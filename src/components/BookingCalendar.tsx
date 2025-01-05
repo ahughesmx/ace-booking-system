@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { Trash2 } from "lucide-react";
 
 type Booking = {
   id: string;
@@ -13,6 +14,12 @@ type Booking = {
   user_id: string;
   start_time: string;
   end_time: string;
+  court: {
+    name: string;
+  };
+  user: {
+    full_name: string;
+  };
 };
 
 type Court = {
@@ -52,7 +59,15 @@ export default function BookingCalendar() {
 
       const { data, error } = await supabase
         .from("bookings")
-        .select("*")
+        .select(`
+          *,
+          court:courts (
+            name
+          ),
+          user:profiles (
+            full_name
+          )
+        `)
         .gte("start_time", startOfDay.toISOString())
         .lte("end_time", endOfDay.toISOString());
       
@@ -129,6 +144,30 @@ export default function BookingCalendar() {
     }
   };
 
+  const handleCancelBooking = async (bookingId: string) => {
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .delete()
+        .eq("id", bookingId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Reserva cancelada",
+        description: "La reserva ha sido cancelada correctamente.",
+      });
+
+      refetchBookings();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo cancelar la reserva. Por favor intenta de nuevo.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -190,6 +229,47 @@ export default function BookingCalendar() {
           </Button>
         </CardContent>
       </Card>
+
+      {bookings && bookings.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Reservas del día</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {bookings.map((booking) => (
+                <Card key={booking.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">
+                          {booking.court?.name || "Cancha sin nombre"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(booking.start_time).toLocaleTimeString()} -{" "}
+                          {new Date(booking.end_time).toLocaleTimeString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Reservado por: {booking.user?.full_name || "Usuario desconocido"}
+                        </p>
+                      </div>
+                      {user?.id === booking.user_id && (
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => handleCancelBooking(booking.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
