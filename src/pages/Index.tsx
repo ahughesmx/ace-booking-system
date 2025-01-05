@@ -88,7 +88,6 @@ export default function Index() {
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t py-4">
-        <div className="container mx-auto px-4">
           <div className="flex justify-around items-center">
             <Link to="/" className="flex flex-col items-center text-blue-600">
               <Home className="h-6 w-6" />
@@ -103,7 +102,6 @@ export default function Index() {
               <span className="text-xs mt-1">Perfil</span>
             </Link>
           </div>
-        </div>
       </div>
     </div>
   );
