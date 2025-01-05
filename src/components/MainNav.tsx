@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -9,17 +9,23 @@ const MainNav = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/login");
   };
 
+  const handleNavigation = (tab: string) => {
+    navigate("/", { state: { defaultTab: tab } });
+    setMobileOpen(false);
+  };
+
   const navigationItems = [
-    { label: "Inicio", icon: Home, onClick: () => navigate("/") },
-    { label: "Reservas", icon: Calendar, onClick: () => navigate("/", { state: { defaultTab: "bookings" } }) },
-    { label: "Partidos", icon: Calendar, onClick: () => navigate("/", { state: { defaultTab: "matches" } }) },
-    { label: "Ranking", icon: Trophy, onClick: () => navigate("/", { state: { defaultTab: "ranking" } }) },
+    { label: "Inicio", icon: Home, onClick: () => handleNavigation("bookings") },
+    { label: "Reservas", icon: Calendar, onClick: () => handleNavigation("bookings") },
+    { label: "Partidos", icon: Calendar, onClick: () => handleNavigation("matches") },
+    { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
   ];
 
   const NavItems = () => (
@@ -29,10 +35,7 @@ const MainNav = () => {
           key={item.label}
           variant="ghost"
           className="flex items-center gap-2"
-          onClick={() => {
-            item.onClick();
-            setMobileOpen(false);
-          }}
+          onClick={item.onClick}
         >
           <item.icon className="h-4 w-4" />
           <span>{item.label}</span>
