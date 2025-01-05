@@ -1,16 +1,25 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
-import ProfileForm from "@/components/ProfileForm";
-import BookingCalendar from "@/components/BookingCalendar";
+import MatchManagement from "@/components/MatchManagement";
 
 export default function Index() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
-  if (!user) return null;
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth/login");
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
 
   return (
-    <div className="container py-6 space-y-6">
-      <ProfileForm userId={user.id} />
-      <BookingCalendar />
+    <div className="container py-8">
+      <MatchManagement />
     </div>
   );
 }
