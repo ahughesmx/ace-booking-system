@@ -26,8 +26,17 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const { data: courts = [] } = useCourts();
 
   const isTimeSlotAvailable = (time: string, courtId: string) => {
-    // Check if the time slot is available for the selected court
-    return true; // Placeholder for actual availability check logic
+    if (!selectedDate) return false;
+    
+    const [hours] = time.split(":");
+    const bookingTime = new Date(selectedDate);
+    bookingTime.setHours(parseInt(hours), 0, 0, 0);
+    
+    // Check if booking is at least 2 hours in advance
+    const now = new Date();
+    const hoursDifference = (bookingTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    return hoursDifference >= 2;
   };
 
   const handleBooking = async () => {
@@ -43,6 +52,19 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     const [hours] = selectedTime.split(":");
     const startTime = new Date(selectedDate);
     startTime.setHours(parseInt(hours), 0, 0, 0);
+    
+    // Validate 2 hour minimum before making the API call
+    const now = new Date();
+    const hoursDifference = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursDifference < 2) {
+      toast({
+        title: "Error",
+        description: "Las reservas deben hacerse con al menos 2 horas de anticipación.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const endTime = new Date(startTime);
     endTime.setHours(startTime.getHours() + 1);
@@ -62,12 +84,6 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
           toast({
             title: "Límite de reservas alcanzado",
             description: "Ya tienes el máximo de 2 reservas activas permitidas.",
-            variant: "destructive",
-          });
-        } else if (error.message.includes('2 horas de anticipación')) {
-          toast({
-            title: "Tiempo mínimo no cumplido",
-            description: "Las reservas deben hacerse con al menos 2 horas de anticipación.",
             variant: "destructive",
           });
         } else {
