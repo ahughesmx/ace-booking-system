@@ -4,7 +4,7 @@ import MatchManagement from "@/components/MatchManagement";
 import RankingTable from "@/components/RankingTable";
 import { useUserRole } from "@/hooks/use-user-role";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { UserCircle2, Search, TennisBall, GraduationCap, Shield, Home, Users, User, Bell } from "lucide-react";
+import { UserCircle2, Search, CircleDot, GraduationCap, Shield, Home, Users, User, Bell } from "lucide-react";
 import MainNav from "@/components/MainNav";
 import { useLocation } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,7 +49,7 @@ export default function Index() {
           <Card className="hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="bg-[#0A1A2A] w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-                <TennisBall className="h-6 w-6 text-white" />
+                <CircleDot className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-xl font-bold mb-2">Únete a un partido abierto</h3>
               <p className="text-gray-600">Si buscas otros jugadores</p>
