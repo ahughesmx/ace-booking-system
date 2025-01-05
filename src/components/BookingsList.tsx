@@ -113,7 +113,8 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
                   }`}
                 >
                   <p className="font-medium text-sm">
-                    {timeSlot.start} - {timeSlot.end}
+                    <span className="md:hidden">{timeSlot.start}</span>
+                    <span className="hidden md:inline">{timeSlot.start} - {timeSlot.end}</span>
                   </p>
                   <p className={`text-xs ${isAvailable ? 'text-green-600' : 'text-gray-500'}`}>
                     {isAvailable ? 'Disponible' : 'No disponible'}
