@@ -1,14 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/components/AuthProvider";
 import { BookingCard } from "@/components/BookingCard";
+import { TimeSlotsGrid } from "@/components/TimeSlotsGrid";
 import { supabase } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCourts } from "@/hooks/use-courts";
 import type { Booking } from "@/types/booking";
-import { format, addHours, isBefore } from "date-fns";
-import { es } from "date-fns/locale";
+import { format } from "date-fns";
 
 interface BookingsListProps {
   bookings: Booking[];
@@ -20,30 +20,12 @@ const BUSINESS_HOURS = {
   end: 22, // 10 PM (último slot será de 22:00 a 23:00)
 };
 
-function generateTimeSlots() {
-  const slots = [];
-  const now = new Date();
-  
-  for (let hour = BUSINESS_HOURS.start; hour <= BUSINESS_HOURS.end; hour++) {
-    const startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour);
-    const endTime = addHours(startTime, 1);
-    const isPast = isBefore(startTime, now);
-    
-    slots.push({
-      start: format(startTime, 'HH:00'),
-      end: format(endTime, 'HH:00'),
-      isPast
-    });
-  }
-  return slots;
-}
-
 export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { data: userRole } = useUserRole(user?.id);
   const { data: courts = [] } = useCourts();
-  const isAdmin = userRole?.role === 'admin';
+  const isAdmin = userRole?.role === "admin";
   const queryClient = useQueryClient();
 
   const handleCancelBooking = async (bookingId: string) => {
@@ -93,10 +75,8 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
   };
 
   if (!user) {
-    // Show available time slots for non-logged in users
-    const timeSlots = generateTimeSlots();
     const bookedSlots = new Set(
-      bookings.map(booking => format(new Date(booking.start_time), 'HH:00'))
+      bookings.map(booking => format(new Date(booking.start_time), "HH:00"))
     );
 
     return (
@@ -105,29 +85,10 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
           <CardTitle>Horarios disponibles</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-3">
-            {timeSlots.map(timeSlot => {
-              const isAvailable = !bookedSlots.has(timeSlot.start) && !timeSlot.isPast;
-              return (
-                <div
-                  key={timeSlot.start}
-                  className={`p-2 rounded-lg border text-center transition-colors ${
-                    isAvailable 
-                      ? 'bg-green-50 border-green-200 hover:bg-green-100' 
-                      : 'bg-gray-50 border-gray-200'
-                  }`}
-                >
-                  <p className="font-medium text-sm">
-                    <span className="md:hidden">{timeSlot.start}</span>
-                    <span className="hidden md:inline">{timeSlot.start} - {timeSlot.end}</span>
-                  </p>
-                  <p className={`text-xs ${isAvailable ? 'text-green-600' : 'text-gray-500'}`}>
-                    {isAvailable ? 'Disponible' : 'No disponible'}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
+          <TimeSlotsGrid 
+            bookedSlots={bookedSlots}
+            businessHours={BUSINESS_HOURS}
+          />
         </CardContent>
       </Card>
     );
