@@ -29,14 +29,17 @@ export default function RankingTable() {
         .from("rankings")
         .select(`
           *,
-          profiles:profiles(
-            full_name
-          )
+          profiles:profiles(full_name)
         `)
         .order("points", { ascending: false });
 
-      if (error) throw error;
-      return data as RankingWithProfile[];
+      if (error) {
+        console.error("Error fetching rankings:", error);
+        throw error;
+      }
+
+      // Type assertion to handle the response type
+      return (data || []) as RankingWithProfile[];
     },
   });
 
