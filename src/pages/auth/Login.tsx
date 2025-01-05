@@ -2,16 +2,47 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LoginForm } from "@/components/auth/LoginForm";
 import MainNav from "@/components/MainNav";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Login() {
   const navigate = useNavigate();
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement login logic
-    console.log("Login attempt with:", { loginEmail, loginPassword });
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      });
+
+      if (error) {
+        toast({
+          title: "Error al iniciar sesión",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "¡Bienvenido!",
+        description: "Has iniciado sesión exitosamente",
+      });
+      
+      navigate("/");
+    } catch (error) {
+      console.error("Error during login:", error);
+      toast({
+        title: "Error al iniciar sesión",
+        description: "Ocurrió un error inesperado",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleShowRegister = () => {
