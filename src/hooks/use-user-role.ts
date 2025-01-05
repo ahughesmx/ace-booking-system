@@ -23,5 +23,7 @@ export function useUserRole(userId: string | undefined) {
       return data?.role as UserRole;
     },
     enabled: !!userId,
+    retry: 1, // Reducimos a 1 solo reintento
+    retryDelay: 1000, // Esperamos 1 segundo antes de reintentar
   });
 }

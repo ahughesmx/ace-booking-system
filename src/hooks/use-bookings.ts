@@ -28,5 +28,7 @@ export function useBookings(date: Date | undefined) {
       return data as Booking[];
     },
     enabled: !!date,
+    retry: 1, // Reducimos a 1 solo reintento
+    retryDelay: 1000, // Esperamos 1 segundo antes de reintentar
   });
 }
