@@ -8,6 +8,7 @@ import RankingTable from "@/components/RankingTable";
 import { useUserRole } from "@/hooks/use-user-role";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UserCircle2 } from "lucide-react";
+import MainNav from "@/components/MainNav";
 
 export default function Index() {
   const { user, loading } = useAuth();
@@ -26,6 +27,7 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
+      <MainNav />
       <div className="container mx-auto px-4 py-6 md:py-8">
         {userRole?.role === 'admin' && (
           <Alert className="mb-6 bg-blue-50 border-blue-200">
