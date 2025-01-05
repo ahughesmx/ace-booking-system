@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { handleSupabaseResponse, supabase } from "@/lib/supabase-client";
 
 export type Court = {
   id: string;
@@ -9,19 +9,12 @@ export type Court = {
 export function useCourts() {
   return useQuery({
     queryKey: ["courts"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("courts")
-        .select("*");
-      
-      if (error) {
-        console.error("Error fetching courts:", error);
-        throw error;
-      }
-      
-      return data as Court[];
-    },
-    retry: 1, // Reducimos a 1 solo reintento
-    retryDelay: 1000, // Esperamos 1 segundo antes de reintentar
+    queryFn: () => 
+      handleSupabaseResponse(
+        supabase.from("courts").select("*")
+      ),
+    staleTime: 1000 * 60 * 5, // 5 minutos
+    retry: 1,
+    retryDelay: 1000,
   });
 }

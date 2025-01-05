@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { handleSupabaseResponse, supabase } from "@/lib/supabase-client";
 
 export type UserRole = 'admin' | 'moderator' | 'user';
 
@@ -9,21 +9,17 @@ export function useUserRole(userId: string | undefined) {
     queryFn: async () => {
       if (!userId) return null;
       
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching user role:', error);
-        return null;
-      }
-
-      return data?.role as UserRole;
+      return handleSupabaseResponse(
+        supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .single()
+      );
     },
     enabled: !!userId,
-    retry: 1, // Reducimos a 1 solo reintento
-    retryDelay: 1000, // Esperamos 1 segundo antes de reintentar
+    staleTime: 1000 * 60 * 5, // 5 minutos
+    retry: 1,
+    retryDelay: 1000,
   });
 }
