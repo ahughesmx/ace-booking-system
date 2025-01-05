@@ -102,7 +102,7 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
           <CardTitle>Horarios disponibles</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {timeSlots.map(timeSlot => {
               const isAvailable = !bookedSlots.has(timeSlot.start);
               return (
