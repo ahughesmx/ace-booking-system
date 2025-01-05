@@ -4,6 +4,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BookingCalendar from "@/components/BookingCalendar";
 import MatchManagement from "@/components/MatchManagement";
+import RankingTable from "@/components/RankingTable";
 import { useUserRole } from "@/hooks/use-user-role";
 
 export default function Index() {
@@ -31,15 +32,19 @@ export default function Index() {
         </div>
       )}
       <Tabs defaultValue="bookings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="bookings">Reservas</TabsTrigger>
           <TabsTrigger value="matches">Partidos</TabsTrigger>
+          <TabsTrigger value="ranking">Ranking</TabsTrigger>
         </TabsList>
         <TabsContent value="bookings" className="space-y-4">
           <BookingCalendar />
         </TabsContent>
         <TabsContent value="matches" className="space-y-4">
           <MatchManagement />
+        </TabsContent>
+        <TabsContent value="ranking" className="space-y-4">
+          <RankingTable />
         </TabsContent>
       </Tabs>
     </div>
