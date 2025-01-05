@@ -6,6 +6,7 @@ import { CourtSelector } from "@/components/CourtSelector";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 import { useCourts } from "@/hooks/use-courts";
 import { supabase } from "@/lib/supabase-client";
+import { useQuery } from "@tanstack/react-query";
 
 const availableTimeSlots = [
   "08:00", "09:00", "10:00", "11:00", "12:00",
@@ -26,6 +27,31 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const { user } = useAuth();
   const { data: courts = [] } = useCourts();
 
+  // Fetch existing bookings for the selected date
+  const { data: existingBookings = [] } = useQuery({
+    queryKey: ["bookings", selectedDate, selectedCourt],
+    queryFn: async () => {
+      if (!selectedDate || !selectedCourt) return [];
+      
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("court_id", selectedCourt)
+        .gte("start_time", startOfDay.toISOString())
+        .lte("end_time", endOfDay.toISOString());
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedDate && !!selectedCourt,
+  });
+
   const isTimeSlotAvailable = (time: string, courtId: string) => {
     if (!selectedDate) return false;
     
@@ -35,7 +61,23 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     const now = new Date();
     const hoursDifference = (bookingTime.getTime() - now.getTime()) / (1000 * 60 * 60);
     
-    return hoursDifference >= 2;
+    // Check if the time is at least 2 hours in the future
+    if (hoursDifference < 2) return false;
+
+    // Check if there's any existing booking for this time slot
+    const timeSlotStart = new Date(selectedDate);
+    timeSlotStart.setHours(parseInt(hours), 0, 0, 0);
+    const timeSlotEnd = new Date(timeSlotStart);
+    timeSlotEnd.setHours(timeSlotStart.getHours() + 1);
+
+    return !existingBookings.some(booking => {
+      const bookingStart = new Date(booking.start_time);
+      const bookingEnd = new Date(booking.end_time);
+      return (
+        (timeSlotStart >= bookingStart && timeSlotStart < bookingEnd) ||
+        (timeSlotEnd > bookingStart && timeSlotEnd <= bookingEnd)
+      );
+    });
   };
 
   const handleBooking = async () => {
