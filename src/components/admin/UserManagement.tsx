@@ -4,6 +4,15 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
 
@@ -17,6 +26,8 @@ type User = {
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -85,6 +96,86 @@ export default function UserManagement() {
     }
   };
 
+  const handleEditUser = async (userId: string, data: Partial<User>) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: data.full_name,
+          member_id: data.member_id,
+        })
+        .eq("id", userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Usuario actualizado",
+        description: "La información del usuario ha sido actualizada correctamente.",
+      });
+
+      setIsDialogOpen(false);
+      fetchUsers();
+    } catch (error) {
+      console.error("Error updating user:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la información del usuario.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const EditUserDialog = ({ user }: { user: User }) => {
+    const [formData, setFormData] = useState({
+      full_name: user.full_name || "",
+      member_id: user.member_id || "",
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      handleEditUser(user.id, formData);
+    };
+
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="full_name">Nombre completo</Label>
+          <Input
+            id="full_name"
+            value={formData.full_name}
+            onChange={(e) =>
+              setFormData({ ...formData, full_name: e.target.value })
+            }
+            placeholder="Juan Pérez"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="member_id">Clave de socio</Label>
+          <Input
+            id="member_id"
+            value={formData.member_id}
+            onChange={(e) =>
+              setFormData({ ...formData, member_id: e.target.value })
+            }
+            placeholder="Ingresa la clave de socio"
+          />
+        </div>
+
+        <div className="flex justify-end space-x-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setIsDialogOpen(false)}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit">Guardar cambios</Button>
+        </div>
+      </form>
+    );
+  };
+
   if (loading) {
     return (
       <Card>
@@ -131,6 +222,22 @@ export default function UserManagement() {
                   </p>
                 </div>
                 <div className="space-x-2">
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        onClick={() => setEditingUser(user)}
+                      >
+                        Editar
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Editar Usuario</DialogTitle>
+                      </DialogHeader>
+                      {editingUser && <EditUserDialog user={editingUser} />}
+                    </DialogContent>
+                  </Dialog>
                   <Button
                     variant={user.role === "user" ? "outline" : "default"}
                     onClick={() =>
