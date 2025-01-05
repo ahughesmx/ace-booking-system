@@ -33,7 +33,7 @@ export default function RankingTable() {
           points,
           wins,
           losses,
-          profiles:profiles!inner(
+          profiles!rankings_user_id_fkey_profiles(
             full_name
           )
         `)
