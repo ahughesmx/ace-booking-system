@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LogIn } from "lucide-react";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -22,11 +23,14 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">
-            Club de Tenis
-          </CardTitle>
+          <div className="flex items-center justify-center gap-2">
+            <LogIn className="h-6 w-6 text-primary" />
+            <CardTitle className="text-2xl">
+              Club de Tenis
+            </CardTitle>
+          </div>
           <CardDescription className="text-center">
-            Inicia sesión o regístrate para continuar
+            Inicia sesión o regístrate para acceder al sistema de gestión de partidos
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -37,8 +41,8 @@ export default function Login() {
               variables: {
                 default: {
                   colors: {
-                    brand: '#2563eb',
-                    brandAccent: '#1d4ed8',
+                    brand: 'rgb(37 99 235)',
+                    brandAccent: 'rgb(29 78 216)',
                   },
                 },
               },
