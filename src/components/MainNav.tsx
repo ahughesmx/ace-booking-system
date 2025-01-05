@@ -38,7 +38,7 @@ const MainNav = () => {
         <Button
           key={item.label}
           variant="ghost"
-          className="flex items-center gap-2"
+          className="flex w-full items-center justify-start gap-2"
           onClick={item.onClick}
         >
           <item.icon className="h-4 w-4" />
@@ -48,7 +48,7 @@ const MainNav = () => {
       {user ? (
         <Button
           variant="ghost"
-          className="flex items-center gap-2 text-red-500 hover:text-red-600"
+          className="flex w-full items-center justify-start gap-2 text-red-500 hover:text-red-600"
           onClick={handleSignOut}
         >
           <LogOut className="h-4 w-4" />
@@ -57,7 +57,7 @@ const MainNav = () => {
       ) : (
         <Button
           variant="ghost"
-          className="flex items-center gap-2 text-blue-500 hover:text-blue-600"
+          className="flex w-full items-center justify-start gap-2 text-blue-500 hover:text-blue-600"
           onClick={handleSignIn}
         >
           <LogIn className="h-4 w-4" />
