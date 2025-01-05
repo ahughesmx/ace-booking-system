@@ -33,23 +33,22 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     const bookingTime = new Date(selectedDate);
     bookingTime.setHours(parseInt(hours), 0, 0, 0);
     
-    // Obtener la fecha y hora actual en la zona horaria de México
-    const now = new Date();
-    const mexicoOffset = -6; // UTC-6 para Ciudad de México
-    now.setHours(now.getHours() + mexicoOffset);
+    // Obtener la fecha actual en México
+    const nowInMexico = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
     
     // Comparar fechas sin considerar la hora
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayInMexico = new Date(nowInMexico.getFullYear(), nowInMexico.getMonth(), nowInMexico.getDate());
     const selectedDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
     
     // Si es un día futuro, permitir la reserva
-    if (selectedDay > today) {
+    if (selectedDay > todayInMexico) {
       return true;
     }
     
     // Si es hoy, validar las 2 horas de anticipación
-    if (selectedDay.getTime() === today.getTime()) {
-      const hoursDifference = (bookingTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    if (selectedDay.getTime() === todayInMexico.getTime()) {
+      const bookingTimeInMexico = new Date(bookingTime.toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
+      const hoursDifference = (bookingTimeInMexico.getTime() - nowInMexico.getTime()) / (1000 * 60 * 60);
       return hoursDifference >= 2;
     }
     
