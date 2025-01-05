@@ -21,7 +21,7 @@ export default function Index() {
   }
 
   const renderMobileHome = () => (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">
           Hola {user?.email?.split('@')[0] || 'Usuario'}
@@ -32,46 +32,46 @@ export default function Index() {
 
       <h2 className="text-2xl font-bold">Juega tu partido perfecto</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <Link to="/" state={{ defaultTab: "bookings" }}>
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="bg-[#0A1A2A] w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-                <Search className="h-6 w-6 text-white" />
+          <Card className="hover:shadow-lg transition-shadow h-full">
+            <CardContent className="p-4">
+              <div className="bg-[#0A1A2A] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+                <Search className="h-5 w-5 text-white" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Reserva una cancha</h3>
-              <p className="text-gray-600">Si ya sabes con quién vas a jugar</p>
+              <h3 className="text-base font-bold mb-1">Reserva una cancha</h3>
+              <p className="text-gray-600 text-sm">Si ya sabes con quién vas a jugar</p>
             </CardContent>
           </Card>
         </Link>
 
         <Link to="/" state={{ defaultTab: "matches" }}>
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="bg-[#0A1A2A] w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-                <CircleDot className="h-6 w-6 text-white" />
+          <Card className="hover:shadow-lg transition-shadow h-full">
+            <CardContent className="p-4">
+              <div className="bg-[#0A1A2A] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+                <CircleDot className="h-5 w-5 text-white" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Únete a un partido abierto</h3>
-              <p className="text-gray-600">Si buscas otros jugadores</p>
+              <h3 className="text-base font-bold mb-1">Únete a un partido</h3>
+              <p className="text-gray-600 text-sm">Si buscas otros jugadores</p>
             </CardContent>
           </Card>
         </Link>
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="bg-[#0A1A2A] w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-              <GraduationCap className="h-6 w-6 text-white" />
+        <Card className="hover:shadow-lg transition-shadow h-full">
+          <CardContent className="p-4">
+            <div className="bg-[#0A1A2A] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+              <GraduationCap className="h-5 w-5 text-white" />
             </div>
-            <h3 className="text-xl font-bold mb-2">Clases</h3>
+            <h3 className="text-base font-bold mb-1">Clases</h3>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="bg-[#0A1A2A] w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-              <Shield className="h-6 w-6 text-white" />
+        <Card className="hover:shadow-lg transition-shadow h-full">
+          <CardContent className="p-4">
+            <div className="bg-[#0A1A2A] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+              <Shield className="h-5 w-5 text-white" />
             </div>
-            <h3 className="text-xl font-bold mb-2">Competencias</h3>
+            <h3 className="text-base font-bold mb-1">Competencias</h3>
           </CardContent>
         </Card>
       </div>
