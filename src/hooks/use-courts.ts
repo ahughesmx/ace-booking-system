@@ -8,7 +8,7 @@ export function useCourts() {
   return useQuery({
     queryKey: ["courts"],
     queryFn: () => 
-      handleSupabaseResponse<Court[]>(
+      handleSupabaseResponse(
         supabase.from("courts").select("*")
       ),
     staleTime: 1000 * 60 * 5, // 5 minutos

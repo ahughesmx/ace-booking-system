@@ -23,7 +23,7 @@ export default function Index() {
 
   return (
     <div className="container py-8">
-      {userRole === 'admin' && (
+      {userRole?.role === 'admin' && (
         <div className="mb-4 p-4 bg-blue-100 rounded-lg">
           <p className="text-blue-800">
             Acceso de administrador activado
