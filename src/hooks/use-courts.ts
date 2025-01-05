@@ -1,16 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { handleSupabaseResponse, supabase } from "@/lib/supabase-client";
+import type { Database } from "@/integrations/supabase/types";
 
-export type Court = {
-  id: string;
-  name: string;
-};
+export type Court = Database['public']['Tables']['courts']['Row'];
 
 export function useCourts() {
   return useQuery({
     queryKey: ["courts"],
     queryFn: () => 
-      handleSupabaseResponse(
+      handleSupabaseResponse<Court[]>(
         supabase.from("courts").select("*")
       ),
     staleTime: 1000 * 60 * 5, // 5 minutos

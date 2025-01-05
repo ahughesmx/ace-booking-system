@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { handleSupabaseResponse, supabase } from "@/lib/supabase-client";
+import type { Database } from "@/integrations/supabase/types";
 
-export type UserRole = 'admin' | 'moderator' | 'user';
+type UserRoleRow = Database['public']['Tables']['user_roles']['Row'];
+export type UserRole = UserRoleRow['role'];
 
 export function useUserRole(userId: string | undefined) {
   return useQuery({
@@ -9,7 +11,7 @@ export function useUserRole(userId: string | undefined) {
     queryFn: async () => {
       if (!userId) return null;
       
-      return handleSupabaseResponse(
+      return handleSupabaseResponse<UserRoleRow>(
         supabase
           .from('user_roles')
           .select('role')

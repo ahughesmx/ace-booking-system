@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, PostgrestResponse, PostgrestSingleResponse, PostgrestFilterBuilder, PostgrestBuilder } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 
 const supabaseUrl = "https://bpjinatcgdmxqetfxjji.supabase.co";
@@ -9,18 +9,12 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
     persistSession: true,
     autoRefreshToken: true,
   },
-  global: {
-    headers: {
-      'x-my-custom-header': 'my-app-name',
-    },
-  },
 });
 
-// Función helper para manejar respuestas de Supabase
 export async function handleSupabaseResponse<T>(
-  promise: Promise<{ data: T | null; error: any }>
+  query: PostgrestFilterBuilder<any> | PostgrestBuilder<any>
 ): Promise<T> {
-  const { data, error } = await promise;
+  const { data, error } = await query;
   
   if (error) {
     console.error('Supabase error:', error);
@@ -31,5 +25,5 @@ export async function handleSupabaseResponse<T>(
     throw new Error('No data returned from Supabase');
   }
   
-  return data;
+  return data as T;
 }
