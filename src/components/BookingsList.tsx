@@ -108,11 +108,13 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
               return (
                 <div
                   key={timeSlot.start}
-                  className={`p-3 rounded-lg border ${
-                    isAvailable ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                  className={`p-3 rounded-lg border transition-colors ${
+                    isAvailable 
+                      ? 'bg-green-50 border-green-200 hover:bg-green-100' 
+                      : 'bg-gray-50 border-gray-200'
                   }`}
                 >
-                  <p className="font-medium">
+                  <p className="font-medium text-sm">
                     {timeSlot.start} - {timeSlot.end}
                   </p>
                   <p className={`text-sm ${isAvailable ? 'text-green-600' : 'text-gray-500'}`}>
