@@ -22,8 +22,7 @@ const MainNav = () => {
   };
 
   const navigationItems = [
-    { label: "Inicio", icon: Home, onClick: () => handleNavigation("bookings") },
-    { label: "Reservas", icon: Calendar, onClick: () => handleNavigation("bookings") },
+    { label: "Inicio", icon: Home, onClick: () => handleNavigation("matches") },
     { label: "Partidos", icon: Calendar, onClick: () => handleNavigation("matches") },
     { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
   ];
