@@ -1,13 +1,13 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Court } from "@/hooks/use-courts";
 
-interface CanchaSelectorProps {
+interface CourtSelectorProps {
   courts: Court[];
   selectedCourt: string | null;
   onCourtSelect: (courtId: string) => void;
 }
 
-export function CanchaSelector({ courts, selectedCourt, onCourtSelect }: CanchaSelectorProps) {
+export function CourtSelector({ courts, selectedCourt, onCourtSelect }: CourtSelectorProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {courts.map((court) => (
