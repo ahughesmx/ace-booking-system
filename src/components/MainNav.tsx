@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Home, Calendar, Trophy, LogOut } from "lucide-react";
+import { Menu, Home, Calendar, Trophy, LogOut, LogIn } from "lucide-react";
 
 const MainNav = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -13,6 +13,10 @@ const MainNav = () => {
 
   const handleSignOut = async () => {
     await signOut();
+    navigate("/");
+  };
+
+  const handleSignIn = () => {
     navigate("/login");
   };
 
@@ -41,14 +45,25 @@ const MainNav = () => {
           <span>{item.label}</span>
         </Button>
       ))}
-      <Button
-        variant="ghost"
-        className="flex items-center gap-2 text-red-500 hover:text-red-600"
-        onClick={handleSignOut}
-      >
-        <LogOut className="h-4 w-4" />
-        <span>Cerrar sesión</span>
-      </Button>
+      {user ? (
+        <Button
+          variant="ghost"
+          className="flex items-center gap-2 text-red-500 hover:text-red-600"
+          onClick={handleSignOut}
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Cerrar sesión</span>
+        </Button>
+      ) : (
+        <Button
+          variant="ghost"
+          className="flex items-center gap-2 text-blue-500 hover:text-blue-600"
+          onClick={handleSignIn}
+        >
+          <LogIn className="h-4 w-4" />
+          <span>Iniciar sesión</span>
+        </Button>
+      )}
     </>
   );
 
