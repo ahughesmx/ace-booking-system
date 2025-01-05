@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/AuthProvider";
 import { MatchCard } from "@/components/MatchCard";
 import type { Match } from "@/types/match";
+import { Plus, List } from "lucide-react";
 
 export function MatchManagement() {
   const navigate = useNavigate();
@@ -55,14 +56,13 @@ export function MatchManagement() {
         return;
       }
 
-      // Create a booking first
       const startTime = new Date();
-      startTime.setHours(8, 0, 0, 0); // Set to 8:00 AM
+      startTime.setHours(8, 0, 0, 0);
       if (startTime < new Date()) {
-        startTime.setDate(startTime.getDate() + 1); // Schedule for next day if current time is past 8 AM
+        startTime.setDate(startTime.getDate() + 1);
       }
       
-      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour later
+      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
 
       const { data: bookingData, error: bookingError } = await supabase
         .from("bookings")
@@ -78,7 +78,6 @@ export function MatchManagement() {
         throw bookingError;
       }
 
-      // Create the match
       const { error: matchError } = await supabase.from("matches").insert({
         booking_id: bookingData.id,
         player1_id: user.id,
@@ -146,28 +145,56 @@ export function MatchManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Partidos</h1>
+      {/* Header Section */}
+      <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between md:items-center">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Partidos</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              {matches?.length || 0} partidos disponibles
+            </p>
+          </div>
+          <Button
+            onClick={handleCreateMatch}
+            disabled={isLoading}
+            size="icon"
+            className="md:hidden bg-[#0A1A2A] hover:bg-[#152538]"
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
+        </div>
         <Button
           onClick={handleCreateMatch}
           disabled={isLoading}
-          className="w-full md:w-auto"
+          className="hidden md:flex bg-[#0A1A2A] hover:bg-[#152538]"
         >
+          <Plus className="h-5 w-5 mr-2" />
           {isLoading ? "Creando..." : "Crear Partido"}
         </Button>
       </div>
 
-      <div className="grid gap-4">
-        {matches?.map((match) => (
-          <MatchCard
-            key={match.id}
-            match={match}
-            canUpdateResult={
-              user?.id === match.player1_id || user?.id === match.player2_id
-            }
-            onUpdateResult={handleUpdateResult}
-          />
-        ))}
+      {/* Matches List */}
+      <div className="space-y-4">
+        {matches?.length === 0 ? (
+          <div className="text-center py-12 bg-muted/50 rounded-lg">
+            <List className="h-12 w-12 mx-auto text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-semibold">No hay partidos</h3>
+            <p className="text-muted-foreground mt-1">
+              Crea un partido para empezar a jugar
+            </p>
+          </div>
+        ) : (
+          matches?.map((match) => (
+            <MatchCard
+              key={match.id}
+              match={match}
+              canUpdateResult={
+                user?.id === match.player1_id || user?.id === match.player2_id
+              }
+              onUpdateResult={handleUpdateResult}
+            />
+          ))
+        )}
       </div>
     </div>
   );
