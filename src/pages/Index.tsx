@@ -14,7 +14,7 @@ export default function Index() {
   const location = useLocation();
   const navigate = useNavigate();
   const { data: userRole } = useUserRole(user?.id);
-  const defaultTab = location.state?.defaultTab || "bookings";
+  const defaultTab = location.state?.defaultTab;
 
   if (loading) {
     return <div>Cargando...</div>;
@@ -83,8 +83,8 @@ export default function Index() {
   );
 
   const renderContent = () => {
-    // Solo mostrar la vista móvil si estamos en la página principal (sin tab específico)
-    if (window.innerWidth < 768 && !location.state?.defaultTab) {
+    // Mostrar la vista móvil solo cuando no hay tab específico
+    if (!defaultTab && window.innerWidth < 768) {
       return renderMobileHome();
     }
 
@@ -96,7 +96,7 @@ export default function Index() {
       case "ranking":
         return <RankingTable />;
       default:
-        return <BookingCalendar />;
+        return window.innerWidth < 768 ? renderMobileHome() : <BookingCalendar />;
     }
   };
 

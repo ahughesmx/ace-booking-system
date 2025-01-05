@@ -20,15 +20,21 @@ const MainNav = () => {
     navigate("/login");
   };
 
-  const handleNavigation = (tab: string) => {
+  const handleNavigation = (tab: string | null) => {
     if (window.innerWidth < 768) {
       setMobileOpen(false);
     }
-    navigate("/", { state: { defaultTab: tab } });
+    
+    if (tab === null) {
+      // Si es "Inicio", navega a la raíz sin estado para mostrar la vista móvil
+      navigate("/", { state: undefined });
+    } else {
+      navigate("/", { state: { defaultTab: tab } });
+    }
   };
 
   const navigationItems = [
-    { label: "Inicio", icon: Home, onClick: () => handleNavigation("bookings") },
+    { label: "Inicio", icon: Home, onClick: () => handleNavigation(null) },
     { label: "Reservas", icon: Calendar, onClick: () => handleNavigation("bookings") },
     { label: "Partidos", icon: Calendar, onClick: () => handleNavigation("matches") },
     { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
