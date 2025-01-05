@@ -6,6 +6,7 @@ import { useUserRole } from "@/hooks/use-user-role";
 import UserManagement from "@/components/admin/UserManagement";
 import CourtManagement from "@/components/admin/CourtManagement";
 import Statistics from "@/components/admin/Statistics";
+import ValidMemberIdManagement from "@/components/admin/ValidMemberIdManagement";
 
 export default function AdminIndex() {
   const { user, loading } = useAuth();
@@ -32,10 +33,11 @@ export default function AdminIndex() {
     <div className="container py-8">
       <h1 className="text-2xl font-bold mb-6">Panel de Administración</h1>
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="users">Usuarios</TabsTrigger>
           <TabsTrigger value="courts">Canchas</TabsTrigger>
           <TabsTrigger value="stats">Estadísticas</TabsTrigger>
+          <TabsTrigger value="member-ids">Claves de Socio</TabsTrigger>
         </TabsList>
         <TabsContent value="users" className="space-y-4">
           <UserManagement />
@@ -45,6 +47,9 @@ export default function AdminIndex() {
         </TabsContent>
         <TabsContent value="stats" className="space-y-4">
           <Statistics />
+        </TabsContent>
+        <TabsContent value="member-ids" className="space-y-4">
+          <ValidMemberIdManagement />
         </TabsContent>
       </Tabs>
     </div>
