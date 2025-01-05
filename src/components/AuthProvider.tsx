@@ -43,29 +43,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // First clear the local state
+      // Clear local state first
       setSession(null);
       setUser(null);
 
-      // Then attempt to sign out from Supabase
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("Error signing out:", error);
-        // Even if there's an error, we don't restore the state since we want to force logout
-        toast({
-          title: "Advertencia",
-          description: "La sesión se ha cerrado localmente",
-          variant: "default",
-        });
-      } else {
-        toast({
-          title: "Sesión cerrada",
-          description: "Has cerrado sesión exitosamente",
-        });
+      // Only attempt to sign out from Supabase if we have a session
+      if (session) {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.error("Error signing out:", error);
+        }
       }
+
+      // Always show success message since we've cleared local state
+      toast({
+        title: "Sesión cerrada",
+        description: "Has cerrado sesión exitosamente",
+      });
     } catch (error) {
       console.error("Error in signOut:", error);
-      // Don't rethrow the error since we want the logout to succeed locally
+      // Show a message that we've at least logged out locally
       toast({
         title: "Advertencia",
         description: "La sesión se ha cerrado localmente",
