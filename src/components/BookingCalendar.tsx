@@ -18,7 +18,7 @@ export default function BookingCalendar() {
     <div className="grid gap-6 md:grid-cols-2">
       <Card className="md:sticky md:top-4 h-fit">
         <CardHeader>
-          <CardTitle>Reserva tu cancha</CardTitle>
+          <CardTitle>Reserva tu Cancha</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="rounded-lg border p-3">
