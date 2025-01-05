@@ -67,27 +67,42 @@ export type Database = {
           booking_id: string | null
           created_at: string | null
           id: string
+          is_confirmed_player1: boolean | null
+          is_confirmed_player2: boolean | null
+          is_doubles: boolean | null
           player1_id: string | null
+          player1_partner_id: string | null
           player1_sets: number | null
           player2_id: string | null
+          player2_partner_id: string | null
           player2_sets: number | null
         }
         Insert: {
           booking_id?: string | null
           created_at?: string | null
           id?: string
+          is_confirmed_player1?: boolean | null
+          is_confirmed_player2?: boolean | null
+          is_doubles?: boolean | null
           player1_id?: string | null
+          player1_partner_id?: string | null
           player1_sets?: number | null
           player2_id?: string | null
+          player2_partner_id?: string | null
           player2_sets?: number | null
         }
         Update: {
           booking_id?: string | null
           created_at?: string | null
           id?: string
+          is_confirmed_player1?: boolean | null
+          is_confirmed_player2?: boolean | null
+          is_doubles?: boolean | null
           player1_id?: string | null
+          player1_partner_id?: string | null
           player1_sets?: number | null
           player2_id?: string | null
+          player2_partner_id?: string | null
           player2_sets?: number | null
         }
         Relationships: [
@@ -106,18 +121,21 @@ export type Database = {
           created_at: string | null
           full_name: string | null
           id: string
+          member_id: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
           full_name?: string | null
           id: string
+          member_id?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
           full_name?: string | null
           id?: string
+          member_id?: string | null
         }
         Relationships: []
       }
