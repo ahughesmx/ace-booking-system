@@ -1,15 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import type { Database } from "@/integrations/supabase/types";
+import type { Booking } from "@/types/booking";
 
-type BookingRow = Database['public']['Tables']['bookings']['Row'];
-type CourtRow = Database['public']['Tables']['courts']['Row'];
-type ProfileRow = Database['public']['Tables']['profiles']['Row'];
-
-export type Booking = BookingRow & {
-  court?: Pick<CourtRow, 'name'>;
-  user?: Pick<ProfileRow, 'full_name'>;
-};
+export { type Booking };
 
 export function useBookings(date: Date | undefined) {
   return useQuery({
@@ -35,7 +29,7 @@ export function useBookings(date: Date | undefined) {
       return data as Booking[];
     },
     enabled: !!date,
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 1,
     retryDelay: 1000,
   });

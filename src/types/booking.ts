@@ -4,10 +4,10 @@ export type Booking = {
   user_id: string;
   start_time: string;
   end_time: string;
-  court: {
+  court?: {
     name: string;
   };
-  user: {
+  user?: {
     full_name: string;
   };
 };
