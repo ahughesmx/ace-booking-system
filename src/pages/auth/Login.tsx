@@ -21,8 +21,8 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-background">
       <MainNav />
-      <div className="container mx-auto flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-sm">
+      <div className="container mx-auto flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
           <LoginForm
             loginEmail={loginEmail}
             setLoginEmail={setLoginEmail}
