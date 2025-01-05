@@ -9,11 +9,11 @@ import Statistics from "@/components/admin/Statistics";
 import ValidMemberIdManagement from "@/components/admin/ValidMemberIdManagement";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Users, Court, BarChart3, Key } from "lucide-react";
+import { Menu, Users, Dumbbell, BarChart3, Key } from "lucide-react";
 
 const navigationItems = [
   { id: "users", label: "Usuarios", icon: Users },
-  { id: "courts", label: "Canchas", icon: Court },
+  { id: "courts", label: "Canchas", icon: Dumbbell },
   { id: "stats", label: "Estadísticas", icon: BarChart3 },
   { id: "member-ids", label: "Claves de Socio", icon: Key },
 ];
