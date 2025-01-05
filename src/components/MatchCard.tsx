@@ -11,16 +11,27 @@ import {
 import { Input } from "@/components/ui/input";
 import type { Match } from "@/types/match";
 import { Calendar, Clock, MapPin } from "lucide-react";
+import { AdminMatchControls } from "./AdminMatchControls";
 
 type MatchCardProps = {
   match: Match;
   canUpdateResult: boolean;
+  isAdmin: boolean;
   onUpdateResult: (matchId: string, player1Sets: number, player2Sets: number) => void;
+  onDeleteMatch: (matchId: string) => void;
 };
 
-export function MatchCard({ match, canUpdateResult, onUpdateResult }: MatchCardProps) {
+export function MatchCard({ 
+  match, 
+  canUpdateResult, 
+  isAdmin,
+  onUpdateResult,
+  onDeleteMatch 
+}: MatchCardProps) {
   const [player1Sets, setPlayer1Sets] = useState<string>("");
   const [player2Sets, setPlayer2Sets] = useState<string>("");
+  
+  const isMatchConfirmed = match.is_confirmed_player1 && match.is_confirmed_player2;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -77,60 +88,68 @@ export function MatchCard({ match, canUpdateResult, onUpdateResult }: MatchCardP
             <span>{match.booking?.court?.name || "Cancha por asignar"}</span>
           </div>
 
-          {canUpdateResult && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-4"
-                >
-                  Actualizar Resultado
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Actualizar Resultado</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">
-                        Sets {match.player1?.full_name || "Jugador 1"}
-                      </label>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="3"
-                        value={player1Sets}
-                        onChange={(e) => setPlayer1Sets(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">
-                        Sets {match.player2?.full_name || "Jugador 2"}
-                      </label>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="3"
-                        value={player2Sets}
-                        onChange={(e) => setPlayer2Sets(e.target.value)}
-                      />
-                    </div>
-                  </div>
+          {isAdmin ? (
+            <AdminMatchControls
+              match={match}
+              onUpdateResult={onUpdateResult}
+              onDeleteMatch={onDeleteMatch}
+            />
+          ) : (
+            canUpdateResult && !isMatchConfirmed && (
+              <Dialog>
+                <DialogTrigger asChild>
                   <Button 
-                    onClick={() => {
-                      onUpdateResult(match.id, parseInt(player1Sets), parseInt(player2Sets));
-                      setPlayer1Sets("");
-                      setPlayer2Sets("");
-                    }}
-                    className="w-full"
+                    variant="outline" 
+                    className="w-full mt-4"
                   >
-                    Guardar Resultado
+                    Actualizar Resultado
                   </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Actualizar Resultado</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium mb-1.5 block">
+                          Sets {match.player1?.full_name || "Jugador 1"}
+                        </label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="3"
+                          value={player1Sets}
+                          onChange={(e) => setPlayer1Sets(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium mb-1.5 block">
+                          Sets {match.player2?.full_name || "Jugador 2"}
+                        </label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="3"
+                          value={player2Sets}
+                          onChange={(e) => setPlayer2Sets(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => {
+                        onUpdateResult(match.id, parseInt(player1Sets), parseInt(player2Sets));
+                        setPlayer1Sets("");
+                        setPlayer2Sets("");
+                      }}
+                      className="w-full"
+                    >
+                      Guardar Resultado
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )
           )}
         </div>
       </CardContent>
