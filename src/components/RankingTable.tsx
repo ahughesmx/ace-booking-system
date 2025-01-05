@@ -10,6 +10,17 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+type RankingWithProfile = {
+  id: string;
+  user_id: string | null;
+  points: number | null;
+  wins: number | null;
+  losses: number | null;
+  profiles: {
+    full_name: string | null;
+  } | null;
+};
+
 export default function RankingTable() {
   const { data: rankings, isLoading } = useQuery({
     queryKey: ["rankings"],
@@ -25,7 +36,7 @@ export default function RankingTable() {
         .order("points", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as RankingWithProfile[];
     },
   });
 
