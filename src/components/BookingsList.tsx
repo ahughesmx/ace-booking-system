@@ -7,7 +7,7 @@ import { useUserRole } from "@/hooks/use-user-role";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCourts } from "@/hooks/use-courts";
 import type { Booking } from "@/types/booking";
-import { format, addHours } from "date-fns";
+import { format, addHours, isBefore } from "date-fns";
 import { es } from "date-fns/locale";
 
 interface BookingsListProps {
@@ -22,12 +22,17 @@ const BUSINESS_HOURS = {
 
 function generateTimeSlots() {
   const slots = [];
+  const now = new Date();
+  
   for (let hour = BUSINESS_HOURS.start; hour <= BUSINESS_HOURS.end; hour++) {
-    const startTime = new Date(`2000-01-01T${hour.toString().padStart(2, '0')}:00`);
+    const startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour);
     const endTime = addHours(startTime, 1);
+    const isPast = isBefore(startTime, now);
+    
     slots.push({
       start: format(startTime, 'HH:00'),
-      end: format(endTime, 'HH:00')
+      end: format(endTime, 'HH:00'),
+      isPast
     });
   }
   return slots;
@@ -102,7 +107,7 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
         <CardContent>
           <div className="grid grid-cols-3 gap-3">
             {timeSlots.map(timeSlot => {
-              const isAvailable = !bookedSlots.has(timeSlot.start);
+              const isAvailable = !bookedSlots.has(timeSlot.start) && !timeSlot.isPast;
               return (
                 <div
                   key={timeSlot.start}
