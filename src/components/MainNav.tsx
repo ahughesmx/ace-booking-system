@@ -21,8 +21,10 @@ const MainNav = () => {
   };
 
   const handleNavigation = (tab: string) => {
+    if (window.innerWidth < 768) {
+      setMobileOpen(false);
+    }
     navigate("/", { state: { defaultTab: tab } });
-    setMobileOpen(false);
   };
 
   const navigationItems = [
