@@ -1,14 +1,11 @@
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogIn, Mail, Lock, UserPlus } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { RegisterForm } from "@/components/auth/RegisterForm";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -128,106 +125,25 @@ export default function Login() {
         </CardHeader>
         <CardContent>
           {!showRegister ? (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="login-email"
-                    type="email"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="tucorreo@ejemplo.com"
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="login-password">Contraseña</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="login-password"
-                    type="password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="Tu contraseña"
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-              <Button className="w-full" type="submit">
-                <LogIn className="mr-2 h-4 w-4" /> Iniciar Sesión
-              </Button>
-              <div className="text-center text-sm">
-                <button
-                  type="button"
-                  onClick={() => setShowRegister(true)}
-                  className="text-primary hover:underline"
-                >
-                  ¿No tienes cuenta? Regístrate
-                </button>
-              </div>
-            </form>
+            <LoginForm
+              loginEmail={loginEmail}
+              setLoginEmail={setLoginEmail}
+              loginPassword={loginPassword}
+              setLoginPassword={setLoginPassword}
+              onSubmit={handleLogin}
+              onShowRegister={() => setShowRegister(true)}
+            />
           ) : (
-            <form onSubmit={handleSignUp} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="member_id">Clave de Socio</Label>
-                <Input
-                  id="member_id"
-                  type="text"
-                  value={memberId}
-                  onChange={(e) => setMemberId(e.target.value)}
-                  placeholder="Tu clave de socio"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="tucorreo@ejemplo.com"
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Tu contraseña"
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-              <Button type="submit" className="w-full">
-                <UserPlus className="mr-2 h-4 w-4" /> Registrarse
-              </Button>
-              <div className="text-center text-sm">
-                <button
-                  type="button"
-                  onClick={() => setShowRegister(false)}
-                  className="text-primary hover:underline"
-                >
-                  ¿Ya tienes cuenta? Inicia sesión
-                </button>
-              </div>
-            </form>
+            <RegisterForm
+              memberId={memberId}
+              setMemberId={setMemberId}
+              email={email}
+              setEmail={setEmail}
+              password={password}
+              setPassword={setPassword}
+              onSubmit={handleSignUp}
+              onShowLogin={() => setShowRegister(false)}
+            />
           )}
         </CardContent>
       </Card>
