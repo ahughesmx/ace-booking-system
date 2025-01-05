@@ -26,10 +26,9 @@ function generateTimeSlots() {
   const slots = [];
   for (let hour = BUSINESS_HOURS.start; hour <= BUSINESS_HOURS.end - 1; hour++) {
     const startTime = new Date(`2000-01-01T${hour.toString().padStart(2, '0')}:00`);
-    const endTime = addHours(startTime, 1);
     slots.push({
-      start: format(startTime, 'HH:mm'),
-      end: format(endTime, 'HH:mm')
+      start: format(startTime, 'HH:00'),
+      end: format(addHours(startTime, 1), 'HH:00')
     });
   }
   return slots;
@@ -93,7 +92,7 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
     // Show available time slots for non-logged in users
     const timeSlots = generateTimeSlots();
     const bookedSlots = new Set(
-      bookings.map(booking => format(new Date(booking.start_time), 'HH:mm'))
+      bookings.map(booking => format(new Date(booking.start_time), 'HH:00'))
     );
 
     return (
@@ -102,22 +101,22 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
           <CardTitle>Horarios disponibles</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3">
             {timeSlots.map(timeSlot => {
               const isAvailable = !bookedSlots.has(timeSlot.start);
               return (
                 <div
                   key={timeSlot.start}
-                  className={`p-3 rounded-lg border transition-colors ${
+                  className={`p-3 rounded-lg border text-center transition-colors ${
                     isAvailable 
                       ? 'bg-green-50 border-green-200 hover:bg-green-100' 
                       : 'bg-gray-50 border-gray-200'
                   }`}
                 >
                   <p className="font-medium text-sm">
-                    {timeSlot.start} - {timeSlot.end}
+                    {timeSlot.start}
                   </p>
-                  <p className={`text-sm ${isAvailable ? 'text-green-600' : 'text-gray-500'}`}>
+                  <p className={`text-xs ${isAvailable ? 'text-green-600' : 'text-gray-500'}`}>
                     {isAvailable ? 'Disponible' : 'No disponible'}
                   </p>
                 </div>
