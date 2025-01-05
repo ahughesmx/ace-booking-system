@@ -3,17 +3,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { BookingCard } from "@/components/BookingCard";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
-import type { Booking } from "@/types/booking";
-
-type Court = {
-  id: string;
-  name: string;
-};
+import { CourtSelector } from "@/components/CourtSelector";
+import { useBookings } from "@/hooks/use-bookings";
+import { useCourts } from "@/hooks/use-courts";
+import { supabase } from "@/integrations/supabase/client";
 
 const availableTimeSlots = [
   "08:00", "09:00", "10:00", "11:00", "12:00",
@@ -28,47 +24,8 @@ export default function BookingCalendar() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const { data: courts } = useQuery({
-    queryKey: ["courts"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("courts")
-        .select("*");
-      
-      if (error) throw error;
-      return data as Court[];
-    },
-  });
-
-  const { data: bookings, refetch: refetchBookings } = useQuery({
-    queryKey: ["bookings", selectedDate],
-    queryFn: async () => {
-      if (!selectedDate) return [];
-      
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const { data, error } = await supabase
-        .from("bookings")
-        .select(`
-          *,
-          court:courts (
-            name
-          ),
-          user:profiles (
-            full_name
-          )
-        `)
-        .gte("start_time", startOfDay.toISOString())
-        .lte("end_time", endOfDay.toISOString());
-      
-      if (error) throw error;
-      return data as Booking[];
-    },
-  });
+  const { data: courts } = useCourts();
+  const { data: bookings, refetch: refetchBookings } = useBookings(selectedDate);
 
   const isTimeSlotAvailable = (time: string, courtId: string) => {
     if (!bookings) return true;
@@ -124,6 +81,7 @@ export default function BookingCalendar() {
       refetchBookings();
       setSelectedTime(null);
     } catch (error) {
+      console.error("Error creating booking:", error);
       toast({
         title: "Error",
         description: "No se pudo realizar la reserva. Por favor intenta de nuevo.",
@@ -148,6 +106,7 @@ export default function BookingCalendar() {
 
       refetchBookings();
     } catch (error) {
+      console.error("Error canceling booking:", error);
       toast({
         title: "Error",
         description: "No se pudo cancelar la reserva. Por favor intenta de nuevo.",
@@ -173,23 +132,11 @@ export default function BookingCalendar() {
           </div>
 
           {courts && courts.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {courts.map((court) => (
-                <Card
-                  key={court.id}
-                  className={`cursor-pointer transition-colors ${
-                    selectedCourt === court.id
-                      ? "border-primary"
-                      : "hover:border-primary/50"
-                  }`}
-                  onClick={() => setSelectedCourt(court.id)}
-                >
-                  <CardHeader>
-                    <CardTitle className="text-lg">{court.name}</CardTitle>
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
+            <CourtSelector
+              courts={courts}
+              selectedCourt={selectedCourt}
+              onCourtSelect={setSelectedCourt}
+            />
           )}
 
           {selectedCourt && (
