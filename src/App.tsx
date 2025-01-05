@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/components/AuthProvider";
 import { useAuth } from "@/components/AuthProvider";
 import Index from "./pages/Index";
@@ -11,7 +11,7 @@ import Login from "./pages/auth/Login";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function AdminRoute() {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -19,10 +19,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    return <Login />;
+    return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>;
+  return <AdminIndex />;
 }
 
 const App = () => (
@@ -33,16 +33,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/login" element={<Login />} />
             <Route path="/" element={<Index />} />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute>
-                  <AdminIndex />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/login" element={<Login />} />
+            <Route path="/admin" element={<AdminRoute />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
