@@ -51,6 +51,22 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     setIsSubmitting(true);
 
     try {
+      // First check active bookings
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('active_bookings')
+        .eq('id', user.id)
+        .single();
+
+      if (profile && profile.active_bookings >= 2) {
+        toast({
+          title: "Límite de reservas alcanzado",
+          description: "Ya tienes el máximo de 2 reservas activas permitidas.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const [hours] = selectedTime.split(":");
       const startTime = new Date(selectedDate);
       startTime.setHours(parseInt(hours), 0, 0, 0);
@@ -65,20 +81,12 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
         });
 
       if (error) {
-        if (error.message.includes('máximo de reservas permitidas')) {
-          toast({
-            title: "Límite de reservas alcanzado",
-            description: "Ya tienes el máximo de 2 reservas activas permitidas.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: "No se pudo realizar la reserva. Por favor intenta de nuevo.",
-            variant: "destructive",
-          });
-          console.error("Error creating booking:", error);
-        }
+        toast({
+          title: "Error",
+          description: "No se pudo realizar la reserva. Por favor intenta de nuevo.",
+          variant: "destructive",
+        });
+        console.error("Error creating booking:", error);
         return;
       }
 
