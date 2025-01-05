@@ -29,7 +29,7 @@ export default function RankingTable() {
         .from("rankings")
         .select(`
           *,
-          profiles!rankings_user_id_fkey(
+          profiles:profiles(
             full_name
           )
         `)
