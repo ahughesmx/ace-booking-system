@@ -6,26 +6,20 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
-import { Trash2 } from "lucide-react";
-
-type Booking = {
-  id: string;
-  court_id: string;
-  user_id: string;
-  start_time: string;
-  end_time: string;
-  court: {
-    name: string;
-  };
-  user: {
-    full_name: string;
-  };
-};
+import { BookingCard } from "@/components/BookingCard";
+import { TimeSlotPicker } from "@/components/TimeSlotPicker";
+import type { Booking } from "@/types/booking";
 
 type Court = {
   id: string;
   name: string;
 };
+
+const availableTimeSlots = [
+  "08:00", "09:00", "10:00", "11:00", "12:00",
+  "13:00", "14:00", "15:00", "16:00", "17:00",
+  "18:00", "19:00", "20:00"
+];
 
 export default function BookingCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -75,12 +69,6 @@ export default function BookingCalendar() {
       return data as Booking[];
     },
   });
-
-  const availableTimeSlots = [
-    "08:00", "09:00", "10:00", "11:00", "12:00",
-    "13:00", "14:00", "15:00", "16:00", "17:00",
-    "18:00", "19:00", "20:00"
-  ];
 
   const isTimeSlotAvailable = (time: string, courtId: string) => {
     if (!bookings) return true;
@@ -205,19 +193,13 @@ export default function BookingCalendar() {
           )}
 
           {selectedCourt && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {availableTimeSlots.map((time) => (
-                <Button
-                  key={time}
-                  variant={selectedTime === time ? "default" : "outline"}
-                  className="w-full"
-                  disabled={!isTimeSlotAvailable(time, selectedCourt)}
-                  onClick={() => setSelectedTime(time)}
-                >
-                  {time}
-                </Button>
-              ))}
-            </div>
+            <TimeSlotPicker
+              availableTimeSlots={availableTimeSlots}
+              selectedTime={selectedTime}
+              selectedCourt={selectedCourt}
+              isTimeSlotAvailable={isTimeSlotAvailable}
+              onTimeSelect={setSelectedTime}
+            />
           )}
 
           <Button
@@ -238,33 +220,12 @@ export default function BookingCalendar() {
           <CardContent>
             <div className="space-y-4">
               {bookings.map((booking) => (
-                <Card key={booking.id}>
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">
-                          {booking.court?.name || "Cancha sin nombre"}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(booking.start_time).toLocaleTimeString()} -{" "}
-                          {new Date(booking.end_time).toLocaleTimeString()}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Reservado por: {booking.user?.full_name || "Usuario desconocido"}
-                        </p>
-                      </div>
-                      {user?.id === booking.user_id && (
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => handleCancelBooking(booking.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                <BookingCard
+                  key={booking.id}
+                  booking={booking}
+                  isOwner={user?.id === booking.user_id}
+                  onCancel={handleCancelBooking}
+                />
               ))}
             </div>
           </CardContent>

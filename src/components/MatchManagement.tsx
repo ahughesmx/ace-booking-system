@@ -6,47 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/AuthProvider";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-
-type Match = {
-  id: string;
-  booking_id: string;
-  player1_id: string;
-  player2_id: string;
-  player1_sets: number;
-  player2_sets: number;
-  is_doubles: boolean;
-  is_confirmed_player1: boolean;
-  is_confirmed_player2: boolean;
-  booking: {
-    start_time: string;
-    court: {
-      name: string;
-    };
-  };
-  player1: {
-    full_name: string;
-  };
-  player2: {
-    full_name: string;
-  };
-};
+import { MatchCard } from "@/components/MatchCard";
+import type { Match } from "@/types/match";
 
 export function MatchManagement() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
-  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-  const [player1Sets, setPlayer1Sets] = useState<string>("");
-  const [player2Sets, setPlayer2Sets] = useState<string>("");
 
   const { data: matches, refetch: refetchMatches } = useQuery({
     queryKey: ["matches"],
@@ -141,19 +108,24 @@ export function MatchManagement() {
     }
   };
 
-  const handleUpdateResult = async () => {
-    if (!selectedMatch) return;
-
+  const handleUpdateResult = async (
+    matchId: string,
+    player1Sets: number,
+    player2Sets: number
+  ) => {
     try {
+      const match = matches?.find((m) => m.id === matchId);
+      if (!match) return;
+
       const { error } = await supabase
         .from("matches")
         .update({
-          player1_sets: parseInt(player1Sets),
-          player2_sets: parseInt(player2Sets),
-          is_confirmed_player1: user?.id === selectedMatch.player1_id,
-          is_confirmed_player2: user?.id === selectedMatch.player2_id,
+          player1_sets: player1Sets,
+          player2_sets: player2Sets,
+          is_confirmed_player1: user?.id === match.player1_id,
+          is_confirmed_player2: user?.id === match.player2_id,
         })
-        .eq("id", selectedMatch.id);
+        .eq("id", matchId);
 
       if (error) throw error;
 
@@ -163,9 +135,6 @@ export function MatchManagement() {
       });
 
       refetchMatches();
-      setSelectedMatch(null);
-      setPlayer1Sets("");
-      setPlayer2Sets("");
     } catch (error) {
       console.error("Error updating match result:", error);
       toast({
@@ -191,81 +160,14 @@ export function MatchManagement() {
 
       <div className="grid gap-4">
         {matches?.map((match) => (
-          <Card key={match.id}>
-            <CardHeader>
-              <CardTitle className="text-lg">
-                {match.player1?.full_name || "Jugador 1"} vs{" "}
-                {match.player2?.full_name || "Jugador 2"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p>
-                  Cancha: {match.booking?.court?.name || "Por asignar"}
-                </p>
-                <p>
-                  Fecha:{" "}
-                  {match.booking?.start_time
-                    ? new Date(match.booking.start_time).toLocaleString()
-                    : "Por definir"}
-                </p>
-                {match.player1_sets !== null && match.player2_sets !== null && (
-                  <p>
-                    Resultado: {match.player1_sets} - {match.player2_sets}
-                  </p>
-                )}
-                {(user?.id === match.player1_id ||
-                  user?.id === match.player2_id) && (
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button
-                        onClick={() => setSelectedMatch(match)}
-                        variant="outline"
-                      >
-                        Actualizar Resultado
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Actualizar Resultado</DialogTitle>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm">
-                              Sets {match.player1?.full_name || "Jugador 1"}
-                            </label>
-                            <Input
-                              type="number"
-                              min="0"
-                              max="3"
-                              value={player1Sets}
-                              onChange={(e) => setPlayer1Sets(e.target.value)}
-                            />
-                          </div>
-                          <div>
-                            <label className="text-sm">
-                              Sets {match.player2?.full_name || "Jugador 2"}
-                            </label>
-                            <Input
-                              type="number"
-                              min="0"
-                              max="3"
-                              value={player2Sets}
-                              onChange={(e) => setPlayer2Sets(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <Button onClick={handleUpdateResult}>
-                          Guardar Resultado
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <MatchCard
+            key={match.id}
+            match={match}
+            canUpdateResult={
+              user?.id === match.player1_id || user?.id === match.player2_id
+            }
+            onUpdateResult={handleUpdateResult}
+          />
         ))}
       </div>
     </div>
