@@ -4,10 +4,12 @@ import { useAuth } from "@/components/AuthProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BookingCalendar from "@/components/BookingCalendar";
 import MatchManagement from "@/components/MatchManagement";
+import { useUserRole } from "@/hooks/use-user-role";
 
 export default function Index() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { data: userRole } = useUserRole(user?.id);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -21,6 +23,13 @@ export default function Index() {
 
   return (
     <div className="container py-8">
+      {userRole === 'admin' && (
+        <div className="mb-4 p-4 bg-blue-100 rounded-lg">
+          <p className="text-blue-800">
+            Acceso de administrador activado
+          </p>
+        </div>
+      )}
       <Tabs defaultValue="bookings" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="bookings">Reservas</TabsTrigger>
