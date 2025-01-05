@@ -21,9 +21,7 @@ export function CanchaSelector({ courts, selectedCourt, onCourtSelect }: CanchaS
           onClick={() => onCourtSelect(court.id)}
         >
           <CardHeader>
-            <CardTitle className="text-lg">
-              {court.name.replace(/Court (\d+)/, 'Cancha $1')}
-            </CardTitle>
+            <CardTitle className="text-lg">{court.name}</CardTitle>
           </CardHeader>
         </Card>
       ))}
