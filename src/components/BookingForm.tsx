@@ -21,6 +21,7 @@ interface BookingFormProps {
 export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps) {
   const [selectedCourt, setSelectedCourt] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: courts = [] } = useCourts();
@@ -28,18 +29,12 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const isTimeSlotAvailable = (time: string, courtId: string) => {
     if (!selectedDate) return false;
     
-    // Crear la fecha y hora de la reserva
     const [hours] = time.split(":");
     const bookingTime = new Date(selectedDate);
     bookingTime.setHours(parseInt(hours), 0, 0, 0);
-
-    // Obtener la hora actual
     const now = new Date();
-    
-    // Calcular la diferencia en horas
     const hoursDifference = (bookingTime.getTime() - now.getTime()) / (1000 * 60 * 60);
     
-    // Permitir la reserva si faltan 2 o más horas
     return hoursDifference >= 2;
   };
 
@@ -53,11 +48,13 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
       return;
     }
 
-    const [hours] = selectedTime.split(":");
-    const startTime = new Date(selectedDate);
-    startTime.setHours(parseInt(hours), 0, 0, 0);
-    
+    setIsSubmitting(true);
+
     try {
+      const [hours] = selectedTime.split(":");
+      const startTime = new Date(selectedDate);
+      startTime.setHours(parseInt(hours), 0, 0, 0);
+
       const { error } = await supabase
         .from("bookings")
         .insert({
@@ -75,20 +72,31 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
             variant: "destructive",
           });
         } else {
-          throw error;
+          toast({
+            title: "Error",
+            description: "No se pudo realizar la reserva. Por favor intenta de nuevo.",
+            variant: "destructive",
+          });
+          console.error("Error creating booking:", error);
         }
         return;
       }
 
       onBookingSuccess();
       setSelectedTime(null);
-    } catch (error) {
+      toast({
+        title: "Reserva exitosa",
+        description: "Tu cancha ha sido reservada correctamente.",
+      });
+    } catch (error: any) {
       console.error("Error creating booking:", error);
       toast({
         title: "Error",
         description: "No se pudo realizar la reserva. Por favor intenta de nuevo.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -114,10 +122,10 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
 
       <Button
         className="w-full"
-        disabled={!selectedDate || !selectedTime || !selectedCourt}
+        disabled={!selectedDate || !selectedTime || !selectedCourt || isSubmitting}
         onClick={handleBooking}
       >
-        Reservar cancha
+        {isSubmitting ? "Reservando..." : "Reservar cancha"}
       </Button>
     </div>
   );
