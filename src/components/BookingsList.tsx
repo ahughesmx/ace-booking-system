@@ -4,6 +4,7 @@ import { BookingCard } from "@/components/BookingCard";
 import { supabase } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Booking } from "@/types/booking";
 
 interface BookingsListProps {
@@ -16,6 +17,7 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
   const { toast } = useToast();
   const { data: userRole } = useUserRole(user?.id);
   const isAdmin = userRole?.role === 'admin';
+  const queryClient = useQueryClient();
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
@@ -26,7 +28,6 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
       const now = new Date();
       const hoursDifference = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-      // Si no es admin, verificar la restricción de 24 horas
       if (!isAdmin && hoursDifference < 24) {
         toast({
           title: "No se puede cancelar",
@@ -42,6 +43,12 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
         .eq("id", bookingId);
 
       if (error) throw error;
+
+      // Refetch the bookings query to update available time slots
+      const bookingDate = new Date(booking.start_time);
+      await queryClient.invalidateQueries({ 
+        queryKey: ["bookings", bookingDate, booking.court_id]
+      });
 
       onCancelSuccess();
       toast({

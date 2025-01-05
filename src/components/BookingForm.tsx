@@ -6,7 +6,7 @@ import { CourtSelector } from "@/components/CourtSelector";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 import { useCourts } from "@/hooks/use-courts";
 import { supabase } from "@/lib/supabase-client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const availableTimeSlots = [
   "08:00", "09:00", "10:00", "11:00", "12:00",
@@ -26,6 +26,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: courts = [] } = useCourts();
+  const queryClient = useQueryClient();
 
   // Fetch existing bookings for the selected date
   const { data: existingBookings = [] } = useQuery({
@@ -61,10 +62,8 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     const now = new Date();
     const hoursDifference = (bookingTime.getTime() - now.getTime()) / (1000 * 60 * 60);
     
-    // Check if the time is at least 2 hours in the future
     if (hoursDifference < 2) return false;
 
-    // Check if there's any existing booking for this time slot
     const timeSlotStart = new Date(selectedDate);
     timeSlotStart.setHours(parseInt(hours), 0, 0, 0);
     const timeSlotEnd = new Date(timeSlotStart);
@@ -93,7 +92,6 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     setIsSubmitting(true);
 
     try {
-      // First check active bookings
       const { data: profile } = await supabase
         .from('profiles')
         .select('active_bookings')
@@ -132,6 +130,9 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
         return;
       }
 
+      // Refetch the bookings query to update available time slots
+      await queryClient.invalidateQueries({ queryKey: ["bookings", selectedDate, selectedCourt] });
+      
       onBookingSuccess();
       setSelectedTime(null);
       toast({
