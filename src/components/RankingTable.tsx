@@ -28,8 +28,12 @@ export default function RankingTable() {
       const { data, error } = await supabase
         .from("rankings")
         .select(`
-          *,
-          profiles:profiles(full_name)
+          id,
+          user_id,
+          points,
+          wins,
+          losses,
+          profiles!rankings_user_id_fkey_profiles (full_name)
         `)
         .order("points", { ascending: false });
 
@@ -38,7 +42,6 @@ export default function RankingTable() {
         throw error;
       }
 
-      // Type assertion to handle the response type
       return (data || []) as RankingWithProfile[];
     },
   });
