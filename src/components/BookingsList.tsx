@@ -3,6 +3,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { BookingCard } from "@/components/BookingCard";
 import { supabase } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/use-user-role";
 import type { Booking } from "@/types/booking";
 
 interface BookingsListProps {
@@ -13,6 +14,8 @@ interface BookingsListProps {
 export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { data: userRole } = useUserRole(user?.id);
+  const isAdmin = userRole?.role === 'admin';
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
@@ -23,7 +26,8 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
       const now = new Date();
       const hoursDifference = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-      if (hoursDifference < 24) {
+      // Si no es admin, verificar la restricción de 24 horas
+      if (!isAdmin && hoursDifference < 24) {
         toast({
           title: "No se puede cancelar",
           description: "Las reservas solo pueden cancelarse con al menos 24 horas de anticipación.",
@@ -40,6 +44,10 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
       if (error) throw error;
 
       onCancelSuccess();
+      toast({
+        title: "Reserva cancelada",
+        description: "La reserva ha sido cancelada exitosamente.",
+      });
     } catch (error) {
       console.error("Error canceling booking:", error);
       toast({
@@ -76,7 +84,7 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
             <BookingCard
               key={booking.id}
               booking={booking}
-              isOwner={user?.id === booking.user_id}
+              isOwner={isAdmin || user?.id === booking.user_id}
               onCancel={handleCancelBooking}
             />
           ))}
