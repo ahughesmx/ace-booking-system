@@ -22,7 +22,6 @@ const BUSINESS_HOURS = {
 
 function generateTimeSlots() {
   const slots = [];
-  // Cambiamos <= para incluir la última hora
   for (let hour = BUSINESS_HOURS.start; hour <= BUSINESS_HOURS.end; hour++) {
     const startTime = new Date(`2000-01-01T${hour.toString().padStart(2, '0')}:00`);
     slots.push({
@@ -100,7 +99,7 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
           <CardTitle>Horarios disponibles</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+          <div className="grid grid-cols-3 gap-3">
             {timeSlots.map(timeSlot => {
               const isAvailable = !bookedSlots.has(timeSlot.start);
               return (
