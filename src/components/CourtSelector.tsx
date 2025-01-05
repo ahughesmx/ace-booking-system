@@ -9,7 +9,7 @@ interface CanchaSelectorProps {
 
 export function CanchaSelector({ courts, selectedCourt, onCourtSelect }: CanchaSelectorProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-3">
       {courts.map((court) => (
         <Card
           key={court.id}
@@ -20,8 +20,8 @@ export function CanchaSelector({ courts, selectedCourt, onCourtSelect }: CanchaS
           }`}
           onClick={() => onCourtSelect(court.id)}
         >
-          <CardHeader className="flex items-center justify-center p-4">
-            <CardTitle className="text-lg">{court.name}</CardTitle>
+          <CardHeader className="flex items-center justify-center p-3">
+            <CardTitle className="text-base">{court.name}</CardTitle>
           </CardHeader>
         </Card>
       ))}
