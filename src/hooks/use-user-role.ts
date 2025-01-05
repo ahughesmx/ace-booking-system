@@ -14,16 +14,12 @@ export function useUserRole(userId: string | undefined) {
         .from("user_roles")
         .select("*")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return { role: 'user' } as UserRole;
-        }
-        throw error;
-      }
+      if (error) throw error;
 
-      return data as UserRole;
+      // Si no hay rol asignado, devolvemos el rol por defecto 'user'
+      return data || { role: 'user' } as UserRole;
     },
     enabled: !!userId,
     retry: 1,
