@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
-import { CourtSelector } from "@/components/CourtSelector";
+import { CanchaSelector } from "@/components/CourtSelector";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 import { useCourts } from "@/hooks/use-courts";
 import { supabase } from "@/lib/supabase-client";
@@ -154,7 +154,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   return (
     <div className="space-y-4">
       {courts && courts.length > 0 && (
-        <CourtSelector
+        <CanchaSelector
           courts={courts}
           selectedCourt={selectedCourt}
           onCourtSelect={setSelectedCourt}
