@@ -21,7 +21,9 @@ export function CanchaSelector({ courts, selectedCourt, onCourtSelect }: CanchaS
           onClick={() => onCourtSelect(court.id)}
         >
           <CardHeader>
-            <CardTitle className="text-lg">{court.name}</CardTitle>
+            <CardTitle className="text-lg">
+              {court.name.replace('Court', 'Cancha')}
+            </CardTitle>
           </CardHeader>
         </Card>
       ))}
