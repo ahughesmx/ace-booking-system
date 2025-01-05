@@ -2,13 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/AuthProvider";
 import { useUserRole } from "@/hooks/use-user-role";
-import { MatchCard } from "@/components/MatchCard";
+import { MatchHeader } from "./match/MatchHeader";
+import { MatchList } from "./match/MatchList";
 import type { Match } from "@/types/match";
-import { Plus, List } from "lucide-react";
 
 export function MatchManagement() {
   const navigate = useNavigate();
@@ -173,57 +172,18 @@ export function MatchManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between md:items-center">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Partidos</h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              {matches?.length || 0} partidos disponibles
-            </p>
-          </div>
-          <Button
-            onClick={handleCreateMatch}
-            disabled={isLoading}
-            size="icon"
-            className="md:hidden bg-[#0A1A2A] hover:bg-[#152538]"
-          >
-            <Plus className="h-5 w-5" />
-          </Button>
-        </div>
-        <Button
-          onClick={handleCreateMatch}
-          disabled={isLoading}
-          className="hidden md:flex bg-[#0A1A2A] hover:bg-[#152538]"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          {isLoading ? "Creando..." : "Crear Partido"}
-        </Button>
-      </div>
-
-      <div className="space-y-4">
-        {matches?.length === 0 ? (
-          <div className="text-center py-12 bg-muted/50 rounded-lg">
-            <List className="h-12 w-12 mx-auto text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-semibold">No hay partidos</h3>
-            <p className="text-muted-foreground mt-1">
-              Crea un partido para empezar a jugar
-            </p>
-          </div>
-        ) : (
-          matches?.map((match) => (
-            <MatchCard
-              key={match.id}
-              match={match}
-              isAdmin={isAdmin}
-              canUpdateResult={
-                user?.id === match.player1_id || user?.id === match.player2_id
-              }
-              onUpdateResult={handleUpdateResult}
-              onDeleteMatch={handleDeleteMatch}
-            />
-          ))
-        )}
-      </div>
+      <MatchHeader
+        matchCount={matches?.length || 0}
+        isLoading={isLoading}
+        onCreateMatch={handleCreateMatch}
+      />
+      <MatchList
+        matches={matches}
+        isAdmin={isAdmin}
+        userId={user?.id}
+        onUpdateResult={handleUpdateResult}
+        onDeleteMatch={handleDeleteMatch}
+      />
     </div>
   );
 }
