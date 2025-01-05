@@ -20,7 +20,7 @@ interface BookingFormProps {
 }
 
 export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps) {
-  const [selectedCourt, setSelectedCourt] = useState<string | null>(null);
+  const [selectedCancha, setSelectedCancha] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -28,11 +28,10 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const { data: courts = [] } = useCourts();
   const queryClient = useQueryClient();
 
-  // Fetch existing bookings for the selected date
   const { data: existingBookings = [] } = useQuery({
-    queryKey: ["bookings", selectedDate, selectedCourt],
+    queryKey: ["bookings", selectedDate, selectedCancha],
     queryFn: async () => {
-      if (!selectedDate || !selectedCourt) return [];
+      if (!selectedDate || !selectedCancha) return [];
       
       const startOfDay = new Date(selectedDate);
       startOfDay.setHours(0, 0, 0, 0);
@@ -43,17 +42,17 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
       const { data, error } = await supabase
         .from("bookings")
         .select("*")
-        .eq("court_id", selectedCourt)
+        .eq("court_id", selectedCancha)
         .gte("start_time", startOfDay.toISOString())
         .lte("end_time", endOfDay.toISOString());
 
       if (error) throw error;
       return data || [];
     },
-    enabled: !!selectedDate && !!selectedCourt,
+    enabled: !!selectedDate && !!selectedCancha,
   });
 
-  const isTimeSlotAvailable = (time: string, courtId: string) => {
+  const isTimeSlotAvailable = (time: string, canchaId: string) => {
     if (!selectedDate) return false;
     
     const [hours] = time.split(":");
@@ -80,7 +79,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   };
 
   const handleBooking = async () => {
-    if (!selectedDate || !selectedTime || !selectedCourt || !user) {
+    if (!selectedDate || !selectedTime || !selectedCancha || !user) {
       toast({
         title: "Error",
         description: "Por favor selecciona una fecha, cancha y horario.",
@@ -114,7 +113,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
       const { error } = await supabase
         .from("bookings")
         .insert({
-          court_id: selectedCourt,
+          court_id: selectedCancha,
           user_id: user.id,
           start_time: startTime.toISOString(),
           end_time: new Date(startTime.getTime() + 60 * 60 * 1000).toISOString(),
@@ -130,8 +129,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
         return;
       }
 
-      // Refetch the bookings query to update available time slots
-      await queryClient.invalidateQueries({ queryKey: ["bookings", selectedDate, selectedCourt] });
+      await queryClient.invalidateQueries({ queryKey: ["bookings", selectedDate, selectedCancha] });
       
       onBookingSuccess();
       setSelectedTime(null);
@@ -156,16 +154,16 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
       {courts && courts.length > 0 && (
         <CanchaSelector
           courts={courts}
-          selectedCourt={selectedCourt}
-          onCourtSelect={setSelectedCourt}
+          selectedCourt={selectedCancha}
+          onCourtSelect={setSelectedCancha}
         />
       )}
 
-      {selectedCourt && (
+      {selectedCancha && (
         <TimeSlotPicker
           availableTimeSlots={availableTimeSlots}
           selectedTime={selectedTime}
-          selectedCourt={selectedCourt}
+          selectedCourt={selectedCancha}
           isTimeSlotAvailable={isTimeSlotAvailable}
           onTimeSelect={setSelectedTime}
         />
@@ -173,7 +171,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
 
       <Button
         className="w-full"
-        disabled={!selectedDate || !selectedTime || !selectedCourt || isSubmitting}
+        disabled={!selectedDate || !selectedTime || !selectedCancha || isSubmitting}
         onClick={handleBooking}
       >
         {isSubmitting ? "Reservando..." : "Reservar cancha"}
