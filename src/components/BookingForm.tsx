@@ -28,12 +28,17 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const isTimeSlotAvailable = (time: string, courtId: string) => {
     if (!selectedDate) return false;
     
+    // Convertir la hora seleccionada a la zona horaria de México
     const [hours] = time.split(":");
     const bookingTime = new Date(selectedDate);
     bookingTime.setHours(parseInt(hours), 0, 0, 0);
     
-    // Solo validar las 2 horas si es el día actual
+    // Obtener la fecha y hora actual en la zona horaria de México
     const now = new Date();
+    const mexicoOffset = -6; // UTC-6 para Ciudad de México
+    now.setHours(now.getHours() + mexicoOffset);
+    
+    // Comparar fechas sin considerar la hora
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const selectedDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
     
@@ -66,27 +71,6 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     const startTime = new Date(selectedDate);
     startTime.setHours(parseInt(hours), 0, 0, 0);
     
-    // Validar 2 horas de anticipación solo si es el día actual
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const selectedDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-    
-    if (selectedDay.getTime() === today.getTime()) {
-      const hoursDifference = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-      
-      if (hoursDifference < 2) {
-        toast({
-          title: "Error",
-          description: "Las reservas deben hacerse con al menos 2 horas de anticipación.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-    
-    const endTime = new Date(startTime);
-    endTime.setHours(startTime.getHours() + 1);
-
     try {
       const { error } = await supabase
         .from("bookings")
@@ -94,7 +78,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
           court_id: selectedCourt,
           user_id: user.id,
           start_time: startTime.toISOString(),
-          end_time: endTime.toISOString(),
+          end_time: new Date(startTime.getTime() + 60 * 60 * 1000).toISOString(),
         });
 
       if (error) {
