@@ -33,7 +33,9 @@ export default function RankingTable() {
           points,
           wins,
           losses,
-          profiles!rankings_user_id_fkey_profiles (full_name)
+          profiles:profiles!rankings_user_id_fkey_profiles (
+            full_name
+          )
         `)
         .order("points", { ascending: false });
 
@@ -42,7 +44,7 @@ export default function RankingTable() {
         throw error;
       }
 
-      return (data || []) as RankingWithProfile[];
+      return data as unknown as RankingWithProfile[];
     },
   });
 
