@@ -76,32 +76,15 @@ export default function Index() {
         </Card>
       </div>
 
-      <div className="space-y-4">
+      <div>
         <h2 className="text-2xl font-bold">Clubes</h2>
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-4 mt-4">
           <img 
             src="/lovable-uploads/cb20a440-8fe0-48ba-a91f-3943cb74ae55.png" 
             alt="Club de tenis" 
             className="w-full h-48 object-cover rounded-lg"
           />
         </div>
-      </div>
-
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t py-4">
-          <div className="flex justify-around items-center">
-            <Link to="/" className="flex flex-col items-center text-blue-600">
-              <Home className="h-6 w-6" />
-              <span className="text-xs mt-1">Inicio</span>
-            </Link>
-            <Link to="/" className="flex flex-col items-center text-gray-500">
-              <Users className="h-6 w-6" />
-              <span className="text-xs mt-1">Comunidad</span>
-            </Link>
-            <Link to="/" className="flex flex-col items-center text-gray-500">
-              <User className="h-6 w-6" />
-              <span className="text-xs mt-1">Perfil</span>
-            </Link>
-          </div>
       </div>
     </div>
   );
