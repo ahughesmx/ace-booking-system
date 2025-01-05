@@ -83,7 +83,8 @@ export default function Index() {
   );
 
   const renderContent = () => {
-    if (window.innerWidth < 768) {
+    // Solo mostrar la vista móvil si estamos en la página principal (sin tab específico)
+    if (window.innerWidth < 768 && !location.state?.defaultTab) {
       return renderMobileHome();
     }
 
