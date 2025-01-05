@@ -17,14 +17,14 @@ interface BookingsListProps {
 
 const BUSINESS_HOURS = {
   start: 8, // 8 AM
-  end: 22, // 10 PM
+  end: 23, // 11 PM (para incluir el slot de 22:00)
 };
 
 const TIME_SLOT_DURATION = 60; // 60 minutes
 
 function generateTimeSlots() {
   const slots = [];
-  for (let hour = BUSINESS_HOURS.start; hour < BUSINESS_HOURS.end; hour++) {
+  for (let hour = BUSINESS_HOURS.start; hour <= BUSINESS_HOURS.end - 1; hour++) {
     const startTime = new Date(`2000-01-01T${hour.toString().padStart(2, '0')}:00`);
     const endTime = addHours(startTime, 1);
     slots.push({
