@@ -16,15 +16,16 @@ export default function MatchManagement() {
     
     setIsLoading(true);
     try {
+      const startTime = new Date();
+      const endTime = new Date(Date.now() + 3600000); // 1 hour from now
+
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
-        .insert([
-          { 
-            user_id: user.id,
-            start_time: new Date(),
-            end_time: new Date(Date.now() + 3600000) // 1 hour from now
-          }
-        ])
+        .insert({
+          user_id: user.id,
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString()
+        })
         .select()
         .single();
 
@@ -32,13 +33,11 @@ export default function MatchManagement() {
 
       const { error: matchError } = await supabase
         .from('matches')
-        .insert([
-          {
-            booking_id: booking.id,
-            player1_id: user.id,
-            is_doubles: false
-          }
-        ]);
+        .insert({
+          booking_id: booking.id,
+          player1_id: user.id,
+          is_doubles: false
+        });
 
       if (matchError) throw matchError;
 
