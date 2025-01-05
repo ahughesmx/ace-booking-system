@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import BookingCalendar from "@/components/BookingCalendar";
 import MatchManagement from "@/components/MatchManagement";
@@ -12,16 +10,9 @@ import { useLocation } from "react-router-dom";
 
 export default function Index() {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const { data: userRole } = useUserRole(user?.id);
   const defaultTab = location.state?.defaultTab || "bookings";
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate("/login");
-    }
-  }, [user, loading, navigate]);
 
   if (loading) {
     return <div>Cargando...</div>;
