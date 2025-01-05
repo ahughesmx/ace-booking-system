@@ -28,32 +28,20 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const isTimeSlotAvailable = (time: string, courtId: string) => {
     if (!selectedDate) return false;
     
-    // Convertir la hora seleccionada a la zona horaria de México
+    // Obtener la fecha y hora actual en México
+    const nowInMexico = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
+    
+    // Crear la fecha y hora de la reserva en México
     const [hours] = time.split(":");
     const bookingTime = new Date(selectedDate);
     bookingTime.setHours(parseInt(hours), 0, 0, 0);
+    const bookingTimeInMexico = new Date(bookingTime.toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
+
+    // Calcular la diferencia en horas
+    const hoursDifference = (bookingTimeInMexico.getTime() - nowInMexico.getTime()) / (1000 * 60 * 60);
     
-    // Obtener la fecha actual en México
-    const nowInMexico = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
-    
-    // Comparar fechas sin considerar la hora
-    const todayInMexico = new Date(nowInMexico.getFullYear(), nowInMexico.getMonth(), nowInMexico.getDate());
-    const selectedDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-    
-    // Si es un día futuro, permitir la reserva
-    if (selectedDay > todayInMexico) {
-      return true;
-    }
-    
-    // Si es hoy, validar las 2 horas de anticipación
-    if (selectedDay.getTime() === todayInMexico.getTime()) {
-      const bookingTimeInMexico = new Date(bookingTime.toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
-      const hoursDifference = (bookingTimeInMexico.getTime() - nowInMexico.getTime()) / (1000 * 60 * 60);
-      return hoursDifference >= 2;
-    }
-    
-    // Si es un día pasado, no permitir la reserva
-    return false;
+    // Permitir la reserva si faltan 2 o más horas
+    return hoursDifference >= 2;
   };
 
   const handleBooking = async () => {
