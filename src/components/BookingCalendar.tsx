@@ -9,7 +9,8 @@ import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 import { CourtSelector } from "@/components/CourtSelector";
 import { useBookings } from "@/hooks/use-bookings";
 import { useCourts } from "@/hooks/use-courts";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase-client";
+import type { Booking } from "@/hooks/use-bookings";
 
 const availableTimeSlots = [
   "08:00", "09:00", "10:00", "11:00", "12:00",
@@ -24,8 +25,8 @@ export default function BookingCalendar() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const { data: courts } = useCourts();
-  const { data: bookings, refetch: refetchBookings } = useBookings(selectedDate);
+  const { data: courts = [] } = useCourts();
+  const { data: bookings = [], refetch: refetchBookings } = useBookings(selectedDate);
 
   const isTimeSlotAvailable = (time: string, courtId: string) => {
     if (!bookings) return true;
@@ -166,7 +167,7 @@ export default function BookingCalendar() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {bookings.map((booking) => (
+              {bookings.map((booking: Booking) => (
                 <BookingCard
                   key={booking.id}
                   booking={booking}

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { handleSupabaseResponse, supabase } from "@/lib/supabase-client";
+import { supabase } from "@/lib/supabase-client";
 import type { Database } from "@/integrations/supabase/types";
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
@@ -7,8 +7,8 @@ type CourtRow = Database['public']['Tables']['courts']['Row'];
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 
 export type Booking = BookingRow & {
-  court: Pick<CourtRow, 'name'>;
-  user: Pick<ProfileRow, 'full_name'>;
+  court?: Pick<CourtRow, 'name'>;
+  user?: Pick<ProfileRow, 'full_name'>;
 };
 
 export function useBookings(date: Date | undefined) {
@@ -23,13 +23,16 @@ export function useBookings(date: Date | undefined) {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
-      return handleSupabaseResponse(
-        supabase
-          .from("bookings")
-          .select("*, court:courts(name), user:profiles(full_name)")
-          .gte("start_time", startOfDay.toISOString())
-          .lte("end_time", endOfDay.toISOString())
-      );
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*, court:courts(name), user:profiles(full_name)")
+        .gte("start_time", startOfDay.toISOString())
+        .lte("end_time", endOfDay.toISOString());
+
+      if (error) throw error;
+      if (!data) return [];
+      
+      return data as Booking[];
     },
     enabled: !!date,
     staleTime: 1000 * 60 * 5, // 5 minutos
