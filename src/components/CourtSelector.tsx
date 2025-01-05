@@ -20,7 +20,7 @@ export function CanchaSelector({ courts, selectedCourt, onCourtSelect }: CanchaS
           }`}
           onClick={() => onCourtSelect(court.id)}
         >
-          <CardHeader className="flex items-center justify-center p-4">
+          <CardHeader className="py-3">
             <CardTitle className="text-lg text-center">{court.name}</CardTitle>
           </CardHeader>
         </Card>
