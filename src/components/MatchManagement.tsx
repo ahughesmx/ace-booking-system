@@ -35,6 +35,12 @@ export function MatchManagement() {
           ),
           player2:profiles!matches_player2_id_fkey_profiles (
             full_name
+          ),
+          player1_partner:profiles!matches_player1_partner_id_fkey_profiles (
+            full_name
+          ),
+          player2_partner:profiles!matches_player2_partner_id_fkey_profiles (
+            full_name
           )
         `)
         .order("created_at", { ascending: false });
@@ -44,7 +50,7 @@ export function MatchManagement() {
     },
   });
 
-  const handleCreateMatch = async () => {
+  const handleCreateMatch = async (isDoubles: boolean = false) => {
     try {
       setIsLoading(true);
 
@@ -83,7 +89,7 @@ export function MatchManagement() {
       const { error: matchError } = await supabase.from("matches").insert({
         booking_id: bookingData.id,
         player1_id: user.id,
-        is_doubles: false,
+        is_doubles: isDoubles,
       });
 
       if (matchError) {
@@ -92,7 +98,7 @@ export function MatchManagement() {
 
       toast({
         title: "¡Éxito!",
-        description: "Partido creado correctamente",
+        description: `Partido de ${isDoubles ? 'dobles' : 'singles'} creado correctamente`,
       });
 
       refetchMatches();
@@ -122,8 +128,8 @@ export function MatchManagement() {
         .update({
           player1_sets: player1Sets,
           player2_sets: player2Sets,
-          is_confirmed_player1: user?.id === match.player1_id,
-          is_confirmed_player2: user?.id === match.player2_id,
+          is_confirmed_player1: user?.id === match.player1_id || user?.id === match.player1_partner_id,
+          is_confirmed_player2: user?.id === match.player2_id || user?.id === match.player2_partner_id,
         })
         .eq("id", matchId);
 

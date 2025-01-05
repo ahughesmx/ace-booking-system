@@ -23,4 +23,10 @@ export type Match = {
   player2?: {
     full_name: string | null;
   } | null;
+  player1_partner?: {
+    full_name: string | null;
+  } | null;
+  player2_partner?: {
+    full_name: string | null;
+  } | null;
 };

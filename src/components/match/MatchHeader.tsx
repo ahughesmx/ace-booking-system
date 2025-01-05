@@ -1,10 +1,16 @@
-import { Plus } from "lucide-react";
+import { Plus, Users, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type MatchHeaderProps = {
   matchCount: number;
   isLoading: boolean;
-  onCreateMatch: () => void;
+  onCreateMatch: (isDoubles: boolean) => void;
 };
 
 export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeaderProps) {
@@ -17,23 +23,49 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
             {matchCount} partidos disponibles
           </p>
         </div>
-        <Button
-          onClick={onCreateMatch}
-          disabled={isLoading}
-          size="icon"
-          className="md:hidden bg-[#0A1A2A] hover:bg-[#152538]"
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              disabled={isLoading}
+              size="icon"
+              className="md:hidden bg-[#0A1A2A] hover:bg-[#152538]"
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onCreateMatch(false)}>
+              <User className="h-4 w-4 mr-2" />
+              Partido Singles
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onCreateMatch(true)}>
+              <Users className="h-4 w-4 mr-2" />
+              Partido Dobles
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-      <Button
-        onClick={onCreateMatch}
-        disabled={isLoading}
-        className="hidden md:flex bg-[#0A1A2A] hover:bg-[#152538]"
-      >
-        <Plus className="h-5 w-5 mr-2" />
-        {isLoading ? "Creando..." : "Crear Partido"}
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            disabled={isLoading}
+            className="hidden md:flex bg-[#0A1A2A] hover:bg-[#152538]"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            {isLoading ? "Creando..." : "Crear Partido"}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onCreateMatch(false)}>
+            <User className="h-4 w-4 mr-2" />
+            Partido Singles
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onCreateMatch(true)}>
+            <Users className="h-4 w-4 mr-2" />
+            Partido Dobles
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

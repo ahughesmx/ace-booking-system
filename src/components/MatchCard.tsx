@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { Match } from "@/types/match";
-import { Calendar, Clock, MapPin } from "lucide-react";
+import { Calendar, Clock, MapPin, Users } from "lucide-react";
 import { AdminMatchControls } from "./AdminMatchControls";
 
 type MatchCardProps = {
@@ -51,16 +51,25 @@ export function MatchCard({
     }).format(date);
   };
 
+  const renderTeamName = (playerName: string | null | undefined, partnerName: string | null | undefined) => {
+    if (!playerName) return "Jugador por confirmar";
+    if (!partnerName) return playerName;
+    return `${playerName} / ${partnerName}`;
+  };
+
   return (
     <Card className="overflow-hidden border-muted bg-card hover:bg-accent/5 transition-colors">
       <CardHeader className="p-4">
         <div className="flex flex-col space-y-1.5">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-base">
-              {match.player1?.full_name || "Jugador 1"}
-              {match.player2?.full_name && <span className="text-muted-foreground"> vs </span>}
-              {match.player2?.full_name || "Esperando rival"}
-            </h3>
+            <div className="flex items-center gap-2">
+              <Users className={`h-4 w-4 ${match.is_doubles ? 'opacity-100' : 'opacity-0'}`} />
+              <h3 className="font-semibold text-base">
+                {renderTeamName(match.player1?.full_name, match.is_doubles ? match.player1_partner?.full_name : undefined)}
+                <span className="text-muted-foreground"> vs </span>
+                {renderTeamName(match.player2?.full_name, match.is_doubles ? match.player2_partner?.full_name : undefined)}
+              </h3>
+            </div>
             {match.player1_sets !== null && match.player2_sets !== null && (
               <span className="text-lg font-bold">
                 {match.player1_sets} - {match.player2_sets}
@@ -113,7 +122,7 @@ export function MatchCard({
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium mb-1.5 block">
-                          Sets {match.player1?.full_name || "Jugador 1"}
+                          Sets {renderTeamName(match.player1?.full_name, match.is_doubles ? match.player1_partner?.full_name : undefined)}
                         </label>
                         <Input
                           type="number"
@@ -125,7 +134,7 @@ export function MatchCard({
                       </div>
                       <div>
                         <label className="text-sm font-medium mb-1.5 block">
-                          Sets {match.player2?.full_name || "Jugador 2"}
+                          Sets {renderTeamName(match.player2?.full_name, match.is_doubles ? match.player2_partner?.full_name : undefined)}
                         </label>
                         <Input
                           type="number"
