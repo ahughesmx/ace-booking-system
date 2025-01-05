@@ -5,17 +5,36 @@ import { supabase } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCourts } from "@/hooks/use-courts";
 import type { Booking } from "@/types/booking";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface BookingsListProps {
   bookings: Booking[];
   onCancelSuccess: () => void;
 }
 
+const BUSINESS_HOURS = {
+  start: 8, // 8 AM
+  end: 22, // 10 PM
+};
+
+const TIME_SLOT_DURATION = 60; // 60 minutes
+
+function generateTimeSlots() {
+  const slots = [];
+  for (let hour = BUSINESS_HOURS.start; hour < BUSINESS_HOURS.end; hour++) {
+    slots.push(`${hour.toString().padStart(2, '0')}:00`);
+  }
+  return slots;
+}
+
 export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { data: userRole } = useUserRole(user?.id);
+  const { data: courts = [] } = useCourts();
   const isAdmin = userRole?.role === 'admin';
   const queryClient = useQueryClient();
 
@@ -64,6 +83,44 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
       });
     }
   };
+
+  if (!user) {
+    // Show available time slots for non-logged in users
+    const timeSlots = generateTimeSlots();
+    const bookedSlots = new Set(
+      bookings.map(booking => format(new Date(booking.start_time), 'HH:mm'))
+    );
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Horarios disponibles</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {timeSlots.map(timeSlot => {
+              const isAvailable = !bookedSlots.has(timeSlot);
+              return (
+                <div
+                  key={timeSlot}
+                  className={`p-3 rounded-lg border ${
+                    isAvailable ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                  }`}
+                >
+                  <p className="font-medium">
+                    {timeSlot} - {format(new Date(`2000-01-01T${timeSlot}`), 'HH:mm', { locale: es })}
+                  </p>
+                  <p className={`text-sm ${isAvailable ? 'text-green-600' : 'text-gray-500'}`}>
+                    {isAvailable ? 'Disponible' : 'No disponible'}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!bookings.length) {
     return (
