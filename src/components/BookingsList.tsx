@@ -24,9 +24,10 @@ function generateTimeSlots() {
   const slots = [];
   for (let hour = BUSINESS_HOURS.start; hour <= BUSINESS_HOURS.end; hour++) {
     const startTime = new Date(`2000-01-01T${hour.toString().padStart(2, '0')}:00`);
+    const endTime = addHours(startTime, 1);
     slots.push({
       start: format(startTime, 'HH:00'),
-      end: format(addHours(startTime, 1), 'HH:00')
+      end: format(endTime, 'HH:00')
     });
   }
   return slots;
@@ -112,7 +113,7 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
                   }`}
                 >
                   <p className="font-medium text-sm">
-                    {timeSlot.start}
+                    {timeSlot.start} - {timeSlot.end}
                   </p>
                   <p className={`text-xs ${isAvailable ? 'text-green-600' : 'text-gray-500'}`}>
                     {isAvailable ? 'Disponible' : 'No disponible'}
