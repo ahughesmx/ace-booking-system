@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,13 +15,19 @@ export default function Index() {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: userRole } = useUserRole(user?.id);
-  const defaultTab = location.state?.defaultTab || "bookings";
+  const [activeTab, setActiveTab] = useState(location.state?.defaultTab || "bookings");
 
   useEffect(() => {
     if (!loading && !user) {
       navigate("/login");
     }
   }, [user, loading, navigate]);
+
+  useEffect(() => {
+    if (location.state?.defaultTab) {
+      setActiveTab(location.state.defaultTab);
+    }
+  }, [location.state?.defaultTab]);
 
   if (loading) {
     return <div>Cargando...</div>;
@@ -40,7 +46,7 @@ export default function Index() {
           </Alert>
         )}
         
-        <Tabs defaultValue={defaultTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="w-full grid grid-cols-3 max-w-md mx-auto">
             <TabsTrigger value="bookings">Reservas</TabsTrigger>
             <TabsTrigger value="matches">Partidos</TabsTrigger>
