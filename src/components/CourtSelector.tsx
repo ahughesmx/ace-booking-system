@@ -22,7 +22,7 @@ export function CanchaSelector({ courts, selectedCourt, onCourtSelect }: CanchaS
         >
           <CardHeader>
             <CardTitle className="text-lg">
-              {court.name.replace('Court', 'Cancha')}
+              {court.name.replace(/Court (\d+)/, 'Cancha $1')}
             </CardTitle>
           </CardHeader>
         </Card>
