@@ -30,16 +30,27 @@ export default function BookingCalendar() {
             />
           </div>
           
-          <BookingForm 
-            selectedDate={selectedDate}
-            onBookingSuccess={() => {
-              refetchBookings();
-              toast({
-                title: "Reserva exitosa",
-                description: "Tu cancha ha sido reservada correctamente.",
-              });
-            }}
-          />
+          {user ? (
+            <BookingForm 
+              selectedDate={selectedDate}
+              onBookingSuccess={() => {
+                refetchBookings();
+                toast({
+                  title: "Reserva exitosa",
+                  description: "Tu cancha ha sido reservada correctamente.",
+                });
+              }}
+            />
+          ) : (
+            <div className="text-center p-4 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground mb-2">
+                Inicia sesión para reservar una cancha
+              </p>
+              <Button variant="outline" onClick={() => window.location.href = '/login'}>
+                Iniciar Sesión
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
