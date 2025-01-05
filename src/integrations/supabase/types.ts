@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       bookings: {
         Row: {
+          booking_made_at: string | null
           court_id: string | null
           created_at: string | null
           end_time: string
@@ -19,6 +20,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          booking_made_at?: string | null
           court_id?: string | null
           created_at?: string | null
           end_time: string
@@ -27,6 +29,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          booking_made_at?: string | null
           court_id?: string | null
           created_at?: string | null
           end_time?: string
@@ -152,6 +155,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_bookings: number | null
           avatar_url: string | null
           created_at: string | null
           full_name: string | null
@@ -159,6 +163,7 @@ export type Database = {
           member_id: string | null
         }
         Insert: {
+          active_bookings?: number | null
           avatar_url?: string | null
           created_at?: string | null
           full_name?: string | null
@@ -166,6 +171,7 @@ export type Database = {
           member_id?: string | null
         }
         Update: {
+          active_bookings?: number | null
           avatar_url?: string | null
           created_at?: string | null
           full_name?: string | null

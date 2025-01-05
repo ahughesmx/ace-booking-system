@@ -10,7 +10,7 @@ import { CourtSelector } from "@/components/CourtSelector";
 import { useBookings } from "@/hooks/use-bookings";
 import { useCourts } from "@/hooks/use-courts";
 import { supabase } from "@/lib/supabase-client";
-import type { Booking } from "@/hooks/use-bookings";
+import type { Booking } from "@/types/booking";
 
 const availableTimeSlots = [
   "08:00", "09:00", "10:00", "11:00", "12:00",
@@ -72,7 +72,25 @@ export default function BookingCalendar() {
           end_time: endTime.toISOString(),
         });
 
-      if (error) throw error;
+      if (error) {
+        // Manejar errores específicos de las restricciones
+        if (error.message.includes('máximo de reservas permitidas')) {
+          toast({
+            title: "Límite de reservas alcanzado",
+            description: "Ya tienes el máximo de 2 reservas activas permitidas.",
+            variant: "destructive",
+          });
+        } else if (error.message.includes('2 horas de anticipación')) {
+          toast({
+            title: "Tiempo mínimo no cumplido",
+            description: "Las reservas deben hacerse con al menos 2 horas de anticipación.",
+            variant: "destructive",
+          });
+        } else {
+          throw error;
+        }
+        return;
+      }
 
       toast({
         title: "Reserva exitosa",
@@ -93,6 +111,23 @@ export default function BookingCalendar() {
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
+      // Verificar el tiempo antes de cancelar
+      const booking = bookings.find(b => b.id === bookingId);
+      if (!booking) return;
+
+      const startTime = new Date(booking.start_time);
+      const now = new Date();
+      const hoursDifference = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+      if (hoursDifference < 24) {
+        toast({
+          title: "No se puede cancelar",
+          description: "Las reservas solo pueden cancelarse con al menos 24 horas de anticipación.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from("bookings")
         .delete()
