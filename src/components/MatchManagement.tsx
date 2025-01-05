@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/AuthProvider";
 import { MatchCard } from "@/components/MatchCard";
@@ -28,10 +27,10 @@ export function MatchManagement() {
               name
             )
           ),
-          player1:profiles!matches_player1_id_fkey (
+          player1:profiles!matches_player1_id_fkey_profiles (
             full_name
           ),
-          player2:profiles!matches_player2_id_fkey (
+          player2:profiles!matches_player2_id_fkey_profiles (
             full_name
           )
         `)
