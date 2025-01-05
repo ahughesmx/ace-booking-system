@@ -77,8 +77,7 @@ export default function Index() {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold">Clubes</h2>
-        <div className="grid grid-cols-1 gap-4 mt-4">
+        <div className="grid grid-cols-1 gap-4">
           <img 
             src="/lovable-uploads/cb20a440-8fe0-48ba-a91f-3943cb74ae55.png" 
             alt="Club de tenis" 
