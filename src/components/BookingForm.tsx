@@ -7,6 +7,7 @@ import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 import { useCourts } from "@/hooks/use-courts";
 import { supabase } from "@/lib/supabase-client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 const availableTimeSlots = [
   "08:00", "09:00", "10:00", "11:00", "12:00",
@@ -27,6 +28,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const { user } = useAuth();
   const { data: courts = [] } = useCourts();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Fetch existing bookings for the selected date
   const { data: existingBookings = [] } = useQuery({
@@ -130,7 +132,6 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
         return;
       }
 
-      // Refetch the bookings query to update available time slots
       await queryClient.invalidateQueries({ queryKey: ["bookings", selectedDate, selectedCourt] });
       
       onBookingSuccess();
@@ -149,6 +150,10 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleLoginRedirect = () => {
+    navigate('/login');
   };
 
   return (
@@ -171,13 +176,22 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
         />
       )}
 
-      <Button
-        className="w-full"
-        disabled={!selectedDate || !selectedTime || !selectedCourt || isSubmitting}
-        onClick={handleBooking}
-      >
-        {isSubmitting ? "Reservando..." : "Reservar cancha"}
-      </Button>
+      {user ? (
+        <Button
+          className="w-full"
+          disabled={!selectedDate || !selectedTime || !selectedCourt || isSubmitting}
+          onClick={handleBooking}
+        >
+          {isSubmitting ? "Reservando..." : "Reservar cancha"}
+        </Button>
+      ) : (
+        <Button
+          className="w-full"
+          onClick={handleLoginRedirect}
+        >
+          Iniciar sesión para reservar
+        </Button>
+      )}
     </div>
   );
 }
