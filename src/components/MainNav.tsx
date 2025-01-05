@@ -17,9 +17,9 @@ const MainNav = () => {
 
   const navigationItems = [
     { label: "Inicio", icon: Home, onClick: () => navigate("/") },
-    { label: "Reservas", icon: Calendar, onClick: () => document.querySelector('[value="bookings"]')?.click() },
-    { label: "Partidos", icon: Calendar, onClick: () => document.querySelector('[value="matches"]')?.click() },
-    { label: "Ranking", icon: Trophy, onClick: () => document.querySelector('[value="ranking"]')?.click() },
+    { label: "Reservas", icon: Calendar, onClick: () => navigate("/", { state: { defaultTab: "bookings" } }) },
+    { label: "Partidos", icon: Calendar, onClick: () => navigate("/", { state: { defaultTab: "matches" } }) },
+    { label: "Ranking", icon: Trophy, onClick: () => navigate("/", { state: { defaultTab: "ranking" } }) },
   ];
 
   const NavItems = () => (

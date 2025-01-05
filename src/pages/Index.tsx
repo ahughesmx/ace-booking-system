@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BookingCalendar from "@/components/BookingCalendar";
@@ -13,7 +13,9 @@ import MainNav from "@/components/MainNav";
 export default function Index() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: userRole } = useUserRole(user?.id);
+  const defaultTab = location.state?.defaultTab || "bookings";
 
   useEffect(() => {
     if (!loading && !user) {
@@ -38,7 +40,7 @@ export default function Index() {
           </Alert>
         )}
         
-        <Tabs defaultValue="bookings" className="space-y-6">
+        <Tabs defaultValue={defaultTab} className="space-y-6">
           <TabsList className="w-full grid grid-cols-3 max-w-md mx-auto">
             <TabsTrigger value="bookings">Reservas</TabsTrigger>
             <TabsTrigger value="matches">Partidos</TabsTrigger>
