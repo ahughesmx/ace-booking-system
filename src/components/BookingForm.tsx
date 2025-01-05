@@ -32,11 +32,24 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     const bookingTime = new Date(selectedDate);
     bookingTime.setHours(parseInt(hours), 0, 0, 0);
     
-    // Check if booking is at least 2 hours in advance
+    // Solo validar las 2 horas si es el día actual
     const now = new Date();
-    const hoursDifference = (bookingTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const selectedDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
     
-    return hoursDifference >= 2;
+    // Si es un día futuro, permitir la reserva
+    if (selectedDay > today) {
+      return true;
+    }
+    
+    // Si es hoy, validar las 2 horas de anticipación
+    if (selectedDay.getTime() === today.getTime()) {
+      const hoursDifference = (bookingTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+      return hoursDifference >= 2;
+    }
+    
+    // Si es un día pasado, no permitir la reserva
+    return false;
   };
 
   const handleBooking = async () => {
@@ -53,17 +66,22 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     const startTime = new Date(selectedDate);
     startTime.setHours(parseInt(hours), 0, 0, 0);
     
-    // Validate 2 hour minimum before making the API call
+    // Validar 2 horas de anticipación solo si es el día actual
     const now = new Date();
-    const hoursDifference = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const selectedDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
     
-    if (hoursDifference < 2) {
-      toast({
-        title: "Error",
-        description: "Las reservas deben hacerse con al menos 2 horas de anticipación.",
-        variant: "destructive",
-      });
-      return;
+    if (selectedDay.getTime() === today.getTime()) {
+      const hoursDifference = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+      
+      if (hoursDifference < 2) {
+        toast({
+          title: "Error",
+          description: "Las reservas deben hacerse con al menos 2 horas de anticipación.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
     
     const endTime = new Date(startTime);
