@@ -4,7 +4,7 @@ import MatchManagement from "@/components/MatchManagement";
 import RankingTable from "@/components/RankingTable";
 import { useUserRole } from "@/hooks/use-user-role";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { UserCircle2, Search, CircleDot, GraduationCap, Shield, Home, Users, User, Bell } from "lucide-react";
+import { UserCircle2, Search, CircleDot, GraduationCap, Shield, Bell } from "lucide-react";
 import MainNav from "@/components/MainNav";
 import { useLocation } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -74,16 +74,6 @@ export default function Index() {
             <h3 className="text-base font-bold mb-1">Competencias</h3>
           </CardContent>
         </Card>
-      </div>
-
-      <div>
-        <div className="grid grid-cols-1 gap-4">
-          <img 
-            src="/lovable-uploads/cb20a440-8fe0-48ba-a91f-3943cb74ae55.png" 
-            alt="Club de tenis" 
-            className="w-full h-48 object-cover rounded-lg"
-          />
-        </div>
       </div>
     </div>
   );
