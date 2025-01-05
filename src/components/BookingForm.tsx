@@ -28,17 +28,16 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const isTimeSlotAvailable = (time: string, courtId: string) => {
     if (!selectedDate) return false;
     
-    // Obtener la fecha y hora actual en México
-    const nowInMexico = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
-    
-    // Crear la fecha y hora de la reserva en México
+    // Crear la fecha y hora de la reserva
     const [hours] = time.split(":");
     const bookingTime = new Date(selectedDate);
     bookingTime.setHours(parseInt(hours), 0, 0, 0);
-    const bookingTimeInMexico = new Date(bookingTime.toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
 
+    // Obtener la hora actual
+    const now = new Date();
+    
     // Calcular la diferencia en horas
-    const hoursDifference = (bookingTimeInMexico.getTime() - nowInMexico.getTime()) / (1000 * 60 * 60);
+    const hoursDifference = (bookingTime.getTime() - now.getTime()) / (1000 * 60 * 60);
     
     // Permitir la reserva si faltan 2 o más horas
     return hoursDifference >= 2;
