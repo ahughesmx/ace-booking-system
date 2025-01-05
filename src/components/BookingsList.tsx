@@ -7,7 +7,7 @@ import { useUserRole } from "@/hooks/use-user-role";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCourts } from "@/hooks/use-courts";
 import type { Booking } from "@/types/booking";
-import { format } from "date-fns";
+import { format, addHours } from "date-fns";
 import { es } from "date-fns/locale";
 
 interface BookingsListProps {
@@ -25,7 +25,12 @@ const TIME_SLOT_DURATION = 60; // 60 minutes
 function generateTimeSlots() {
   const slots = [];
   for (let hour = BUSINESS_HOURS.start; hour < BUSINESS_HOURS.end; hour++) {
-    slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    const startTime = new Date(`2000-01-01T${hour.toString().padStart(2, '0')}:00`);
+    const endTime = addHours(startTime, 1);
+    slots.push({
+      start: format(startTime, 'HH:mm'),
+      end: format(endTime, 'HH:mm')
+    });
   }
   return slots;
 }
@@ -99,16 +104,16 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
         <CardContent>
           <div className="space-y-2">
             {timeSlots.map(timeSlot => {
-              const isAvailable = !bookedSlots.has(timeSlot);
+              const isAvailable = !bookedSlots.has(timeSlot.start);
               return (
                 <div
-                  key={timeSlot}
+                  key={timeSlot.start}
                   className={`p-3 rounded-lg border ${
                     isAvailable ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
                   }`}
                 >
                   <p className="font-medium">
-                    {timeSlot} - {format(new Date(`2000-01-01T${timeSlot}`), 'HH:mm', { locale: es })}
+                    {timeSlot.start} - {timeSlot.end}
                   </p>
                   <p className={`text-sm ${isAvailable ? 'text-green-600' : 'text-gray-500'}`}>
                     {isAvailable ? 'Disponible' : 'No disponible'}
