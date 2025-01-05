@@ -43,15 +43,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // Clear local storage first
-      window.localStorage.removeItem('supabase.auth.token');
-      
-      // Clear local state
+      // First clear local state to ensure immediate UI feedback
       setSession(null);
       setUser(null);
 
+      // Clear all supabase local storage items
+      const localStorageKeys = Object.keys(localStorage);
+      localStorageKeys.forEach(key => {
+        if (key.startsWith('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+
       // Attempt to sign out from Supabase
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Supabase signOut error:", error);
+        // Even if there's an error, we've already cleared local state
+        toast({
+          title: "Sesión cerrada",
+          description: "La sesión se ha cerrado localmente",
+        });
+        return;
+      }
 
       toast({
         title: "Sesión cerrada",
@@ -59,11 +74,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
     } catch (error) {
       console.error("Error in signOut:", error);
-      
       toast({
-        title: "Advertencia",
+        title: "Sesión cerrada",
         description: "La sesión se ha cerrado localmente",
-        variant: "default",
       });
     }
   };
