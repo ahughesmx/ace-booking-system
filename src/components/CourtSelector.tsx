@@ -21,7 +21,7 @@ export function CourtSelector({ courts, selectedCourt, onCourtSelect }: CourtSel
           onClick={() => onCourtSelect(court.id)}
         >
           <CardHeader>
-            <CardTitle className="text-lg">{court.name}</CardTitle>
+            <CardTitle className="text-lg">Cancha {court.name}</CardTitle>
           </CardHeader>
         </Card>
       ))}
