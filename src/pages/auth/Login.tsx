@@ -3,6 +3,7 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -18,36 +19,59 @@ export default function Login() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Bienvenido al Club de Tenis
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl text-center">
+            Club de Tenis
+          </CardTitle>
+          <CardDescription className="text-center">
             Inicia sesión o regístrate para continuar
-          </p>
-        </div>
-        <Auth
-          supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
-          providers={[]}
-          localization={{
-            variables: {
-              sign_in: {
-                email_label: "Correo electrónico",
-                password_label: "Contraseña",
-                button_label: "Iniciar sesión",
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Auth
+            supabaseClient={supabase}
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: '#2563eb',
+                    brandAccent: '#1d4ed8',
+                  },
+                },
               },
-              sign_up: {
-                email_label: "Correo electrónico",
-                password_label: "Contraseña",
-                button_label: "Registrarse",
+              className: {
+                container: 'w-full',
+                button: 'w-full',
+                input: 'rounded-md',
               },
-            },
-          }}
-        />
-      </div>
+            }}
+            providers={[]}
+            localization={{
+              variables: {
+                sign_in: {
+                  email_label: "Correo electrónico",
+                  password_label: "Contraseña",
+                  button_label: "Iniciar sesión",
+                  email_input_placeholder: "tucorreo@ejemplo.com",
+                  password_input_placeholder: "Tu contraseña",
+                  link_text: "¿Ya tienes una cuenta? Inicia sesión",
+                },
+                sign_up: {
+                  email_label: "Correo electrónico",
+                  password_label: "Contraseña",
+                  button_label: "Registrarse",
+                  email_input_placeholder: "tucorreo@ejemplo.com",
+                  password_input_placeholder: "Crea una contraseña",
+                  link_text: "¿No tienes una cuenta? Regístrate",
+                },
+              },
+            }}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }
