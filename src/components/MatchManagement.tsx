@@ -1,56 +1,73 @@
 import { useState } from "react";
-import { useAuth } from "@/components/AuthProvider";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export default function MatchManagement() {
-  const { user } = useAuth();
+export function MatchManagement() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateMatch = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
     try {
-      const startTime = new Date();
-      const endTime = new Date(Date.now() + 3600000); // 1 hour from now
+      setIsLoading(true);
 
-      const { data: booking, error: bookingError } = await supabase
-        .from('bookings')
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to create a match",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
+      // Create a booking first
+      const startTime = new Date();
+      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour later
+
+      const { data: bookingData, error: bookingError } = await supabase
+        .from("bookings")
         .insert({
           user_id: user.id,
           start_time: startTime.toISOString(),
-          end_time: endTime.toISOString()
+          end_time: endTime.toISOString(),
         })
         .select()
         .single();
 
-      if (bookingError) throw bookingError;
+      if (bookingError) {
+        throw bookingError;
+      }
 
-      const { error: matchError } = await supabase
-        .from('matches')
-        .insert({
-          booking_id: booking.id,
-          player1_id: user.id,
-          is_doubles: false
-        });
+      // Create the match
+      const { error: matchError } = await supabase.from("matches").insert({
+        booking_id: bookingData.id,
+        player1_id: user.id,
+        is_doubles: false,
+      });
 
-      if (matchError) throw matchError;
+      if (matchError) {
+        throw matchError;
+      }
 
       toast({
-        title: "Partido creado",
-        description: "El partido se ha creado correctamente"
+        title: "Success",
+        description: "Match created successfully",
       });
+
+      navigate("/matches");
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error creating match:", error);
       toast({
         title: "Error",
-        description: "No se pudo crear el partido",
-        variant: "destructive"
+        description: "Failed to create match. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -58,22 +75,17 @@ export default function MatchManagement() {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto mt-8">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Trophy className="h-6 w-6 text-primary" />
-          Gestión de Partidos
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Button 
-          onClick={handleCreateMatch} 
-          disabled={isLoading}
-          className="w-full"
-        >
-          {isLoading ? "Creando..." : "Crear Nuevo Partido"}
-        </Button>
-      </CardContent>
-    </Card>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Create a Match</h1>
+      <Button
+        onClick={handleCreateMatch}
+        disabled={isLoading}
+        className="w-full md:w-auto"
+      >
+        {isLoading ? "Creating..." : "Create Match"}
+      </Button>
+    </div>
   );
 }
+
+export default MatchManagement;
