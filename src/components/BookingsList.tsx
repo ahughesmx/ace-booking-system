@@ -17,14 +17,13 @@ interface BookingsListProps {
 
 const BUSINESS_HOURS = {
   start: 8, // 8 AM
-  end: 23, // 11 PM (para incluir el slot de 22:00)
+  end: 22, // 10 PM (último slot será de 22:00 a 23:00)
 };
-
-const TIME_SLOT_DURATION = 60; // 60 minutes
 
 function generateTimeSlots() {
   const slots = [];
-  for (let hour = BUSINESS_HOURS.start; hour <= BUSINESS_HOURS.end - 1; hour++) {
+  // Cambiamos <= para incluir la última hora
+  for (let hour = BUSINESS_HOURS.start; hour <= BUSINESS_HOURS.end; hour++) {
     const startTime = new Date(`2000-01-01T${hour.toString().padStart(2, '0')}:00`);
     slots.push({
       start: format(startTime, 'HH:00'),
@@ -101,13 +100,13 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
           <CardTitle>Horarios disponibles</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3">
+          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
             {timeSlots.map(timeSlot => {
               const isAvailable = !bookedSlots.has(timeSlot.start);
               return (
                 <div
                   key={timeSlot.start}
-                  className={`p-3 rounded-lg border text-center transition-colors ${
+                  className={`p-2 rounded-lg border text-center transition-colors ${
                     isAvailable 
                       ? 'bg-green-50 border-green-200 hover:bg-green-100' 
                       : 'bg-gray-50 border-gray-200'
