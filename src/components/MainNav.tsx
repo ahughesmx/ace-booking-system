@@ -48,7 +48,7 @@ const MainNav = () => {
           className="flex w-full items-center justify-start gap-2"
           onClick={item.onClick}
         >
-          <item.icon className="h-4 w-4" />
+          <item.icon className="h-4 w-4 text-[#1e3a8a]" />
           <span>{item.label}</span>
         </Button>
       ))}
@@ -96,7 +96,7 @@ const MainNav = () => {
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
+                <Menu className="h-6 w-6 text-[#1e3a8a]" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px]">
