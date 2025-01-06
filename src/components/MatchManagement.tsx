@@ -23,7 +23,18 @@ export function MatchManagement() {
       const { data, error } = await supabase
         .from("matches")
         .select(`
-          *,
+          id,
+          booking_id,
+          player1_id,
+          player2_id,
+          player1_sets,
+          player2_sets,
+          is_doubles,
+          is_confirmed_player1,
+          is_confirmed_player2,
+          created_at,
+          player1_partner_id,
+          player2_partner_id,
           booking:bookings (
             start_time,
             court:courts (
