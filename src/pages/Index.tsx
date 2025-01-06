@@ -36,7 +36,7 @@ export default function Index() {
 
       <h2 className="text-2xl font-bold">Juega tu partido perfecto</h2>
 
-      <div className="grid grid-cols-1 gap-4 max-w-md mx-auto">
+      <div className="grid grid-cols-2 gap-4">
         <button onClick={() => handleNavigation("bookings")} className="w-full text-left">
           <Card className="hover:shadow-lg transition-shadow">
             <CardContent className="p-4 flex items-center gap-4">
