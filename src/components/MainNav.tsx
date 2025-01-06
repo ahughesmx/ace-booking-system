@@ -26,7 +26,6 @@ const MainNav = () => {
     }
     
     if (tab === null) {
-      // Si es "Inicio", navega a la raíz sin estado para mostrar la vista móvil
       navigate("/", { state: undefined });
     } else {
       navigate("/", { state: { defaultTab: tab } });
@@ -79,7 +78,14 @@ const MainNav = () => {
     <nav className="w-full bg-white shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <div className="text-xl font-bold">ACE</div>
+          <div className="flex items-center gap-2">
+            <img 
+              src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png" 
+              alt="CDV Logo" 
+              className="h-8 w-8"
+            />
+            <span className="text-xl font-bold">CDV</span>
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
