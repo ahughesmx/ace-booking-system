@@ -15,7 +15,7 @@ export const createBookingDateTime = (date: Date, hours: string): Date => {
   );
 
   // Convert the local time to Mexico City time
-  const mexicoCityTime = fromZonedTime(baseDate, 'America/Mexico_City');
+  const mexicoCityTime = toZonedTime(baseDate, 'America/Mexico_City');
   
   return mexicoCityTime;
 };
