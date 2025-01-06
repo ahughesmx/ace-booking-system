@@ -41,7 +41,7 @@ export default function Index() {
           <Card className="hover:shadow-lg transition-shadow h-full">
             <CardContent className="p-4">
               <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center mb-2">
-                <Search className="h-4 w-4 text-white" />
+                <Search className="h-5 w-5 text-white" />
               </div>
               <h3 className="text-sm font-bold mb-1">Reserva una cancha</h3>
               <p className="text-xs text-gray-600">Si ya sabes con quién vas a jugar</p>
@@ -53,7 +53,7 @@ export default function Index() {
           <Card className="hover:shadow-lg transition-shadow h-full">
             <CardContent className="p-4">
               <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center mb-2">
-                <CircleDot className="h-4 w-4 text-white" />
+                <CircleDot className="h-5 w-5 text-white" />
               </div>
               <h3 className="text-sm font-bold mb-1">Registra un partido</h3>
               <p className="text-xs text-gray-600">Si quieres rankear</p>
@@ -64,7 +64,7 @@ export default function Index() {
         <Card className="hover:shadow-lg transition-shadow h-full">
           <CardContent className="p-4">
             <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center mb-2">
-              <GraduationCap className="h-4 w-4 text-white" />
+              <GraduationCap className="h-5 w-5 text-white" />
             </div>
             <h3 className="text-sm font-bold mb-1">Clases</h3>
           </CardContent>
@@ -73,7 +73,7 @@ export default function Index() {
         <Card className="hover:shadow-lg transition-shadow h-full">
           <CardContent className="p-4">
             <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center mb-2">
-              <Shield className="h-4 w-4 text-white" />
+              <Shield className="h-5 w-5 text-white" />
             </div>
             <h3 className="text-sm font-bold mb-1">Competencias</h3>
           </CardContent>
