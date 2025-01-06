@@ -22,7 +22,7 @@ export function useMatches() {
           created_at,
           player1_partner_id,
           player2_partner_id,
-          booking (
+          bookings (
             start_time,
             court (
               name
@@ -48,8 +48,17 @@ export function useMatches() {
         throw error;
       }
       
-      console.log("Matches data:", data);
-      return data as Match[];
+      // Transform the data to match our Match type
+      const transformedData: Match[] = data.map(match => ({
+        ...match,
+        booking: match.bookings ? {
+          start_time: match.bookings.start_time,
+          court: match.bookings.court
+        } : null
+      }));
+      
+      console.log("Matches data:", transformedData);
+      return transformedData;
     },
     retry: 1,
     retryDelay: 1000,
