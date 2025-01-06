@@ -1,5 +1,6 @@
 import { TimeSlot } from "./TimeSlot";
 import { format, addHours, isBefore, isToday } from "date-fns";
+import { useCourts } from "@/hooks/use-courts";
 
 interface TimeSlot {
   start: string;
@@ -38,17 +39,28 @@ function generateTimeSlots(businessHours: { start: number; end: number }, select
 
 export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate }: TimeSlotsGridProps) {
   const timeSlots = generateTimeSlots(businessHours, selectedDate);
+  const { data: courts = [] } = useCourts();
+  const totalCourts = courts.length;
+
+  // Función para contar cuántas reservas hay en un horario específico
+  const getBookingsCountForSlot = (slot: string) => {
+    return bookedSlots.has(slot) ? 1 : 0; // Contamos cada reserva individual
+  };
 
   return (
     <div className="grid grid-cols-3 gap-3">
       {timeSlots.map(timeSlot => {
-        const isAvailable = !bookedSlots.has(timeSlot.start) && !timeSlot.isPast;
+        const bookingsCount = getBookingsCountForSlot(timeSlot.start);
+        const availableSlots = totalCourts - bookingsCount;
+        const isAvailable = !timeSlot.isPast && availableSlots > 0;
+        
         return (
           <TimeSlot
             key={timeSlot.start}
             start={timeSlot.start}
             end={timeSlot.end}
             isAvailable={isAvailable}
+            availableCount={availableSlots}
           />
         );
       })}

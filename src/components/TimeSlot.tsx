@@ -4,9 +4,10 @@ interface TimeSlotProps {
   start: string;
   end: string;
   isAvailable: boolean;
+  availableCount?: number;
 }
 
-export function TimeSlot({ start, end, isAvailable }: TimeSlotProps) {
+export function TimeSlot({ start, end, isAvailable, availableCount = 0 }: TimeSlotProps) {
   return (
     <div
       className={cn(
@@ -21,7 +22,9 @@ export function TimeSlot({ start, end, isAvailable }: TimeSlotProps) {
         <span className="hidden md:inline">{start} - {end}</span>
       </p>
       <p className={`text-xs ${isAvailable ? "text-green-600" : "text-gray-500"}`}>
-        {isAvailable ? "Disponible" : "No disponible"}
+        {isAvailable 
+          ? `${availableCount} ${availableCount === 1 ? 'cancha disponible' : 'canchas disponibles'}`
+          : "No disponible"}
       </p>
     </div>
   );
