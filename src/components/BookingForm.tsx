@@ -1,13 +1,13 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { CanchaSelector } from "@/components/CourtSelector";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
-import { BookingSubmitButton } from "@/components/BookingSubmitButton";
 import { useCourts } from "@/hooks/use-courts";
 import { supabase } from "@/lib/supabase-client";
-import { useQuery } from "@tanstack/react-query";
-import { createBookingDateTime, isTimeSlotAvailable } from "@/utils/dateUtils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 const availableTimeSlots = [
   "08:00", "09:00", "10:00", "11:00", "12:00",
@@ -27,7 +27,10 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: courts = [] } = useCourts();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
+  // Fetch existing bookings for the selected date
   const { data: existingBookings = [] } = useQuery({
     queryKey: ["bookings", selectedDate, selectedCourt],
     queryFn: async () => {
@@ -52,6 +55,32 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     enabled: !!selectedDate && !!selectedCourt,
   });
 
+  const isTimeSlotAvailable = (time: string, courtId: string) => {
+    if (!selectedDate) return false;
+    
+    const [hours] = time.split(":");
+    const bookingTime = new Date(selectedDate);
+    bookingTime.setHours(parseInt(hours), 0, 0, 0);
+    const now = new Date();
+    const hoursDifference = (bookingTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursDifference < 2) return false;
+
+    const timeSlotStart = new Date(selectedDate);
+    timeSlotStart.setHours(parseInt(hours), 0, 0, 0);
+    const timeSlotEnd = new Date(timeSlotStart);
+    timeSlotEnd.setHours(timeSlotStart.getHours() + 1);
+
+    return !existingBookings.some(booking => {
+      const bookingStart = new Date(booking.start_time);
+      const bookingEnd = new Date(booking.end_time);
+      return (
+        (timeSlotStart >= bookingStart && timeSlotStart < bookingEnd) ||
+        (timeSlotEnd > bookingStart && timeSlotEnd <= bookingEnd)
+      );
+    });
+  };
+
   const handleBooking = async () => {
     if (!selectedDate || !selectedTime || !selectedCourt || !user) {
       toast({
@@ -65,9 +94,24 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     setIsSubmitting(true);
 
     try {
-      const startTime = createBookingDateTime(selectedDate, selectedTime);
-      const endTime = new Date(startTime);
-      endTime.setHours(startTime.getHours() + 1);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('active_bookings')
+        .eq('id', user.id)
+        .single();
+
+      if (profile && profile.active_bookings >= 2) {
+        toast({
+          title: "Límite de reservas alcanzado",
+          description: "Ya tienes el máximo de 2 reservas activas permitidas.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const [hours] = selectedTime.split(":");
+      const startTime = new Date(selectedDate);
+      startTime.setHours(parseInt(hours), 0, 0, 0);
 
       const { error } = await supabase
         .from("bookings")
@@ -75,27 +119,21 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
           court_id: selectedCourt,
           user_id: user.id,
           start_time: startTime.toISOString(),
-          end_time: endTime.toISOString(),
+          end_time: new Date(startTime.getTime() + 60 * 60 * 1000).toISOString(),
         });
 
       if (error) {
-        console.error("Error creating booking:", error);
-        let errorMessage = "No se pudo realizar la reserva. ";
-        
-        if (error.message.includes("valid_time_range")) {
-          errorMessage += "El horario seleccionado está fuera del horario permitido (8:00 - 22:00).";
-        } else {
-          errorMessage += "Por favor intenta de nuevo.";
-        }
-        
         toast({
           title: "Error",
-          description: errorMessage,
+          description: "No se pudo realizar la reserva. Por favor intenta de nuevo.",
           variant: "destructive",
         });
+        console.error("Error creating booking:", error);
         return;
       }
 
+      await queryClient.invalidateQueries({ queryKey: ["bookings", selectedDate, selectedCourt] });
+      
       onBookingSuccess();
       setSelectedTime(null);
       toast({
@@ -114,9 +152,8 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     }
   };
 
-  const checkTimeSlotAvailability = (time: string) => {
-    if (!selectedDate) return false;
-    return isTimeSlotAvailable(selectedDate, time, existingBookings);
+  const handleLoginRedirect = () => {
+    navigate('/login');
   };
 
   return (
@@ -134,16 +171,27 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
           availableTimeSlots={availableTimeSlots}
           selectedTime={selectedTime}
           selectedCourt={selectedCourt}
-          isTimeSlotAvailable={checkTimeSlotAvailability}
+          isTimeSlotAvailable={isTimeSlotAvailable}
           onTimeSelect={setSelectedTime}
         />
       )}
 
-      <BookingSubmitButton
-        isSubmitting={isSubmitting}
-        isValid={!!selectedDate && !!selectedTime && !!selectedCourt}
-        onSubmit={handleBooking}
-      />
+      {user ? (
+        <Button
+          className="w-full"
+          disabled={!selectedDate || !selectedTime || !selectedCourt || isSubmitting}
+          onClick={handleBooking}
+        >
+          {isSubmitting ? "Reservando..." : "Reservar cancha"}
+        </Button>
+      ) : (
+        <Button
+          className="w-full"
+          onClick={handleLoginRedirect}
+        >
+          Iniciar sesión para reservar
+        </Button>
+      )}
     </div>
   );
 }
