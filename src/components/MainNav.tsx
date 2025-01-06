@@ -82,7 +82,7 @@ const MainNav = () => {
             <img 
               src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png" 
               alt="CDV Logo" 
-              className="h-10 w-10"
+              className="h-12 w-12"
             />
             <span className="text-xl font-bold">CDV</span>
           </div>
