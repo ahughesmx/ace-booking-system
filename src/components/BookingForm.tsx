@@ -123,12 +123,12 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
         });
 
       if (error) {
+        console.error("Error creating booking:", error);
         toast({
           title: "Error",
           description: "No se pudo realizar la reserva. Por favor intenta de nuevo.",
           variant: "destructive",
         });
-        console.error("Error creating booking:", error);
         return;
       }
 
