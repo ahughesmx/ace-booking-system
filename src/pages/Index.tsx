@@ -43,8 +43,8 @@ export default function Index() {
               <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
                 <Search className="h-6 w-6 text-white" />
               </div>
-              <h3 className="text-sm font-bold mb-1">Reserva una cancha</h3>
-              <p className="text-xs text-gray-600">Si ya sabes con quién vas a jugar</p>
+              <h3 className="text-base font-bold mb-1">Reserva una cancha</h3>
+              <p className="text-sm text-gray-600">Si ya sabes con quién vas a jugar</p>
             </CardContent>
           </Card>
         </button>
@@ -55,8 +55,8 @@ export default function Index() {
               <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
                 <CircleDot className="h-6 w-6 text-white" />
               </div>
-              <h3 className="text-sm font-bold mb-1">Registra un partido</h3>
-              <p className="text-xs text-gray-600">Si quieres rankear</p>
+              <h3 className="text-base font-bold mb-1">Registra un partido</h3>
+              <p className="text-sm text-gray-600">Si quieres rankear</p>
             </CardContent>
           </Card>
         </button>
@@ -66,7 +66,7 @@ export default function Index() {
             <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
-            <h3 className="text-sm font-bold mb-1">Clases</h3>
+            <h3 className="text-base font-bold mb-1">Clases</h3>
           </CardContent>
         </Card>
 
@@ -75,7 +75,7 @@ export default function Index() {
             <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
               <Shield className="h-6 w-6 text-white" />
             </div>
-            <h3 className="text-sm font-bold mb-1">Competencias</h3>
+            <h3 className="text-base font-bold mb-1">Competencias</h3>
           </CardContent>
         </Card>
       </div>
