@@ -56,7 +56,7 @@ export default function Index() {
                 <CircleDot className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-base font-bold mb-1">Registra un partido</h3>
-              <p className="text-sm text-gray-600">Si quieres rankear</p>
+              <p className="text-sm text-gray-600">Si quieres rankear tu posición</p>
             </CardContent>
           </Card>
         </button>
