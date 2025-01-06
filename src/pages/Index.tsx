@@ -31,7 +31,7 @@ export default function Index() {
           Hola {user?.email?.split('@')[0] || 'Usuario'}
           <span className="ml-2" role="img" aria-label="wave">👋</span>
         </h1>
-        <Bell className="h-6 w-6" />
+        <Bell className="h-6 w-6 text-[#1e3a8a]" />
       </div>
 
       <h2 className="text-2xl font-bold">Juega tu partido perfecto</h2>
@@ -40,8 +40,8 @@ export default function Index() {
         <button onClick={() => handleNavigation("bookings")} className="w-full text-left">
           <Card className="hover:shadow-lg transition-shadow h-full">
             <CardContent className="p-4">
-              <div className="bg-[#0A1A2A] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
-                <Search className="h-5 w-5 text-white" />
+              <div className="bg-white w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+                <Search className="h-5 w-5 text-[#1e3a8a]" />
               </div>
               <h3 className="text-base font-bold mb-1">Reserva una cancha</h3>
               <p className="text-gray-600 text-sm">Si ya sabes con quién vas a jugar</p>
@@ -52,8 +52,8 @@ export default function Index() {
         <button onClick={() => handleNavigation("matches")} className="w-full text-left">
           <Card className="hover:shadow-lg transition-shadow h-full">
             <CardContent className="p-4">
-              <div className="bg-[#0A1A2A] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
-                <CircleDot className="h-5 w-5 text-white" />
+              <div className="bg-white w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+                <CircleDot className="h-5 w-5 text-[#1e3a8a]" />
               </div>
               <h3 className="text-base font-bold mb-1">Registra un partido</h3>
               <p className="text-gray-600 text-sm">Si quieres rankear</p>
@@ -63,8 +63,8 @@ export default function Index() {
 
         <Card className="hover:shadow-lg transition-shadow h-full">
           <CardContent className="p-4">
-            <div className="bg-[#0A1A2A] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
-              <GraduationCap className="h-5 w-5 text-white" />
+            <div className="bg-white w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+              <GraduationCap className="h-5 w-5 text-[#1e3a8a]" />
             </div>
             <h3 className="text-base font-bold mb-1">Clases</h3>
           </CardContent>
@@ -72,8 +72,8 @@ export default function Index() {
 
         <Card className="hover:shadow-lg transition-shadow h-full">
           <CardContent className="p-4">
-            <div className="bg-[#0A1A2A] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
-              <Shield className="h-5 w-5 text-white" />
+            <div className="bg-white w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+              <Shield className="h-5 w-5 text-[#1e3a8a]" />
             </div>
             <h3 className="text-base font-bold mb-1">Competencias</h3>
           </CardContent>
