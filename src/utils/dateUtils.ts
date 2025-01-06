@@ -1,51 +1,61 @@
-export const createBookingDateTime = (date: Date, timeString: string): Date => {
-  const [hours] = timeString.split(':');
-  const bookingTime = new Date(date);
-  bookingTime.setHours(parseInt(hours), 0, 0, 0);
+import { format, addHours, isBefore, isAfter, setHours, setMinutes, setSeconds, setMilliseconds } from 'date-fns';
+import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
+
+export const createBookingDateTime = (date: Date, hours: string): Date => {
+  // Create a base date with the selected hours
+  const baseDate = setHours(
+    setMinutes(
+      setSeconds(
+        setMilliseconds(date, 0),
+        0
+      ),
+      0
+    ),
+    parseInt(hours)
+  );
+
+  // Convert the local time to Mexico City time
+  const mexicoCityTime = zonedTimeToUtc(baseDate, 'America/Mexico_City');
   
-  // Set the timezone offset for Mexico City (UTC-6)
-  const mexicoCityOffset = -6 * 60;
-  const localOffset = bookingTime.getTimezoneOffset();
-  const offsetDiff = localOffset - mexicoCityOffset;
-  
-  // Adjust the time by the offset difference
-  bookingTime.setMinutes(bookingTime.getMinutes() + offsetDiff);
-  
-  return bookingTime;
+  return mexicoCityTime;
 };
 
 export const isTimeSlotAvailable = (
-  time: string,
-  selectedDate: Date | undefined,
-  existingBookings: any[],
-  courtId: string
+  selectedDate: Date,
+  hours: string,
+  existingBookings: Array<{ start_time: string; end_time: string }> = []
 ): boolean => {
-  if (!selectedDate) return false;
+  const bookingTime = createBookingDateTime(selectedDate, hours);
   
-  const [hours] = time.split(':');
-  const bookingTime = new Date(selectedDate);
-  bookingTime.setHours(parseInt(hours), 0, 0, 0);
+  // Don't allow bookings in the past
   const now = new Date();
+  if (isBefore(bookingTime, now)) return false;
+
+  // Calculate hours difference for the 2-hour advance booking requirement
   const hoursDifference = (bookingTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-  
-  // Don't allow bookings less than 2 hours in advance
   if (hoursDifference < 2) return false;
 
   // Don't allow bookings outside business hours (8:00 - 22:00)
   const bookingHour = parseInt(hours);
   if (bookingHour < 8 || bookingHour >= 22) return false;
 
-  const timeSlotStart = new Date(selectedDate);
-  timeSlotStart.setHours(parseInt(hours), 0, 0, 0);
-  const timeSlotEnd = new Date(timeSlotStart);
-  timeSlotEnd.setHours(timeSlotStart.getHours() + 1);
+  // Check for conflicts with existing bookings
+  const timeSlotStart = createBookingDateTime(selectedDate, hours);
+  const timeSlotEnd = addHours(timeSlotStart, 1);
 
   return !existingBookings.some(booking => {
     const bookingStart = new Date(booking.start_time);
     const bookingEnd = new Date(booking.end_time);
+    
     return (
-      (timeSlotStart >= bookingStart && timeSlotStart < bookingEnd) ||
-      (timeSlotEnd > bookingStart && timeSlotEnd <= bookingEnd)
+      (isAfter(timeSlotStart, bookingStart) && isBefore(timeSlotStart, bookingEnd)) ||
+      (isAfter(timeSlotEnd, bookingStart) && isBefore(timeSlotEnd, bookingEnd)) ||
+      (isBefore(timeSlotStart, bookingStart) && isAfter(timeSlotEnd, bookingEnd))
     );
   });
+};
+
+export const formatBookingTime = (date: string): string => {
+  const mexicoCityTime = utcToZonedTime(new Date(date), 'America/Mexico_City');
+  return format(mexicoCityTime, 'HH:mm');
 };
