@@ -40,7 +40,7 @@ export default function Index() {
         <button onClick={() => handleNavigation("bookings")} className="w-full text-left">
           <Card className="hover:shadow-lg transition-shadow h-full">
             <CardContent className="p-4">
-              <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+              <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
                 <Search className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-sm font-bold mb-1">Reserva una cancha</h3>
@@ -52,7 +52,7 @@ export default function Index() {
         <button onClick={() => handleNavigation("matches")} className="w-full text-left">
           <Card className="hover:shadow-lg transition-shadow h-full">
             <CardContent className="p-4">
-              <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+              <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
                 <CircleDot className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-sm font-bold mb-1">Registra un partido</h3>
@@ -63,7 +63,7 @@ export default function Index() {
 
         <Card className="hover:shadow-lg transition-shadow h-full">
           <CardContent className="p-4">
-            <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+            <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
             <h3 className="text-sm font-bold mb-1">Clases</h3>
@@ -72,7 +72,7 @@ export default function Index() {
 
         <Card className="hover:shadow-lg transition-shadow h-full">
           <CardContent className="p-4">
-            <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+            <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
               <Shield className="h-6 w-6 text-white" />
             </div>
             <h3 className="text-sm font-bold mb-1">Competencias</h3>
