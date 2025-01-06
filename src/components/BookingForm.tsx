@@ -6,6 +6,9 @@ import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 import { useCourts } from "@/hooks/use-courts";
 import { useNavigate } from "react-router-dom";
 import { useBookingSubmit } from "./booking/useBookingSubmit";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase-client";
+import { format } from "date-fns";
 
 const availableTimeSlots = [
   "08:00", "09:00", "10:00", "11:00", "12:00",
@@ -25,6 +28,46 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const { data: courts = [] } = useCourts();
   const navigate = useNavigate();
   const { handleBooking, isSubmitting } = useBookingSubmit(onBookingSuccess);
+
+  // Query existing bookings for the selected date
+  const { data: existingBookings = [] } = useQuery({
+    queryKey: ["bookings", selectedDate, selectedCourt],
+    queryFn: async () => {
+      if (!selectedDate || !selectedCourt) return [];
+      
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const { data } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("court_id", selectedCourt)
+        .gte("start_time", startOfDay.toISOString())
+        .lte("end_time", endOfDay.toISOString());
+
+      return data || [];
+    },
+    enabled: !!selectedDate && !!selectedCourt
+  });
+
+  const isTimeSlotAvailable = (time: string, courtId: string) => {
+    if (!selectedDate) return false;
+
+    // Convert the time slot to a Date object for comparison
+    const [hours] = time.split(":");
+    const slotDate = new Date(selectedDate);
+    slotDate.setHours(parseInt(hours), 0, 0, 0);
+
+    // Check if there's any booking that overlaps with this time slot
+    return !existingBookings.some(booking => {
+      const bookingStart = new Date(booking.start_time);
+      const bookingEnd = new Date(booking.end_time);
+      return slotDate >= bookingStart && slotDate < bookingEnd;
+    });
+  };
 
   const handleLoginRedirect = () => {
     navigate('/login');
