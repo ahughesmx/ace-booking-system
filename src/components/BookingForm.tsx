@@ -28,7 +28,6 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const { user } = useAuth();
   const { data: courts = [] } = useCourts();
 
-  // Fetch existing bookings for the selected date
   const { data: existingBookings = [] } = useQuery({
     queryKey: ["bookings", selectedDate, selectedCourt],
     queryFn: async () => {
@@ -81,9 +80,17 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
 
       if (error) {
         console.error("Error creating booking:", error);
+        let errorMessage = "No se pudo realizar la reserva. ";
+        
+        if (error.message.includes("valid_time_range")) {
+          errorMessage += "El horario seleccionado está fuera del horario permitido (8:00 - 22:00).";
+        } else {
+          errorMessage += "Por favor intenta de nuevo.";
+        }
+        
         toast({
           title: "Error",
-          description: "No se pudo realizar la reserva. Por favor intenta de nuevo.",
+          description: errorMessage,
           variant: "destructive",
         });
         return;

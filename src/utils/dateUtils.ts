@@ -2,7 +2,13 @@ export const createBookingDateTime = (date: Date, timeString: string): Date => {
   const [hours] = timeString.split(':');
   const bookingTime = new Date(date);
   bookingTime.setHours(parseInt(hours), 0, 0, 0);
-  return bookingTime;
+  
+  // Convert to Mexico City timezone
+  const mexicoCityDate = new Date(bookingTime.toLocaleString('en-US', {
+    timeZone: 'America/Mexico_City'
+  }));
+  
+  return mexicoCityDate;
 };
 
 export const isTimeSlotAvailable = (
