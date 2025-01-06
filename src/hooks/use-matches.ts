@@ -24,7 +24,7 @@ export function useMatches() {
           player2_partner_id,
           bookings (
             start_time,
-            court (
+            court:courts (
               name
             )
           ),
@@ -53,7 +53,9 @@ export function useMatches() {
         ...match,
         booking: match.bookings ? {
           start_time: match.bookings.start_time,
-          court: match.bookings.court
+          court: match.bookings.court ? {
+            name: match.bookings.court.name
+          } : undefined
         } : null
       }));
       
