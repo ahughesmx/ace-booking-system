@@ -14,7 +14,7 @@ export type Match = {
   booking?: {
     start_time: string;
     court?: {
-      name: string;
+      name: string | null;
     } | null;
   } | null;
   player1?: {

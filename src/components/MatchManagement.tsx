@@ -42,16 +42,16 @@ export function MatchManagement() {
               name
             )
           ),
-          player1:profiles (
+          player1:profiles!matches_player1_id_fkey_profiles (
             full_name
           ),
-          player2:profiles (
+          player2:profiles!matches_player2_id_fkey_profiles (
             full_name
           ),
-          player1_partner:profiles (
+          player1_partner:profiles!matches_player1_partner_id_fkey_profiles (
             full_name
           ),
-          player2_partner:profiles (
+          player2_partner:profiles!matches_player2_partner_id_fkey_profiles (
             full_name
           )
         `)
