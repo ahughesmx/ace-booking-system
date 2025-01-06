@@ -3,12 +3,15 @@ export const createBookingDateTime = (date: Date, timeString: string): Date => {
   const bookingTime = new Date(date);
   bookingTime.setHours(parseInt(hours), 0, 0, 0);
   
-  // Convert to Mexico City timezone
-  const mexicoCityDate = new Date(bookingTime.toLocaleString('en-US', {
-    timeZone: 'America/Mexico_City'
-  }));
+  // Set the timezone offset for Mexico City (UTC-6)
+  const mexicoCityOffset = -6 * 60;
+  const localOffset = bookingTime.getTimezoneOffset();
+  const offsetDiff = localOffset - mexicoCityOffset;
   
-  return mexicoCityDate;
+  // Adjust the time by the offset difference
+  bookingTime.setMinutes(bookingTime.getMinutes() + offsetDiff);
+  
+  return bookingTime;
 };
 
 export const isTimeSlotAvailable = (
@@ -25,7 +28,12 @@ export const isTimeSlotAvailable = (
   const now = new Date();
   const hoursDifference = (bookingTime.getTime() - now.getTime()) / (1000 * 60 * 60);
   
+  // Don't allow bookings less than 2 hours in advance
   if (hoursDifference < 2) return false;
+
+  // Don't allow bookings outside business hours (8:00 - 22:00)
+  const bookingHour = parseInt(hours);
+  if (bookingHour < 8 || bookingHour >= 22) return false;
 
   const timeSlotStart = new Date(selectedDate);
   timeSlotStart.setHours(parseInt(hours), 0, 0, 0);
