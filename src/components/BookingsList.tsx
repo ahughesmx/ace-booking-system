@@ -13,6 +13,7 @@ import { format } from "date-fns";
 interface BookingsListProps {
   bookings: Booking[];
   onCancelSuccess: () => void;
+  selectedDate?: Date;
 }
 
 const BUSINESS_HOURS = {
@@ -20,7 +21,7 @@ const BUSINESS_HOURS = {
   end: 22, // 10 PM (último slot será de 22:00 a 23:00)
 };
 
-export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
+export function BookingsList({ bookings, onCancelSuccess, selectedDate }: BookingsListProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { data: userRole } = useUserRole(user?.id);
@@ -88,6 +89,7 @@ export function BookingsList({ bookings, onCancelSuccess }: BookingsListProps) {
           <TimeSlotsGrid 
             bookedSlots={bookedSlots}
             businessHours={BUSINESS_HOURS}
+            selectedDate={selectedDate}
           />
         </CardContent>
       </Card>

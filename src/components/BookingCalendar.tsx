@@ -56,6 +56,7 @@ export default function BookingCalendar() {
 
       <BookingsList 
         bookings={bookings}
+        selectedDate={selectedDate}
         onCancelSuccess={() => {
           refetchBookings();
           toast({
