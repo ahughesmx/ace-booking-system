@@ -6,32 +6,9 @@ export function useMatches() {
   return useQuery({
     queryKey: ["matches"],
     queryFn: async () => {
-      console.log("Fetching matches...");
-      const { data, error } = await supabase
-        .from("matches")
-        .select(`
-          *,
-          booking:bookings (
-            start_time,
-            court:courts (
-              name
-            )
-          ),
-          player1:profiles!matches_player1_id_fkey_profiles (
-            full_name
-          ),
-          player2:profiles!matches_player2_id_fkey_profiles (
-            full_name
-          ),
-          player1_partner:profiles!matches_player1_partner_id_fkey_profiles (
-            full_name
-          ),
-          player2_partner:profiles!matches_player2_partner_id_fkey_profiles (
-            full_name
-          )
-        `)
-        .order("created_at", { ascending: false });
-
+      console.log("Fetching matches via Edge Function...");
+      const { data, error } = await supabase.functions.invoke('get-matches');
+      
       if (error) {
         console.error("Error fetching matches:", error);
         throw error;
