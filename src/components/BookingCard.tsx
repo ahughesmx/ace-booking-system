@@ -10,6 +10,14 @@ type BookingCardProps = {
 };
 
 export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
+  const formatTime = (date: string) => {
+    return new Date(date).toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    });
+  };
+
   return (
     <Card>
       <CardContent className="pt-6">
@@ -19,8 +27,7 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
               {booking.court?.name || "Cancha sin nombre"}
             </p>
             <p className="text-sm text-muted-foreground">
-              {new Date(booking.start_time).toLocaleTimeString()} -{" "}
-              {new Date(booking.end_time).toLocaleTimeString()}
+              {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
             </p>
             <p className="text-sm text-muted-foreground">
               Reservado por: {booking.user?.full_name || "Usuario desconocido"}
