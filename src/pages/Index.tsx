@@ -39,13 +39,13 @@ export default function Index() {
       <div className="grid grid-cols-2 gap-4">
         <button onClick={() => handleNavigation("bookings")} className="w-full text-left">
           <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center">
-                <Search className="h-5 w-5 text-white" />
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center">
+                <Search className="h-4 w-4 text-white" />
               </div>
               <div>
-                <h3 className="text-base font-bold">Reserva una cancha</h3>
-                <p className="text-gray-600 text-sm">Si ya sabes con quién vas a jugar</p>
+                <h3 className="text-sm font-bold">Reserva una cancha</h3>
+                <p className="text-xs text-gray-600">Si ya sabes con quién vas a jugar</p>
               </div>
             </CardContent>
           </Card>
@@ -53,36 +53,36 @@ export default function Index() {
 
         <button onClick={() => handleNavigation("matches")} className="w-full text-left">
           <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center">
-                <CircleDot className="h-5 w-5 text-white" />
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center">
+                <CircleDot className="h-4 w-4 text-white" />
               </div>
               <div>
-                <h3 className="text-base font-bold">Registra un partido</h3>
-                <p className="text-gray-600 text-sm">Si quieres rankear</p>
+                <h3 className="text-sm font-bold">Registra un partido</h3>
+                <p className="text-xs text-gray-600">Si quieres rankear</p>
               </div>
             </CardContent>
           </Card>
         </button>
 
         <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center">
-              <GraduationCap className="h-5 w-5 text-white" />
+          <CardContent className="p-3 flex items-center gap-3">
+            <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center">
+              <GraduationCap className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h3 className="text-base font-bold">Clases</h3>
+              <h3 className="text-sm font-bold">Clases</h3>
             </div>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center">
-              <Shield className="h-5 w-5 text-white" />
+          <CardContent className="p-3 flex items-center gap-3">
+            <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center">
+              <Shield className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h3 className="text-base font-bold">Competencias</h3>
+              <h3 className="text-sm font-bold">Competencias</h3>
             </div>
           </CardContent>
         </Card>
