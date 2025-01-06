@@ -30,7 +30,6 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  // Fetch existing bookings for the selected date
   const { data: existingBookings = [] } = useQuery({
     queryKey: ["bookings", selectedDate, selectedCourt],
     queryFn: async () => {
@@ -112,6 +111,17 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
       const [hours] = selectedTime.split(":");
       const startTime = new Date(selectedDate);
       startTime.setHours(parseInt(hours), 0, 0, 0);
+      startTime.setMinutes(0, 0, 0);
+
+      const endTime = new Date(startTime);
+      endTime.setHours(startTime.getHours() + 1);
+
+      console.log('Attempting to create booking with:', {
+        court_id: selectedCourt,
+        user_id: user.id,
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+      });
 
       const { error } = await supabase
         .from("bookings")
@@ -119,20 +129,22 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
           court_id: selectedCourt,
           user_id: user.id,
           start_time: startTime.toISOString(),
-          end_time: new Date(startTime.getTime() + 60 * 60 * 1000).toISOString(),
+          end_time: endTime.toISOString(),
         });
 
       if (error) {
+        console.error("Error creating booking:", error);
         toast({
           title: "Error",
           description: "No se pudo realizar la reserva. Por favor intenta de nuevo.",
           variant: "destructive",
         });
-        console.error("Error creating booking:", error);
         return;
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["bookings", selectedDate, selectedCourt] });
+      await queryClient.invalidateQueries({ 
+        queryKey: ["bookings", selectedDate, selectedCourt] 
+      });
       
       onBookingSuccess();
       setSelectedTime(null);
