@@ -114,8 +114,9 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     }
   };
 
-  const checkTimeSlotAvailability = (time: string, courtId: string) => {
-    return isTimeSlotAvailable(time, selectedDate, existingBookings, courtId);
+  const checkTimeSlotAvailability = (time: string) => {
+    if (!selectedDate) return false;
+    return isTimeSlotAvailable(selectedDate, time, existingBookings);
   };
 
   return (

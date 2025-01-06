@@ -1,5 +1,5 @@
 import { format, addHours, isBefore, isAfter, setHours, setMinutes, setSeconds, setMilliseconds } from 'date-fns';
-import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 export const createBookingDateTime = (date: Date, hours: string): Date => {
   // Create a base date with the selected hours
@@ -15,7 +15,7 @@ export const createBookingDateTime = (date: Date, hours: string): Date => {
   );
 
   // Convert the local time to Mexico City time
-  const mexicoCityTime = zonedTimeToUtc(baseDate, 'America/Mexico_City');
+  const mexicoCityTime = fromZonedTime(baseDate, 'America/Mexico_City');
   
   return mexicoCityTime;
 };
@@ -56,6 +56,6 @@ export const isTimeSlotAvailable = (
 };
 
 export const formatBookingTime = (date: string): string => {
-  const mexicoCityTime = utcToZonedTime(new Date(date), 'America/Mexico_City');
+  const mexicoCityTime = toZonedTime(new Date(date), 'America/Mexico_City');
   return format(mexicoCityTime, 'HH:mm');
 };
