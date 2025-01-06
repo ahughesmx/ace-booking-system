@@ -12,11 +12,13 @@ import { Input } from "@/components/ui/input";
 import type { Match } from "@/types/match";
 import { Calendar, Clock, MapPin, Users } from "lucide-react";
 import { AdminMatchControls } from "./AdminMatchControls";
+import { MatchInviteDialog } from "./match/MatchInviteDialog";
 
 type MatchCardProps = {
   match: Match;
   canUpdateResult: boolean;
   isAdmin: boolean;
+  userId?: string;
   onUpdateResult: (matchId: string, player1Sets: number, player2Sets: number) => void;
   onDeleteMatch: (matchId: string) => void;
 };
@@ -25,6 +27,7 @@ export function MatchCard({
   match, 
   canUpdateResult, 
   isAdmin,
+  userId,
   onUpdateResult,
   onDeleteMatch 
 }: MatchCardProps) {
@@ -32,6 +35,7 @@ export function MatchCard({
   const [player2Sets, setPlayer2Sets] = useState<string>("");
   
   const isMatchConfirmed = match.is_confirmed_player1 && match.is_confirmed_player2;
+  const isMatchOwner = userId === match.player1_id;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -56,6 +60,8 @@ export function MatchCard({
     if (!partnerName) return playerName;
     return `${playerName} / ${partnerName}`;
   };
+
+  const showInviteControls = isMatchOwner && !isMatchConfirmed;
 
   return (
     <Card className="overflow-hidden border-muted bg-card hover:bg-accent/5 transition-colors">
@@ -96,6 +102,35 @@ export function MatchCard({
             <MapPin className="h-4 w-4 mr-2" />
             <span>{match.booking?.court?.name || "Cancha por asignar"}</span>
           </div>
+
+          {showInviteControls && (
+            <div className="flex flex-wrap gap-2 mt-4">
+              {!match.player2_id && (
+                <MatchInviteDialog
+                  matchId={match.id}
+                  currentUserId={userId || ''}
+                  isDoubles={match.is_doubles || false}
+                  position="player2"
+                />
+              )}
+              {match.is_doubles && !match.player1_partner_id && (
+                <MatchInviteDialog
+                  matchId={match.id}
+                  currentUserId={userId || ''}
+                  isDoubles={true}
+                  position="player1_partner"
+                />
+              )}
+              {match.is_doubles && !match.player2_partner_id && match.player2_id && (
+                <MatchInviteDialog
+                  matchId={match.id}
+                  currentUserId={userId || ''}
+                  isDoubles={true}
+                  position="player2_partner"
+                />
+              )}
+            </div>
+          )}
 
           {isAdmin ? (
             <AdminMatchControls

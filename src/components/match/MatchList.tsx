@@ -36,9 +36,13 @@ export function MatchList({
           key={match.id}
           match={match}
           isAdmin={isAdmin}
+          userId={userId}
           canUpdateResult={
             isAdmin || 
-            (userId === match.player1_id || userId === match.player2_id)
+            userId === match.player1_id || 
+            userId === match.player2_id ||
+            userId === match.player1_partner_id ||
+            userId === match.player2_partner_id
           }
           onUpdateResult={onUpdateResult}
           onDeleteMatch={onDeleteMatch}
