@@ -24,7 +24,7 @@ export default function Index() {
     navigate("/", { state: { defaultTab: tab } });
   };
 
-  const renderMobileHome = () => (
+  const renderHomeCards = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">
@@ -36,7 +36,7 @@ export default function Index() {
 
       <h2 className="text-2xl font-bold">Juega tu partido perfecto</h2>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <button onClick={() => handleNavigation("bookings")} className="w-full text-left">
           <Card className="hover:shadow-lg transition-shadow h-full">
             <CardContent className="p-4">
@@ -83,9 +83,9 @@ export default function Index() {
   );
 
   const renderContent = () => {
-    // Mostrar la vista móvil solo cuando no hay tab específico
-    if (!defaultTab && window.innerWidth < 768) {
-      return renderMobileHome();
+    // Mostrar la vista de tarjetas cuando no hay tab específico, independientemente del tamaño de pantalla
+    if (!defaultTab) {
+      return renderHomeCards();
     }
 
     switch (defaultTab) {
@@ -96,7 +96,7 @@ export default function Index() {
       case "ranking":
         return <RankingTable />;
       default:
-        return window.innerWidth < 768 ? renderMobileHome() : <BookingCalendar />;
+        return renderHomeCards();
     }
   };
 
