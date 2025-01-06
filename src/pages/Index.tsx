@@ -25,7 +25,7 @@ export default function Index() {
   };
 
   const renderHomeCards = () => (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">
           Hola {user?.email?.split('@')[0] || 'Usuario'}
@@ -36,15 +36,15 @@ export default function Index() {
 
       <h2 className="text-2xl font-bold">Juega tu partido perfecto</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <button onClick={() => handleNavigation("bookings")} className="w-full text-left">
           <Card className="hover:shadow-lg transition-shadow h-full">
             <CardContent className="p-4">
-              <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
-                <Search className="h-5 w-5 text-white" />
+              <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+                <Search className="h-4 w-4 text-white" />
               </div>
-              <h3 className="text-base font-bold mb-1">Reserva una cancha</h3>
-              <p className="text-gray-600 text-sm">Si ya sabes con quién vas a jugar</p>
+              <h3 className="text-sm font-bold mb-1">Reserva una cancha</h3>
+              <p className="text-xs text-gray-600">Si ya sabes con quién vas a jugar</p>
             </CardContent>
           </Card>
         </button>
@@ -52,30 +52,30 @@ export default function Index() {
         <button onClick={() => handleNavigation("matches")} className="w-full text-left">
           <Card className="hover:shadow-lg transition-shadow h-full">
             <CardContent className="p-4">
-              <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
-                <CircleDot className="h-5 w-5 text-white" />
+              <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+                <CircleDot className="h-4 w-4 text-white" />
               </div>
-              <h3 className="text-base font-bold mb-1">Registra un partido</h3>
-              <p className="text-gray-600 text-sm">Si quieres rankear</p>
+              <h3 className="text-sm font-bold mb-1">Registra un partido</h3>
+              <p className="text-xs text-gray-600">Si quieres rankear</p>
             </CardContent>
           </Card>
         </button>
 
         <Card className="hover:shadow-lg transition-shadow h-full">
           <CardContent className="p-4">
-            <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
-              <GraduationCap className="h-5 w-5 text-white" />
+            <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+              <GraduationCap className="h-4 w-4 text-white" />
             </div>
-            <h3 className="text-base font-bold mb-1">Clases</h3>
+            <h3 className="text-sm font-bold mb-1">Clases</h3>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow h-full">
           <CardContent className="p-4">
-            <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
-              <Shield className="h-5 w-5 text-white" />
+            <div className="bg-[#1e3a8a] w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+              <Shield className="h-4 w-4 text-white" />
             </div>
-            <h3 className="text-base font-bold mb-1">Competencias</h3>
+            <h3 className="text-sm font-bold mb-1">Competencias</h3>
           </CardContent>
         </Card>
       </div>
@@ -83,7 +83,6 @@ export default function Index() {
   );
 
   const renderContent = () => {
-    // Mostrar la vista de tarjetas cuando no hay tab específico, independientemente del tamaño de pantalla
     if (!defaultTab) {
       return renderHomeCards();
     }
