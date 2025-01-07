@@ -1,171 +1,109 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase-client";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { UserPlus } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase-client";
+import { UserSearch } from "../UserSearch";
 
 type NewMatchInviteProps = {
   matchId: string;
   currentUserId: string;
   isDoubles: boolean;
-  position: 'player2' | 'player1_partner' | 'player2_partner';
+  position: "player2" | "player1_partner" | "player2_partner";
 };
 
 export function NewMatchInvite({ 
   matchId, 
-  currentUserId, 
-  isDoubles, 
+  currentUserId,
+  isDoubles,
   position 
 }: NewMatchInviteProps) {
   const [open, setOpen] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const { data: availablePlayers } = useQuery({
-    queryKey: ["available-players", matchId],
-    queryFn: async () => {
-      // Obtener jugadores que no están ya en el partido
-      const { data: match } = await supabase
-        .from("matches")
-        .select("player1_id, player2_id, player1_partner_id, player2_partner_id")
-        .eq("id", matchId)
+  const handleInvite = async (recipientId: string) => {
+    try {
+      console.log("Enviando invitación...", { matchId, recipientId, position });
+      
+      // Primero crear la invitación
+      const { data: invitationData, error: invitationError } = await supabase
+        .from('match_invitations')
+        .insert([
+          {
+            match_id: matchId,
+            sender_id: currentUserId,
+            recipient_id: recipientId,
+            status: 'pending'
+          }
+        ])
+        .select()
         .single();
 
-      if (!match) throw new Error("Match not found");
+      if (invitationError) {
+        throw invitationError;
+      }
 
-      const existingPlayerIds = [
-        match.player1_id,
-        match.player2_id,
-        match.player1_partner_id,
-        match.player2_partner_id
-      ].filter(Boolean);
-
-      const { data: profiles, error } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .not("id", "in", `(${existingPlayerIds.join(",")})`)
-        .neq("id", currentUserId)
-        .order("full_name");
-
-      if (error) throw error;
-      return profiles;
-    },
-  });
-
-  const handleInvite = async () => {
-    try {
-      setError(null);
-      setIsSubmitting(true);
-
-      // 1. Crear la invitación
-      const { error: inviteError } = await supabase
-        .from("match_invitations")
-        .insert({
-          match_id: matchId,
-          sender_id: currentUserId,
-          recipient_id: selectedUserId,
-          status: "pending"
-        });
-
-      if (inviteError) throw inviteError;
-
-      // 2. Actualizar el partido con el jugador pendiente
-      const updateData = {
-        [position]: selectedUserId,
-      };
+      // Luego actualizar el match con el jugador invitado
+      const updateData: Record<string, any> = {};
+      updateData[position + '_id'] = recipientId;
 
       const { error: matchError } = await supabase
-        .from("matches")
+        .from('matches')
         .update(updateData)
-        .eq("id", matchId);
+        .eq('id', matchId);
 
-      if (matchError) throw matchError;
+      if (matchError) {
+        throw matchError;
+      }
 
       toast({
         title: "Invitación enviada",
-        description: "El jugador ha sido invitado al partido.",
+        description: "Se ha enviado la invitación al jugador",
       });
 
       setOpen(false);
-      setSelectedUserId("");
-    } catch (err) {
-      console.error("Error sending invitation:", err);
-      setError("No se pudo enviar la invitación. Por favor intenta de nuevo.");
-    } finally {
-      setIsSubmitting(false);
+    } catch (error) {
+      console.error("Error sending invitation:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo enviar la invitación",
+      });
     }
   };
 
-  const positionLabels = {
-    player2: "Jugador 2",
-    player1_partner: "Compañero Jugador 1",
-    player2_partner: "Compañero Jugador 2"
+  const getButtonText = () => {
+    switch (position) {
+      case "player2":
+        return "Invitar Oponente";
+      case "player1_partner":
+        return "Invitar Compañero";
+      case "player2_partner":
+        return "Invitar Compañero del Oponente";
+      default:
+        return "Invitar Jugador";
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <UserPlus className="h-4 w-4 mr-2" />
-          Invitar {positionLabels[position]}
-        </Button>
+        <Button variant="outline">{getButtonText()}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Invitar Jugador</DialogTitle>
-          <DialogDescription>
-            Selecciona un jugador para invitar como {positionLabels[position].toLowerCase()}.
-          </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          <Select
-            value={selectedUserId}
-            onValueChange={setSelectedUserId}
-            disabled={isSubmitting}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar jugador" />
-            </SelectTrigger>
-            <SelectContent>
-              {availablePlayers?.map((player) => (
-                <SelectItem key={player.id} value={player.id}>
-                  {player.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button 
-            onClick={handleInvite} 
-            disabled={!selectedUserId || isSubmitting}
-            className="w-full"
-          >
-            {isSubmitting ? "Enviando..." : "Enviar Invitación"}
-          </Button>
-        </div>
+        <UserSearch
+          onSelect={handleInvite}
+          excludeIds={[currentUserId]}
+        />
       </DialogContent>
     </Dialog>
   );
