@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ export default function BookingCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { data: bookings = [], refetch: refetchBookings } = useBookings(selectedDate);
 
   return (
@@ -50,7 +52,7 @@ export default function BookingCalendar() {
               </p>
               <Button 
                 variant="outline" 
-                onClick={() => window.location.href = '/login'}
+                onClick={() => navigate('/login')}
                 className="hover:bg-[#6898FE]/10 border-[#6898FE]/20"
               >
                 Iniciar Sesión
