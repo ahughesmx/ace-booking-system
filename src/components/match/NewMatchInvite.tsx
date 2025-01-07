@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase-client";
 import { UserSearch } from "@/components/UserSearch";
 
 type NewMatchInviteProps = {
@@ -16,22 +16,46 @@ type NewMatchInviteProps = {
   currentUserId: string;
   isDoubles: boolean;
   position: "player2" | "player1_partner" | "player2_partner";
+  bookingStartTime?: string;
 };
 
 export function NewMatchInvite({ 
   matchId, 
   currentUserId,
   isDoubles,
-  position 
+  position,
+  bookingStartTime 
 }: NewMatchInviteProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
   const handleInvite = async (recipientId: string) => {
     try {
-      console.log("Enviando invitación...", { matchId, recipientId, position });
+      // Verificar si el usuario ya tiene un partido confirmado en esta fecha y hora
+      if (bookingStartTime) {
+        const { data: existingMatches } = await supabase
+          .from("matches")
+          .select(`
+            id,
+            booking:bookings!inner(start_time)
+          `)
+          .or(`player1_id.eq.${recipientId},player2_id.eq.${recipientId}`)
+          .eq("booking.start_time", bookingStartTime)
+          .eq("is_confirmed_player1", true)
+          .eq("is_confirmed_player2", true);
+
+        if (existingMatches && existingMatches.length > 0) {
+          toast({
+            title: "No se puede invitar",
+            description: "El usuario ya tiene un partido confirmado en esta fecha y hora",
+            variant: "destructive",
+          });
+          setOpen(false);
+          return;
+        }
+      }
       
-      // Primero crear la invitación
+      // Crear la invitación
       const { error: invitationError } = await supabase
         .from('match_invitations')
         .insert([
@@ -47,7 +71,7 @@ export function NewMatchInvite({
         throw invitationError;
       }
 
-      // Luego actualizar el match con el jugador invitado
+      // Actualizar el match con el jugador invitado
       const updateData: Record<string, any> = {};
       updateData[position + '_id'] = recipientId;
 
