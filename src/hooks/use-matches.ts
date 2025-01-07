@@ -11,18 +11,7 @@ export function useMatches() {
       const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
         .select(`
-          id,
-          booking_id,
-          player1_id,
-          player2_id,
-          player1_sets,
-          player2_sets,
-          is_doubles,
-          is_confirmed_player1,
-          is_confirmed_player2,
-          created_at,
-          player1_partner_id,
-          player2_partner_id,
+          *,
           player1:profiles!matches_player1_id_fkey_profiles (
             id,
             full_name
@@ -55,7 +44,6 @@ export function useMatches() {
 
       console.log("Datos de matches obtenidos:", matchesData);
 
-      // Transformación explícita de los datos para asegurar la estructura correcta
       const matches: Match[] = matchesData.map(match => ({
         id: match.id,
         booking_id: match.booking_id,
