@@ -32,8 +32,11 @@ export function MatchList({
     );
   }
 
+  // Si hay menos de 3 partidos, usamos un diseño de una sola columna
+  const gridCols = matches.length < 3 ? 'max-w-2xl mx-auto' : 'md:grid-cols-2 xl:grid-cols-3';
+
   return (
-    <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'}`}>
+    <div className={`grid gap-4 grid-cols-1 ${gridCols}`}>
       {matches.map((match) => (
         <MatchCard
           key={match.id}
