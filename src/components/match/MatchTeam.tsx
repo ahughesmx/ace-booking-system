@@ -6,16 +6,23 @@ type MatchTeamProps = {
   partnerName?: string | null | undefined;
   isDoubles?: boolean;
   isConfirmed?: boolean;
+  showConfirmation?: boolean;
 };
 
-export function MatchTeam({ playerName, partnerName, isDoubles, isConfirmed }: MatchTeamProps) {
+export function MatchTeam({ 
+  playerName, 
+  partnerName, 
+  isDoubles, 
+  isConfirmed,
+  showConfirmation = false 
+}: MatchTeamProps) {
   const renderTeamName = () => {
     if (!playerName) return "Jugador por confirmar";
     
     const mainPlayerDisplay = (
       <span className="font-semibold">
         {playerName}
-        {isConfirmed !== undefined && (
+        {showConfirmation && (
           <Badge 
             variant={isConfirmed ? "default" : "secondary"}
             className="ml-2 text-xs"
