@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import type { Match } from "@/types/match";
+import { useEffect } from "react";
 
 export function useMatches() {
-  return useQuery({
+  const { data, refetch } = useQuery({
     queryKey: ["matches"],
     queryFn: async () => {
       console.log("Iniciando fetch de matches...");
@@ -81,4 +82,30 @@ export function useMatches() {
       return matches;
     }
   });
+
+  useEffect(() => {
+    // Suscripción a cambios en la tabla matches
+    const channel = supabase
+      .channel('matches-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Escuchar todos los eventos (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'matches'
+        },
+        (payload) => {
+          console.log('Cambio detectado en matches:', payload);
+          refetch(); // Actualizar los datos cuando hay cambios
+        }
+      )
+      .subscribe();
+
+    // Limpieza de la suscripción
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
+
+  return { data, refetch };
 }
