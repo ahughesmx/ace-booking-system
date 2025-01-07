@@ -6,8 +6,9 @@ export function useMatches() {
   return useQuery({
     queryKey: ["matches"],
     queryFn: async () => {
-      console.log("Fetching matches...");
-      const { data, error } = await supabase
+      console.log("Iniciando fetch de matches...");
+      
+      const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
         .select(`
           id,
@@ -22,12 +23,6 @@ export function useMatches() {
           created_at,
           player1_partner_id,
           player2_partner_id,
-          booking:bookings!matches_booking_id_fkey (
-            start_time,
-            court:courts (
-              name
-            )
-          ),
           player1:profiles!matches_player1_id_fkey_profiles (
             id,
             full_name
@@ -43,26 +38,58 @@ export function useMatches() {
           player2_partner:profiles!matches_player2_partner_id_fkey_profiles (
             id,
             full_name
+          ),
+          booking:bookings!matches_booking_id_fkey (
+            start_time,
+            court:courts (
+              name
+            )
           )
         `)
         .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error("Error fetching matches:", error);
-        throw error;
+
+      if (matchesError) {
+        console.error("Error al obtener matches:", matchesError);
+        throw matchesError;
       }
 
-      console.log("Matches data:", data);
-      
-      return data.map(match => ({
-        ...match,
+      console.log("Datos de matches obtenidos:", matchesData);
+
+      // Transformación explícita de los datos para asegurar la estructura correcta
+      const matches: Match[] = matchesData.map(match => ({
+        id: match.id,
+        booking_id: match.booking_id,
+        player1_id: match.player1_id,
+        player2_id: match.player2_id,
+        player1_sets: match.player1_sets,
+        player2_sets: match.player2_sets,
+        is_doubles: match.is_doubles,
+        is_confirmed_player1: match.is_confirmed_player1,
+        is_confirmed_player2: match.is_confirmed_player2,
+        created_at: match.created_at,
+        player1_partner_id: match.player1_partner_id,
+        player2_partner_id: match.player2_partner_id,
+        player1: match.player1 ? {
+          full_name: match.player1.full_name
+        } : null,
+        player2: match.player2 ? {
+          full_name: match.player2.full_name
+        } : null,
+        player1_partner: match.player1_partner ? {
+          full_name: match.player1_partner.full_name
+        } : null,
+        player2_partner: match.player2_partner ? {
+          full_name: match.player2_partner.full_name
+        } : null,
         booking: match.booking ? {
           start_time: match.booking.start_time,
           court: match.booking.court ? {
             name: match.booking.court.name
-          } : undefined
+          } : null
         } : null
       }));
+
+      return matches;
     }
   });
 }
