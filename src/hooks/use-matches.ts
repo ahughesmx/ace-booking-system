@@ -49,7 +49,7 @@ export function useMatches() {
       }
       
       // Transform the data to match our Match type
-      const transformedData: Match[] = data.map(match => ({
+      return data.map(match => ({
         ...match,
         booking: match.bookings ? {
           start_time: match.bookings.start_time,
@@ -58,9 +58,6 @@ export function useMatches() {
           } : undefined
         } : null
       }));
-      
-      console.log("Matches data:", transformedData);
-      return transformedData;
     },
     retry: 1,
     retryDelay: 1000,
