@@ -1,9 +1,12 @@
 import { addHours, setHours, setMinutes, setSeconds, setMilliseconds } from "date-fns";
+import { zonedTimeToUtc } from 'date-fns-tz';
 
 export function normalizeDateTime(date: Date, timeString: string): Date {
   const [hours] = timeString.split(":");
   const normalizedDate = new Date(date);
-  return setMilliseconds(
+  
+  // Set the time components
+  const dateWithTime = setMilliseconds(
     setSeconds(
       setMinutes(
         setHours(normalizedDate, parseInt(hours)),
@@ -13,6 +16,9 @@ export function normalizeDateTime(date: Date, timeString: string): Date {
     ),
     0
   );
+
+  // Convert to UTC while considering Mexico City timezone
+  return zonedTimeToUtc(dateWithTime, 'America/Mexico_City');
 }
 
 export function createBookingTimes(date: Date | undefined, timeString: string | null) {
