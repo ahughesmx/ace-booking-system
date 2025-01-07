@@ -44,13 +44,6 @@ export function useBookingSubmit(onSuccess: () => void) {
         throw new Error("Error al crear los horarios de la reserva");
       }
 
-      console.log('Attempting to create booking with:', {
-        court_id: selectedCourt,
-        user_id: user.id,
-        start_time: times.startTime.toISOString(),
-        end_time: times.endTime.toISOString(),
-      });
-
       const { error } = await supabase
         .from("bookings")
         .insert({
@@ -61,29 +54,20 @@ export function useBookingSubmit(onSuccess: () => void) {
         });
 
       if (error) {
-        console.error("Error creating booking:", error);
-        
-        // Parse the error body if it exists
-        let errorMessage = "No se pudo realizar la reserva. Por favor intenta de nuevo.";
-        try {
-          if (error.message) {
-            const errorBody = JSON.parse(error.message);
-            if (errorBody?.message?.includes("máximo de reservas permitidas")) {
-              toast({
-                title: "Límite de reservas alcanzado",
-                description: "Ya tienes el máximo de 2 reservas activas permitidas. Cancela una reserva existente para poder hacer una nueva.",
-                variant: "destructive",
-              });
-              return;
-            }
-          }
-        } catch (e) {
-          console.error("Error parsing error message:", e);
+        // Check if the error is about maximum bookings
+        if (error.message?.includes("máximo de reservas permitidas")) {
+          toast({
+            title: "Límite de reservas alcanzado",
+            description: "No se puede realizar la reserva. Has alcanzado el máximo de reservas activas permitidas.",
+            variant: "destructive",
+          });
+          return;
         }
-        
+
+        // Handle other errors
         toast({
           title: "Error",
-          description: errorMessage,
+          description: "No se pudo realizar la reserva. Por favor intenta de nuevo.",
           variant: "destructive",
         });
         return;
@@ -94,10 +78,6 @@ export function useBookingSubmit(onSuccess: () => void) {
       });
       
       onSuccess();
-      toast({
-        title: "Reserva exitosa",
-        description: "Tu cancha ha sido reservada correctamente.",
-      });
     } catch (error: any) {
       console.error("Error creating booking:", error);
       toast({
