@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +20,28 @@ export const MatchInvitationNotification = () => {
   const [selectedInvitation, setSelectedInvitation] = useState<MatchInvitation | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { data: pendingInvitations = [] } = useInvitations(user?.id);
+  const { data: pendingInvitations = [], refetch } = useInvitations(user?.id);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('match-invitations')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'match_invitations'
+        },
+        () => {
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
 
   const handleInvitationResponse = async (accept: boolean) => {
     if (!selectedInvitation) return;
@@ -30,7 +51,14 @@ export const MatchInvitationNotification = () => {
         // Get all pending invitations for the same time slot
         const { data: conflictingInvitations, error: fetchError } = await supabase
           .from("match_invitations")
-          .select("id")
+          .select(`
+            id,
+            match:matches (
+              booking:bookings (
+                start_time
+              )
+            )
+          `)
           .eq("recipient_id", user?.id)
           .eq("status", "pending")
           .neq("id", selectedInvitation.id);
