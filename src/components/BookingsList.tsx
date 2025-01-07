@@ -8,7 +8,7 @@ import { useUserRole } from "@/hooks/use-user-role";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCourts } from "@/hooks/use-courts";
 import type { Booking } from "@/types/booking";
-import { format } from "date-fns";
+import { format, addDays, startOfToday, isAfter, isBefore, endOfTomorrow } from "date-fns";
 
 interface BookingsListProps {
   bookings: Booking[];
@@ -74,6 +74,29 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
       });
     }
   };
+
+  // Validar que la fecha seleccionada sea hoy o mañana
+  const isValidDate = (date?: Date) => {
+    if (!date) return false;
+    const today = startOfToday();
+    const tomorrow = endOfTomorrow();
+    return !isBefore(date, today) && !isAfter(date, tomorrow);
+  };
+
+  if (!isValidDate(selectedDate)) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-[#1e3a8a]">Horarios disponibles</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-center py-8">
+            Solo se pueden hacer reservas para hoy y mañana
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!user) {
     const bookedSlots = new Set(
