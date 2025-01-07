@@ -13,19 +13,15 @@ export function useMatches() {
         .select(`
           *,
           player1:profiles!matches_player1_id_fkey_profiles (
-            id,
             full_name
           ),
           player2:profiles!matches_player2_id_fkey_profiles (
-            id,
             full_name
           ),
           player1_partner:profiles!matches_player1_partner_id_fkey_profiles (
-            id,
             full_name
           ),
           player2_partner:profiles!matches_player2_partner_id_fkey_profiles (
-            id,
             full_name
           ),
           booking:bookings!matches_booking_id_fkey (
@@ -40,6 +36,11 @@ export function useMatches() {
       if (matchesError) {
         console.error("Error al obtener matches:", matchesError);
         throw matchesError;
+      }
+
+      if (!matchesData) {
+        console.log("No se encontraron matches");
+        return [];
       }
 
       console.log("Datos de matches obtenidos:", matchesData);
