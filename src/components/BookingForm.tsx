@@ -8,26 +8,13 @@ import { useNavigate } from "react-router-dom";
 import { useBookingSubmit } from "./booking/useBookingSubmit";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import { format, isAfter, addHours, parseISO } from "date-fns";
+import { format } from "date-fns";
 
-// Filtrar los horarios disponibles basados en la hora actual
-const getAvailableTimeSlots = () => {
-  const now = new Date();
-  const currentHour = now.getHours();
-  
-  // Definir todos los horarios posibles
-  const allTimeSlots = [
-    "08:00", "09:00", "10:00", "11:00", "12:00",
-    "13:00", "14:00", "15:00", "16:00", "17:00",
-    "18:00", "19:00", "20:00", "21:00", "22:00"
-  ];
-
-  // Si es hoy, filtrar las horas que ya pasaron
-  return allTimeSlots.filter(timeSlot => {
-    const [hours] = timeSlot.split(":").map(Number);
-    return hours > currentHour;
-  });
-};
+const availableTimeSlots = [
+  "08:00", "09:00", "10:00", "11:00", "12:00",
+  "13:00", "14:00", "15:00", "16:00", "17:00",
+  "18:00", "19:00", "20:00", "21:00", "22:00"
+];
 
 interface BookingFormProps {
   selectedDate?: Date;
@@ -69,22 +56,12 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const isTimeSlotAvailable = (time: string, courtId: string) => {
     if (!selectedDate) return false;
 
-    // Verificar si el horario ya pasó para el día actual
-    const now = new Date();
+    // Convert the time slot to a Date object for comparison
     const [hours] = time.split(":");
     const slotDate = new Date(selectedDate);
     slotDate.setHours(parseInt(hours), 0, 0, 0);
 
-    if (
-      selectedDate.getDate() === now.getDate() &&
-      selectedDate.getMonth() === now.getMonth() &&
-      selectedDate.getFullYear() === now.getFullYear() &&
-      slotDate <= now
-    ) {
-      return false;
-    }
-
-    // Verificar si hay reservas existentes
+    // Check if there's any booking that overlaps with this time slot
     return !existingBookings.some(booking => {
       const bookingStart = new Date(booking.start_time);
       const bookingEnd = new Date(booking.end_time);
@@ -95,15 +72,6 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const handleLoginRedirect = () => {
     navigate('/login');
   };
-
-  // Obtener los horarios disponibles
-  const availableTimeSlots = selectedDate?.getDate() === new Date().getDate() 
-    ? getAvailableTimeSlots()
-    : [
-        "08:00", "09:00", "10:00", "11:00", "12:00",
-        "13:00", "14:00", "15:00", "16:00", "17:00",
-        "18:00", "19:00", "20:00", "21:00", "22:00"
-      ];
 
   return (
     <div className="space-y-4">
