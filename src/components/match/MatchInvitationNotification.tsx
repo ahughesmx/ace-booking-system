@@ -27,16 +27,29 @@ export const MatchInvitationNotification = () => {
 
     try {
       if (accept && selectedInvitation.match?.booking?.start_time) {
-        // Reject other invitations for the same time slot
-        const { error: rejectError } = await supabase
+        // Get all pending invitations for the same time slot
+        const { data: conflictingInvitations, error: fetchError } = await supabase
           .from("match_invitations")
-          .update({ status: "rejected" })
+          .select("id")
           .eq("recipient_id", user?.id)
           .eq("status", "pending")
-          .neq("id", selectedInvitation.id)
-          .eq("match.bookings.start_time", selectedInvitation.match.booking.start_time);
+          .neq("id", selectedInvitation.id);
 
-        if (rejectError) throw rejectError;
+        if (fetchError) throw fetchError;
+
+        // Filter locally for the same time slot
+        const invitationsToReject = conflictingInvitations.filter(invitation => {
+          return invitation.match?.booking?.start_time === selectedInvitation.match?.booking?.start_time;
+        });
+
+        if (invitationsToReject.length > 0) {
+          const { error: rejectError } = await supabase
+            .from("match_invitations")
+            .update({ status: "rejected" })
+            .in("id", invitationsToReject.map(inv => inv.id));
+
+          if (rejectError) throw rejectError;
+        }
       }
 
       // Update the selected invitation
