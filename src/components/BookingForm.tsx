@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useBookingSubmit } from "./booking/useBookingSubmit";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import { format, addHours, isBefore, startOfHour, addMinutes } from "date-fns";
+import { format, addHours, isBefore, startOfHour } from "date-fns";
 
 const availableTimeSlots = [
   "08:00", "09:00", "10:00", "11:00", "12:00",
@@ -30,7 +30,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const { handleBooking, isSubmitting } = useBookingSubmit(onBookingSuccess);
 
   // Query existing bookings for the selected date
-  const { data: existingBookings = [] } = useQuery({
+  const { data: existingBookings = [], isLoading: isLoadingBookings } = useQuery({
     queryKey: ["bookings", selectedDate, selectedCourt],
     queryFn: async () => {
       if (!selectedDate || !selectedCourt) return [];
@@ -51,6 +51,21 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
       return data || [];
     },
     enabled: !!selectedDate && !!selectedCourt
+  });
+
+  // Query user's active bookings
+  const { data: userActiveBookings = 0 } = useQuery({
+    queryKey: ["userActiveBookings", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      const { data } = await supabase
+        .from("profiles")
+        .select("active_bookings")
+        .eq("id", user.id)
+        .single();
+      return data?.active_bookings || 0;
+    },
+    enabled: !!user?.id
   });
 
   const isTimeSlotAvailable = (time: string, courtId: string) => {
@@ -84,6 +99,14 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
 
   return (
     <div className="space-y-4">
+      {userActiveBookings >= 2 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+          <p className="text-yellow-800 text-sm">
+            Ya tienes el máximo de 2 reservas activas permitidas. Debes esperar a que finalicen o cancelar alguna reserva existente.
+          </p>
+        </div>
+      )}
+
       {courts && courts.length > 0 && (
         <CanchaSelector
           courts={courts}
@@ -105,7 +128,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
       {user ? (
         <Button
           className="w-full"
-          disabled={!selectedDate || !selectedTime || !selectedCourt || isSubmitting}
+          disabled={!selectedDate || !selectedTime || !selectedCourt || isSubmitting || userActiveBookings >= 2}
           onClick={() => handleBooking(selectedDate, selectedTime, selectedCourt)}
         >
           {isSubmitting ? "Reservando..." : "Reservar cancha"}
