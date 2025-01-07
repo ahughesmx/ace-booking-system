@@ -102,9 +102,9 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   return (
     <div className="space-y-4">
       {userActiveBookings >= 2 && (
-        <Alert variant="warning" className="bg-yellow-50 border-yellow-200">
-          <AlertCircle className="h-4 w-4 text-yellow-800" />
-          <AlertDescription className="text-yellow-800">
+        <Alert variant="warning">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
             Ya tienes el máximo de 2 reservas activas permitidas. Debes esperar a que finalicen o cancelar alguna reserva existente.
           </AlertDescription>
         </Alert>
