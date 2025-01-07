@@ -100,7 +100,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Reservas del día</CardTitle>
+          <CardTitle className="text-[#1e3a8a]">Reservas del día</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-center py-8">
@@ -114,7 +114,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Reservas del día</CardTitle>
+        <CardTitle className="text-[#1e3a8a]">Reservas del día</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
