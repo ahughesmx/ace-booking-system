@@ -44,7 +44,7 @@ export function useBookingSubmit(onSuccess: () => void) {
         throw new Error("Error al crear los horarios de la reserva");
       }
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("bookings")
         .insert({
           court_id: selectedCourt,
@@ -54,17 +54,18 @@ export function useBookingSubmit(onSuccess: () => void) {
         });
 
       if (error) {
-        // Check if the error is about maximum bookings
+        // Manejar específicamente el error de máximo de reservas
         if (error.message?.includes("máximo de reservas permitidas")) {
           toast({
             title: "Límite de reservas alcanzado",
-            description: "No se puede realizar la reserva. Has alcanzado el máximo de reservas activas permitidas.",
+            description: "No puedes realizar más reservas. Has alcanzado el máximo de reservas activas permitidas.",
             variant: "destructive",
           });
           return;
         }
 
-        // Handle other errors
+        // Manejar otros errores
+        console.error("Error creating booking:", error);
         toast({
           title: "Error",
           description: "No se pudo realizar la reserva. Por favor intenta de nuevo.",
@@ -78,6 +79,11 @@ export function useBookingSubmit(onSuccess: () => void) {
       });
       
       onSuccess();
+      
+      toast({
+        title: "Reserva exitosa",
+        description: "Tu reserva se ha realizado correctamente.",
+      });
     } catch (error: any) {
       console.error("Error creating booking:", error);
       toast({

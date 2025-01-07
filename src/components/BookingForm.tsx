@@ -9,6 +9,8 @@ import { useBookingSubmit } from "./booking/useBookingSubmit";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { format, addHours, isBefore, startOfHour } from "date-fns";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const availableTimeSlots = [
   "08:00", "09:00", "10:00", "11:00", "12:00",
@@ -100,11 +102,12 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   return (
     <div className="space-y-4">
       {userActiveBookings >= 2 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-          <p className="text-yellow-800 text-sm">
+        <Alert variant="warning" className="bg-yellow-50 border-yellow-200">
+          <AlertCircle className="h-4 w-4 text-yellow-800" />
+          <AlertDescription className="text-yellow-800">
             Ya tienes el máximo de 2 reservas activas permitidas. Debes esperar a que finalicen o cancelar alguna reserva existente.
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
 
       {courts && courts.length > 0 && (
