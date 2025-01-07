@@ -1,22 +1,43 @@
 import { Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 type MatchTeamProps = {
   playerName: string | null | undefined;
   partnerName?: string | null | undefined;
   isDoubles?: boolean;
+  isConfirmed?: boolean;
 };
 
-export function MatchTeam({ playerName, partnerName, isDoubles }: MatchTeamProps) {
+export function MatchTeam({ playerName, partnerName, isDoubles, isConfirmed }: MatchTeamProps) {
   const renderTeamName = () => {
     if (!playerName) return "Jugador por confirmar";
-    if (!partnerName) return playerName;
-    return `${playerName} / ${partnerName}`;
+    
+    const mainPlayerDisplay = (
+      <span className="font-semibold">
+        {playerName}
+        {isConfirmed !== undefined && (
+          <Badge 
+            variant={isConfirmed ? "default" : "secondary"}
+            className="ml-2 text-xs"
+          >
+            {isConfirmed ? "confirmado" : "por confirmar"}
+          </Badge>
+        )}
+      </span>
+    );
+
+    if (!partnerName) return mainPlayerDisplay;
+    return (
+      <>
+        {mainPlayerDisplay} / {partnerName}
+      </>
+    );
   };
 
   return (
     <div className="flex items-center gap-2">
       {isDoubles && <Users className="h-4 w-4" />}
-      <span className="font-semibold">{renderTeamName()}</span>
+      {renderTeamName()}
     </div>
   );
 }

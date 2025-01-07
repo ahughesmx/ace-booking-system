@@ -51,12 +51,14 @@ export function MatchCard({
                 playerName={match.player1?.full_name}
                 partnerName={match.is_doubles ? match.player1_partner?.full_name : undefined}
                 isDoubles={match.is_doubles}
+                isConfirmed={match.is_confirmed_player1}
               />
               <span className="text-muted-foreground">vs</span>
               <MatchTeam 
                 playerName={match.player2?.full_name}
                 partnerName={match.is_doubles ? match.player2_partner?.full_name : undefined}
                 isDoubles={match.is_doubles}
+                isConfirmed={match.is_confirmed_player2}
               />
             </div>
           </div>
