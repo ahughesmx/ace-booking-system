@@ -18,8 +18,8 @@ export function MatchManagement() {
     handleDeleteMatch 
   } = useMatchActions(refetchMatches);
 
-  const onCreateMatch = (isDoubles: boolean = false) => {
-    handleCreateMatch(user?.id, isDoubles);
+  const onCreateMatch = (isDoubles: boolean = false, bookingId: string) => {
+    handleCreateMatch(user?.id, isDoubles, bookingId);
   };
 
   return (

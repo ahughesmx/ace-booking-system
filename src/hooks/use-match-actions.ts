@@ -8,7 +8,7 @@ export function useMatchActions(refetchMatches: () => void) {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleCreateMatch = async (userId: string | undefined, isDoubles: boolean = false) => {
+  const handleCreateMatch = async (userId: string | undefined, isDoubles: boolean = false, bookingId: string) => {
     try {
       setIsLoading(true);
 
@@ -22,30 +22,10 @@ export function useMatchActions(refetchMatches: () => void) {
         return;
       }
 
-      const startTime = new Date();
-      startTime.setHours(8, 0, 0, 0);
-      if (startTime < new Date()) {
-        startTime.setDate(startTime.getDate() + 1);
-      }
-      
-      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
-
-      const { data: bookingData, error: bookingError } = await supabase
-        .from("bookings")
-        .insert({
-          user_id: userId,
-          start_time: startTime.toISOString(),
-          end_time: endTime.toISOString(),
-        })
-        .select()
-        .single();
-
-      if (bookingError) throw bookingError;
-
       const { error: matchError } = await supabase
         .from("matches")
         .insert({
-          booking_id: bookingData.id,
+          booking_id: bookingId,
           player1_id: userId,
           is_doubles: isDoubles,
         });
