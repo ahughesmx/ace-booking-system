@@ -16,12 +16,14 @@ export default function BookingCalendar() {
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
-      <Card className="md:sticky md:top-4 h-fit">
-        <CardHeader>
-          <CardTitle>Reserva tu Cancha</CardTitle>
+      <Card className="md:sticky md:top-4 h-fit border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
+        <CardHeader className="bg-gradient-to-r from-[#6898FE]/10 to-transparent">
+          <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+            Reserva tu Cancha
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="rounded-lg border p-3">
+          <div className="rounded-lg border border-[#6898FE]/20 p-3">
             <Calendar
               mode="single"
               selected={selectedDate}
@@ -42,11 +44,15 @@ export default function BookingCalendar() {
               }}
             />
           ) : (
-            <div className="text-center p-4 bg-muted rounded-lg">
+            <div className="text-center p-4 bg-[#6898FE]/5 rounded-lg border border-[#6898FE]/20">
               <p className="text-sm text-muted-foreground mb-2">
                 Inicia sesión para reservar una cancha
               </p>
-              <Button variant="outline" onClick={() => window.location.href = '/login'}>
+              <Button 
+                variant="outline" 
+                onClick={() => window.location.href = '/login'}
+                className="hover:bg-[#6898FE]/10 border-[#6898FE]/20"
+              >
                 Iniciar Sesión
               </Button>
             </div>

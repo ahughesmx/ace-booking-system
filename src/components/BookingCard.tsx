@@ -19,11 +19,11 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
   };
 
   return (
-    <Card>
+    <Card className="border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 hover:shadow-lg transition-all duration-300">
       <CardContent className="pt-6">
         <div className="flex justify-between items-center">
           <div>
-            <p className="font-medium">
+            <p className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
               {booking.court?.name || "Cancha sin nombre"}
             </p>
             <p className="text-sm text-muted-foreground">
@@ -38,6 +38,7 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
               variant="destructive"
               size="icon"
               onClick={() => onCancel(booking.id)}
+              className="hover:bg-red-600 transition-colors duration-200"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
