@@ -62,6 +62,17 @@ export function useBookingSubmit(onSuccess: () => void) {
 
       if (error) {
         console.error("Error creating booking:", error);
+        
+        // Handle the specific maximum bookings error
+        if (error.message?.includes("máximo de reservas permitidas")) {
+          toast({
+            title: "Límite de reservas alcanzado",
+            description: "Ya tienes el máximo de 2 reservas activas permitidas. Cancela una reserva existente para poder hacer una nueva.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         throw error;
       }
 
