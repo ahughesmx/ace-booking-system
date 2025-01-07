@@ -29,7 +29,7 @@ export function MatchTeam({
             variant={isConfirmed ? "default" : "secondary"}
             className="ml-2 text-xs"
           >
-            {isConfirmed ? "ha confirmado" : "por confirmar"}
+            {isConfirmed ? "confirmado" : "por confirmar"}
           </Badge>
         )}
       </span>
