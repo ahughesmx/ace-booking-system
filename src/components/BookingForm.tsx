@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useBookingSubmit } from "./booking/useBookingSubmit";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import { format } from "date-fns";
+import { format, addHours, isBefore, startOfHour, addMinutes } from "date-fns";
 
 const availableTimeSlots = [
   "08:00", "09:00", "10:00", "11:00", "12:00",
@@ -60,6 +60,15 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     const [hours] = time.split(":");
     const slotDate = new Date(selectedDate);
     slotDate.setHours(parseInt(hours), 0, 0, 0);
+
+    // Get current time rounded to the next hour
+    const now = new Date();
+    const nextHour = startOfHour(addHours(now, 1));
+
+    // Check if the time slot is in the past
+    if (isBefore(slotDate, nextHour)) {
+      return false;
+    }
 
     // Check if there's any booking that overlaps with this time slot
     return !existingBookings.some(booking => {
