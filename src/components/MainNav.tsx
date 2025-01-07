@@ -4,6 +4,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Home, Calendar, Trophy, LogOut, LogIn } from "lucide-react";
+import { MatchInvitationNotification } from "./match/MatchInvitationNotification";
 
 const MainNav = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -53,14 +54,16 @@ const MainNav = () => {
         </Button>
       ))}
       {user ? (
-        <Button
-          variant="ghost"
-          className="flex w-full items-center justify-start gap-2 text-red-500 hover:text-red-600"
-          onClick={handleSignOut}
-        >
-          <LogOut className="h-4 w-4" />
-          <span>Cerrar sesión</span>
-        </Button>
+        <>
+          <Button
+            variant="ghost"
+            className="flex w-full items-center justify-start gap-2 text-red-500 hover:text-red-600"
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Cerrar sesión</span>
+          </Button>
+        </>
       ) : (
         <Button
           variant="ghost"
@@ -89,6 +92,7 @@ const MainNav = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
+            {user && <MatchInvitationNotification />}
             <NavItems />
           </div>
 
@@ -101,6 +105,7 @@ const MainNav = () => {
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px]">
               <div className="flex flex-col space-y-4 mt-8">
+                {user && <MatchInvitationNotification />}
                 <NavItems />
               </div>
             </SheetContent>
