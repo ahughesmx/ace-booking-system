@@ -6,4 +6,15 @@ export type MatchInvitation = {
   status: 'pending' | 'accepted' | 'rejected' | null;
   created_at: string | null;
   updated_at: string | null;
+  match?: {
+    booking?: {
+      start_time: string;
+      court?: {
+        name: string | null;
+      } | null;
+    } | null;
+    player1?: {
+      full_name: string | null;
+    } | null;
+  } | null;
 };

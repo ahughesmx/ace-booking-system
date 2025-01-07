@@ -17,29 +17,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase-client";
 import { useAuth } from "@/components/AuthProvider";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { useToast } from "@/components/ui/use-toast";
-
-type MatchInvitation = {
-  id: string;
-  match_id: string;
-  invited_user_id: string;
-  status: string;
-  created_at: string;
-  match: {
-    date: string;
-    time: string;
-    court: {
-      name: string;
-    };
-    created_by: {
-      full_name: string;
-    };
-  };
-};
+import { useToast } from "@/hooks/use-toast";
+import { MatchInvitation } from "@/types/match-invitation";
 
 const formatDateTime = (date: string, time: string) => {
   const dateObj = new Date(`${date}T${time}`);
@@ -49,7 +32,7 @@ const formatDateTime = (date: string, time: string) => {
 export const MatchInvitationNotification = () => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [selectedInvitation, setSelectedInvitation] = useState<any>(null);
+  const [selectedInvitation, setSelectedInvitation] = useState<MatchInvitation | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -58,26 +41,26 @@ export const MatchInvitationNotification = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("match_invitations")
-        .select(
-          `
+        .select(`
           id,
           match_id,
-          invited_user_id,
+          sender_id,
+          recipient_id,
           status,
           created_at,
           match:matches (
-            date,
-            time,
-            court:courts (name),
-            created_by:profiles (full_name)
+            booking:bookings (
+              start_time,
+              court:courts (name)
+            ),
+            player1:profiles!player1_id (full_name)
           )
-        `
-        )
-        .eq("invited_user_id", user?.id)
+        `)
+        .eq("recipient_id", user?.id)
         .eq("status", "pending");
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!user,
   });
@@ -86,6 +69,20 @@ export const MatchInvitationNotification = () => {
     if (!selectedInvitation) return;
 
     try {
+      // Si se acepta, primero rechazar otras invitaciones en el mismo horario
+      if (accept && selectedInvitation.match?.booking?.start_time) {
+        const { error: rejectError } = await supabase
+          .from("match_invitations")
+          .update({ status: "rejected" })
+          .eq("recipient_id", user?.id)
+          .eq("status", "pending")
+          .neq("id", selectedInvitation.id)
+          .eq("match.booking.start_time", selectedInvitation.match.booking.start_time);
+
+        if (rejectError) throw rejectError;
+      }
+
+      // Actualizar la invitación seleccionada
       const { error } = await supabase
         .from("match_invitations")
         .update({ status: accept ? "accepted" : "rejected" })
@@ -141,17 +138,19 @@ export const MatchInvitationNotification = () => {
                 >
                   <div className="text-sm">
                     <span className="font-medium">
-                      {invitation.match.created_by.full_name}
+                      {invitation.match?.player1?.full_name}
                     </span>{" "}
                     te ha invitado a jugar en{" "}
                     <span className="font-medium">
-                      {invitation.match.court.name}
+                      {invitation.match?.booking?.court?.name}
                     </span>{" "}
                     el{" "}
-                    {formatDateTime(
-                      invitation.match.date,
-                      invitation.match.time
-                    )}
+                    {invitation.match?.booking?.start_time && 
+                      format(
+                        new Date(invitation.match.booking.start_time),
+                        "EEEE d 'de' MMMM 'a las' HH:mm",
+                        { locale: es }
+                      )}
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -167,7 +166,10 @@ export const MatchInvitationNotification = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleInvitationResponse(false)}
+                      onClick={() => {
+                        setSelectedInvitation(invitation);
+                        handleInvitationResponse(false);
+                      }}
                     >
                       Rechazar
                     </Button>
@@ -183,8 +185,8 @@ export const MatchInvitationNotification = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Confirmas tu participación?</AlertDialogTitle>
             <AlertDialogDescription>
-              Al aceptar, confirmas tu participación en el partido y te
-              comprometes a asistir.
+              Al aceptar esta invitación, se rechazarán automáticamente otras invitaciones
+              que tengas pendientes para la misma fecha y hora.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
