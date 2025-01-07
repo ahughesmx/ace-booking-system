@@ -48,7 +48,6 @@ export function useMatches() {
         throw error;
       }
       
-      // Transform the data to match our Match type
       return data.map(match => ({
         ...match,
         booking: match.bookings ? {
