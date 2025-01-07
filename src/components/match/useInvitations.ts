@@ -28,7 +28,7 @@ export const useInvitations = (userId: string | undefined) => {
         .eq("status", "pending");
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as MatchInvitation[];
     },
     enabled: !!userId,
   });
