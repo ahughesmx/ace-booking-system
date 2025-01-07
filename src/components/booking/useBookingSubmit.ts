@@ -44,7 +44,9 @@ export function useBookingSubmit(onSuccess: () => void) {
         throw new Error("Error al crear los horarios de la reserva");
       }
 
-      const { data, error } = await supabase
+      console.log("Booking times:", times);
+
+      const { error } = await supabase
         .from("bookings")
         .insert({
           court_id: selectedCourt,
@@ -54,21 +56,23 @@ export function useBookingSubmit(onSuccess: () => void) {
         });
 
       if (error) {
-        // Manejar específicamente el error de máximo de reservas
-        if (error.message?.includes("máximo de reservas permitidas")) {
-          toast({
-            title: "Límite de reservas alcanzado",
-            description: "No puedes realizar más reservas. Has alcanzado el máximo de reservas activas permitidas.",
-            variant: "destructive",
-          });
-          return;
+        // Parse the error message from PostgreSQL if available
+        let errorMessage = "No se pudo realizar la reserva. Por favor intenta de nuevo.";
+        
+        if (error.message) {
+          // Check for specific error messages from the database
+          if (error.message.includes("máximo de reservas permitidas")) {
+            errorMessage = "Ya tienes el máximo de reservas activas permitidas. Debes esperar a que finalicen o cancelar alguna reserva existente.";
+          } else if (error.message.includes("2 horas de anticipación")) {
+            errorMessage = "Las reservas deben hacerse con al menos 2 horas de anticipación.";
+          } else if (error.message.includes("Solo se pueden hacer reservas para hoy y mañana")) {
+            errorMessage = "Solo se pueden hacer reservas para hoy y mañana.";
+          }
         }
 
-        // Manejar otros errores
-        console.error("Error creating booking:", error);
         toast({
           title: "Error",
-          description: "No se pudo realizar la reserva. Por favor intenta de nuevo.",
+          description: errorMessage,
           variant: "destructive",
         });
         return;
