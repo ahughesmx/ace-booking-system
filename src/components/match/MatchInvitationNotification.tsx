@@ -1,16 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Bell } from "lucide-react";
-import { supabase } from "@/lib/supabase-client";
-import { useAuth } from "@/components/AuthProvider";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,219 +11,190 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { useToast } from "@/components/ui/use-toast";
 
-export function MatchInvitationNotification() {
+type MatchInvitation = {
+  id: string;
+  match_id: string;
+  invited_user_id: string;
+  status: string;
+  created_at: string;
+  match: {
+    date: string;
+    time: string;
+    court: {
+      name: string;
+    };
+    created_by: {
+      full_name: string;
+    };
+  };
+};
+
+const formatDateTime = (date: string, time: string) => {
+  const dateObj = new Date(`${date}T${time}`);
+  return format(dateObj, "EEEE d 'de' MMMM 'a las' HH:mm", { locale: es });
+};
+
+export const MatchInvitationNotification = () => {
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [selectedInvitation, setSelectedInvitation] = useState<any>(null);
   const { user } = useAuth();
   const { toast } = useToast();
-  const [invitations, setInvitations] = useState<any[]>([]);
-  const [open, setOpen] = useState(false);
-  const [confirmationOpen, setConfirmationOpen] = useState(false);
-  const [selectedInvitation, setSelectedInvitation] = useState<any>(null);
 
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const fetchInvitations = async () => {
+  const { data: pendingInvitations = [] } = useQuery<MatchInvitation[]>({
+    queryKey: ["pendingInvitations", user?.id],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("match_invitations")
-        .select(`
-          *,
-          matches (
-            *,
-            player1:profiles!matches_player1_id_fkey_profiles (full_name),
-            player2:profiles!matches_player2_id_fkey_profiles (full_name),
-            player1_partner:profiles!matches_player1_partner_id_fkey_profiles (full_name),
-            player2_partner:profiles!matches_player2_partner_id_fkey_profiles (full_name),
-            booking:bookings (
-              start_time,
-              court:courts (name)
-            )
+        .select(
+          `
+          id,
+          match_id,
+          invited_user_id,
+          status,
+          created_at,
+          match:matches (
+            date,
+            time,
+            court:courts (name),
+            created_by:profiles (full_name)
           )
-        `)
-        .eq("recipient_id", user.id)
+        `
+        )
+        .eq("invited_user_id", user?.id)
         .eq("status", "pending");
 
-      if (error) {
-        console.error("Error fetching invitations:", error);
-        return;
-      }
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
 
-      setInvitations(data || []);
-    };
+  const handleInvitationResponse = async (accept: boolean) => {
+    if (!selectedInvitation) return;
 
-    fetchInvitations();
-
-    const channel = supabase
-      .channel("match_invitations_changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "match_invitations",
-          filter: `recipient_id=eq.${user.id}`,
-        },
-        () => {
-          fetchInvitations();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id]);
-
-  const handleResponse = async (invitationId: string, accept: boolean) => {
     try {
-      if (accept) {
-        const invitation = invitations.find((inv) => inv.id === invitationId);
-        if (!invitation?.matches?.booking?.start_time) return;
-
-        // Rechazar otras invitaciones para la misma fecha y hora
-        const { error: rejectError } = await supabase
-          .from("match_invitations")
-          .update({ status: "rejected" })
-          .eq("recipient_id", user?.id)
-          .eq("status", "pending")
-          .neq("id", invitationId)
-          .filter("matches.booking.start_time", "eq", invitation.matches.booking.start_time);
-
-        if (rejectError) throw rejectError;
-      }
-
       const { error } = await supabase
         .from("match_invitations")
-        .update({
-          status: accept ? "accepted" : "rejected",
-        })
-        .eq("id", invitationId);
+        .update({ status: accept ? "accepted" : "rejected" })
+        .eq("id", selectedInvitation.id);
 
       if (error) throw error;
-
-      if (accept) {
-        // Update the match if invitation is accepted
-        const invitation = invitations.find((inv) => inv.id === invitationId);
-        if (invitation) {
-          await supabase
-            .from("matches")
-            .update({
-              is_confirmed_player2: true,
-            })
-            .eq("id", invitation.match_id);
-        }
-      }
 
       toast({
         title: accept ? "Invitación aceptada" : "Invitación rechazada",
         description: accept
-          ? "Has sido agregado al partido"
+          ? "Has sido agregado al partido exitosamente"
           : "Has rechazado la invitación al partido",
       });
 
-      setOpen(false);
-      setConfirmationOpen(false);
+      setShowConfirmDialog(false);
+      setIsPopoverOpen(false);
     } catch (error) {
-      console.error("Error responding to invitation:", error);
+      console.error("Error updating invitation:", error);
       toast({
         title: "Error",
-        description: "No se pudo procesar tu respuesta",
+        description: "No se pudo procesar la invitación",
         variant: "destructive",
       });
     }
   };
 
-  const handleAcceptClick = (invitation: any) => {
-    setSelectedInvitation(invitation);
-    setConfirmationOpen(true);
-  };
-
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative"
-          >
-            <Bell className={invitations.length > 0 ? "text-red-500 animate-pulse" : ""} />
-            {invitations.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
-                {invitations.length}
+      <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="icon" className="relative">
+            <Bell className="h-6 w-6" style={{ transform: 'scale(1.2)' }} />
+            {pendingInvitations.length > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] text-white flex items-center justify-center">
+                {pendingInvitations.length}
               </span>
             )}
           </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Invitaciones a partidos</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {invitations.length === 0 ? (
-              <p className="text-center text-muted-foreground">
-                No tienes invitaciones pendientes
+        </PopoverTrigger>
+        <PopoverContent className="w-80">
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <h4 className="font-medium leading-none">Invitaciones pendientes</h4>
+              <p className="text-sm text-muted-foreground">
+                Tienes {pendingInvitations.length} invitaciones pendientes
               </p>
-            ) : (
-              invitations.map((invitation) => (
+            </div>
+            <div className="grid gap-2">
+              {pendingInvitations.map((invitation) => (
                 <div
                   key={invitation.id}
-                  className="border rounded-lg p-4 space-y-2"
+                  className="grid gap-1"
                 >
-                  <p className="font-medium">
-                    {invitation.matches?.player1?.full_name || 'Usuario'} te ha invitado a un partido
-                  </p>
-                  {invitation.matches?.booking && (
-                    <>
-                      <p className="text-sm text-muted-foreground">
-                        Cancha: {invitation.matches.booking.court?.name || 'No especificada'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Fecha:{" "}
-                        {new Date(
-                          invitation.matches.booking.start_time
-                        ).toLocaleString()}
-                      </p>
-                    </>
-                  )}
-                  <div className="flex gap-2 pt-2">
+                  <div className="text-sm">
+                    <span className="font-medium">
+                      {invitation.match.created_by.full_name}
+                    </span>{" "}
+                    te ha invitado a jugar en{" "}
+                    <span className="font-medium">
+                      {invitation.match.court.name}
+                    </span>{" "}
+                    el{" "}
+                    {formatDateTime(
+                      invitation.match.date,
+                      invitation.match.time
+                    )}
+                  </div>
+                  <div className="flex gap-2">
                     <Button
-                      variant="default"
-                      onClick={() => handleAcceptClick(invitation)}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedInvitation(invitation);
+                        setShowConfirmDialog(true);
+                      }}
                     >
                       Aceptar
                     </Button>
                     <Button
-                      variant="outline"
-                      onClick={() => handleResponse(invitation.id, false)}
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleInvitationResponse(false)}
                     >
                       Rechazar
                     </Button>
                   </div>
                 </div>
-              ))
-            )}
+              ))}
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={confirmationOpen} onOpenChange={setConfirmationOpen}>
+        </PopoverContent>
+      </Popover>
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Aceptar invitación?</AlertDialogTitle>
+            <AlertDialogTitle>¿Confirmas tu participación?</AlertDialogTitle>
             <AlertDialogDescription>
-              Al aceptar esta invitación, otras invitaciones que tengas para la misma fecha y hora serán rechazadas automáticamente.
+              Al aceptar, confirmas tu participación en el partido y te
+              comprometes a asistir.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => selectedInvitation && handleResponse(selectedInvitation.id, true)}>
-              Aceptar
+            <AlertDialogAction onClick={() => handleInvitationResponse(true)}>
+              Confirmar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
   );
-}
+};
