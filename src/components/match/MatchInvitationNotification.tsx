@@ -27,20 +27,22 @@ export const MatchInvitationNotification = () => {
 
     try {
       if (accept && selectedInvitation.match?.booking?.start_time) {
+        // Reject other invitations for the same time slot
         const { error: rejectError } = await supabase
           .from("match_invitations")
-          .update({ status: "rejected" as const })
+          .update({ status: "rejected" })
           .eq("recipient_id", user?.id)
           .eq("status", "pending")
           .neq("id", selectedInvitation.id)
-          .eq("match.booking.start_time", selectedInvitation.match.booking.start_time);
+          .eq("match.bookings.start_time", selectedInvitation.match.booking.start_time);
 
         if (rejectError) throw rejectError;
       }
 
+      // Update the selected invitation
       const { error } = await supabase
         .from("match_invitations")
-        .update({ status: accept ? "accepted" as const : "rejected" as const })
+        .update({ status: accept ? "accepted" : "rejected" })
         .eq("id", selectedInvitation.id);
 
       if (error) throw error;

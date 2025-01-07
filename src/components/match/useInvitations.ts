@@ -9,19 +9,18 @@ export const useInvitations = (userId: string | undefined) => {
       const { data, error } = await supabase
         .from("match_invitations")
         .select(`
-          id,
-          match_id,
-          sender_id,
-          recipient_id,
-          status,
-          created_at,
-          updated_at,
+          *,
           match:matches (
+            id,
             booking:bookings (
               start_time,
-              court:courts (name)
+              court:courts (
+                name
+              )
             ),
-            player1:profiles!player1_id (full_name)
+            player1:profiles!player1_id (
+              full_name
+            )
           )
         `)
         .eq("recipient_id", userId)
