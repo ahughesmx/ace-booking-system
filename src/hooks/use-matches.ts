@@ -22,22 +22,26 @@ export function useMatches() {
           created_at,
           player1_partner_id,
           player2_partner_id,
-          bookings (
+          booking:bookings (
             start_time,
             court:courts (
               name
             )
           ),
           player1:profiles!matches_player1_id_fkey_profiles (
+            id,
             full_name
           ),
           player2:profiles!matches_player2_id_fkey_profiles (
+            id,
             full_name
           ),
           player1_partner:profiles!matches_player1_partner_id_fkey_profiles (
+            id,
             full_name
           ),
           player2_partner:profiles!matches_player2_partner_id_fkey_profiles (
+            id,
             full_name
           )
         `)
@@ -47,13 +51,15 @@ export function useMatches() {
         console.error("Error fetching matches:", error);
         throw error;
       }
+
+      console.log("Matches data:", data);
       
       return data.map(match => ({
         ...match,
-        booking: match.bookings ? {
-          start_time: match.bookings.start_time,
-          court: match.bookings.court ? {
-            name: match.bookings.court.name
+        booking: match.booking ? {
+          start_time: match.booking.start_time,
+          court: match.booking.court ? {
+            name: match.booking.court.name
           } : undefined
         } : null
       }));

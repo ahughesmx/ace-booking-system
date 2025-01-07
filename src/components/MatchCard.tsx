@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,9 +9,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { Match } from "@/types/match";
-import { Calendar, Clock, MapPin, Users } from "lucide-react";
 import { AdminMatchControls } from "./AdminMatchControls";
 import { MatchInviteDialog } from "./match/MatchInviteDialog";
+import { MatchTeam } from "./match/MatchTeam";
+import { MatchDateTime } from "./match/MatchDateTime";
+import { MatchScore } from "./match/MatchScore";
+import { MatchLocation } from "./match/MatchLocation";
+import { useState } from "react";
 
 type MatchCardProps = {
   match: Match;
@@ -36,72 +39,39 @@ export function MatchCard({
   
   const isMatchConfirmed = match.is_confirmed_player1 && match.is_confirmed_player2;
   const isMatchOwner = userId === match.player1_id;
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('es-MX', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-    }).format(date);
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('es-MX', {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true,
-    }).format(date);
-  };
-
-  const renderTeamName = (playerName: string | null | undefined, partnerName: string | null | undefined) => {
-    if (!playerName) return "Jugador por confirmar";
-    if (!partnerName) return playerName;
-    return `${playerName} / ${partnerName}`;
-  };
-
   const showInviteControls = isMatchOwner && !isMatchConfirmed;
 
   return (
     <Card className="overflow-hidden border-muted bg-card hover:bg-accent/5 transition-colors">
       <CardHeader className="p-4">
-        <div className="flex flex-col space-y-1.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className={`h-4 w-4 ${match.is_doubles ? 'opacity-100' : 'opacity-0'}`} />
-              <h3 className="font-semibold text-base">
-                {renderTeamName(match.player1?.full_name, match.is_doubles ? match.player1_partner?.full_name : undefined)}
-                <span className="text-muted-foreground"> vs </span>
-                {renderTeamName(match.player2?.full_name, match.is_doubles ? match.player2_partner?.full_name : undefined)}
-              </h3>
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center gap-4">
+              <MatchTeam 
+                playerName={match.player1?.full_name}
+                partnerName={match.is_doubles ? match.player1_partner?.full_name : undefined}
+                isDoubles={match.is_doubles}
+              />
+              <span className="text-muted-foreground">vs</span>
+              <MatchTeam 
+                playerName={match.player2?.full_name}
+                partnerName={match.is_doubles ? match.player2_partner?.full_name : undefined}
+                isDoubles={match.is_doubles}
+              />
             </div>
-            {match.player1_sets !== null && match.player2_sets !== null && (
-              <span className="text-lg font-bold">
-                {match.player1_sets} - {match.player2_sets}
-              </span>
-            )}
           </div>
+          <MatchScore 
+            player1Sets={match.player1_sets} 
+            player2Sets={match.player2_sets} 
+          />
         </div>
       </CardHeader>
       <CardContent className="p-4 pt-0">
         <div className="space-y-3">
           {match.booking?.start_time && (
-            <>
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4 mr-2" />
-                <span>{formatDate(match.booking.start_time)}</span>
-              </div>
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Clock className="h-4 w-4 mr-2" />
-                <span>{formatTime(match.booking.start_time)}</span>
-              </div>
-            </>
+            <MatchDateTime dateTime={match.booking.start_time} />
           )}
-          <div className="flex items-center text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4 mr-2" />
-            <span>{match.booking?.court?.name || "Cancha por asignar"}</span>
-          </div>
+          <MatchLocation courtName={match.booking?.court?.name} />
 
           {showInviteControls && (
             <div className="flex flex-wrap gap-2 mt-4">
@@ -157,7 +127,7 @@ export function MatchCard({
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium mb-1.5 block">
-                          Sets {renderTeamName(match.player1?.full_name, match.is_doubles ? match.player1_partner?.full_name : undefined)}
+                          Sets Equipo 1
                         </label>
                         <Input
                           type="number"
@@ -169,7 +139,7 @@ export function MatchCard({
                       </div>
                       <div>
                         <label className="text-sm font-medium mb-1.5 block">
-                          Sets {renderTeamName(match.player2?.full_name, match.is_doubles ? match.player2_partner?.full_name : undefined)}
+                          Sets Equipo 2
                         </label>
                         <Input
                           type="number"
