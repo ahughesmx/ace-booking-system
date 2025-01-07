@@ -20,7 +20,7 @@ export function MatchTeam({ playerName, partnerName, isDoubles, isConfirmed }: M
             variant={isConfirmed ? "default" : "secondary"}
             className="ml-2 text-xs"
           >
-            {isConfirmed === true ? "ha confirmado" : "por confirmar"}
+            {isConfirmed ? "ha confirmado" : "por confirmar"}
           </Badge>
         )}
       </span>

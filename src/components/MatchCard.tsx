@@ -39,7 +39,6 @@ export function MatchCard({
   
   const isMatchConfirmed = match.is_confirmed_player1 && match.is_confirmed_player2;
   const isMatchOwner = userId === match.player1_id;
-  const showInviteControls = isMatchOwner && !isMatchConfirmed;
 
   return (
     <Card className="overflow-hidden border-muted bg-card hover:bg-accent/5 transition-colors">
@@ -51,14 +50,14 @@ export function MatchCard({
                 playerName={match.player1?.full_name}
                 partnerName={match.is_doubles ? match.player1_partner?.full_name : undefined}
                 isDoubles={match.is_doubles}
-                isConfirmed={isMatchOwner ? undefined : match.is_confirmed_player1}
+                isConfirmed={match.is_confirmed_player1}
               />
               <span className="text-muted-foreground">vs</span>
               <MatchTeam 
                 playerName={match.player2?.full_name}
                 partnerName={match.is_doubles ? match.player2_partner?.full_name : undefined}
                 isDoubles={match.is_doubles}
-                isConfirmed={isMatchOwner ? match.is_confirmed_player2 : undefined}
+                isConfirmed={match.is_confirmed_player2}
               />
             </div>
           </div>
@@ -75,7 +74,7 @@ export function MatchCard({
           )}
           <MatchLocation courtName={match.booking?.court?.name} />
 
-          {showInviteControls && (
+          {isMatchOwner && !isMatchConfirmed && (
             <div className="flex flex-wrap gap-2 mt-4">
               {!match.player2_id && (
                 <NewMatchInvite
