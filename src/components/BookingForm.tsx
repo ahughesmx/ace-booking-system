@@ -49,9 +49,9 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
 
   return (
     <div className="space-y-4">
-      {userActiveBookings >= 2 && (
+      {userActiveBookings >= 4 && (
         <BookingAlert 
-          message="Ya tienes el máximo de 2 reservas activas permitidas. Debes esperar a que finalicen o cancelar alguna reserva existente."
+          message="Ya tienes el máximo de 4 reservas activas permitidas. Debes esperar a que finalicen o cancelar alguna reserva existente."
         />
       )}
 
@@ -82,7 +82,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
 
       <BookingButton 
         isSubmitting={isSubmitting}
-        isDisabled={!selectedDate || !selectedTime || !selectedCourt || userActiveBookings >= 2}
+        isDisabled={!selectedDate || !selectedTime || !selectedCourt || userActiveBookings >= 4}
         onClick={() => handleBooking(selectedDate, selectedTime, selectedCourt)}
         loginRedirect={handleLoginRedirect}
         isAuthenticated={!!user}
