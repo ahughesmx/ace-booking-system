@@ -19,6 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/components/AuthProvider";
 
 type MatchHeaderProps = {
   matchCount: number;
@@ -30,10 +31,21 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
   const [selectedBooking, setSelectedBooking] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { user } = useAuth();
 
   const { data: bookings = [] } = useQuery({
-    queryKey: ["active-bookings"],
+    queryKey: ["active-bookings", user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
+
+      // Primero obtenemos las reservas que ya tienen partidos
+      const { data: matchesData } = await supabase
+        .from("matches")
+        .select("booking_id");
+
+      const bookingsWithMatches = new Set(matchesData?.map(match => match.booking_id) || []);
+
+      // Luego obtenemos las reservas del usuario que no tienen partidos
       const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
         .select(`
@@ -41,20 +53,16 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
           start_time,
           court:courts(name)
         `)
+        .eq('user_id', user.id)
         .gte("end_time", new Date().toISOString())
         .order("start_time", { ascending: true });
 
       if (bookingsError) throw bookingsError;
 
-      const { data: matchesData, error: matchesError } = await supabase
-        .from("matches")
-        .select("booking_id");
-
-      if (matchesError) throw matchesError;
-
-      const bookingsWithMatches = new Set(matchesData.map(match => match.booking_id));
+      // Filtramos las reservas que ya tienen partidos
       return (bookingsData || []).filter(booking => !bookingsWithMatches.has(booking.id));
     },
+    enabled: !!user?.id,
   });
 
   const handleCreateMatch = (isDoubles: boolean) => {
@@ -85,7 +93,8 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
               size={isMobile ? "sm" : "default"}
             >
               <Plus className="h-5 w-5 mr-2" />
-              {bookings.length === 0 ? "Reserva una cancha primero" : "Crear Partido"}
+              {!user ? "Inicia sesión para crear partidos" : 
+                bookings.length === 0 ? "Reserva una cancha primero" : "Crear Partido"}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
