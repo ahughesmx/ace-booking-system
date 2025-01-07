@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type TimeSlotPickerProps = {
   availableTimeSlots: string[];
@@ -17,17 +18,23 @@ export function TimeSlotPicker({
 }: TimeSlotPickerProps) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-      {availableTimeSlots.map((time) => (
-        <Button
-          key={time}
-          variant={selectedTime === time ? "default" : "outline"}
-          className="w-full"
-          disabled={!isTimeSlotAvailable(time, selectedCourt)}
-          onClick={() => onTimeSelect(time)}
-        >
-          {time}
-        </Button>
-      ))}
+      {availableTimeSlots.map((time) => {
+        const isAvailable = isTimeSlotAvailable(time, selectedCourt);
+        return (
+          <Button
+            key={time}
+            variant={selectedTime === time && isAvailable ? "default" : "outline"}
+            className={cn(
+              "w-full",
+              !isAvailable && "opacity-50 cursor-not-allowed"
+            )}
+            disabled={!isAvailable}
+            onClick={() => onTimeSelect(time)}
+          >
+            {time}
+          </Button>
+        );
+      })}
     </div>
   );
 }
