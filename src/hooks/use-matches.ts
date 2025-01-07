@@ -22,7 +22,7 @@ export function useMatches() {
           created_at,
           player1_partner_id,
           player2_partner_id,
-          booking:bookings (
+          booking:bookings!matches_booking_id_fkey (
             start_time,
             court:courts (
               name
