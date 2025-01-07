@@ -32,7 +32,8 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
   const { data: bookings = [] } = useQuery({
     queryKey: ["active-bookings"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, get all bookings
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
         .select(`
           id,
@@ -42,8 +43,20 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
         .gte("end_time", new Date().toISOString())
         .order("start_time", { ascending: true });
 
-      if (error) throw error;
-      return data;
+      if (bookingsError) throw bookingsError;
+
+      // Then, get all matches to filter out bookings that already have matches
+      const { data: matchesData, error: matchesError } = await supabase
+        .from("matches")
+        .select("booking_id");
+
+      if (matchesError) throw matchesError;
+
+      // Create a set of booking IDs that already have matches
+      const bookingsWithMatches = new Set(matchesData.map(match => match.booking_id));
+
+      // Filter out bookings that already have matches
+      return (bookingsData || []).filter(booking => !bookingsWithMatches.has(booking.id));
     },
   });
 
