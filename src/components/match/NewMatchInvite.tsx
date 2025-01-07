@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase-client";
-import { UserSearch } from "../UserSearch";
+import { UserSearch } from "@/components/UserSearch";
 
 type NewMatchInviteProps = {
   matchId: string;
@@ -32,7 +32,7 @@ export function NewMatchInvite({
       console.log("Enviando invitación...", { matchId, recipientId, position });
       
       // Primero crear la invitación
-      const { data: invitationData, error: invitationError } = await supabase
+      const { error: invitationError } = await supabase
         .from('match_invitations')
         .insert([
           {
@@ -41,9 +41,7 @@ export function NewMatchInvite({
             recipient_id: recipientId,
             status: 'pending'
           }
-        ])
-        .select()
-        .single();
+        ]);
 
       if (invitationError) {
         throw invitationError;
