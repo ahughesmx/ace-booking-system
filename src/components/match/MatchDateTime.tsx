@@ -24,15 +24,15 @@ export function MatchDateTime({ dateTime }: MatchDateTimeProps) {
   };
 
   return (
-    <>
+    <div className="flex flex-col space-y-1">
       <div className="flex items-center text-sm text-muted-foreground">
-        <Calendar className="h-4 w-4 mr-2" />
+        <Calendar className="h-4 w-4 mr-2 text-[#9b87f5]" />
         <span>{formatDate(dateTime)}</span>
       </div>
       <div className="flex items-center text-sm text-muted-foreground">
-        <Clock className="h-4 w-4 mr-2" />
+        <Clock className="h-4 w-4 mr-2 text-[#9b87f5]" />
         <span>{formatTime(dateTime)}</span>
       </div>
-    </>
+    </div>
   );
 }

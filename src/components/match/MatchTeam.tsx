@@ -16,18 +16,16 @@ export function MatchTeam({
   isConfirmed,
   showConfirmation = false 
 }: MatchTeamProps) {
-  console.log('MatchTeam props:', { playerName, isConfirmed, showConfirmation });
-  
   const renderTeamName = () => {
     if (!playerName) return "Jugador por confirmar";
     
     const mainPlayerDisplay = (
-      <span className="font-semibold">
+      <span className="font-medium">
         {playerName}
         {showConfirmation && (
           <Badge 
             variant={isConfirmed ? "default" : "secondary"}
-            className="ml-2 text-xs"
+            className="ml-2 text-xs bg-gradient-to-r from-[#9b87f5] to-[#7E69AB]"
           >
             {isConfirmed ? "confirmado" : "por confirmar"}
           </Badge>
@@ -37,15 +35,16 @@ export function MatchTeam({
 
     if (!partnerName) return mainPlayerDisplay;
     return (
-      <>
-        {mainPlayerDisplay} / {partnerName}
-      </>
+      <div className="flex flex-col">
+        {mainPlayerDisplay}
+        <span className="text-sm text-muted-foreground">y {partnerName}</span>
+      </div>
     );
   };
 
   return (
     <div className="flex items-center gap-2">
-      {isDoubles && <Users className="h-4 w-4" />}
+      {isDoubles && <Users className="h-4 w-4 text-[#9b87f5]" />}
       {renderTeamName()}
     </div>
   );

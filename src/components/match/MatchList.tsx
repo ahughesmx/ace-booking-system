@@ -1,6 +1,7 @@
 import { List } from "lucide-react";
 import type { Match } from "@/types/match";
 import { MatchCard } from "@/components/MatchCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type MatchListProps = {
   matches: Match[] | undefined;
@@ -17,12 +18,14 @@ export function MatchList({
   onUpdateResult,
   onDeleteMatch 
 }: MatchListProps) {
+  const isMobile = useIsMobile();
+
   if (!matches?.length) {
     return (
-      <div className="text-center py-12 bg-muted/50 rounded-lg">
-        <List className="h-12 w-12 mx-auto text-muted-foreground" />
+      <div className="text-center py-12 bg-gradient-to-b from-[#9b87f5]/5 to-transparent rounded-lg border border-[#9b87f5]/10">
+        <List className="h-12 w-12 mx-auto text-[#9b87f5]" />
         <h3 className="mt-4 text-lg font-semibold">No hay partidos</h3>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-muted-foreground mt-1 px-4">
           Crea un partido para empezar a jugar
         </p>
       </div>
@@ -30,7 +33,7 @@ export function MatchList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'}`}>
       {matches.map((match) => (
         <MatchCard
           key={match.id}
