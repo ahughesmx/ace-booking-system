@@ -20,7 +20,9 @@ export const useInvitations = (userId: string | undefined) => {
             ),
             player1:profiles!player1_id (
               full_name
-            )
+            ),
+            is_confirmed_player1,
+            is_confirmed_player2
           )
         `)
         .eq("recipient_id", userId)

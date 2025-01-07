@@ -30,7 +30,22 @@ export const MatchInvitationNotification = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'match_invitations'
+          table: 'match_invitations',
+        },
+        () => {
+          refetch();
+        }
+      )
+      .subscribe();
+
+    const matchesChannel = supabase
+      .channel('matches')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'matches',
         },
         () => {
           refetch();
@@ -40,6 +55,7 @@ export const MatchInvitationNotification = () => {
 
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(matchesChannel);
     };
   }, [refetch]);
 
@@ -48,7 +64,6 @@ export const MatchInvitationNotification = () => {
 
     try {
       if (accept && selectedInvitation.match?.booking?.start_time) {
-        // Get all pending invitations for the same time slot
         const { data: conflictingInvitations, error: fetchError } = await supabase
           .from("match_invitations")
           .select(`
@@ -65,7 +80,6 @@ export const MatchInvitationNotification = () => {
 
         if (fetchError) throw fetchError;
 
-        // Filter locally for the same time slot
         const invitationsToReject = conflictingInvitations.filter(invitation => {
           return invitation.match?.booking?.start_time === selectedInvitation.match?.booking?.start_time;
         });
@@ -78,9 +92,18 @@ export const MatchInvitationNotification = () => {
 
           if (rejectError) throw rejectError;
         }
+
+        // Actualizar el estado de confirmación en el partido
+        const { error: matchUpdateError } = await supabase
+          .from("matches")
+          .update({
+            is_confirmed_player2: true
+          })
+          .eq("id", selectedInvitation.match.id);
+
+        if (matchUpdateError) throw matchUpdateError;
       }
 
-      // Update the selected invitation
       const { error } = await supabase
         .from("match_invitations")
         .update({ status: accept ? "accepted" : "rejected" })
