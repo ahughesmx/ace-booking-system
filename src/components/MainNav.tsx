@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Home, Calendar, Trophy, LogOut, LogIn } from "lucide-react";
 import { MatchInvitationNotification } from "./match/MatchInvitationNotification";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const MainNav = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -13,18 +14,18 @@ const MainNav = () => {
   const location = useLocation();
 
   const handleSignOut = async () => {
+    setMobileOpen(false); // Cerrar el menú antes de cerrar sesión
     await signOut();
     navigate("/");
   };
 
   const handleSignIn = () => {
+    setMobileOpen(false); // Cerrar el menú
     navigate("/login");
   };
 
   const handleNavigation = (tab: string | null) => {
-    if (window.innerWidth < 768) {
-      setMobileOpen(false);
-    }
+    setMobileOpen(false); // Cerrar el menú al navegar
     
     if (tab === null) {
       navigate("/", { state: undefined });
@@ -97,19 +98,34 @@ const MainNav = () => {
           </div>
 
           {/* Mobile Navigation */}
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6 text-[#1e3a8a]" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px]">
-              <div className="flex flex-col space-y-4 mt-8">
-                {user && <MatchInvitationNotification />}
-                <NavItems />
-              </div>
-            </SheetContent>
-          </Sheet>
+          <div className="flex items-center gap-2 md:hidden">
+            {user && <MatchInvitationNotification />}
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6 text-[#1e3a8a]" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px]">
+                {user && (
+                  <div className="flex flex-col items-center gap-4 mb-8 pt-4">
+                    <Avatar className="h-20 w-20">
+                      <AvatarFallback className="bg-[#1e3a8a] text-white text-xl">
+                        {user.email?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="text-center">
+                      <p className="font-medium text-lg">{user.email?.split('@')[0]}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-col space-y-4">
+                  <NavItems />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
     </nav>
