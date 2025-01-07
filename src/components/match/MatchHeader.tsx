@@ -73,7 +73,7 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
             Partidos
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {matchCount} {matchCount === 1 ? "partido disponible" : "partidos disponibles"}
+            {matchCount} {matchCount === 1 ? "partido registrado" : "partidos registrados"}
           </p>
         </div>
 
