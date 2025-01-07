@@ -11,7 +11,7 @@ export function TimeSlot({ start, end, isAvailable, availableCount = 0 }: TimeSl
   return (
     <div
       className={cn(
-        "p-2 rounded-lg border transition-colors",
+        "p-2 rounded-lg border transition-colors text-center",
         isAvailable 
           ? "bg-[#6898FE]/10 border-[#6898FE]/20 hover:bg-[#6898FE]/20" 
           : "bg-gray-50 border-gray-200"

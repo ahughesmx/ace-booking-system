@@ -83,7 +83,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Horarios disponibles</CardTitle>
+          <CardTitle className="text-[#1e3a8a]">Horarios disponibles</CardTitle>
         </CardHeader>
         <CardContent>
           <TimeSlotsGrid 
