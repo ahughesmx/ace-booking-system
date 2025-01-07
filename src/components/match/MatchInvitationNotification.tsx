@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase-client";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import {
@@ -147,12 +147,12 @@ export function MatchInvitationNotification() {
                 className="border rounded-lg p-4 space-y-2"
               >
                 <p className="font-medium">
-                  {invitation.matches.player1.full_name} te ha invitado a un partido
+                  {invitation.matches?.player1?.full_name || 'Usuario'} te ha invitado a un partido
                 </p>
-                {invitation.matches.booking && (
+                {invitation.matches?.booking && (
                   <>
                     <p className="text-sm text-muted-foreground">
-                      Cancha: {invitation.matches.booking.court.name}
+                      Cancha: {invitation.matches.booking.court?.name || 'No especificada'}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Fecha:{" "}
