@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import type { Match } from "@/types/match";
 import { AdminMatchControls } from "./AdminMatchControls";
-import { MatchInviteDialog } from "./match/MatchInviteDialog";
+import { NewMatchInvite } from "./match/NewMatchInvite";
 import { MatchTeam } from "./match/MatchTeam";
 import { MatchDateTime } from "./match/MatchDateTime";
 import { MatchScore } from "./match/MatchScore";
@@ -76,7 +76,7 @@ export function MatchCard({
           {showInviteControls && (
             <div className="flex flex-wrap gap-2 mt-4">
               {!match.player2_id && (
-                <MatchInviteDialog
+                <NewMatchInvite
                   matchId={match.id}
                   currentUserId={userId || ''}
                   isDoubles={match.is_doubles || false}
@@ -84,7 +84,7 @@ export function MatchCard({
                 />
               )}
               {match.is_doubles && !match.player1_partner_id && (
-                <MatchInviteDialog
+                <NewMatchInvite
                   matchId={match.id}
                   currentUserId={userId || ''}
                   isDoubles={true}
@@ -92,7 +92,7 @@ export function MatchCard({
                 />
               )}
               {match.is_doubles && !match.player2_partner_id && match.player2_id && (
-                <MatchInviteDialog
+                <NewMatchInvite
                   matchId={match.id}
                   currentUserId={userId || ''}
                   isDoubles={true}
