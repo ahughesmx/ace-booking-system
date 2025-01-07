@@ -31,7 +31,6 @@ export default function Index() {
           Hola {user?.email?.split('@')[0] || 'Usuario'}
           <span className="ml-2" role="img" aria-label="wave">👋</span>
         </h1>
-        <Bell className="h-6 w-6 text-[#1e3a8a]" />
       </div>
 
       <h2 className="text-2xl font-bold">Juega tu partido perfecto</h2>
