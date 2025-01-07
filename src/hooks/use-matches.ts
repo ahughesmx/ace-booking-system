@@ -63,6 +63,6 @@ export function useMatches() {
           } : undefined
         } : null
       }));
-    },
+    }
   });
 }
