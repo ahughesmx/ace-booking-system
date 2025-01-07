@@ -7,6 +7,7 @@ export type MatchInvitation = {
   created_at: string | null;
   updated_at: string | null;
   match?: {
+    id: string;
     booking?: {
       start_time: string;
       court?: {
@@ -16,5 +17,7 @@ export type MatchInvitation = {
     player1?: {
       full_name: string | null;
     } | null;
+    is_confirmed_player1: boolean | null;
+    is_confirmed_player2: boolean | null;
   } | null;
 };
