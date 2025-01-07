@@ -2,12 +2,12 @@ import { useAuth } from "@/components/AuthProvider";
 import BookingCalendar from "@/components/BookingCalendar";
 import MatchManagement from "@/components/MatchManagement";
 import RankingTable from "@/components/RankingTable";
-import { useUserRole } from "@/hooks/use-user-role";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { UserCircle2, Search, CircleDot, GraduationCap, Shield, Bell } from "lucide-react";
+import { UserCircle2, Search, CircleDot, GraduationCap, Shield } from "lucide-react";
 import MainNav from "@/components/MainNav";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import { useUserRole } from "@/hooks/use-user-role";
 
 export default function Index() {
   const { user, loading } = useAuth();
@@ -27,54 +27,64 @@ export default function Index() {
   const renderHomeCards = () => (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
           Hola {user?.email?.split('@')[0] || 'Usuario'}
           <span className="ml-2" role="img" aria-label="wave">👋</span>
         </h1>
       </div>
 
-      <h2 className="text-2xl font-bold">Juega tu partido perfecto</h2>
+      <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+        Juega tu partido perfecto
+      </h2>
 
       <div className="grid grid-cols-2 gap-4">
         <button onClick={() => handleNavigation("bookings")} className="w-full text-left">
-          <Card className="hover:shadow-lg transition-shadow h-full">
+          <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
             <CardContent className="p-4">
               <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
                 <Search className="h-6 w-6 text-white" />
               </div>
-              <h3 className="text-base font-bold mb-1">Reserva una cancha</h3>
-              <p className="text-sm text-gray-600">Si ya sabes con quién vas a jugar</p>
+              <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                Reserva una cancha
+              </h3>
+              <p className="text-sm text-[#6898FE]/70">Si ya sabes con quién vas a jugar</p>
             </CardContent>
           </Card>
         </button>
 
         <button onClick={() => handleNavigation("matches")} className="w-full text-left">
-          <Card className="hover:shadow-lg transition-shadow h-full">
+          <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
             <CardContent className="p-4">
               <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
                 <CircleDot className="h-6 w-6 text-white" />
               </div>
-              <h3 className="text-base font-bold mb-1">Registra un partido</h3>
-              <p className="text-sm text-gray-600">Si quieres rankear tu posición</p>
+              <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                Registra un partido
+              </h3>
+              <p className="text-sm text-[#6898FE]/70">Si quieres rankear tu posición</p>
             </CardContent>
           </Card>
         </button>
 
-        <Card className="hover:shadow-lg transition-shadow h-full">
+        <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
           <CardContent className="p-4">
             <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
-            <h3 className="text-base font-bold mb-1">Clases</h3>
+            <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+              Clases
+            </h3>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow h-full">
+        <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
           <CardContent className="p-4">
             <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
               <Shield className="h-6 w-6 text-white" />
             </div>
-            <h3 className="text-base font-bold mb-1">Competencias</h3>
+            <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+              Competencias
+            </h3>
           </CardContent>
         </Card>
       </div>
