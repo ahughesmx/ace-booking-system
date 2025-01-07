@@ -63,17 +63,30 @@ export function useBookingSubmit(onSuccess: () => void) {
       if (error) {
         console.error("Error creating booking:", error);
         
-        // Handle the specific maximum bookings error
-        if (error.message?.includes("máximo de reservas permitidas")) {
-          toast({
-            title: "Límite de reservas alcanzado",
-            description: "Ya tienes el máximo de 2 reservas activas permitidas. Cancela una reserva existente para poder hacer una nueva.",
-            variant: "destructive",
-          });
-          return;
+        // Parse the error body if it exists
+        let errorMessage = "No se pudo realizar la reserva. Por favor intenta de nuevo.";
+        try {
+          if (error.message) {
+            const errorBody = JSON.parse(error.message);
+            if (errorBody?.message?.includes("máximo de reservas permitidas")) {
+              toast({
+                title: "Límite de reservas alcanzado",
+                description: "Ya tienes el máximo de 2 reservas activas permitidas. Cancela una reserva existente para poder hacer una nueva.",
+                variant: "destructive",
+              });
+              return;
+            }
+          }
+        } catch (e) {
+          console.error("Error parsing error message:", e);
         }
         
-        throw error;
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
       }
 
       await queryClient.invalidateQueries({ 
