@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/AuthProvider";
 import { CanchaSelector } from "@/components/CourtSelector";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
@@ -8,20 +7,19 @@ import { useNavigate } from "react-router-dom";
 import { useBookingSubmit } from "./booking/useBookingSubmit";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import { format, addHours, isBefore, startOfHour } from "date-fns";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { BookingAlert } from "./booking/BookingAlert";
+import { BookingButton } from "./booking/BookingButton";
+
+interface BookingFormProps {
+  selectedDate?: Date;
+  onBookingSuccess: () => void;
+}
 
 const availableTimeSlots = [
   "08:00", "09:00", "10:00", "11:00", "12:00",
   "13:00", "14:00", "15:00", "16:00", "17:00",
   "18:00", "19:00", "20:00", "21:00", "22:00"
 ];
-
-interface BookingFormProps {
-  selectedDate?: Date;
-  onBookingSuccess: () => void;
-}
 
 export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps) {
   const [selectedCourt, setSelectedCourt] = useState<string | null>(null);
@@ -31,31 +29,6 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const navigate = useNavigate();
   const { handleBooking, isSubmitting } = useBookingSubmit(onBookingSuccess);
 
-  // Query existing bookings for the selected date
-  const { data: existingBookings = [], isLoading: isLoadingBookings } = useQuery({
-    queryKey: ["bookings", selectedDate, selectedCourt],
-    queryFn: async () => {
-      if (!selectedDate || !selectedCourt) return [];
-      
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const { data } = await supabase
-        .from("bookings")
-        .select("*")
-        .eq("court_id", selectedCourt)
-        .gte("start_time", startOfDay.toISOString())
-        .lte("end_time", endOfDay.toISOString());
-
-      return data || [];
-    },
-    enabled: !!selectedDate && !!selectedCourt
-  });
-
-  // Query user's active bookings
   const { data: userActiveBookings = 0 } = useQuery({
     queryKey: ["userActiveBookings", user?.id],
     queryFn: async () => {
@@ -70,31 +43,6 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     enabled: !!user?.id
   });
 
-  const isTimeSlotAvailable = (time: string, courtId: string) => {
-    if (!selectedDate) return false;
-
-    // Convert the time slot to a Date object for comparison
-    const [hours] = time.split(":");
-    const slotDate = new Date(selectedDate);
-    slotDate.setHours(parseInt(hours), 0, 0, 0);
-
-    // Get current time rounded to the next hour
-    const now = new Date();
-    const nextHour = startOfHour(addHours(now, 1));
-
-    // Check if the time slot is in the past
-    if (isBefore(slotDate, nextHour)) {
-      return false;
-    }
-
-    // Check if there's any booking that overlaps with this time slot
-    return !existingBookings.some(booking => {
-      const bookingStart = new Date(booking.start_time);
-      const bookingEnd = new Date(booking.end_time);
-      return slotDate >= bookingStart && slotDate < bookingEnd;
-    });
-  };
-
   const handleLoginRedirect = () => {
     navigate('/login');
   };
@@ -102,12 +50,9 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   return (
     <div className="space-y-4">
       {userActiveBookings >= 2 && (
-        <Alert variant="warning">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Ya tienes el máximo de 2 reservas activas permitidas. Debes esperar a que finalicen o cancelar alguna reserva existente.
-          </AlertDescription>
-        </Alert>
+        <BookingAlert 
+          message="Ya tienes el máximo de 2 reservas activas permitidas. Debes esperar a que finalicen o cancelar alguna reserva existente."
+        />
       )}
 
       {courts && courts.length > 0 && (
@@ -123,27 +68,25 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
           availableTimeSlots={availableTimeSlots}
           selectedTime={selectedTime}
           selectedCourt={selectedCourt}
-          isTimeSlotAvailable={isTimeSlotAvailable}
+          isTimeSlotAvailable={(time, courtId) => {
+            if (!selectedDate) return false;
+            const [hours] = time.split(":");
+            const slotDate = new Date(selectedDate);
+            slotDate.setHours(parseInt(hours), 0, 0, 0);
+            const now = new Date();
+            return slotDate > now;
+          }}
           onTimeSelect={setSelectedTime}
         />
       )}
 
-      {user ? (
-        <Button
-          className="w-full"
-          disabled={!selectedDate || !selectedTime || !selectedCourt || isSubmitting || userActiveBookings >= 2}
-          onClick={() => handleBooking(selectedDate, selectedTime, selectedCourt)}
-        >
-          {isSubmitting ? "Reservando..." : "Reservar cancha"}
-        </Button>
-      ) : (
-        <Button
-          className="w-full"
-          onClick={handleLoginRedirect}
-        >
-          Iniciar sesión para reservar
-        </Button>
-      )}
+      <BookingButton 
+        isSubmitting={isSubmitting}
+        isDisabled={!selectedDate || !selectedTime || !selectedCourt || userActiveBookings >= 2}
+        onClick={() => handleBooking(selectedDate, selectedTime, selectedCourt)}
+        loginRedirect={handleLoginRedirect}
+        isAuthenticated={!!user}
+      />
     </div>
   );
 }
