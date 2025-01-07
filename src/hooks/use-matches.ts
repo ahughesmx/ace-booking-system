@@ -64,7 +64,5 @@ export function useMatches() {
         } : null
       }));
     },
-    retry: 1,
-    retryDelay: 1000,
   });
 }
