@@ -16,6 +16,8 @@ export function MatchTeam({
   isConfirmed,
   showConfirmation = false 
 }: MatchTeamProps) {
+  console.log('MatchTeam props:', { playerName, isConfirmed, showConfirmation });
+  
   const renderTeamName = () => {
     if (!playerName) return "Jugador por confirmar";
     

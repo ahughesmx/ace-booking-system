@@ -46,62 +46,68 @@ export function useMatches() {
 
       console.log("Datos de matches obtenidos:", matchesData);
 
-      const matches: Match[] = matchesData.map(match => ({
-        id: match.id,
-        booking_id: match.booking_id,
-        player1_id: match.player1_id,
-        player2_id: match.player2_id,
-        player1_sets: match.player1_sets,
-        player2_sets: match.player2_sets,
-        is_doubles: match.is_doubles,
-        is_confirmed_player1: match.is_confirmed_player1,
-        is_confirmed_player2: match.is_confirmed_player2,
-        created_at: match.created_at,
-        player1_partner_id: match.player1_partner_id,
-        player2_partner_id: match.player2_partner_id,
-        player1: match.player1 ? {
-          full_name: match.player1.full_name
-        } : null,
-        player2: match.player2 ? {
-          full_name: match.player2.full_name
-        } : null,
-        player1_partner: match.player1_partner ? {
-          full_name: match.player1_partner.full_name
-        } : null,
-        player2_partner: match.player2_partner ? {
-          full_name: match.player2_partner.full_name
-        } : null,
-        booking: match.booking ? {
-          start_time: match.booking.start_time,
-          court: match.booking.court ? {
-            name: match.booking.court.name
+      const matches: Match[] = matchesData.map(match => {
+        console.log('Procesando match:', {
+          id: match.id,
+          is_confirmed_player1: match.is_confirmed_player1,
+          is_confirmed_player2: match.is_confirmed_player2
+        });
+        
+        return {
+          id: match.id,
+          booking_id: match.booking_id,
+          player1_id: match.player1_id,
+          player2_id: match.player2_id,
+          player1_sets: match.player1_sets,
+          player2_sets: match.player2_sets,
+          is_doubles: match.is_doubles,
+          is_confirmed_player1: match.is_confirmed_player1,
+          is_confirmed_player2: match.is_confirmed_player2,
+          created_at: match.created_at,
+          player1_partner_id: match.player1_partner_id,
+          player2_partner_id: match.player2_partner_id,
+          player1: match.player1 ? {
+            full_name: match.player1.full_name
+          } : null,
+          player2: match.player2 ? {
+            full_name: match.player2.full_name
+          } : null,
+          player1_partner: match.player1_partner ? {
+            full_name: match.player1_partner.full_name
+          } : null,
+          player2_partner: match.player2_partner ? {
+            full_name: match.player2_partner.full_name
+          } : null,
+          booking: match.booking ? {
+            start_time: match.booking.start_time,
+            court: match.booking.court ? {
+              name: match.booking.court.name
+            } : null
           } : null
-        } : null
-      }));
+        };
+      });
 
       return matches;
     }
   });
 
   useEffect(() => {
-    // Suscripción a cambios en la tabla matches
     const channel = supabase
       .channel('matches-changes')
       .on(
         'postgres_changes',
         {
-          event: '*', // Escuchar todos los eventos (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'matches'
         },
         (payload) => {
           console.log('Cambio detectado en matches:', payload);
-          refetch(); // Actualizar los datos cuando hay cambios
+          refetch();
         }
       )
       .subscribe();
 
-    // Limpieza de la suscripción
     return () => {
       supabase.removeChannel(channel);
     };
