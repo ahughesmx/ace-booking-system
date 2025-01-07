@@ -67,9 +67,9 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
 
   return (
     <div className="relative">
-      <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between md:items-center bg-gradient-to-r from-[#9b87f5]/10 to-transparent p-6 rounded-lg border border-[#9b87f5]/20">
+      <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between md:items-center bg-gradient-to-r from-[#33C3F0]/10 to-transparent p-6 rounded-lg border border-[#33C3F0]/20">
         <div>
-          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#9b87f5] to-[#7E69AB]">
+          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#33C3F0] to-[#0FA0CE]">
             Partidos
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
@@ -81,7 +81,7 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
           <DialogTrigger asChild>
             <Button
               disabled={isLoading || bookings.length === 0}
-              className="bg-[#9b87f5] hover:bg-[#7E69AB] transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="bg-[#33C3F0] hover:bg-[#0FA0CE] transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               size={isMobile ? "sm" : "default"}
             >
               <Plus className="h-5 w-5 mr-2" />
@@ -121,7 +121,7 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
                   onClick={() => handleCreateMatch(false)}
                   disabled={!selectedBooking}
                   variant="outline"
-                  className="w-full hover:bg-[#9b87f5]/10 border-[#9b87f5]/20"
+                  className="w-full hover:bg-[#33C3F0]/10 border-[#33C3F0]/20"
                 >
                   <User className="h-4 w-4 mr-2" />
                   Singles
@@ -130,7 +130,7 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
                   onClick={() => handleCreateMatch(true)}
                   disabled={!selectedBooking}
                   variant="outline"
-                  className="w-full hover:bg-[#9b87f5]/10 border-[#9b87f5]/20"
+                  className="w-full hover:bg-[#33C3F0]/10 border-[#33C3F0]/20"
                 >
                   <Users className="h-4 w-4 mr-2" />
                   Dobles
