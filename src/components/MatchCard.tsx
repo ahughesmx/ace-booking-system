@@ -42,8 +42,8 @@ export function MatchCard({
   const isMatchOwner = userId === match.player1_id;
 
   return (
-    <Card className="overflow-hidden border-[#33C3F0]/20 bg-gradient-to-br from-white to-[#33C3F0]/5 hover:shadow-lg transition-all duration-300">
-      <CardHeader className="p-4 bg-gradient-to-r from-[#33C3F0]/10 to-transparent">
+    <Card className="overflow-hidden border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 hover:shadow-lg transition-all duration-300">
+      <CardHeader className="p-4 bg-gradient-to-r from-[#6898FE]/10 to-transparent">
         <div className="flex items-center justify-between">
           <div className="flex flex-col space-y-2 flex-grow">
             <div className="flex items-center gap-4">
@@ -69,7 +69,7 @@ export function MatchCard({
               player2Sets={match.player2_sets} 
             />
             {isMatchConfirmed && (
-              <Badge variant="secondary" className="mt-1 bg-[#33C3F0] text-white">
+              <Badge variant="secondary" className="mt-1 bg-[#6898FE] text-white">
                 Confirmado
               </Badge>
             )}
