@@ -26,12 +26,12 @@ export function MatchInvitationNotification() {
         .from("match_invitations")
         .select(`
           *,
-          matches:matches (
+          matches (
             *,
-            player1:profiles!matches_player1_id_fkey (full_name),
-            player2:profiles!matches_player2_id_fkey (full_name),
-            player1_partner:profiles!matches_player1_partner_id_fkey (full_name),
-            player2_partner:profiles!matches_player2_partner_id_fkey (full_name),
+            player1:profiles!matches_player1_id_fkey_profiles (full_name),
+            player2:profiles!matches_player2_id_fkey_profiles (full_name),
+            player1_partner:profiles!matches_player1_partner_id_fkey_profiles (full_name),
+            player2_partner:profiles!matches_player2_partner_id_fkey_profiles (full_name),
             booking:bookings (
               start_time,
               court:courts (name)
@@ -51,7 +51,7 @@ export function MatchInvitationNotification() {
 
     fetchInvitations();
 
-    // Suscribirse a cambios en tiempo real
+    // Subscribe to real-time changes
     const channel = supabase
       .channel("match_invitations_changes")
       .on(
@@ -85,7 +85,7 @@ export function MatchInvitationNotification() {
       if (error) throw error;
 
       if (accept) {
-        // Actualizar el match si se acepta la invitación
+        // Update the match if invitation is accepted
         const invitation = invitations.find((inv) => inv.id === invitationId);
         if (invitation) {
           await supabase
