@@ -27,13 +27,13 @@ export default function Index() {
   const renderHomeCards = () => (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+        <h1 className="text-2xl font-bold text-[#1e3a8a]">
           Hola {user?.email?.split('@')[0] || 'Usuario'}
-          <span className="ml-2" role="img" aria-label="wave">👋</span>
+          <span className="ml-2 text-[#1e3a8a]" role="img" aria-label="wave">👋</span>
         </h1>
       </div>
 
-      <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+      <h2 className="text-2xl font-bold text-[#1e3a8a]">
         Juega tu partido perfecto
       </h2>
 
