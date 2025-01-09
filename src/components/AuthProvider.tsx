@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { Session, User } from "@supabase/supabase-js";
+import { Session, User, AuthError } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,18 +24,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Get initial session
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          toast({
+            title: "Error",
+            description: "Error al inicializar la sesión",
+            variant: "destructive",
+          });
+          return;
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-          setSession(session);
-          setUser(session?.user ?? null);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log("Auth event:", event);
+          if (event === 'SIGNED_IN') {
+            setSession(session);
+            setUser(session?.user ?? null);
+            toast({
+              title: "Sesión iniciada",
+              description: "Has iniciado sesión exitosamente",
+            });
+          } else if (event === 'SIGNED_OUT') {
+            setSession(null);
+            setUser(null);
+            toast({
+              title: "Sesión cerrada",
+              description: "Has cerrado sesión exitosamente",
+            });
+          } else if (event === 'USER_UPDATED') {
+            setSession(session);
+            setUser(session?.user ?? null);
+          }
           setLoading(false);
         });
 
@@ -45,11 +71,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         console.error("Error initializing auth:", error);
         setLoading(false);
+        toast({
+          title: "Error",
+          description: "Error al inicializar la autenticación",
+          variant: "destructive",
+        });
       }
     };
 
     initializeAuth();
-  }, []);
+  }, [toast]);
 
   const signOut = async () => {
     try {
@@ -66,10 +97,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      // Clear session and user state
       setSession(null);
       setUser(null);
-
+      
       toast({
         title: "Sesión cerrada",
         description: "Has cerrado sesión exitosamente",
