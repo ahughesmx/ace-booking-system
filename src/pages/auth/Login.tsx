@@ -16,6 +16,11 @@ export default function Login() {
   const [loginPassword, setLoginPassword] = useState("");
   const [error, setError] = useState<string>("");
 
+  // Add new state variables for registration
+  const [memberId, setMemberId] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   useEffect(() => {
     if (user) {
       navigate(from, { replace: true });
@@ -55,6 +60,12 @@ export default function Login() {
       <div className="w-full max-w-md space-y-8">
         {showRegister ? (
           <RegisterForm
+            memberId={memberId}
+            setMemberId={setMemberId}
+            email={email}
+            setEmail={setEmail}
+            password={password}
+            setPassword={setPassword}
             onSubmit={handleRegisterSubmit}
             onShowLogin={() => setShowRegister(false)}
           />
