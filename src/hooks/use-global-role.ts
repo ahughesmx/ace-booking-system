@@ -1,12 +1,10 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import type { Database } from "@/integrations/supabase/types";
 
 type UserRole = Database['public']['Tables']['user_roles']['Row'];
 
 export function useGlobalRole(userId: string | undefined) {
-  const queryClient = useQueryClient();
-
   return useQuery({
     queryKey: ["globalUserRole", userId],
     queryFn: async () => {
@@ -22,7 +20,7 @@ export function useGlobalRole(userId: string | undefined) {
           .from("user_roles")
           .select("*")
           .eq("user_id", userId)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error("useGlobalRole: Error fetching user role:", error);
@@ -30,7 +28,7 @@ export function useGlobalRole(userId: string | undefined) {
         }
 
         console.log("useGlobalRole: Role data:", data);
-        return data as UserRole;
+        return data as UserRole | null;
       } catch (error) {
         console.error("useGlobalRole: Error:", error);
         return null;
