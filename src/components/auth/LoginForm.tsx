@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LoginFormProps {
   loginEmail: string;
@@ -11,6 +12,7 @@ interface LoginFormProps {
   setLoginPassword: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onShowRegister: () => void;
+  error?: string;
 }
 
 export function LoginForm({
@@ -20,6 +22,7 @@ export function LoginForm({
   setLoginPassword,
   onSubmit,
   onShowRegister,
+  error,
 }: LoginFormProps) {
   return (
     <Card className="w-full border shadow-md">
@@ -30,6 +33,11 @@ export function LoginForm({
         </p>
       </CardHeader>
       <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="login-email">Email</Label>
