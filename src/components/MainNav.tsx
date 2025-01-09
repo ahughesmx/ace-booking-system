@@ -45,11 +45,12 @@ const MainNav = () => {
     { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
   ];
 
+  // Añadir Panel de Control si el usuario está autenticado
   if (user) {
     navigationItems.push({
       label: "Panel de Control",
       icon: Settings,
-      onClick: handleAdminNavigation
+      onClick: handleAdminNavigation,
     });
   }
 
