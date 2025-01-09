@@ -16,7 +16,7 @@ export default function Login() {
   const [loginPassword, setLoginPassword] = useState("");
   const [error, setError] = useState<string>("");
 
-  // Add new state variables for registration
+  // Estado para el registro
   const [memberId, setMemberId] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,21 +38,10 @@ export default function Login() {
       });
 
       if (error) {
-        switch (error.message) {
-          case "Invalid login credentials":
-            setError("Email o contraseña incorrectos");
-            break;
-          case "Email not confirmed":
-            setError("Por favor verifica tu correo electrónico antes de iniciar sesión");
-            break;
-          default:
-            setError("Error al iniciar sesión. Por favor intenta de nuevo");
-        }
+        setError("Email o contraseña incorrectos");
       }
     } catch (err) {
-      const error = err as AuthError;
-      setError("Error al iniciar sesión. Por favor intenta de nuevo");
-      console.error("Login error:", error);
+      setError("Error al iniciar sesión");
     }
   };
 
@@ -61,14 +50,13 @@ export default function Login() {
     setError("");
 
     try {
-      // First check if member ID is valid
-      const { data: validMember, error: validationError } = await supabase
+      const { data: validMember } = await supabase
         .from('valid_member_ids')
         .select('member_id')
         .eq('member_id', memberId)
         .single();
 
-      if (validationError || !validMember) {
+      if (!validMember) {
         setError("Clave de socio inválida");
         return;
       }
@@ -84,24 +72,12 @@ export default function Login() {
       });
 
       if (error) {
-        switch (error.message) {
-          case "User already registered":
-            setError("Este correo ya está registrado");
-            break;
-          case "Password should be at least 6 characters":
-            setError("La contraseña debe tener al menos 6 caracteres");
-            break;
-          default:
-            setError("Error al registrar. Por favor intenta de nuevo");
-        }
+        setError("Error al registrar usuario");
       } else {
-        setError(""); // Clear any errors
-        setShowRegister(false); // Switch back to login view
+        setShowRegister(false);
       }
     } catch (err) {
-      const error = err as AuthError;
-      setError("Error al registrar. Por favor intenta de nuevo");
-      console.error("Registration error:", error);
+      setError("Error al registrar usuario");
     }
   };
 
