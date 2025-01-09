@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useGlobalRole } from "@/hooks/use-global-role";
 import { useAuth } from "@/components/AuthProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserManagement } from "@/components/admin/UserManagement";
-import { CourtManagement } from "@/components/admin/CourtManagement";
-import { Statistics } from "@/components/admin/Statistics";
-import { ValidMemberIdManagement } from "@/components/admin/ValidMemberIdManagement";
+import UserManagement from "@/components/admin/UserManagement";
+import CourtManagement from "@/components/admin/CourtManagement";
+import Statistics from "@/components/admin/Statistics";
+import ValidMemberIdManagement from "@/components/admin/ValidMemberIdManagement";
 import { useToast } from "@/hooks/use-toast";
 
 const AdminPage = () => {
