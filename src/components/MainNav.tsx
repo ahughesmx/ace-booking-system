@@ -15,6 +15,8 @@ const MainNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Debug logs
+  console.log("MainNav - User:", user);
   console.log("MainNav - User ID:", user?.id);
   console.log("MainNav - User Role Data:", userRole);
   console.log("MainNav - Is Role Loading:", isRoleLoading);
@@ -46,17 +48,20 @@ const MainNav = () => {
     navigate("/admin");
   };
 
-  const isAdmin = !isRoleLoading && userRole?.role === 'admin';
+  // Determine admin status
+  const isAdmin = Boolean(!isRoleLoading && userRole?.role === 'admin');
   console.log("MainNav - Is Admin:", isAdmin);
 
-  const navigationItems = [
+  // Base navigation items
+  const baseNavigationItems = [
     { label: "Inicio", icon: Home, onClick: () => handleNavigation(null) },
     { label: "Reservas", icon: Calendar, onClick: () => handleNavigation("bookings") },
     { label: "Partidos", icon: Calendar, onClick: () => handleNavigation("matches") },
     { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
   ];
 
-  // Solo agregar el ítem de administración si el usuario es admin
+  // Create navigation items array with conditional admin item
+  const navigationItems = [...baseNavigationItems];
   if (isAdmin) {
     console.log("Adding admin navigation item");
     navigationItems.push({
