@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
 
 type AuthContextType = {
@@ -25,48 +25,50 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        });
 
-    return () => subscription.unsubscribe();
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   const signOut = async () => {
     try {
-      // First clear local state to ensure immediate UI feedback
-      setSession(null);
-      setUser(null);
-
-      // Clear all supabase local storage items
-      const localStorageKeys = Object.keys(localStorage);
-      localStorageKeys.forEach(key => {
-        if (key.startsWith('sb-')) {
-          localStorage.removeItem(key);
-        }
-      });
-
-      // Attempt to sign out from Supabase
+      setLoading(true);
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error("Supabase signOut error:", error);
-        // Even if there's an error, we've already cleared local state
+        console.error("Error signing out:", error);
         toast({
-          title: "Sesión cerrada",
-          description: "La sesión se ha cerrado localmente",
+          title: "Error",
+          description: "Hubo un problema al cerrar sesión",
+          variant: "destructive",
         });
         return;
       }
+
+      // Clear session and user state
+      setSession(null);
+      setUser(null);
 
       toast({
         title: "Sesión cerrada",
@@ -75,9 +77,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error("Error in signOut:", error);
       toast({
-        title: "Sesión cerrada",
-        description: "La sesión se ha cerrado localmente",
+        title: "Error",
+        description: "Hubo un problema al cerrar sesión",
+        variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
