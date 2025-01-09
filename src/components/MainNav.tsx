@@ -1,31 +1,33 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
+import { useUserRole } from "@/hooks/use-user-role";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Home, Calendar, Trophy, LogOut, LogIn } from "lucide-react";
+import { Menu, Home, Calendar, Trophy, LogOut, LogIn, Settings } from "lucide-react";
 import { MatchInvitationNotification } from "./match/MatchInvitationNotification";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const MainNav = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { data: userRole } = useUserRole(user?.id);
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleSignOut = async () => {
-    setMobileOpen(false); // Cerrar el menú antes de cerrar sesión
+    setMobileOpen(false);
     await signOut();
     navigate("/");
   };
 
   const handleSignIn = () => {
-    setMobileOpen(false); // Cerrar el menú
+    setMobileOpen(false);
     navigate("/login");
   };
 
   const handleNavigation = (tab: string | null) => {
-    setMobileOpen(false); // Cerrar el menú al navegar
+    setMobileOpen(false);
     
     if (tab === null) {
       navigate("/", { state: undefined });
@@ -34,12 +36,26 @@ const MainNav = () => {
     }
   };
 
+  const handleAdminNavigation = () => {
+    setMobileOpen(false);
+    navigate("/admin");
+  };
+
   const navigationItems = [
     { label: "Inicio", icon: Home, onClick: () => handleNavigation(null) },
     { label: "Reservas", icon: Calendar, onClick: () => handleNavigation("bookings") },
     { label: "Partidos", icon: Calendar, onClick: () => handleNavigation("matches") },
     { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
   ];
+
+  // Solo agregar el ítem de administración si el usuario tiene rol de admin
+  if (userRole?.role === 'admin') {
+    navigationItems.push({
+      label: "Panel de Control",
+      icon: Settings,
+      onClick: handleAdminNavigation
+    });
+  }
 
   const NavItems = () => (
     <>
