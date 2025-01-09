@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 const MainNav = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
-  const { data: userRole } = useUserRole(user?.id);
+  const { data: userRole, isLoading: isRoleLoading } = useUserRole(user?.id);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -48,8 +48,8 @@ const MainNav = () => {
     { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
   ];
 
-  // Solo agregar el ítem de administración si el usuario tiene rol de admin
-  if (userRole?.role === 'admin') {
+  // Solo agregar el ítem de administración si el usuario tiene rol de admin y no está cargando
+  if (!isRoleLoading && userRole?.role === 'admin') {
     navigationItems.push({
       label: "Panel de Control",
       icon: Settings,

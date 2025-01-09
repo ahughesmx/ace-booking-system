@@ -10,7 +10,7 @@ export function useUserRole(userId: string | undefined) {
     queryFn: async () => {
       if (!userId) {
         console.log("No user ID provided to useUserRole");
-        return { role: 'user' } as UserRole;
+        return null;
       }
 
       console.log("Fetching role for user:", userId);
@@ -31,11 +31,10 @@ export function useUserRole(userId: string | undefined) {
         return data as UserRole;
       } catch (error) {
         console.error("Error in useUserRole:", error);
-        // Return default role on error instead of throwing
-        return { role: 'user', user_id: userId } as UserRole;
+        // Return null on error instead of a default role
+        return null;
       }
     },
-    retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled: !!userId, // Solo ejecutar la query si hay un userId
   });
 }
