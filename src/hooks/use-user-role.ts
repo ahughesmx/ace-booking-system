@@ -31,10 +31,12 @@ export function useUserRole(userId: string | undefined) {
         return data as UserRole;
       } catch (error) {
         console.error("Error in useUserRole:", error);
-        // Return null on error instead of a default role
         return null;
       }
     },
-    enabled: !!userId, // Solo ejecutar la query si hay un userId
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5, // 5 minutos de caché
+    cacheTime: 1000 * 60 * 30, // 30 minutos de caché
+    retry: 1,
   });
 }
