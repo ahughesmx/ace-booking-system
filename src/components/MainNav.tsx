@@ -15,6 +15,10 @@ const MainNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  console.log("MainNav - User ID:", user?.id);
+  console.log("MainNav - User Role Data:", userRole);
+  console.log("MainNav - Is Role Loading:", isRoleLoading);
+
   const handleSignOut = async () => {
     setMobileOpen(false);
     await signOut();
@@ -50,6 +54,7 @@ const MainNav = () => {
 
   // Solo agregar el ítem de administración si el usuario tiene rol de admin y no está cargando
   if (!isRoleLoading && userRole?.role === 'admin') {
+    console.log("Adding admin navigation item - Role:", userRole.role);
     navigationItems.push({
       label: "Panel de Control",
       icon: Settings,
