@@ -16,23 +16,28 @@ export function useUserRole(userId: string | undefined) {
       console.log("Fetching role for user:", userId);
       
       try {
-        const { data: userRole, error } = await supabase
+        const { data, error } = await supabase
           .from("user_roles")
           .select("*")
           .eq("user_id", userId)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error("Error fetching user role:", error);
           throw error;
         }
 
-        console.log("User role data:", userRole);
+        // If no role found, return default user role
+        if (!data) {
+          return { role: 'user', user_id: userId } as UserRole;
+        }
 
-        return userRole || { role: 'user', user_id: userId } as UserRole;
+        console.log("User role data:", data);
+        return data;
       } catch (error) {
         console.error("Error in useUserRole:", error);
-        throw error;
+        // Return default role on error instead of throwing
+        return { role: 'user', user_id: userId } as UserRole;
       }
     },
     retry: false,
