@@ -20,20 +20,15 @@ export function useUserRole(userId: string | undefined) {
           .from("user_roles")
           .select("*")
           .eq("user_id", userId)
-          .maybeSingle();
+          .single();
 
         if (error) {
           console.error("Error fetching user role:", error);
           throw error;
         }
 
-        // If no role found, return default user role
-        if (!data) {
-          return { role: 'user', user_id: userId } as UserRole;
-        }
-
         console.log("User role data:", data);
-        return data;
+        return data as UserRole;
       } catch (error) {
         console.error("Error in useUserRole:", error);
         // Return default role on error instead of throwing
