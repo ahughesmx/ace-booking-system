@@ -18,6 +18,7 @@ const MainNav = () => {
   console.log("MainNav - User ID:", user?.id);
   console.log("MainNav - User Role Data:", userRole);
   console.log("MainNav - Is Role Loading:", isRoleLoading);
+  console.log("MainNav - User Role Type:", userRole?.role);
 
   const handleSignOut = async () => {
     setMobileOpen(false);
@@ -45,6 +46,9 @@ const MainNav = () => {
     navigate("/admin");
   };
 
+  const isAdmin = !isRoleLoading && userRole?.role === 'admin';
+  console.log("MainNav - Is Admin:", isAdmin);
+
   const navigationItems = [
     { label: "Inicio", icon: Home, onClick: () => handleNavigation(null) },
     { label: "Reservas", icon: Calendar, onClick: () => handleNavigation("bookings") },
@@ -52,9 +56,9 @@ const MainNav = () => {
     { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
   ];
 
-  // Solo agregar el ítem de administración si el usuario tiene rol de admin y no está cargando
-  if (!isRoleLoading && userRole?.role === 'admin') {
-    console.log("Adding admin navigation item - Role:", userRole.role);
+  // Solo agregar el ítem de administración si el usuario es admin
+  if (isAdmin) {
+    console.log("Adding admin navigation item");
     navigationItems.push({
       label: "Panel de Control",
       icon: Settings,
