@@ -11,7 +11,7 @@ import { useGlobalRole } from "@/hooks/use-global-role";
 const MainNav = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
-  const { data: userRole } = useGlobalRole(user?.id);
+  const { data: userRole, isLoading: roleLoading } = useGlobalRole(user?.id);
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -47,8 +47,8 @@ const MainNav = () => {
     { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
   ];
 
-  // Añadir Panel de Control solo si el usuario tiene rol de administrador
-  if (user && userRole?.role === "admin") {
+  // Solo añadir Panel de Control si el usuario está autenticado y no estamos cargando el rol
+  if (user && !roleLoading && userRole?.role === "admin") {
     navigationItems.push({
       label: "Panel de Control",
       icon: Settings,
