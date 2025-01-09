@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
-import { useUserRole } from "@/hooks/use-user-role";
+import { useGlobalRole } from "@/hooks/use-global-role";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Home, Calendar, Trophy, LogOut, LogIn, Settings } from "lucide-react";
@@ -10,25 +10,16 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const MainNav = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isAdminState, setIsAdminState] = useState(false);
   const { user, signOut } = useAuth();
-  const { data: userRole, isLoading: isRoleLoading } = useUserRole(user?.id);
+  const { data: userRole, isLoading } = useGlobalRole(user?.id);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Debug logs for initialization
-  console.log("MainNav - Initial Render");
   console.log("MainNav - User:", user);
-  console.log("MainNav - User ID:", user?.id);
-  console.log("MainNav - User Role Data:", userRole);
-  console.log("MainNav - Is Role Loading:", isRoleLoading);
-  console.log("MainNav - User Role Type:", userRole?.role);
+  console.log("MainNav - User Role:", userRole);
+  console.log("MainNav - Is Loading:", isLoading);
 
-  useEffect(() => {
-    const adminStatus = Boolean(!isRoleLoading && userRole?.role === 'admin');
-    console.log("MainNav - Setting admin status:", adminStatus);
-    setIsAdminState(adminStatus);
-  }, [isRoleLoading, userRole]);
+  const isAdmin = !isLoading && userRole?.role === 'admin';
 
   const handleSignOut = async () => {
     setMobileOpen(false);
@@ -56,20 +47,16 @@ const MainNav = () => {
     navigate("/admin");
   };
 
-  console.log("MainNav - Is Admin State:", isAdminState);
-
   // Base navigation items
-  const baseNavigationItems = [
+  const navigationItems = [
     { label: "Inicio", icon: Home, onClick: () => handleNavigation(null) },
     { label: "Reservas", icon: Calendar, onClick: () => handleNavigation("bookings") },
     { label: "Partidos", icon: Calendar, onClick: () => handleNavigation("matches") },
     { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
   ];
 
-  // Create navigation items array with conditional admin item
-  const navigationItems = [...baseNavigationItems];
-  if (isAdminState) {
-    console.log("Adding admin navigation item");
+  // Add admin item if user is admin
+  if (isAdmin) {
     navigationItems.push({
       label: "Panel de Control",
       icon: Settings,
@@ -91,16 +78,14 @@ const MainNav = () => {
         </Button>
       ))}
       {user ? (
-        <>
-          <Button
-            variant="ghost"
-            className="flex w-full items-center justify-start gap-2 text-red-500 hover:text-red-600"
-            onClick={handleSignOut}
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Cerrar sesión</span>
-          </Button>
-        </>
+        <Button
+          variant="ghost"
+          className="flex w-full items-center justify-start gap-2 text-red-500 hover:text-red-600"
+          onClick={handleSignOut}
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Cerrar sesión</span>
+        </Button>
       ) : (
         <Button
           variant="ghost"
