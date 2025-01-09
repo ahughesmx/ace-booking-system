@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import { useUserRole } from "@/hooks/use-user-role";
@@ -10,17 +10,25 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const MainNav = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isAdminState, setIsAdminState] = useState(false);
   const { user, signOut } = useAuth();
   const { data: userRole, isLoading: isRoleLoading } = useUserRole(user?.id);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Debug logs
+  // Debug logs for initialization
+  console.log("MainNav - Initial Render");
   console.log("MainNav - User:", user);
   console.log("MainNav - User ID:", user?.id);
   console.log("MainNav - User Role Data:", userRole);
   console.log("MainNav - Is Role Loading:", isRoleLoading);
   console.log("MainNav - User Role Type:", userRole?.role);
+
+  useEffect(() => {
+    const adminStatus = Boolean(!isRoleLoading && userRole?.role === 'admin');
+    console.log("MainNav - Setting admin status:", adminStatus);
+    setIsAdminState(adminStatus);
+  }, [isRoleLoading, userRole]);
 
   const handleSignOut = async () => {
     setMobileOpen(false);
@@ -48,9 +56,7 @@ const MainNav = () => {
     navigate("/admin");
   };
 
-  // Determine admin status
-  const isAdmin = Boolean(!isRoleLoading && userRole?.role === 'admin');
-  console.log("MainNav - Is Admin:", isAdmin);
+  console.log("MainNav - Is Admin State:", isAdminState);
 
   // Base navigation items
   const baseNavigationItems = [
@@ -62,7 +68,7 @@ const MainNav = () => {
 
   // Create navigation items array with conditional admin item
   const navigationItems = [...baseNavigationItems];
-  if (isAdmin) {
+  if (isAdminState) {
     console.log("Adding admin navigation item");
     navigationItems.push({
       label: "Panel de Control",
