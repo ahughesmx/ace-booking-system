@@ -6,7 +6,6 @@ type UserRole = Database['public']['Tables']['user_roles']['Row'];
 
 export function useUserRole(userId: string | undefined) {
   console.log("useUserRole hook called with userId:", userId);
-  console.log("Current Supabase URL:", supabase.supabaseUrl);
   
   return useQuery({
     queryKey: ["userRole", userId],
@@ -17,10 +16,7 @@ export function useUserRole(userId: string | undefined) {
       }
 
       console.log("Fetching role for user:", userId);
-      console.log("Supabase client config:", {
-        url: supabase.supabaseUrl,
-        hasAuth: !!supabase.auth,
-      });
+      console.log("Supabase client initialized:", !!supabase);
       
       try {
         const { data, error } = await supabase
