@@ -8,30 +8,46 @@ import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import Index from "./pages/Index";
 import AdminIndex from "./pages/admin/Index";
 import Login from "./pages/auth/Login";
+import { useGlobalRole } from "@/hooks/use-global-role";
+import { useToast } from "@/hooks/use-toast";
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 5,
       retry: 1,
     },
   },
 });
 
 function AdminRoute() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { data: userRole, isLoading: roleLoading } = useGlobalRole(user?.id);
+  const { toast } = useToast();
+  const location = useLocation();
 
-  if (loading) {
+  // Mostrar loading mientras se verifica la autenticación y el rol
+  if (authLoading || roleLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Cargando...</div>
+        <div className="text-lg">Verificando permisos...</div>
       </div>
     );
   }
 
+  // Si no hay usuario, redirigir al login
   if (!user) {
-    return <Navigate to="/login" state={{ from: "/admin" }} replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
+  // Si el usuario no es admin, mostrar mensaje y redirigir
+  if (userRole?.role !== "admin") {
+    toast({
+      title: "Acceso denegado",
+      description: "No tienes permisos para acceder al panel de control",
+      variant: "destructive",
+    });
+    return <Navigate to="/" replace />;
   }
 
   return <AdminIndex />;
@@ -67,14 +83,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
-              <Route
-                path="/admin/*"
-                element={
-                  <RequireAuth>
-                    <AdminRoute />
-                  </RequireAuth>
-                }
-              />
+              <Route path="/admin/*" element={<AdminRoute />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
