@@ -38,21 +38,71 @@ export default function Login() {
       });
 
       if (error) {
-        if (error.message === "Invalid login credentials") {
-          setError("Email o contraseña incorrectos");
-        } else {
-          setError(error.message);
+        switch (error.message) {
+          case "Invalid login credentials":
+            setError("Email o contraseña incorrectos");
+            break;
+          case "Email not confirmed":
+            setError("Por favor verifica tu correo electrónico antes de iniciar sesión");
+            break;
+          default:
+            setError("Error al iniciar sesión. Por favor intenta de nuevo");
         }
       }
     } catch (err) {
       const error = err as AuthError;
-      setError(error.message);
+      setError("Error al iniciar sesión. Por favor intenta de nuevo");
+      console.error("Login error:", error);
     }
   };
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle registration logic here
+    setError("");
+
+    try {
+      // First check if member ID is valid
+      const { data: validMember, error: validationError } = await supabase
+        .from('valid_member_ids')
+        .select('member_id')
+        .eq('member_id', memberId)
+        .single();
+
+      if (validationError || !validMember) {
+        setError("Clave de socio inválida");
+        return;
+      }
+
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            member_id: memberId,
+          },
+        },
+      });
+
+      if (error) {
+        switch (error.message) {
+          case "User already registered":
+            setError("Este correo ya está registrado");
+            break;
+          case "Password should be at least 6 characters":
+            setError("La contraseña debe tener al menos 6 caracteres");
+            break;
+          default:
+            setError("Error al registrar. Por favor intenta de nuevo");
+        }
+      } else {
+        setError(""); // Clear any errors
+        setShowRegister(false); // Switch back to login view
+      }
+    } catch (err) {
+      const error = err as AuthError;
+      setError("Error al registrar. Por favor intenta de nuevo");
+      console.error("Registration error:", error);
+    }
   };
 
   return (
