@@ -10,6 +10,7 @@ import ValidMemberIdManagement from "@/components/admin/ValidMemberIdManagement"
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Users, Dumbbell, BarChart3, Key } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const navigationItems = [
   { id: "users", label: "Usuarios", icon: Users },
@@ -19,26 +20,61 @@ const navigationItems = [
 ];
 
 export default function AdminIndex() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { data: userRole, isLoading: roleLoading } = useUserRole(user?.id);
+  const { data: userRole, isLoading: roleLoading, error: roleError } = useUserRole(user?.id);
   const [activeTab, setActiveTab] = useState("users");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/login");
-    }
-  }, [user, loading, navigate]);
+    const checkAccess = async () => {
+      // Si no hay usuario autenticado, redirigir al login
+      if (!authLoading && !user) {
+        console.log("No user found, redirecting to login");
+        navigate("/login");
+        return;
+      }
 
-  useEffect(() => {
-    if (!roleLoading && userRole?.role !== 'admin') {
-      navigate("/");
-    }
-  }, [userRole, roleLoading, navigate]);
+      // Si hay error al cargar el rol, mostrar toast y redirigir
+      if (roleError) {
+        console.error("Error loading user role:", roleError);
+        toast({
+          title: "Error de acceso",
+          description: "No se pudo verificar tus permisos de administrador",
+          variant: "destructive",
+        });
+        navigate("/");
+        return;
+      }
 
-  if (loading || roleLoading) {
-    return <div>Cargando...</div>;
+      // Si el rol ya se cargó y no es admin, redirigir
+      if (!roleLoading && userRole?.role !== 'admin') {
+        console.log("User is not admin, redirecting");
+        toast({
+          title: "Acceso denegado",
+          description: "No tienes permisos de administrador",
+          variant: "destructive",
+        });
+        navigate("/");
+      }
+    };
+
+    checkAccess();
+  }, [user, authLoading, roleLoading, userRole, roleError, navigate, toast]);
+
+  // Mostrar estado de carga mientras se verifica la autenticación y el rol
+  if (authLoading || roleLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Cargando...</div>
+      </div>
+    );
+  }
+
+  // Si no hay usuario o no es admin, no renderizar nada (el useEffect se encargará de la redirección)
+  if (!user || userRole?.role !== 'admin') {
+    return null;
   }
 
   const handleTabChange = (value: string) => {
