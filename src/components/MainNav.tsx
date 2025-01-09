@@ -15,11 +15,8 @@ const MainNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  console.log("MainNav - User:", user);
-  console.log("MainNav - User Role:", userRole);
-  console.log("MainNav - Is Loading:", isLoading);
-
-  const isAdmin = !isLoading && userRole?.role === 'admin';
+  // Defensive check - only consider admin if we have explicit confirmation
+  const isAdmin = Boolean(userRole?.role === 'admin');
 
   const handleSignOut = async () => {
     setMobileOpen(false);
@@ -43,11 +40,15 @@ const MainNav = () => {
   };
 
   const handleAdminNavigation = () => {
+    if (!isAdmin) {
+      console.warn("Non-admin user attempted to access admin panel");
+      return;
+    }
     setMobileOpen(false);
     navigate("/admin");
   };
 
-  // Base navigation items
+  // Base navigation items that are always shown
   const navigationItems = [
     { label: "Inicio", icon: Home, onClick: () => handleNavigation(null) },
     { label: "Reservas", icon: Calendar, onClick: () => handleNavigation("bookings") },
@@ -55,7 +56,7 @@ const MainNav = () => {
     { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
   ];
 
-  // Add admin item if user is admin
+  // Only add admin item if we're certain the user is an admin
   if (isAdmin) {
     navigationItems.push({
       label: "Panel de Control",
