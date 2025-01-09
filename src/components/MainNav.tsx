@@ -6,10 +6,12 @@ import { Home, Calendar, Trophy, Settings } from "lucide-react";
 import { MatchInvitationNotification } from "./match/MatchInvitationNotification";
 import { NavItems } from "./nav/NavItems";
 import { MobileNav } from "./nav/MobileNav";
+import { useGlobalRole } from "@/hooks/use-global-role";
 
 const MainNav = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { data: userRole } = useGlobalRole(user?.id);
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -45,8 +47,8 @@ const MainNav = () => {
     { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
   ];
 
-  // Añadir Panel de Control si el usuario está autenticado
-  if (user) {
+  // Añadir Panel de Control solo si el usuario tiene rol de administrador
+  if (user && userRole?.role === "admin") {
     navigationItems.push({
       label: "Panel de Control",
       icon: Settings,
