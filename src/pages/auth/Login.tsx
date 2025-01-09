@@ -4,7 +4,6 @@ import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/lib/supabase-client";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { RegisterForm } from "@/components/auth/RegisterForm";
-import { AuthError } from "@supabase/supabase-js";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -23,6 +22,7 @@ export default function Login() {
 
   useEffect(() => {
     if (user) {
+      // Redirigir al usuario a la página que intentaba acceder
       navigate(from, { replace: true });
     }
   }, [user, navigate, from]);

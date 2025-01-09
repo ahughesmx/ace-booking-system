@@ -35,7 +35,7 @@ function AdminRoute() {
     );
   }
 
-  // Si no hay usuario, redirigir al login
+  // Si no hay usuario, redirigir al login y guardar la ruta actual
   if (!user) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
@@ -66,6 +66,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
+    // Guardar la ruta actual para redirigir después del login
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
