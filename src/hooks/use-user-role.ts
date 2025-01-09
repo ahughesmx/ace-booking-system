@@ -35,8 +35,8 @@ export function useUserRole(userId: string | undefined) {
       }
     },
     enabled: !!userId,
-    staleTime: 1000 * 60 * 5, // 5 minutos de caché
-    cacheTime: 1000 * 60 * 30, // 30 minutos de caché
+    staleTime: 1000 * 60 * 5, // 5 minutos
+    gcTime: 1000 * 60 * 30, // 30 minutos (reemplaza cacheTime)
     retry: 1,
   });
 }
