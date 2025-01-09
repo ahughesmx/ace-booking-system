@@ -40,10 +40,6 @@ const MainNav = () => {
   };
 
   const handleAdminNavigation = () => {
-    if (!isAdmin) {
-      console.warn("Non-admin user attempted to access admin panel");
-      return;
-    }
     setMobileOpen(false);
     navigate("/admin");
   };
@@ -56,8 +52,8 @@ const MainNav = () => {
     { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
   ];
 
-  // Only add admin item if we're certain the user is an admin
-  if (isAdmin) {
+  // Add admin item if user is logged in - we'll check permissions on the admin page itself
+  if (user) {
     navigationItems.push({
       label: "Panel de Control",
       icon: Settings,
