@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 
 type AuthContextType = {
   session: Session | null;
@@ -24,7 +25,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Obtener la sesión inicial
     const initializeAuth = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
@@ -41,7 +41,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     initializeAuth();
 
-    // Suscribirse a cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log("Auth event:", event);
       
@@ -75,17 +74,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setLoading(true);
       
-      // Primero verificamos si hay una sesión activa
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       
       if (!currentSession) {
-        // Si no hay sesión, solo limpiamos el estado local
         setSession(null);
         setUser(null);
         return;
       }
 
-      // Si hay sesión, intentamos cerrarla
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -102,9 +98,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, signOut }}>
-      {children}
-    </AuthContext.Provider>
+    <>
+      <AuthContext.Provider value={{ session, user, loading, signOut }}>
+        {children}
+      </AuthContext.Provider>
+      <Toaster />
+    </>
   );
 };
 
