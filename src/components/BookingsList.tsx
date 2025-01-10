@@ -29,6 +29,11 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   const isAdmin = userRole?.role === "admin";
   const queryClient = useQueryClient();
 
+  // Ordenar las reservas por hora de inicio
+  const sortedBookings = [...bookings].sort((a, b) => {
+    return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+  });
+
   const handleCancelBooking = async (bookingId: string) => {
     try {
       const booking = bookings.find(b => b.id === bookingId);
@@ -141,7 +146,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {bookings.map((booking: Booking) => (
+          {sortedBookings.map((booking: Booking) => (
             <BookingCard
               key={booking.id}
               booking={booking}
