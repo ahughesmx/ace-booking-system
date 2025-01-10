@@ -86,22 +86,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setLoading(true);
       
-      // Get current session before attempting to sign out
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      // Clear local state first
+      // Clear local state immediately
       setSession(null);
       setUser(null);
 
-      // Only attempt Supabase signOut if there's an active session
-      if (currentSession) {
-        try {
-          await supabase.auth.signOut();
-        } catch (error) {
-          console.warn("Error during Supabase signOut:", error);
-          // Continue with local signout even if Supabase signOut fails
-        }
-      }
+      // Attempt to sign out from Supabase without checking session
+      await supabase.auth.signOut({
+        scope: 'local'
+      }).catch(error => {
+        // Log but don't throw the error
+        console.warn("Error during Supabase signOut:", error);
+      });
       
       toast({
         title: "Sesión cerrada",
