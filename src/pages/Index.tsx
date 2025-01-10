@@ -1,5 +1,5 @@
 import { useAuth } from "@/components/AuthProvider";
-import BookingCalendar from "@/components/BookingCalendar";
+import { BookingCalendar } from "@/components/BookingCalendar";
 import MatchManagement from "@/components/MatchManagement";
 import RankingTable from "@/components/RankingTable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
