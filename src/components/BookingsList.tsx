@@ -1,14 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/components/AuthProvider";
-import { BookingCard } from "@/components/BookingCard";
-import { TimeSlotsGrid } from "@/components/TimeSlotsGrid";
-import { supabase } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCourts } from "@/hooks/use-courts";
-import type { Booking } from "@/types/booking";
+import { supabase } from "@/lib/supabase-client";
 import { format, addDays, startOfToday, isAfter, isBefore, endOfTomorrow } from "date-fns";
+import type { Booking } from "@/types/booking";
+import { EmptyBookingsList } from "./booking/EmptyBookingsList";
+import { BookingsListContent } from "./booking/BookingsListContent";
 
 interface BookingsListProps {
   bookings: Booking[];
@@ -17,22 +15,16 @@ interface BookingsListProps {
 }
 
 const BUSINESS_HOURS = {
-  start: 8, // 8 AM
-  end: 22, // 10 PM (último slot será de 22:00 a 23:00)
+  start: 8,
+  end: 22,
 };
 
 export function BookingsList({ bookings, onCancelSuccess, selectedDate }: BookingsListProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { data: userRole } = useUserRole(user?.id);
-  const { data: courts = [] } = useCourts();
   const isAdmin = userRole?.role === "admin";
   const queryClient = useQueryClient();
-
-  // Ordenar las reservas por hora de inicio
-  const sortedBookings = [...bookings].sort((a, b) => {
-    return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
-  });
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
@@ -59,17 +51,12 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
 
       if (error) throw error;
 
-      // Refetch the bookings query to update available time slots
       const bookingDate = new Date(booking.start_time);
       await queryClient.invalidateQueries({ 
         queryKey: ["bookings", bookingDate, booking.court_id]
       });
 
       onCancelSuccess();
-      toast({
-        title: "Reserva cancelada",
-        description: "La reserva ha sido cancelada exitosamente.",
-      });
     } catch (error) {
       console.error("Error canceling booking:", error);
       toast({
@@ -90,16 +77,12 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
 
   if (!isValidDate(selectedDate)) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-[#1e3a8a]">Horarios disponibles</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-center py-8">
-            Solo se pueden hacer reservas para hoy y mañana
-          </p>
-        </CardContent>
-      </Card>
+      <EmptyBookingsList
+        isAuthenticated={false}
+        bookedSlots={new Set()}
+        businessHours={BUSINESS_HOURS}
+        selectedDate={selectedDate}
+      />
     );
   }
 
@@ -109,53 +92,32 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     );
 
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-[#1e3a8a]">Horarios disponibles</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TimeSlotsGrid 
-            bookedSlots={bookedSlots}
-            businessHours={BUSINESS_HOURS}
-            selectedDate={selectedDate}
-          />
-        </CardContent>
-      </Card>
+      <EmptyBookingsList
+        isAuthenticated={false}
+        bookedSlots={bookedSlots}
+        businessHours={BUSINESS_HOURS}
+        selectedDate={selectedDate}
+      />
     );
   }
 
   if (!bookings.length) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-[#1e3a8a]">Reservas del día</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-center py-8">
-            No hay reservas para este día
-          </p>
-        </CardContent>
-      </Card>
+      <EmptyBookingsList
+        isAuthenticated={true}
+        bookedSlots={new Set()}
+        businessHours={BUSINESS_HOURS}
+        selectedDate={selectedDate}
+      />
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-[#1e3a8a]">Reservas del día</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {sortedBookings.map((booking: Booking) => (
-            <BookingCard
-              key={booking.id}
-              booking={booking}
-              isOwner={isAdmin || user?.id === booking.user_id}
-              onCancel={handleCancelBooking}
-            />
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <BookingsListContent
+      bookings={bookings}
+      isAdmin={isAdmin}
+      userId={user.id}
+      onCancel={handleCancelBooking}
+    />
   );
 }
