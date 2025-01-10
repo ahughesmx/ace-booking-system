@@ -85,7 +85,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signOut();
+      
+      // First clear the local state
+      setSession(null);
+      setUser(null);
+
+      // Then attempt to sign out from Supabase
+      const { error } = await supabase.auth.signOut({
+        scope: 'local' // Change to local scope to avoid session validation
+      });
       
       if (error) {
         console.error("Error signing out:", error);
@@ -96,9 +104,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
         return;
       }
-
-      setSession(null);
-      setUser(null);
       
       toast({
         title: "Sesión cerrada",
