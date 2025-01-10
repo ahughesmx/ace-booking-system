@@ -8,7 +8,9 @@ import { useAuth } from "@/components/AuthProvider";
 import { BookingForm } from "@/components/BookingForm";
 import { BookingsList } from "@/components/BookingsList";
 import { useBookings } from "@/hooks/use-bookings";
-import { startOfToday, endOfTomorrow } from "date-fns";
+import { startOfToday, addDays } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase-client";
 
 export function BookingCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -17,8 +19,21 @@ export function BookingCalendar() {
   const navigate = useNavigate();
   const { data: bookings = [], refetch: refetchBookings } = useBookings(selectedDate);
 
+  const { data: bookingRules } = useQuery({
+    queryKey: ["bookingRules"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("booking_rules")
+        .select("*")
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const today = startOfToday();
-  const tomorrow = endOfTomorrow();
+  const maxDate = bookingRules ? addDays(today, bookingRules.max_days_ahead) : addDays(today, 1);
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -34,7 +49,7 @@ export function BookingCalendar() {
               mode="single"
               selected={selectedDate}
               onSelect={setSelectedDate}
-              disabled={(date) => date < today || date > tomorrow}
+              disabled={(date) => date < today || date > maxDate}
               className="mx-auto"
               initialFocus
             />
