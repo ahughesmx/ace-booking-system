@@ -12,6 +12,47 @@ export function useBookingSubmit(onSuccess: () => void) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const checkExistingBookings = async (date: Date, selectedTime: string) => {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const { data: existingBookings, error } = await supabase
+      .from("bookings")
+      .select("start_time, end_time")
+      .eq("user_id", user?.id)
+      .gte("start_time", startOfDay.toISOString())
+      .lte("end_time", endOfDay.toISOString());
+
+    if (error) {
+      console.error("Error checking existing bookings:", error);
+      return false;
+    }
+
+    if (!existingBookings?.length) return true;
+
+    const newBookingTime = new Date(date);
+    const [hours] = selectedTime.split(":");
+    newBookingTime.setHours(parseInt(hours), 0, 0, 0);
+
+    // Verificar que haya al menos 1 hora entre la nueva reserva y las existentes
+    for (const booking of existingBookings) {
+      const existingStart = new Date(booking.start_time);
+      const existingEnd = new Date(booking.end_time);
+      
+      const timeDiffStart = Math.abs(newBookingTime.getTime() - existingEnd.getTime()) / (1000 * 60 * 60);
+      const timeDiffEnd = Math.abs(existingStart.getTime() - newBookingTime.getTime()) / (1000 * 60 * 60);
+      
+      if (timeDiffStart < 1 || timeDiffEnd < 1) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleBooking = async (
     selectedDate: Date | undefined,
     selectedTime: string | null,
@@ -31,6 +72,17 @@ export function useBookingSubmit(onSuccess: () => void) {
       toast({
         title: "Error",
         description: validationError,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Verificar el espacio entre reservas antes de intentar crear una nueva
+    const isValidSpacing = await checkExistingBookings(selectedDate, selectedTime);
+    if (!isValidSpacing) {
+      toast({
+        title: "Error",
+        description: "Debe haber un espacio de al menos 1 hora entre tus reservas del mismo día. Por favor selecciona un horario diferente.",
         variant: "destructive",
       });
       return;
@@ -65,8 +117,6 @@ export function useBookingSubmit(onSuccess: () => void) {
             errorMessage = "Las reservas deben hacerse con al menos 2 horas de anticipación.";
           } else if (error.message.includes("Solo se pueden hacer reservas para hoy y mañana")) {
             errorMessage = "Solo se pueden hacer reservas para hoy y mañana.";
-          } else if (error.message.includes("espacio de al menos")) {
-            errorMessage = "Debe haber un espacio de al menos 1 hora entre tus reservas del mismo día. Por favor selecciona un horario diferente.";
           }
         }
 
