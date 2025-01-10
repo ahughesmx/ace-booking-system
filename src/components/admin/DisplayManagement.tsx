@@ -16,22 +16,39 @@ export default function DisplayManagement() {
   const { data: displaySettings, refetch } = useQuery({
     queryKey: ["display-settings"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First try to get existing settings
+      const { data: existingSettings, error: fetchError } = await supabase
         .from("display_settings")
         .select("*")
         .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching display settings:", error);
-        throw error;
+      if (fetchError) {
+        console.error("Error fetching display settings:", fetchError);
+        throw fetchError;
       }
 
-      // Return default settings if none exist
-      return data || {
-        id: null,
-        is_enabled: true,
-        rotation_interval: 10000,
-      };
+      // If no settings exist, create default settings
+      if (!existingSettings) {
+        const { data: newSettings, error: insertError } = await supabase
+          .from("display_settings")
+          .insert([
+            {
+              is_enabled: true,
+              rotation_interval: 10000,
+            },
+          ])
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error("Error creating default display settings:", insertError);
+          throw insertError;
+        }
+
+        return newSettings;
+      }
+
+      return existingSettings;
     },
   });
 
