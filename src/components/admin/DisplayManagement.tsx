@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { AdminButton } from "@/components/admin/AdminButton";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -199,24 +199,14 @@ export default function DisplayManagement() {
                 Copiar la URL para mostrar en una pantalla
               </p>
             </div>
-            <Button
+            <AdminButton
               variant="outline"
               size="sm"
-              className="gap-2"
+              icon={copying ? <CheckSquare className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               onClick={handleCopyUrl}
             >
-              {copying ? (
-                <>
-                  <CheckSquare className="h-4 w-4" />
-                  Copiado
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4" />
-                  Copiar URL
-                </>
-              )}
-            </Button>
+              {copying ? "Copiado" : "Copiar URL"}
+            </AdminButton>
           </div>
         </CardContent>
       </Card>

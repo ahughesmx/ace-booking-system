@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+import { AdminButton } from "@/components/admin/AdminButton";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, X, Check, Trash2 } from "lucide-react";
@@ -151,15 +151,15 @@ export default function CourtManagement() {
               className="pl-4 h-11 border-gray-200 focus:border-primary focus:ring-primary"
             />
           </div>
-          <Button
+          <AdminButton
             onClick={handleAddCourt}
             disabled={loading || !newCourtName.trim()}
             size="lg"
+            icon={<Plus className="w-5 h-5" />}
             className="bg-primary hover:bg-primary/90 text-white shadow-sm transition-colors"
           >
-            <Plus className="w-5 h-5 mr-2" />
             Agregar cancha
-          </Button>
+          </AdminButton>
         </div>
 
         <div className="rounded-lg border border-gray-100 overflow-hidden">
@@ -201,46 +201,48 @@ export default function CourtManagement() {
                     <div className="flex gap-2 justify-end">
                       {editingId === court.id ? (
                         <>
-                          <Button
+                          <AdminButton
                             variant="outline"
                             size="sm"
                             onClick={() => handleEditCourt(court.id)}
                             disabled={loading || !editName.trim()}
+                            icon={<Check className="w-4 h-4" />}
                             className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
                           >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button
+                            Guardar
+                          </AdminButton>
+                          <AdminButton
                             variant="outline"
                             size="sm"
                             onClick={cancelEditing}
                             disabled={loading}
+                            icon={<X className="w-4 h-4" />}
                             className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 border-gray-200"
                           >
-                            <X className="w-4 h-4" />
-                          </Button>
+                            Cancelar
+                          </AdminButton>
                         </>
                       ) : (
-                        <Button
+                        <AdminButton
                           variant="outline"
                           size="sm"
                           onClick={() => startEditing(court)}
                           disabled={loading}
+                          icon={<Pencil className="w-4 h-4" />}
                           className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
                         >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
+                          Editar
+                        </AdminButton>
                       )}
-                      <Button
+                      <AdminButton
                         variant="destructive"
                         size="sm"
                         onClick={() => handleDeleteCourt(court.id)}
                         disabled={loading}
-                        className="bg-red-500 hover:bg-red-600 text-white"
+                        icon={<Trash2 className="w-4 h-4" />}
                       >
-                        <Trash2 className="w-4 h-4 mr-1" />
                         Eliminar
-                      </Button>
+                      </AdminButton>
                     </div>
                   </TableCell>
                 </TableRow>
