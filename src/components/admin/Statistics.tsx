@@ -23,173 +23,152 @@ import {
   Legend,
   AreaChart,
   Area,
+  HeatMapChart,
 } from "recharts";
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function Statistics() {
-  // Estadísticas de reservas por día
-  const { data: bookingStats } = useQuery({
-    queryKey: ["booking-stats"],
-    queryFn: async () => {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-      const { data, error } = await supabase
-        .from("bookings")
-        .select("created_at, court_id, courts(name)")
-        .gte("created_at", thirtyDaysAgo.toISOString());
-
-      if (error) throw error;
-
-      const bookingsByDay = data.reduce((acc: any, booking: any) => {
-        const date = new Date(booking.created_at).toLocaleDateString();
-        acc[date] = (acc[date] || 0) + 1;
-        return acc;
-      }, {});
-
-      return Object.entries(bookingsByDay).map(([date, count]) => ({
-        date,
-        reservas: count,
-      }));
-    },
-  });
-
-  // Estadísticas por cancha
-  const { data: courtStats } = useQuery({
-    queryKey: ["court-stats"],
+  // Distribución de reservas por cancha
+  const { data: courtDistribution } = useQuery({
+    queryKey: ["court-distribution"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bookings")
-        .select("court_id, courts(name)");
+        .select("court_id, courts(name)")
+        .gte("start_time", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
       if (error) throw error;
 
-      const courtBookings = data.reduce((acc: any, booking: any) => {
+      const distribution = data.reduce((acc: any, booking: any) => {
         const courtName = booking.courts?.name || 'Desconocida';
         acc[courtName] = (acc[courtName] || 0) + 1;
         return acc;
       }, {});
 
-      return Object.entries(courtBookings).map(([name, value]) => ({
+      return Object.entries(distribution).map(([name, value]) => ({
         name,
         value,
       }));
     },
   });
 
-  // Estadísticas por mes
-  const { data: monthlyStats } = useQuery({
-    queryKey: ["monthly-stats"],
+  // Ocupación por hora para cada cancha
+  const { data: hourlyOccupation } = useQuery({
+    queryKey: ["hourly-occupation"],
     queryFn: async () => {
-      const oneYearAgo = new Date();
-      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-
       const { data, error } = await supabase
         .from("bookings")
-        .select("created_at")
-        .gte("created_at", oneYearAgo.toISOString());
+        .select("start_time, court_id, courts(name)")
+        .gte("start_time", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 
       if (error) throw error;
 
-      const monthlyBookings = data.reduce((acc: any, booking: any) => {
-        const month = new Date(booking.created_at).toLocaleString('default', { month: 'long' });
+      const hourlyData = data.reduce((acc: any, booking: any) => {
+        const hour = new Date(booking.start_time).getHours();
+        const courtName = booking.courts?.name || 'Desconocida';
+        
+        if (!acc[hour]) {
+          acc[hour] = {};
+        }
+        acc[hour][courtName] = (acc[hour][courtName] || 0) + 1;
+        return acc;
+      }, {});
+
+      return Object.entries(hourlyData).map(([hour, courts]) => ({
+        hour: `${hour}:00`,
+        ...courts,
+      }));
+    },
+  });
+
+  // Tendencias mensuales
+  const { data: monthlyTrends } = useQuery({
+    queryKey: ["monthly-trends"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("start_time")
+        .gte("start_time", new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString());
+
+      if (error) throw error;
+
+      const monthlyData = data.reduce((acc: any, booking: any) => {
+        const month = new Date(booking.start_time).toLocaleString('default', { month: 'long' });
         acc[month] = (acc[month] || 0) + 1;
         return acc;
       }, {});
 
-      return Object.entries(monthlyBookings).map(([month, count]) => ({
+      return Object.entries(monthlyData).map(([month, count]) => ({
         month,
         reservas: count,
       }));
     },
   });
 
-  // Estadísticas de usuarios
-  const { data: userStats } = useQuery({
-    queryKey: ["user-stats"],
-    queryFn: async () => {
-      const { count: totalUsers } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact" });
-
-      const { count: activeUsers } = await supabase
-        .from("bookings")
-        .select("user_id", { count: "exact", head: true })
-        .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
-
-      return {
-        totalUsers,
-        activeUsers,
-      };
-    },
-  });
-
-  // Estadísticas de anticipación de reservas
-  const { data: bookingPatterns } = useQuery({
-    queryKey: ["booking-patterns"],
+  // Comparativa por día de la semana
+  const { data: weekdayComparison } = useQuery({
+    queryKey: ["weekday-comparison"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bookings")
-        .select("booking_made_at, start_time");
+        .select("start_time")
+        .gte("start_time", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
       if (error) throw error;
 
-      const patterns = data.reduce((acc: any, booking: any) => {
-        const hoursInAdvance = Math.round(
-          (new Date(booking.start_time).getTime() - new Date(booking.booking_made_at).getTime()) 
-          / (1000 * 60 * 60)
-        );
-        const category = 
-          hoursInAdvance <= 24 ? "< 24h" :
-          hoursInAdvance <= 48 ? "24-48h" :
-          hoursInAdvance <= 72 ? "48-72h" : "> 72h";
-        
-        acc[category] = (acc[category] || 0) + 1;
+      const weekdays = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const weekdayData = data.reduce((acc: any, booking: any) => {
+        const weekday = weekdays[new Date(booking.start_time).getDay()];
+        acc[weekday] = (acc[weekday] || 0) + 1;
         return acc;
       }, {});
 
-      return Object.entries(patterns).map(([range, count]) => ({
-        range,
-        cantidad: count,
+      return Object.entries(weekdayData).map(([day, count]) => ({
+        dia: day,
+        reservas: count,
+      }));
+    },
+  });
+
+  // Horas populares (últimos 30 días)
+  const { data: popularHours } = useQuery({
+    queryKey: ["popular-hours"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("start_time")
+        .gte("start_time", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+
+      if (error) throw error;
+
+      const hourlyData = data.reduce((acc: any, booking: any) => {
+        const hour = new Date(booking.start_time).getHours();
+        acc[hour] = (acc[hour] || 0) + 1;
+        return acc;
+      }, {});
+
+      return Object.entries(hourlyData).map(([hour, count]) => ({
+        hora: `${hour}:00`,
+        reservas: count,
       }));
     },
   });
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
-      {/* Estadísticas de Usuarios */}
-      <Card>
+      {/* Distribución de Reservas por Cancha */}
+      <Card className="col-span-1">
         <CardHeader>
-          <CardTitle>Estadísticas de Usuarios</CardTitle>
+          <CardTitle>Distribución por Cancha</CardTitle>
           <CardDescription>Últimos 30 días</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm font-medium">Usuarios totales</p>
-              <p className="text-2xl font-bold">{userStats?.totalUsers || 0}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium">Usuarios activos</p>
-              <p className="text-2xl font-bold">{userStats?.activeUsers || 0}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Reservas por Cancha */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Reservas por Cancha</CardTitle>
-          <CardDescription>Distribución total</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={courtStats}
+                  data={courtDistribution}
                   dataKey="value"
                   nameKey="name"
                   cx="50%"
@@ -197,7 +176,7 @@ export default function Statistics() {
                   outerRadius={80}
                   label
                 >
-                  {courtStats?.map((entry: any, index: number) => (
+                  {courtDistribution?.map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -209,37 +188,44 @@ export default function Statistics() {
         </CardContent>
       </Card>
 
-      {/* Reservas por Día */}
-      <Card className="md:col-span-2">
+      {/* Ocupación por Hora */}
+      <Card className="col-span-1">
         <CardHeader>
-          <CardTitle>Reservas por día</CardTitle>
-          <CardDescription>Últimos 30 días</CardDescription>
+          <CardTitle>Ocupación por Hora</CardTitle>
+          <CardDescription>Últimos 7 días</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={bookingStats}>
+              <BarChart data={hourlyOccupation}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
+                <XAxis dataKey="hour" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="reservas" fill="#4f46e5" />
+                <Legend />
+                {courtDistribution?.map((court: any, index: number) => (
+                  <Bar 
+                    key={court.name}
+                    dataKey={court.name}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
               </BarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
 
-      {/* Tendencia Mensual */}
-      <Card className="md:col-span-2">
+      {/* Tendencias Mensuales */}
+      <Card className="col-span-2">
         <CardHeader>
-          <CardTitle>Tendencia Mensual</CardTitle>
-          <CardDescription>Últimos 12 meses</CardDescription>
+          <CardTitle>Tendencias Mensuales</CardTitle>
+          <CardDescription>Último año</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyStats}>
+              <LineChart data={monthlyTrends}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
@@ -251,22 +237,43 @@ export default function Statistics() {
         </CardContent>
       </Card>
 
-      {/* Patrones de Reserva */}
-      <Card className="md:col-span-2">
+      {/* Comparativa por Día de la Semana */}
+      <Card className="col-span-1">
         <CardHeader>
-          <CardTitle>Anticipación de Reservas</CardTitle>
-          <CardDescription>Distribución por tiempo de anticipación</CardDescription>
+          <CardTitle>Reservas por Día</CardTitle>
+          <CardDescription>Últimos 30 días</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={bookingPatterns}>
+              <BarChart data={weekdayComparison}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="range" />
+                <XAxis dataKey="dia" />
                 <YAxis />
                 <Tooltip />
-                <Area type="monotone" dataKey="cantidad" fill="#4f46e5" stroke="#4f46e5" />
-              </AreaChart>
+                <Bar dataKey="reservas" fill="#4f46e5" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Horas Populares */}
+      <Card className="col-span-1">
+        <CardHeader>
+          <CardTitle>Horas Populares</CardTitle>
+          <CardDescription>Últimos 30 días</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={popularHours}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="hora" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="reservas" fill="#10b981" />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
