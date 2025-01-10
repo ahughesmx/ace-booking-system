@@ -19,21 +19,45 @@ export default function DisplayManagement() {
       const { data, error } = await supabase
         .from("display_settings")
         .select("*")
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Error fetching display settings:", error);
+        throw error;
+      }
+
+      // Return default settings if none exist
+      return data || {
+        id: null,
+        is_enabled: true,
+        rotation_interval: 10000,
+      };
     },
   });
 
   const handleToggleDisplay = async () => {
     try {
-      const { error } = await supabase
-        .from("display_settings")
-        .update({ is_enabled: !displaySettings?.is_enabled })
-        .eq("id", displaySettings?.id);
+      if (!displaySettings?.id) {
+        // Create new settings if they don't exist
+        const { error: insertError } = await supabase
+          .from("display_settings")
+          .insert([
+            {
+              is_enabled: true,
+              rotation_interval: 10000,
+            },
+          ]);
 
-      if (error) throw error;
+        if (insertError) throw insertError;
+      } else {
+        // Update existing settings
+        const { error } = await supabase
+          .from("display_settings")
+          .update({ is_enabled: !displaySettings.is_enabled })
+          .eq("id", displaySettings.id);
+
+        if (error) throw error;
+      }
 
       await refetch();
       toast({
@@ -43,6 +67,7 @@ export default function DisplayManagement() {
         }`,
       });
     } catch (error) {
+      console.error("Error toggling display:", error);
       toast({
         title: "Error",
         description: "No se pudo actualizar el estado del display",
@@ -53,12 +78,27 @@ export default function DisplayManagement() {
 
   const handleUpdateInterval = async (newInterval: number) => {
     try {
-      const { error } = await supabase
-        .from("display_settings")
-        .update({ rotation_interval: newInterval })
-        .eq("id", displaySettings?.id);
+      if (!displaySettings?.id) {
+        // Create new settings if they don't exist
+        const { error: insertError } = await supabase
+          .from("display_settings")
+          .insert([
+            {
+              is_enabled: true,
+              rotation_interval: newInterval,
+            },
+          ]);
 
-      if (error) throw error;
+        if (insertError) throw insertError;
+      } else {
+        // Update existing settings
+        const { error } = await supabase
+          .from("display_settings")
+          .update({ rotation_interval: newInterval })
+          .eq("id", displaySettings.id);
+
+        if (error) throw error;
+      }
 
       await refetch();
       toast({
@@ -66,6 +106,7 @@ export default function DisplayManagement() {
         description: "El intervalo de rotación ha sido actualizado",
       });
     } catch (error) {
+      console.error("Error updating interval:", error);
       toast({
         title: "Error",
         description: "No se pudo actualizar el intervalo de rotación",
@@ -85,6 +126,7 @@ export default function DisplayManagement() {
       });
       setTimeout(() => setCopying(false), 2000);
     } catch (error) {
+      console.error("Error copying URL:", error);
       toast({
         title: "Error",
         description: "No se pudo copiar la URL",
