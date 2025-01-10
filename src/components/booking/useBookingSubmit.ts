@@ -49,7 +49,6 @@ export function useBookingSubmit(onSuccess: () => void) {
         return false;
       }
 
-      // Ahora rules.time_between_bookings está tipado correctamente como interval
       const timeInterval = (rules as BookingRules).time_between_bookings as string;
       const [hours] = timeInterval.split(':').map(Number);
 
@@ -139,8 +138,6 @@ export function useBookingSubmit(onSuccess: () => void) {
         throw new Error("Error al crear los horarios de la reserva");
       }
 
-      console.log("Booking times:", times);
-
       const { error } = await supabase
         .from("bookings")
         .insert({
@@ -152,9 +149,19 @@ export function useBookingSubmit(onSuccess: () => void) {
 
       if (error) {
         console.error("Error creating booking:", error);
+        // Parse the error message from the backend
+        let errorMessage = "No se pudo realizar la reserva. Por favor intenta de nuevo.";
+        try {
+          const parsedError = JSON.parse(error.message);
+          errorMessage = parsedError.message || errorMessage;
+        } catch {
+          // If we can't parse the error, use the raw message
+          errorMessage = error.message || errorMessage;
+        }
+        
         toast({
           title: "Error",
-          description: "No se pudo realizar la reserva. Por favor intenta de nuevo.",
+          description: errorMessage,
           variant: "destructive",
         });
         return;
