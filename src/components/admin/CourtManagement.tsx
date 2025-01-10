@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, X, Check } from "lucide-react";
 
 type Court = {
   id: string;
@@ -24,6 +24,8 @@ export default function CourtManagement() {
   const { toast } = useToast();
   const [newCourtName, setNewCourtName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
 
   const { data: courts, refetch } = useQuery({
     queryKey: ["courts-admin"],
@@ -92,6 +94,45 @@ export default function CourtManagement() {
     }
   };
 
+  const startEditing = (court: Court) => {
+    setEditingId(court.id);
+    setEditName(court.name);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditName("");
+  };
+
+  const handleEditCourt = async (courtId: string) => {
+    if (!editName.trim()) return;
+
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from("courts")
+        .update({ name: editName.trim() })
+        .eq("id", courtId);
+
+      if (error) throw error;
+
+      await refetch();
+      setEditingId(null);
+      toast({
+        title: "Cancha actualizada",
+        description: "El nombre de la cancha ha sido actualizado exitosamente.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el nombre de la cancha.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex gap-4">
@@ -121,19 +162,60 @@ export default function CourtManagement() {
         <TableBody>
           {courts?.map((court) => (
             <TableRow key={court.id}>
-              <TableCell>{court.name}</TableCell>
+              <TableCell>
+                {editingId === court.id ? (
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="max-w-xs"
+                  />
+                ) : (
+                  court.name
+                )}
+              </TableCell>
               <TableCell>
                 {new Date(court.created_at).toLocaleDateString()}
               </TableCell>
               <TableCell>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDeleteCourt(court.id)}
-                  disabled={loading}
-                >
-                  Eliminar
-                </Button>
+                <div className="flex gap-2">
+                  {editingId === court.id ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditCourt(court.id)}
+                        disabled={loading || !editName.trim()}
+                      >
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={cancelEditing}
+                        disabled={loading}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => startEditing(court)}
+                      disabled={loading}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteCourt(court.id)}
+                    disabled={loading}
+                  >
+                    Eliminar
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
