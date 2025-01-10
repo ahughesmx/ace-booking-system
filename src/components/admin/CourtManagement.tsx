@@ -1,19 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { AdminButton } from "@/components/admin/AdminButton";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, X, Check, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { AddCourtForm } from "./courts/AddCourtForm";
+import { CourtsList } from "./courts/CourtsList";
 
 type Court = {
   id: string;
@@ -23,10 +14,7 @@ type Court = {
 
 export default function CourtManagement() {
   const { toast } = useToast();
-  const [newCourtName, setNewCourtName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
 
   const { data: courts, refetch } = useQuery({
     queryKey: ["courts-admin"],
@@ -41,9 +29,7 @@ export default function CourtManagement() {
     },
   });
 
-  const handleAddCourt = async () => {
-    if (!newCourtName.trim()) return;
-
+  const handleAddCourt = async (newCourtName: string) => {
     try {
       setLoading(true);
       const { error } = await supabase
@@ -52,7 +38,6 @@ export default function CourtManagement() {
 
       if (error) throw error;
 
-      setNewCourtName("");
       await refetch();
       toast({
         title: "Cancha agregada",
@@ -62,6 +47,32 @@ export default function CourtManagement() {
       toast({
         title: "Error",
         description: "No se pudo agregar la cancha.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditCourt = async (courtId: string, newName: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from("courts")
+        .update({ name: newName.trim() })
+        .eq("id", courtId);
+
+      if (error) throw error;
+
+      await refetch();
+      toast({
+        title: "Cancha actualizada",
+        description: "El nombre de la cancha ha sido actualizado exitosamente.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el nombre de la cancha.",
         variant: "destructive",
       });
     } finally {
@@ -95,45 +106,6 @@ export default function CourtManagement() {
     }
   };
 
-  const startEditing = (court: Court) => {
-    setEditingId(court.id);
-    setEditName(court.name);
-  };
-
-  const cancelEditing = () => {
-    setEditingId(null);
-    setEditName("");
-  };
-
-  const handleEditCourt = async (courtId: string) => {
-    if (!editName.trim()) return;
-
-    try {
-      setLoading(true);
-      const { error } = await supabase
-        .from("courts")
-        .update({ name: editName.trim() })
-        .eq("id", courtId);
-
-      if (error) throw error;
-
-      await refetch();
-      setEditingId(null);
-      toast({
-        title: "Cancha actualizada",
-        description: "El nombre de la cancha ha sido actualizado exitosamente.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el nombre de la cancha.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <Card className="bg-white shadow-md">
       <CardHeader>
@@ -142,121 +114,13 @@ export default function CourtManagement() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          <div className="relative flex-1 w-full sm:max-w-sm">
-            <Input
-              placeholder="Nombre de la cancha"
-              value={newCourtName}
-              onChange={(e) => setNewCourtName(e.target.value)}
-              className="w-full pl-4 h-11 border-gray-200 focus:border-primary focus:ring-primary"
-            />
-          </div>
-          <AdminButton
-            onClick={handleAddCourt}
-            disabled={loading || !newCourtName.trim()}
-            size="lg"
-            icon={<Plus className="w-5 h-5" />}
-            fullWidth
-            className="w-full sm:w-auto"
-          >
-            Agregar cancha
-          </AdminButton>
-        </div>
-
-        <div className="rounded-lg border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold text-gray-600">
-                    Nombre
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-600">
-                    Fecha de creación
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-600 text-right">
-                    Acciones
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {courts?.map((court) => (
-                  <TableRow
-                    key={court.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <TableCell className="font-medium">
-                      {editingId === court.id ? (
-                        <Input
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          className="max-w-xs"
-                        />
-                      ) : (
-                        <span className="text-gray-700">{court.name}</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-gray-500">
-                      {new Date(court.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col sm:flex-row gap-2 justify-end">
-                        {editingId === court.id ? (
-                          <>
-                            <AdminButton
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditCourt(court.id)}
-                              disabled={loading || !editName.trim()}
-                              icon={<Check className="w-4 h-4" />}
-                              className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
-                              fullWidth
-                            >
-                              Guardar
-                            </AdminButton>
-                            <AdminButton
-                              variant="outline"
-                              size="sm"
-                              onClick={cancelEditing}
-                              disabled={loading}
-                              icon={<X className="w-4 h-4" />}
-                              className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 border-gray-200"
-                              fullWidth
-                            >
-                              Cancelar
-                            </AdminButton>
-                          </>
-                        ) : (
-                          <AdminButton
-                            variant="outline"
-                            size="sm"
-                            onClick={() => startEditing(court)}
-                            disabled={loading}
-                            icon={<Pencil className="w-4 h-4" />}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
-                            fullWidth
-                          >
-                            Editar
-                          </AdminButton>
-                        )}
-                        <AdminButton
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteCourt(court.id)}
-                          disabled={loading}
-                          icon={<Trash2 className="w-4 h-4" />}
-                          fullWidth
-                        >
-                          Eliminar
-                        </AdminButton>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+        <AddCourtForm onAddCourt={handleAddCourt} loading={loading} />
+        <CourtsList
+          courts={courts || []}
+          onEditCourt={handleEditCourt}
+          onDeleteCourt={handleDeleteCourt}
+          loading={loading}
+        />
       </CardContent>
     </Card>
   );
