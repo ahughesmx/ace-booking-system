@@ -20,10 +20,18 @@ export default function Display() {
       const { data, error } = await supabase
         .from("display_settings")
         .select("*")
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Error fetching display settings:", error);
+        throw error;
+      }
+
+      // Return default settings if none exist
+      return data || {
+        is_enabled: true,
+        rotation_interval: 10000,
+      };
     },
   });
 
