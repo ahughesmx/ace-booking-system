@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { CheckSquare, Square } from "lucide-react";
 
 export default function Display() {
   const { data: displaySettings } = useQuery({
