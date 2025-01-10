@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      booking_rules: {
+        Row: {
+          allow_consecutive_bookings: boolean
+          created_at: string | null
+          id: string
+          max_active_bookings: number
+          min_cancellation_time: unknown
+          time_between_bookings: unknown
+          updated_at: string | null
+        }
+        Insert: {
+          allow_consecutive_bookings?: boolean
+          created_at?: string | null
+          id?: string
+          max_active_bookings?: number
+          min_cancellation_time?: unknown
+          time_between_bookings?: unknown
+          updated_at?: string | null
+        }
+        Update: {
+          allow_consecutive_bookings?: boolean
+          created_at?: string | null
+          id?: string
+          max_active_bookings?: number
+          min_cancellation_time?: unknown
+          time_between_bookings?: unknown
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           booking_made_at: string | null
