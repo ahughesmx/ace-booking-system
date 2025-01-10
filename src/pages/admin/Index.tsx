@@ -8,12 +8,14 @@ import CourtManagement from "@/components/admin/CourtManagement";
 import Statistics from "@/components/admin/Statistics";
 import ValidMemberIdManagement from "@/components/admin/ValidMemberIdManagement";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const AdminPage = () => {
   const { user } = useAuth();
   const { data: userRole } = useGlobalRole(user?.id);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Si el usuario no está autenticado, redirigir al inicio
@@ -39,27 +41,29 @@ const AdminPage = () => {
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <h1 className="text-2xl font-bold mb-6">Panel de Control</h1>
-      <Tabs defaultValue="users">
-        <TabsList>
-          <TabsTrigger value="users">Usuarios</TabsTrigger>
-          <TabsTrigger value="courts">Canchas</TabsTrigger>
-          <TabsTrigger value="statistics">Estadísticas</TabsTrigger>
-          <TabsTrigger value="member-ids">IDs de Miembros</TabsTrigger>
+    <div className="container mx-auto p-4 md:py-6 max-w-full md:max-w-7xl">
+      <h1 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Panel de Control</h1>
+      <Tabs defaultValue="users" className="w-full">
+        <TabsList className={`w-full ${isMobile ? 'grid grid-cols-2 gap-2' : 'flex'} mb-4`}>
+          <TabsTrigger value="users" className="flex-1">Usuarios</TabsTrigger>
+          <TabsTrigger value="courts" className="flex-1">Canchas</TabsTrigger>
+          <TabsTrigger value="statistics" className="flex-1">Estadísticas</TabsTrigger>
+          <TabsTrigger value="member-ids" className="flex-1">IDs de Miembros</TabsTrigger>
         </TabsList>
-        <TabsContent value="users">
-          <UserManagement />
-        </TabsContent>
-        <TabsContent value="courts">
-          <CourtManagement />
-        </TabsContent>
-        <TabsContent value="statistics">
-          <Statistics />
-        </TabsContent>
-        <TabsContent value="member-ids">
-          <ValidMemberIdManagement />
-        </TabsContent>
+        <div className="mt-4">
+          <TabsContent value="users" className="space-y-4">
+            <UserManagement />
+          </TabsContent>
+          <TabsContent value="courts" className="space-y-4">
+            <CourtManagement />
+          </TabsContent>
+          <TabsContent value="statistics" className="space-y-4">
+            <Statistics />
+          </TabsContent>
+          <TabsContent value="member-ids" className="space-y-4">
+            <ValidMemberIdManagement />
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );
