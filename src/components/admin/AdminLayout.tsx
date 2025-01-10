@@ -82,7 +82,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50/50">
-        <Sidebar>
+        <Sidebar className="border-r">
           <SidebarHeader className="border-b px-6 py-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Panel de Control</h2>
