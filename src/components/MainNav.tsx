@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Home, Calendar, Trophy, Settings } from "lucide-react";
@@ -13,6 +13,7 @@ const MainNav = () => {
   const { user, signOut } = useAuth();
   const { data: userRole, isLoading: roleLoading } = useGlobalRole(user?.id);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     setMobileOpen(false);
@@ -80,7 +81,7 @@ const MainNav = () => {
             />
           </div>
 
-          {/* Mobile Navigation */}
+          {/* Mobile Navigation - Ahora siempre visible en móvil */}
           <div className="flex items-center gap-2 md:hidden">
             {user && <MatchInvitationNotification />}
             <MobileNav
