@@ -15,6 +15,7 @@ interface BookingRules {
   min_cancellation_time: string;
   allow_consecutive_bookings: boolean;
   time_between_bookings: string;
+  max_days_ahead: number;
 }
 
 export default function BookingRulesManagement() {
@@ -44,6 +45,7 @@ export default function BookingRulesManagement() {
     const minCancellationHours = parseInt(formData.get("minCancellationHours") as string);
     const allowConsecutive = formData.get("allowConsecutive") === "true";
     const timeBetweenHours = parseInt(formData.get("timeBetweenHours") as string);
+    const maxDaysAhead = parseInt(formData.get("maxDaysAhead") as string);
 
     try {
       const { error } = await supabase
@@ -53,6 +55,7 @@ export default function BookingRulesManagement() {
           min_cancellation_time: `${minCancellationHours}:00:00`,
           allow_consecutive_bookings: allowConsecutive,
           time_between_bookings: `${timeBetweenHours}:00:00`,
+          max_days_ahead: maxDaysAhead,
         })
         .eq("id", rules?.id);
 
@@ -106,6 +109,20 @@ export default function BookingRulesManagement() {
               min="1"
               max="10"
               defaultValue={rules.max_active_bookings}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="maxDaysAhead">
+              Días permitidos para reservar hacia adelante
+            </Label>
+            <Input
+              id="maxDaysAhead"
+              name="maxDaysAhead"
+              type="number"
+              min="1"
+              max="30"
+              defaultValue={rules.max_days_ahead}
             />
           </div>
 
