@@ -27,6 +27,13 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
 
   const active = isActive();
 
+  // Agregar console.log para debugging
+  console.log('Booking user data:', {
+    fullName: booking.user?.full_name,
+    memberId: booking.user?.member_id,
+    entireUser: booking.user
+  });
+
   return (
     <Card className={`border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 hover:shadow-lg transition-all duration-300 ${!active ? 'opacity-50' : ''}`}>
       <CardContent className="pt-6">
