@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 interface BookingRules {
+  id: string;
   max_active_bookings: number;
   min_cancellation_time: string;
   allow_consecutive_bookings: boolean;
