@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Toggle } from "@/components/ui/toggle";
-import { UserCog, Phone, IdCard, User, Shield, Edit2, UserPlus, AlertCircle, LayoutGrid, List } from "lucide-react";
+import { UserCog, Phone, IdCard, User, Shield, Edit2, UserPlus, AlertCircle, LayoutGrid, List, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
@@ -29,15 +29,30 @@ type User = {
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredUsers(users);
+    } else {
+      const filtered = users.filter(user => 
+        user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.member_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredUsers(filtered);
+    }
+  }, [searchTerm, users]);
 
   const fetchUsers = async () => {
     try {
@@ -63,6 +78,7 @@ export default function UserManagement() {
       }));
 
       setUsers(usersWithRoles);
+      setFilteredUsers(usersWithRoles);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast({
@@ -219,7 +235,7 @@ export default function UserManagement() {
 
   const renderGridView = () => (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {users.map((user) => (
+      {filteredUsers.map((user) => (
         <div
           key={user.id}
           className="group relative overflow-hidden rounded-lg border bg-card p-6 transition-all hover:shadow-md"
@@ -307,7 +323,7 @@ export default function UserManagement() {
 
   const renderListView = () => (
     <div className="space-y-4">
-      {users.map((user) => (
+      {filteredUsers.map((user) => (
         <div
           key={user.id}
           className="flex items-center justify-between rounded-lg border bg-card p-4 transition-all hover:shadow-md"
@@ -382,40 +398,61 @@ export default function UserManagement() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <CardTitle className="flex items-center gap-2">
             <UserCog className="h-6 w-6" />
             Gestión de Usuarios
           </CardTitle>
-          <div className="flex items-center gap-2 border rounded-lg p-1">
-            <Toggle
-              pressed={viewMode === 'grid'}
-              onPressedChange={() => setViewMode('grid')}
-              aria-label="Vista en cuadrícula"
-              className="data-[state=on]:bg-muted"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Toggle>
-            <Toggle
-              pressed={viewMode === 'list'}
-              onPressedChange={() => setViewMode('list')}
-              aria-label="Vista en lista"
-              className="data-[state=on]:bg-muted"
-            >
-              <List className="h-4 w-4" />
-            </Toggle>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar usuarios..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 w-full sm:w-[250px]"
+              />
+            </div>
+            <div className="flex items-center gap-2 border rounded-lg p-1">
+              <Toggle
+                pressed={viewMode === 'grid'}
+                onPressedChange={() => setViewMode('grid')}
+                aria-label="Vista en cuadrícula"
+                className="data-[state=on]:bg-muted"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Toggle>
+              <Toggle
+                pressed={viewMode === 'list'}
+                onPressedChange={() => setViewMode('list')}
+                aria-label="Vista en lista"
+                className="data-[state=on]:bg-muted"
+              >
+                <List className="h-4 w-4" />
+              </Toggle>
+            </div>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        {users.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center p-8 text-center">
-            <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium">No hay usuarios registrados</p>
-            <p className="text-sm text-muted-foreground">
-              Los usuarios aparecerán aquí cuando se registren en la plataforma
-            </p>
-          </div>
+        {filteredUsers.length === 0 ? (
+          searchTerm ? (
+            <div className="col-span-full flex flex-col items-center justify-center p-8 text-center">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-lg font-medium">No se encontraron usuarios</p>
+              <p className="text-sm text-muted-foreground">
+                No hay resultados para "{searchTerm}"
+              </p>
+            </div>
+          ) : (
+            <div className="col-span-full flex flex-col items-center justify-center p-8 text-center">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-lg font-medium">No hay usuarios registrados</p>
+              <p className="text-sm text-muted-foreground">
+                Los usuarios aparecerán aquí cuando se registren en la plataforma
+              </p>
+            </div>
+          )
         ) : viewMode === 'grid' ? (
           renderGridView()
         ) : (
