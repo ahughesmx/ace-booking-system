@@ -1,14 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGlobalRole } from "@/hooks/use-global-role";
 import { useAuth } from "@/components/AuthProvider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Menu, Users, BarChart3, IdCard } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import UserManagement from "@/components/admin/UserManagement";
 import CourtManagement from "@/components/admin/CourtManagement";
 import Statistics from "@/components/admin/Statistics";
 import ValidMemberIdManagement from "@/components/admin/ValidMemberIdManagement";
-import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const AdminPage = () => {
   const { user } = useAuth();
@@ -16,15 +18,15 @@ const AdminPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState("users");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Si el usuario no está autenticado, redirigir al inicio
     if (!user) {
       navigate("/");
       return;
     }
 
-    // Verificar el rol después de que se cargue
     if (userRole && userRole.role !== "admin") {
       toast({
         title: "Acceso denegado",
@@ -35,36 +37,87 @@ const AdminPage = () => {
     }
   }, [user, userRole, navigate, toast]);
 
-  // Si el usuario no está autenticado o no es admin, no renderizar nada
   if (!user || (userRole && userRole.role !== "admin")) {
     return null;
   }
 
+  const navigationItems = [
+    { id: "users", label: "Usuarios", icon: Users },
+    { id: "courts", label: "Canchas", icon: BarChart3 },
+    { id: "statistics", label: "Estadísticas", icon: BarChart3 },
+    { id: "member-ids", label: "IDs de Miembros", icon: IdCard },
+  ];
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    setMobileMenuOpen(false);
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "users":
+        return <UserManagement />;
+      case "courts":
+        return <CourtManagement />;
+      case "statistics":
+        return <Statistics />;
+      case "member-ids":
+        return <ValidMemberIdManagement />;
+      default:
+        return <UserManagement />;
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 md:py-6 max-w-full md:max-w-7xl">
-      <h1 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Panel de Control</h1>
-      <Tabs defaultValue="users" className="w-full">
-        <TabsList className={`w-full ${isMobile ? 'grid grid-cols-2 gap-2' : 'flex'} mb-4`}>
-          <TabsTrigger value="users" className="flex-1">Usuarios</TabsTrigger>
-          <TabsTrigger value="courts" className="flex-1">Canchas</TabsTrigger>
-          <TabsTrigger value="statistics" className="flex-1">Estadísticas</TabsTrigger>
-          <TabsTrigger value="member-ids" className="flex-1">IDs de Miembros</TabsTrigger>
-        </TabsList>
-        <div className="mt-4">
-          <TabsContent value="users" className="space-y-4">
-            <UserManagement />
-          </TabsContent>
-          <TabsContent value="courts" className="space-y-4">
-            <CourtManagement />
-          </TabsContent>
-          <TabsContent value="statistics" className="space-y-4">
-            <Statistics />
-          </TabsContent>
-          <TabsContent value="member-ids" className="space-y-4">
-            <ValidMemberIdManagement />
-          </TabsContent>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl md:text-2xl font-bold">Panel de Control</h1>
+        
+        {/* Mobile Menu Button */}
+        <div className="md:hidden">
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right">
+              <nav className="flex flex-col gap-2 mt-4">
+                {navigationItems.map((item) => (
+                  <Button
+                    key={item.id}
+                    variant={activeTab === item.id ? "default" : "ghost"}
+                    className="w-full justify-start gap-2"
+                    onClick={() => handleTabChange(item.id)}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.label}
+                  </Button>
+                ))}
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
-      </Tabs>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center space-x-2">
+          {navigationItems.map((item) => (
+            <Button
+              key={item.id}
+              variant={activeTab === item.id ? "default" : "ghost"}
+              className="gap-2"
+              onClick={() => handleTabChange(item.id)}
+            >
+              <item.icon className="h-5 w-5" />
+              {item.label}
+            </Button>
+          ))}
+        </nav>
+      </div>
+
+      <div className="mt-6">
+        {renderContent()}
+      </div>
     </div>
   );
 };
