@@ -64,6 +64,7 @@ const AdminPage = () => {
 
   const handleHomeClick = () => {
     navigate("/");
+    setMobileMenuOpen(false);
   };
 
   const renderContent = () => {
@@ -91,22 +92,25 @@ const AdminPage = () => {
         <h1 className="text-xl md:text-2xl font-bold">Panel de Control</h1>
         
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleHomeClick}
-            className="text-blue-600"
-          >
-            <Home className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleSignOut}
-            className="text-red-600"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
+          {/* Desktop Navigation Buttons */}
+          <div className="hidden md:flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleHomeClick}
+              className="text-blue-600"
+            >
+              <Home className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleSignOut}
+              className="text-red-600"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
 
           {/* Mobile Menu Button */}
           <div className="md:hidden">
@@ -118,6 +122,7 @@ const AdminPage = () => {
               </SheetTrigger>
               <SheetContent side="right">
                 <nav className="flex flex-col gap-2 mt-4">
+                  {/* Navigation Items */}
                   {navigationItems.map((item) => (
                     <Button
                       key={item.id}
@@ -129,6 +134,24 @@ const AdminPage = () => {
                       {item.label}
                     </Button>
                   ))}
+                  
+                  {/* Mobile Navigation Buttons */}
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 text-blue-600"
+                    onClick={handleHomeClick}
+                  >
+                    <Home className="h-5 w-5" />
+                    Inicio
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 text-red-600"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="h-5 w-5" />
+                    Cerrar sesión
+                  </Button>
                 </nav>
               </SheetContent>
             </Sheet>
