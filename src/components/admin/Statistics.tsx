@@ -27,6 +27,11 @@ import {
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
+interface HourlyData {
+  hour: string;
+  [key: string]: number | string; // Allow dynamic court names as keys
+}
+
 export default function Statistics() {
   // Top 10 usuarios con más reservas
   const { data: topUsers } = useQuery({
@@ -192,21 +197,25 @@ export default function Statistics() {
 
       if (error) throw error;
 
-      const hourlyData = data.reduce((acc: any, booking: any) => {
+      const hourlyData: { [hour: string]: { [court: string]: number } } = {};
+      
+      data.forEach((booking: any) => {
         const hour = new Date(booking.start_time).getHours();
         const courtName = booking.courts?.name || 'Desconocida';
         
-        if (!acc[hour]) {
-          acc[hour] = {};
+        const hourKey = `${hour}:00`;
+        if (!hourlyData[hourKey]) {
+          hourlyData[hourKey] = {};
         }
-        acc[hour][courtName] = (acc[hour][courtName] || 0) + 1;
-        return acc;
-      }, {});
+        hourlyData[hourKey][courtName] = (hourlyData[hourKey][courtName] || 0) + 1;
+      });
 
-      return Object.entries(hourlyData).map(([hour, courts]) => ({
-        hour: `${hour}:00`,
-        ...courts,
+      const formattedData: HourlyData[] = Object.entries(hourlyData).map(([hour, courts]) => ({
+        hour,
+        ...courts
       }));
+
+      return formattedData.sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
     },
   });
 
