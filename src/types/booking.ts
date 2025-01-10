@@ -9,5 +9,6 @@ export type Booking = {
   };
   user?: {
     full_name: string;
+    member_id?: string;
   };
 };
