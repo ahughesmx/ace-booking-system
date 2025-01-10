@@ -8,6 +8,12 @@ import { CheckSquare, Square } from "lucide-react";
 const BLOCK_SIZE = 6; // Número de horarios por bloque
 const ROTATION_INTERVAL = 10000; // 10 segundos por bloque
 
+// Generate time slots from 7:00 to 23:00
+const timeSlots = Array.from({ length: 17 }, (_, i) => {
+  const hour = i + 7;
+  return `${hour.toString().padStart(2, "0")}:00`;
+});
+
 export default function Display() {
   const [currentBlockIndex, setCurrentBlockIndex] = useState(0);
 
@@ -95,12 +101,6 @@ export default function Display() {
       </div>
     );
   }
-
-  // Generate time slots from 7:00 to 23:00
-  const timeSlots = Array.from({ length: 17 }, (_, i) => {
-    const hour = i + 7;
-    return `${hour.toString().padStart(2, "0")}:00`;
-  });
 
   // Obtener el bloque actual de horarios
   const currentTimeSlots = timeSlots.slice(
