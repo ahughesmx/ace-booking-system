@@ -14,6 +14,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
   Users,
@@ -83,7 +84,12 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
       <div className="min-h-screen flex w-full bg-gray-50/50">
         <Sidebar>
           <SidebarHeader className="border-b px-6 py-4">
-            <h2 className="text-lg font-semibold">Panel de Control</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Panel de Control</h2>
+              <div className="md:hidden">
+                <SidebarTrigger />
+              </div>
+            </div>
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
@@ -108,7 +114,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter className="border-t p-4">
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-col sm:flex-row">
               <Button
                 variant="outline"
                 size="sm"
@@ -116,7 +122,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
                 className="w-full gap-2"
               >
                 <Home className="h-4 w-4" />
-                Inicio
+                <span>Inicio</span>
               </Button>
               <Button
                 variant="outline"
@@ -125,13 +131,13 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
                 className="w-full gap-2 text-red-600 hover:text-red-600"
               >
                 <LogOut className="h-4 w-4" />
-                Salir
+                <span>Salir</span>
               </Button>
             </div>
           </SidebarFooter>
         </Sidebar>
         <main className="flex-1 overflow-y-auto">
-          <div className="container max-w-6xl py-6">
+          <div className="container max-w-6xl py-6 px-4 md:px-6">
             {children}
           </div>
         </main>
