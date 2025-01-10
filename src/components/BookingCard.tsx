@@ -57,7 +57,7 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
             <div className="text-sm text-muted-foreground">
               <p>Reservado por: {booking.user?.full_name || "Usuario desconocido"}</p>
               <p className="text-xs">
-                {booking.user?.member_id ? `Clave de socio: ${booking.user.member_id}` : "Clave de socio: No disponible"}
+                Clave de socio: {booking.user?.member_id || "No disponible"}
               </p>
             </div>
           </div>

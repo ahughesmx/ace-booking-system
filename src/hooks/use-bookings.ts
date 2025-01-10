@@ -19,12 +19,14 @@ export function useBookings(date: Date | undefined) {
 
       const { data, error } = await supabase
         .from("bookings")
-        .select("*, court:courts(name), user:profiles(full_name)")
+        .select("*, court:courts(name), user:profiles(full_name, member_id)")
         .gte("start_time", startOfDay.toISOString())
         .lte("end_time", endOfDay.toISOString());
 
       if (error) throw error;
       if (!data) return [];
+      
+      console.log('Bookings data:', data); // Para debugging
       
       return data as Booking[];
     },
