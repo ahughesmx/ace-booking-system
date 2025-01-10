@@ -2,8 +2,10 @@ import { User, Shield, IdCard, Phone, Edit2, UserPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { UserRole } from "@/integrations/supabase/types";
+import type { Database } from "@/integrations/supabase/types";
 import { UserEditDialog } from "./UserEditDialog";
+
+type UserRole = Database["public"]["Enums"]["user_role"];
 
 interface UserCardProps {
   user: {
