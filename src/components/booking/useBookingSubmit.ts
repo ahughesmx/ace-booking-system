@@ -15,16 +15,37 @@ export function useBookingSubmit(onSuccess: () => void) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const checkExistingBookings = async (date: Date, selectedTime: string) => {
+  const checkBookingRules = async (date: Date, selectedTime: string) => {
     try {
       // Primero, obtener las reglas de reserva
       const { data: rules, error: rulesError } = await supabase
         .from("booking_rules")
-        .select("time_between_bookings")
+        .select("*")
         .single();
 
       if (rulesError) {
         console.error("Error fetching booking rules:", rulesError);
+        return false;
+      }
+
+      // Verificar el número máximo de reservas activas
+      const { data: activeBookings, error: activeBookingsError } = await supabase
+        .from("profiles")
+        .select("active_bookings")
+        .eq("id", user?.id)
+        .single();
+
+      if (activeBookingsError) {
+        console.error("Error checking active bookings:", activeBookingsError);
+        return false;
+      }
+
+      if (activeBookings.active_bookings >= (rules as BookingRules).max_active_bookings) {
+        toast({
+          title: "Límite de reservas alcanzado",
+          description: `Ya tienes el máximo de ${(rules as BookingRules).max_active_bookings} reservas activas permitidas.`,
+          variant: "destructive",
+        });
         return false;
       }
 
@@ -38,6 +59,7 @@ export function useBookingSubmit(onSuccess: () => void) {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
+      // Verificar reservas existentes para ese día
       const { data: existingBookings, error } = await supabase
         .from("bookings")
         .select("start_time, end_time")
@@ -56,7 +78,7 @@ export function useBookingSubmit(onSuccess: () => void) {
       const [bookingHours] = selectedTime.split(':');
       newBookingTime.setHours(parseInt(bookingHours), 0, 0, 0);
 
-      // Verificar que haya el espacio configurado entre la nueva reserva y las existentes
+      // Verificar el espacio entre reservas
       for (const booking of existingBookings) {
         const existingStart = new Date(booking.start_time);
         const existingEnd = new Date(booking.end_time);
@@ -65,13 +87,18 @@ export function useBookingSubmit(onSuccess: () => void) {
         const timeDiffEnd = Math.abs(existingStart.getTime() - newBookingTime.getTime()) / (1000 * 60 * 60);
         
         if (timeDiffStart < hours || timeDiffEnd < hours) {
+          toast({
+            title: "Espacio entre reservas insuficiente",
+            description: `Debe haber un espacio de al menos ${timeInterval} entre reservas del mismo día.`,
+            variant: "destructive",
+          });
           return false;
         }
       }
 
       return true;
     } catch (error) {
-      console.error("Error in checkExistingBookings:", error);
+      console.error("Error in checkBookingRules:", error);
       return false;
     }
   };
@@ -100,21 +127,9 @@ export function useBookingSubmit(onSuccess: () => void) {
       return;
     }
 
-    // Verificar el espacio entre reservas antes de intentar crear una nueva
-    const isValidSpacing = await checkExistingBookings(selectedDate, selectedTime);
-    if (!isValidSpacing) {
-      const { data: rules } = await supabase
-        .from("booking_rules")
-        .select("time_between_bookings")
-        .single();
-
-      toast({
-        title: "Error",
-        description: `Debe haber un espacio de al menos ${rules?.time_between_bookings || '1:00:00'} entre tus reservas del mismo día. Por favor selecciona un horario diferente.`,
-        variant: "destructive",
-      });
-      return;
-    }
+    // Verificar las reglas de reserva antes de intentar crear una nueva
+    const isValidBooking = await checkBookingRules(selectedDate, selectedTime);
+    if (!isValidBooking) return;
 
     setIsSubmitting(true);
 
@@ -136,21 +151,10 @@ export function useBookingSubmit(onSuccess: () => void) {
         });
 
       if (error) {
-        let errorMessage = "No se pudo realizar la reserva. Por favor intenta de nuevo.";
-        
-        if (error.message) {
-          if (error.message.includes("máximo de reservas permitidas")) {
-            errorMessage = "Ya tienes el máximo de reservas activas permitidas. Debes esperar a que finalicen o cancelar alguna reserva existente.";
-          } else if (error.message.includes("2 horas de anticipación")) {
-            errorMessage = "Las reservas deben hacerse con al menos 2 horas de anticipación.";
-          } else if (error.message.includes("Solo se pueden hacer reservas para hoy y mañana")) {
-            errorMessage = "Solo se pueden hacer reservas para hoy y mañana.";
-          }
-        }
-
+        console.error("Error creating booking:", error);
         toast({
           title: "Error",
-          description: errorMessage,
+          description: "No se pudo realizar la reserva. Por favor intenta de nuevo.",
           variant: "destructive",
         });
         return;
