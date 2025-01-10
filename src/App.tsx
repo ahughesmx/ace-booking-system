@@ -30,7 +30,6 @@ function AdminRoute() {
   console.log("AdminRoute - UserRole:", userRole);
   console.log("AdminRoute - Loading states:", { authLoading, roleLoading });
 
-  // Si está cargando la autenticación o el rol, mostrar loading
   if (authLoading || roleLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -39,13 +38,11 @@ function AdminRoute() {
     );
   }
 
-  // Si no hay usuario autenticado, redirigir al login
   if (!user) {
     console.log("AdminRoute - No user, redirecting to login");
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  // Si el usuario no es admin, mostrar mensaje y redirigir
   if (userRole?.role !== "admin") {
     console.log("AdminRoute - User is not admin");
     toast({
@@ -64,9 +61,6 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  console.log("RequireAuth - User:", user);
-  console.log("RequireAuth - Loading:", loading);
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -76,7 +70,6 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    console.log("RequireAuth - No user, redirecting to login");
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
@@ -86,7 +79,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter basename="/">
+      <BrowserRouter>
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
