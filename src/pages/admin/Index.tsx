@@ -122,6 +122,16 @@ const AdminPage = () => {
               </SheetTrigger>
               <SheetContent side="right">
                 <nav className="flex flex-col gap-2 mt-4">
+                  {/* Home Button (First Option) */}
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 text-blue-600"
+                    onClick={handleHomeClick}
+                  >
+                    <Home className="h-5 w-5" />
+                    Inicio
+                  </Button>
+
                   {/* Navigation Items */}
                   {navigationItems.map((item) => (
                     <Button
@@ -135,15 +145,7 @@ const AdminPage = () => {
                     </Button>
                   ))}
                   
-                  {/* Mobile Navigation Buttons */}
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2 text-blue-600"
-                    onClick={handleHomeClick}
-                  >
-                    <Home className="h-5 w-5" />
-                    Inicio
-                  </Button>
+                  {/* Sign Out Button */}
                   <Button
                     variant="ghost"
                     className="w-full justify-start gap-2 text-red-600"
