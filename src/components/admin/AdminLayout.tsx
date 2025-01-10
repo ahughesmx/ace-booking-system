@@ -15,6 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   Users,
@@ -70,6 +71,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children, activeTab, onTabChange }: AdminLayoutProps) {
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const { setOpenMobile } = useSidebar();
 
   const handleSignOut = async () => {
     await signOut();
@@ -77,7 +79,13 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
   };
 
   const handleHomeClick = () => {
+    setOpenMobile(false);
     navigate("/");
+  };
+
+  const handleTabChange = (tabId: string) => {
+    setOpenMobile(false);
+    onTabChange(tabId);
   };
 
   return (
@@ -107,7 +115,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
                   {menuItems.map((item) => (
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
-                        onClick={() => onTabChange(item.id)}
+                        onClick={() => handleTabChange(item.id)}
                         className={`w-full justify-start gap-2 ${
                           activeTab === item.id ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""
                         }`}
