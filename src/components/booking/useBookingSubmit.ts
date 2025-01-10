@@ -5,6 +5,9 @@ import { supabase } from "@/lib/supabase-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { createBookingTimes } from "./TimeValidation";
 import { validateBookingTime } from "./BookingValidation";
+import { Database } from "@/integrations/supabase/types";
+
+type BookingRules = Database['public']['Tables']['booking_rules']['Row'];
 
 export function useBookingSubmit(onSuccess: () => void) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,8 +28,8 @@ export function useBookingSubmit(onSuccess: () => void) {
         return false;
       }
 
-      // Convertir el intervalo de tiempo a horas
-      const timeInterval = rules.time_between_bookings;
+      // Ahora rules.time_between_bookings está tipado correctamente como interval
+      const timeInterval = (rules as BookingRules).time_between_bookings as string;
       const [hours] = timeInterval.split(':').map(Number);
 
       const startOfDay = new Date(date);
@@ -174,7 +177,7 @@ export function useBookingSubmit(onSuccess: () => void) {
       setIsSubmitting(false);
     }
   };
-
+  
   return {
     handleBooking,
     isSubmitting
