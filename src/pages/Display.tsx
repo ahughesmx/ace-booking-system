@@ -5,9 +5,6 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { CheckSquare, Square } from "lucide-react";
 
-const BLOCK_SIZE = 6; // Número de horarios por bloque
-const ROTATION_INTERVAL = 10000; // 10 segundos por bloque
-
 // Generate time slots from 7:00 to 23:00
 const timeSlots = Array.from({ length: 17 }, (_, i) => {
   const hour = i + 7;
@@ -15,7 +12,7 @@ const timeSlots = Array.from({ length: 17 }, (_, i) => {
 });
 
 export default function Display() {
-  const [currentBlockIndex, setCurrentBlockIndex] = useState(0);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const { data: displaySettings } = useQuery({
     queryKey: ["display-settings"],
@@ -66,6 +63,11 @@ export default function Display() {
   });
 
   useEffect(() => {
+    // Actualizar el tiempo cada minuto
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
     // Prevent screen from sleeping
     const wakeLock = async () => {
       try {
@@ -75,17 +77,6 @@ export default function Display() {
       }
     };
     wakeLock();
-  }, []);
-
-  useEffect(() => {
-    // Rotación automática de bloques
-    const interval = setInterval(() => {
-      if (timeSlots.length > BLOCK_SIZE) {
-        setCurrentBlockIndex((prevIndex) =>
-          (prevIndex + 1) * BLOCK_SIZE >= timeSlots.length ? 0 : prevIndex + 1
-        );
-      }
-    }, ROTATION_INTERVAL);
 
     return () => clearInterval(interval);
   }, []);
@@ -102,15 +93,17 @@ export default function Display() {
     );
   }
 
-  // Obtener el bloque actual de horarios
-  const currentTimeSlots = timeSlots.slice(
-    currentBlockIndex * BLOCK_SIZE,
-    (currentBlockIndex + 1) * BLOCK_SIZE
-  );
+  const isBooked = (courtId: string, timeSlot: string) => {
+    return bookings?.some(
+      (booking) =>
+        booking.court_id === courtId &&
+        format(new Date(booking.start_time), "HH:00") === timeSlot
+    );
+  };
 
   return (
     <div className="min-h-screen bg-white p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-[1800px] mx-auto space-y-8">
         <div className="flex items-center justify-between mb-12">
           <img
             src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
@@ -119,72 +112,79 @@ export default function Display() {
           />
           <div className="text-right">
             <h2 className="text-4xl font-bold">
-              {format(new Date(), "EEEE d 'de' MMMM", { locale: es })}
+              {format(currentTime, "EEEE d 'de' MMMM", { locale: es })}
             </h2>
             <p className="text-3xl text-muted-foreground">
-              {format(new Date(), "h:mm a")}
+              {format(currentTime, "h:mm a")}
             </p>
           </div>
         </div>
 
-        <div className="border-2 rounded-lg overflow-hidden shadow-lg">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-blue-50">
-                <th className="p-6 text-left text-2xl font-bold">Horario</th>
-                {courts?.map((court) => (
-                  <th key={court.id} className="p-6 text-center text-2xl font-bold">
-                    {court.name}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {currentTimeSlots.map((timeSlot, index) => {
-                const isCurrentHour =
-                  format(new Date(), "HH:00") === timeSlot;
-                return (
-                  <tr
-                    key={timeSlot}
-                    className={`${
-                      isCurrentHour ? "bg-blue-50" : index % 2 === 0 ? "bg-gray-50" : ""
-                    } transition-colors duration-300`}
-                  >
-                    <td className="p-6 text-2xl font-medium">{timeSlot}</td>
-                    {courts?.map((court) => {
-                      const isBooked = bookings?.some(
-                        (booking) =>
-                          booking.court_id === court.id &&
-                          format(new Date(booking.start_time), "HH:00") === timeSlot
-                      );
+        <div className="grid grid-cols-[auto,1fr,auto] gap-8">
+          {/* Indicadores izquierdos */}
+          <div className="space-y-4">
+            {timeSlots.map((slot) => (
+              <div
+                key={`left-${slot}`}
+                className={`h-16 flex items-center justify-end pr-4 text-xl font-medium ${
+                  format(currentTime, "HH:00") === slot
+                    ? "text-blue-500 font-bold"
+                    : ""
+                }`}
+              >
+                {slot}
+              </div>
+            ))}
+          </div>
+
+          {/* Tabla central */}
+          <div className="border-2 rounded-lg overflow-hidden shadow-lg bg-white">
+            <div className="grid grid-cols-4 divide-x-2">
+              {courts?.map((court) => (
+                <div key={court.id} className="text-center">
+                  <div className="bg-blue-50 p-6">
+                    <h3 className="text-2xl font-bold">{court.name}</h3>
+                  </div>
+                  <div className="divide-y-2">
+                    {timeSlots.map((slot) => {
+                      const booked = isBooked(court.id, slot);
+                      const isCurrent = format(currentTime, "HH:00") === slot;
                       return (
-                        <td key={court.id} className="p-6">
-                          <div className="flex justify-center">
-                            {isBooked ? (
-                              <CheckSquare className="w-10 h-10 text-blue-500" />
-                            ) : (
-                              <Square className="w-10 h-10 text-gray-300" />
-                            )}
-                          </div>
-                        </td>
+                        <div
+                          key={`${court.id}-${slot}`}
+                          className={`h-16 flex justify-center items-center ${
+                            isCurrent ? "bg-blue-50" : ""
+                          }`}
+                        >
+                          {booked ? (
+                            <CheckSquare className="w-8 h-8 text-blue-500" />
+                          ) : (
+                            <Square className="w-8 h-8 text-gray-300" />
+                          )}
+                        </div>
                       );
                     })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-        <div className="flex justify-center gap-2 mt-4">
-          {Array.from({ length: Math.ceil(timeSlots.length / BLOCK_SIZE) }).map((_, index) => (
-            <div
-              key={index}
-              className={`w-3 h-3 rounded-full transition-colors duration-300 ${
-                currentBlockIndex === index ? "bg-blue-500" : "bg-gray-300"
-              }`}
-            />
-          ))}
+          {/* Indicadores derechos */}
+          <div className="space-y-4">
+            {timeSlots.map((slot) => (
+              <div
+                key={`right-${slot}`}
+                className={`h-16 flex items-center pl-4 text-xl font-medium ${
+                  format(currentTime, "HH:00") === slot
+                    ? "text-blue-500 font-bold"
+                    : ""
+                }`}
+              >
+                {slot}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

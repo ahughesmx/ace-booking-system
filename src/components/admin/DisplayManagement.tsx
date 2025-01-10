@@ -4,6 +4,8 @@ import { supabase } from "@/lib/supabase-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, CheckSquare } from "lucide-react";
 
@@ -49,6 +51,29 @@ export default function DisplayManagement() {
     }
   };
 
+  const handleUpdateInterval = async (newInterval: number) => {
+    try {
+      const { error } = await supabase
+        .from("display_settings")
+        .update({ rotation_interval: newInterval })
+        .eq("id", displaySettings?.id);
+
+      if (error) throw error;
+
+      await refetch();
+      toast({
+        title: "Intervalo actualizado",
+        description: "El intervalo de rotación ha sido actualizado",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el intervalo de rotación",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCopyUrl = async () => {
     const displayUrl = `${window.location.origin}/display`;
     try {
@@ -86,6 +111,26 @@ export default function DisplayManagement() {
               checked={displaySettings?.is_enabled}
               onCheckedChange={handleToggleDisplay}
             />
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="interval">Intervalo de Rotación (ms)</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="interval"
+                  type="number"
+                  min="1000"
+                  step="1000"
+                  value={displaySettings?.rotation_interval}
+                  onChange={(e) => handleUpdateInterval(Number(e.target.value))}
+                  className="max-w-[200px]"
+                />
+                <span className="text-sm text-muted-foreground self-center">
+                  ms (1000ms = 1 segundo)
+                </span>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center justify-between">
