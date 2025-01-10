@@ -24,24 +24,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Función para actualizar el estado de autenticación
-    const updateAuthState = (newSession: Session | null) => {
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-      setLoading(false);
+    // Obtener la sesión inicial
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        if (initialSession) {
+          setSession(initialSession);
+          setUser(initialSession.user);
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    // Inicializar el estado de autenticación
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      updateAuthState(session);
-    });
+    initializeAuth();
 
-    // Suscribirse a cambios en la autenticación
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    // Suscribirse a cambios de autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log("Auth event:", event);
-      updateAuthState(session);
+      
+      if (currentSession) {
+        setSession(currentSession);
+        setUser(currentSession.user);
+      } else {
+        setSession(null);
+        setUser(null);
+      }
 
       if (event === "SIGNED_IN") {
         toast({
@@ -64,29 +74,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     try {
       setLoading(true);
-
-      // 1. Limpiar el storage local primero
-      const keys = ['supabase.auth.token', 'supabase.auth.refreshToken'];
-      keys.forEach(key => localStorage.removeItem(key));
-
-      // 2. Limpiar el estado local
-      setSession(null);
-      setUser(null);
-
-      // 3. Intentar cerrar sesión en Supabase
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.warn("Error en signOut de Supabase:", error);
-        // No lanzamos el error ya que el estado local ya está limpio
+      
+      // Primero verificamos si hay una sesión activa
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (!currentSession) {
+        // Si no hay sesión, solo limpiamos el estado local
+        setSession(null);
+        setUser(null);
+        return;
       }
 
-    } catch (error) {
-      console.error("Error en signOut:", error);
-      toast({
-        title: "Error",
-        description: "Hubo un problema al cerrar sesión",
-        variant: "destructive",
-      });
+      // Si hay sesión, intentamos cerrarla
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Error during signOut:", error);
+        toast({
+          title: "Error",
+          description: "Hubo un problema al cerrar sesión",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
