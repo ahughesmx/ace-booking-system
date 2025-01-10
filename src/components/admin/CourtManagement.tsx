@@ -12,7 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, X, Check } from "lucide-react";
+import { Plus, Pencil, X, Check, Trash2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Court = {
   id: string;
@@ -134,93 +135,120 @@ export default function CourtManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex gap-4">
-        <Input
-          placeholder="Nombre de la cancha"
-          value={newCourtName}
-          onChange={(e) => setNewCourtName(e.target.value)}
-          className="max-w-xs"
-        />
-        <Button
-          onClick={handleAddCourt}
-          disabled={loading || !newCourtName.trim()}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Agregar cancha
-        </Button>
-      </div>
+    <Card className="bg-white shadow-md">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold text-gray-800">
+          Gestión de Canchas
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex gap-4 items-center">
+          <div className="relative flex-1 max-w-sm">
+            <Input
+              placeholder="Nombre de la cancha"
+              value={newCourtName}
+              onChange={(e) => setNewCourtName(e.target.value)}
+              className="pl-4 h-11 border-gray-200 focus:border-primary focus:ring-primary"
+            />
+          </div>
+          <Button
+            onClick={handleAddCourt}
+            disabled={loading || !newCourtName.trim()}
+            size="lg"
+            className="bg-primary hover:bg-primary/90 text-white shadow-sm transition-colors"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Agregar cancha
+          </Button>
+        </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nombre</TableHead>
-            <TableHead>Fecha de creación</TableHead>
-            <TableHead>Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {courts?.map((court) => (
-            <TableRow key={court.id}>
-              <TableCell>
-                {editingId === court.id ? (
-                  <Input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="max-w-xs"
-                  />
-                ) : (
-                  court.name
-                )}
-              </TableCell>
-              <TableCell>
-                {new Date(court.created_at).toLocaleDateString()}
-              </TableCell>
-              <TableCell>
-                <div className="flex gap-2">
-                  {editingId === court.id ? (
-                    <>
+        <div className="rounded-lg border border-gray-100 overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="font-semibold text-gray-600">
+                  Nombre
+                </TableHead>
+                <TableHead className="font-semibold text-gray-600">
+                  Fecha de creación
+                </TableHead>
+                <TableHead className="font-semibold text-gray-600 text-right">
+                  Acciones
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {courts?.map((court) => (
+                <TableRow
+                  key={court.id}
+                  className="hover:bg-gray-50 transition-colors"
+                >
+                  <TableCell className="font-medium">
+                    {editingId === court.id ? (
+                      <Input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="max-w-xs"
+                      />
+                    ) : (
+                      <span className="text-gray-700">{court.name}</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-gray-500">
+                    {new Date(court.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2 justify-end">
+                      {editingId === court.id ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditCourt(court.id)}
+                            disabled={loading || !editName.trim()}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={cancelEditing}
+                            disabled={loading}
+                            className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 border-gray-200"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => startEditing(court)}
+                          disabled={loading}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      )}
                       <Button
-                        variant="outline"
+                        variant="destructive"
                         size="sm"
-                        onClick={() => handleEditCourt(court.id)}
-                        disabled={loading || !editName.trim()}
-                      >
-                        <Check className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={cancelEditing}
+                        onClick={() => handleDeleteCourt(court.id)}
                         disabled={loading}
+                        className="bg-red-500 hover:bg-red-600 text-white"
                       >
-                        <X className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Eliminar
                       </Button>
-                    </>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => startEditing(court)}
-                      disabled={loading}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                  )}
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteCourt(court.id)}
-                    disabled={loading}
-                  >
-                    Eliminar
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
