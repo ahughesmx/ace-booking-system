@@ -56,18 +56,17 @@ export function useBookingSubmit(onSuccess: () => void) {
         });
 
       if (error) {
-        // Parse the error message from PostgreSQL if available
         let errorMessage = "No se pudo realizar la reserva. Por favor intenta de nuevo.";
         
         if (error.message) {
           if (error.message.includes("máximo de reservas permitidas")) {
-            errorMessage = "Ya tienes el máximo de reservas activas permitidas.";
+            errorMessage = "Ya tienes el máximo de reservas activas permitidas. Debes esperar a que finalicen o cancelar alguna reserva existente.";
           } else if (error.message.includes("2 horas de anticipación")) {
             errorMessage = "Las reservas deben hacerse con al menos 2 horas de anticipación.";
           } else if (error.message.includes("Solo se pueden hacer reservas para hoy y mañana")) {
             errorMessage = "Solo se pueden hacer reservas para hoy y mañana.";
           } else if (error.message.includes("espacio de al menos")) {
-            errorMessage = "Debe haber un espacio de al menos 1 hora entre tus reservas del mismo día.";
+            errorMessage = "Debe haber un espacio de al menos 1 hora entre tus reservas del mismo día. Por favor selecciona un horario diferente.";
           }
         }
 
