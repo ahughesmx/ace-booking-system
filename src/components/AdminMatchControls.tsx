@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { AdminButton } from "@/components/admin/AdminButton";
 import {
   Dialog,
   DialogContent,
@@ -27,10 +27,14 @@ export function AdminMatchControls({ match, onUpdateResult, onDeleteMatch }: Adm
     <div className="flex gap-2 mt-4">
       <Dialog>
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="flex-1">
-            <Pencil className="h-4 w-4 mr-2" />
+          <AdminButton
+            variant="outline"
+            size="sm"
+            icon={<Pencil className="h-4 w-4" />}
+            fullWidth
+          >
             Editar
-          </Button>
+          </AdminButton>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
@@ -66,26 +70,30 @@ export function AdminMatchControls({ match, onUpdateResult, onDeleteMatch }: Adm
                 />
               </div>
             </div>
-            <Button 
+            <AdminButton 
               onClick={() => {
                 onUpdateResult(match.id, parseInt(player1Sets), parseInt(player2Sets));
                 setPlayer1Sets("");
                 setPlayer2Sets("");
               }}
-              className="w-full"
+              fullWidth
             >
               Guardar Resultado
-            </Button>
+            </AdminButton>
           </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogTrigger asChild>
-          <Button variant="destructive" size="sm" className="flex-1">
-            <Trash2 className="h-4 w-4 mr-2" />
+          <AdminButton
+            variant="destructive"
+            size="sm"
+            icon={<Trash2 className="h-4 w-4" />}
+            fullWidth
+          >
             Eliminar
-          </Button>
+          </AdminButton>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
@@ -95,10 +103,13 @@ export function AdminMatchControls({ match, onUpdateResult, onDeleteMatch }: Adm
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <AdminButton 
+              variant="outline" 
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Cancelar
-            </Button>
-            <Button
+            </AdminButton>
+            <AdminButton
               variant="destructive"
               onClick={() => {
                 onDeleteMatch(match.id);
@@ -106,7 +117,7 @@ export function AdminMatchControls({ match, onUpdateResult, onDeleteMatch }: Adm
               }}
             >
               Eliminar
-            </Button>
+            </AdminButton>
           </div>
         </DialogContent>
       </Dialog>
