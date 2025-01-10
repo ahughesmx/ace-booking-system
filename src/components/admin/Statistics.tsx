@@ -23,13 +23,141 @@ import {
   Legend,
   AreaChart,
   Area,
-  HeatMapChart,
 } from "recharts";
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function Statistics() {
-  // Distribución de reservas por cancha
+  // Top 10 usuarios con más reservas
+  const { data: topUsers } = useQuery({
+    queryKey: ["top-users"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("user_id, profiles(full_name)")
+        .gte("start_time", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+
+      if (error) throw error;
+
+      const userBookings = data.reduce((acc: any, booking: any) => {
+        const userName = booking.profiles?.full_name || 'Usuario Desconocido';
+        acc[userName] = (acc[userName] || 0) + 1;
+        return acc;
+      }, {});
+
+      return Object.entries(userBookings)
+        .map(([name, count]) => ({ name, reservas: count }))
+        .sort((a: any, b: any) => b.reservas - a.reservas)
+        .slice(0, 10);
+    },
+  });
+
+  // Distribución por tipo de usuario
+  const { data: userTypes } = useQuery({
+    queryKey: ["user-types"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role, count")
+        .select("role");
+
+      if (error) throw error;
+
+      const distribution = data.reduce((acc: any, user: any) => {
+        acc[user.role] = (acc[user.role] || 0) + 1;
+        return acc;
+      }, {});
+
+      return Object.entries(distribution).map(([role, count]) => ({
+        name: role === 'admin' ? 'Administrador' : 'Usuario Regular',
+        value: count,
+      }));
+    },
+  });
+
+  // Frecuencia de reservas por usuario
+  const { data: bookingFrequency } = useQuery({
+    queryKey: ["booking-frequency"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("user_id, start_time, profiles(full_name)")
+        .gte("start_time", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        .order("start_time", { ascending: true });
+
+      if (error) throw error;
+
+      const userFrequency: { [key: string]: { [key: string]: number } } = {};
+      
+      data.forEach((booking: any) => {
+        const userName = booking.profiles?.full_name || 'Usuario Desconocido';
+        const date = new Date(booking.start_time).toLocaleDateString();
+        
+        if (!userFrequency[userName]) {
+          userFrequency[userName] = {};
+        }
+        userFrequency[userName][date] = (userFrequency[userName][date] || 0) + 1;
+      });
+
+      const frequencyData = Object.entries(userFrequency).map(([user, dates]) => ({
+        user,
+        frequency: Object.values(dates).reduce((sum, count) => sum + count, 0) / Object.keys(dates).length,
+      }));
+
+      return frequencyData.sort((a, b) => b.frequency - a.frequency).slice(0, 5);
+    },
+  });
+
+  // Ocupación diaria/semanal/mensual
+  const { data: occupancyData } = useQuery({
+    queryKey: ["occupancy"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("start_time")
+        .gte("start_time", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+
+      if (error) throw error;
+
+      const occupancy = data.reduce((acc: any, booking: any) => {
+        const date = new Date(booking.start_time).toLocaleDateString();
+        acc[date] = (acc[date] || 0) + 1;
+        return acc;
+      }, {});
+
+      return Object.entries(occupancy).map(([date, count]) => ({
+        fecha: date,
+        ocupacion: count,
+      }));
+    },
+  });
+
+  // Horas pico vs valle
+  const { data: peakHours } = useQuery({
+    queryKey: ["peak-hours"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("start_time")
+        .gte("start_time", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+
+      if (error) throw error;
+
+      const hourlyData = data.reduce((acc: any, booking: any) => {
+        const hour = new Date(booking.start_time).getHours();
+        acc[hour] = (acc[hour] || 0) + 1;
+        return acc;
+      }, {});
+
+      return Object.entries(hourlyData)
+        .map(([hour, count]) => ({
+          hora: `${hour}:00`,
+          reservas: count,
+        }))
+        .sort((a, b) => Number(b.reservas) - Number(a.reservas));
+    },
+  });
+
   const { data: courtDistribution } = useQuery({
     queryKey: ["court-distribution"],
     queryFn: async () => {
@@ -157,7 +285,121 @@ export default function Statistics() {
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
-      {/* Distribución de Reservas por Cancha */}
+      {/* Top 10 Usuarios */}
+      <Card className="col-span-2">
+        <CardHeader>
+          <CardTitle>Top 10 Usuarios con Más Reservas</CardTitle>
+          <CardDescription>Últimos 30 días</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={topUsers}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="reservas" fill="#4f46e5" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Distribución por Tipo de Usuario */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Distribución por Tipo de Usuario</CardTitle>
+          <CardDescription>Todos los usuarios</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={userTypes}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  label
+                >
+                  {userTypes?.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Frecuencia de Reservas por Usuario */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Frecuencia de Reservas</CardTitle>
+          <CardDescription>Top 5 usuarios más activos</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={bookingFrequency}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="user" angle={-45} textAnchor="end" height={100} />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="frequency" fill="#10b981" name="Reservas por día" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Ocupación Diaria */}
+      <Card className="col-span-2">
+        <CardHeader>
+          <CardTitle>Ocupación Diaria</CardTitle>
+          <CardDescription>Últimos 30 días</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={occupancyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="fecha" />
+                <YAxis />
+                <Tooltip />
+                <Area type="monotone" dataKey="ocupacion" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Horas Pico vs Valle */}
+      <Card className="col-span-2">
+        <CardHeader>
+          <CardTitle>Horas Pico vs Valle</CardTitle>
+          <CardDescription>Últimos 7 días</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={peakHours}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="hora" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="reservas" fill="#f59e0b" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="col-span-1">
         <CardHeader>
           <CardTitle>Distribución por Cancha</CardTitle>
