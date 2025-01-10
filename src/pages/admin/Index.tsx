@@ -4,7 +4,7 @@ import { useGlobalRole } from "@/hooks/use-global-role";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Menu, Users, BarChart3, IdCard, Settings2 } from "lucide-react";
+import { Menu, Users, BarChart3, IdCard, Settings2, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import UserManagement from "@/components/admin/UserManagement";
@@ -12,6 +12,7 @@ import CourtManagement from "@/components/admin/CourtManagement";
 import Statistics from "@/components/admin/Statistics";
 import ValidMemberIdManagement from "@/components/admin/ValidMemberIdManagement";
 import BookingRulesManagement from "@/components/admin/BookingRulesManagement";
+import DisplayManagement from "@/components/admin/DisplayManagement";
 
 const AdminPage = () => {
   const { user } = useAuth();
@@ -48,6 +49,7 @@ const AdminPage = () => {
     { id: "statistics", label: "Estadísticas", icon: BarChart3 },
     { id: "member-ids", label: "IDs de Miembros", icon: IdCard },
     { id: "booking-rules", label: "Reglas de Reserva", icon: Settings2 },
+    { id: "display", label: "Display", icon: Monitor },
   ];
 
   const handleTabChange = (tabId: string) => {
@@ -67,6 +69,8 @@ const AdminPage = () => {
         return <ValidMemberIdManagement />;
       case "booking-rules":
         return <BookingRulesManagement />;
+      case "display":
+        return <DisplayManagement />;
       default:
         return <UserManagement />;
     }

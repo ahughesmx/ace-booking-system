@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import Index from "./pages/Index";
 import AdminIndex from "./pages/admin/Index";
 import Login from "./pages/auth/Login";
+import Display from "./pages/Display";
 import { useGlobalRole } from "@/hooks/use-global-role";
 import { useToast } from "@/hooks/use-toast";
 
@@ -88,6 +89,7 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/admin/*" element={<AdminRoute />} />
+              <Route path="/display" element={<Display />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </TooltipProvider>
