@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Link, Copy, CheckSquare, Square } from "lucide-react";
+import { Copy, CheckSquare } from "lucide-react";
 
 export default function DisplayManagement() {
   const { toast } = useToast();
