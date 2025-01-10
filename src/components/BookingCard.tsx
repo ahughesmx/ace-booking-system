@@ -27,11 +27,13 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
 
   const active = isActive();
 
-  // Agregar console.log para debugging
-  console.log('Booking user data:', {
-    fullName: booking.user?.full_name,
+  // Agregar console.logs detallados para debugging
+  console.log('Booking data:', {
+    bookingId: booking.id,
+    userId: booking.user_id,
+    userData: booking.user,
     memberId: booking.user?.member_id,
-    entireUser: booking.user
+    fullUserObject: booking
   });
 
   return (
@@ -54,7 +56,7 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
             </p>
             <div className="text-sm text-muted-foreground">
               <p>Reservado por: {booking.user?.full_name || "Usuario desconocido"}</p>
-              {booking.user?.member_id ? (
+              {booking.user?.member_id && booking.user.member_id.trim() !== "" ? (
                 <p className="text-xs">Clave de socio: {booking.user.member_id}</p>
               ) : (
                 <p className="text-xs">invitado</p>
