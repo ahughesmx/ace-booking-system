@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { Session, User, AuthError } from "@supabase/supabase-js";
+import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,83 +24,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Error getting session:", error);
-          toast({
-            title: "Error",
-            description: "Error al inicializar la sesión",
-            variant: "destructive",
-          });
-          return;
-        }
+    // Initialize auth state from any existing session
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      setSession(initialSession);
+      setUser(initialSession?.user ?? null);
+      setLoading(false);
+    });
 
-        setSession(session);
-        setUser(session?.user ?? null);
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        console.log("Auth event:", event);
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
         setLoading(false);
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-          console.log("Auth event:", event);
-          if (event === 'SIGNED_IN') {
-            setSession(session);
-            setUser(session?.user ?? null);
+        switch (event) {
+          case 'SIGNED_IN':
             toast({
               title: "Sesión iniciada",
               description: "Has iniciado sesión exitosamente",
             });
-          } else if (event === 'SIGNED_OUT') {
-            setSession(null);
-            setUser(null);
+            break;
+          case 'SIGNED_OUT':
             toast({
               title: "Sesión cerrada",
               description: "Has cerrado sesión exitosamente",
             });
-          } else if (event === 'USER_UPDATED') {
-            setSession(session);
-            setUser(session?.user ?? null);
-          }
-          setLoading(false);
-        });
-
-        return () => {
-          subscription.unsubscribe();
-        };
-      } catch (error) {
-        console.error("Error initializing auth:", error);
-        setLoading(false);
-        toast({
-          title: "Error",
-          description: "Error al inicializar la autenticación",
-          variant: "destructive",
-        });
+            break;
+        }
       }
-    };
+    );
 
-    initializeAuth();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [toast]);
 
   const signOut = async () => {
     try {
       setLoading(true);
       
-      // Clear local state immediately
+      // First, remove the session from localStorage
+      localStorage.removeItem('supabase.auth.token');
+      
+      // Clear the auth state immediately
       setSession(null);
       setUser(null);
 
-      // Attempt to sign out from Supabase without checking session
-      await supabase.auth.signOut({
-        scope: 'local'
-      }).catch(error => {
-        // Log but don't throw the error
-        console.warn("Error during Supabase signOut:", error);
-      });
-      
-      toast({
-        title: "Sesión cerrada",
-        description: "Has cerrado sesión exitosamente",
+      // Then attempt to sign out from Supabase
+      await supabase.auth.signOut().catch((error) => {
+        console.warn("Non-critical error during sign out:", error);
+        // We don't throw here as we've already cleared the local state
       });
 
     } catch (error) {
