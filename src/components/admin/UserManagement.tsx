@@ -20,6 +20,7 @@ type User = {
   id: string;
   full_name: string | null;
   member_id: string | null;
+  phone: string | null;
   role: UserRole;
 };
 
@@ -39,7 +40,7 @@ export default function UserManagement() {
       setLoading(true);
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, full_name, member_id");
+        .select("id, full_name, member_id, phone");
 
       if (profilesError) throw profilesError;
 
@@ -53,6 +54,7 @@ export default function UserManagement() {
         id: profile.id,
         full_name: profile.full_name,
         member_id: profile.member_id,
+        phone: profile.phone,
         role: roles.find((r) => r.user_id === profile.id)?.role || "user",
       }));
 
@@ -103,6 +105,7 @@ export default function UserManagement() {
         .update({
           full_name: data.full_name,
           member_id: data.member_id,
+          phone: data.phone,
         })
         .eq("id", userId);
 
@@ -129,6 +132,7 @@ export default function UserManagement() {
     const [formData, setFormData] = useState({
       full_name: user.full_name || "",
       member_id: user.member_id || "",
+      phone: user.phone || "",
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -159,6 +163,18 @@ export default function UserManagement() {
               setFormData({ ...formData, member_id: e.target.value })
             }
             placeholder="Ingresa la clave de socio"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="phone">Teléfono</Label>
+          <Input
+            id="phone"
+            value={formData.phone}
+            onChange={(e) =>
+              setFormData({ ...formData, phone: e.target.value })
+            }
+            placeholder="Ingresa el teléfono"
           />
         </div>
 
@@ -216,6 +232,11 @@ export default function UserManagement() {
                     {user.member_id
                       ? `Clave de socio: ${user.member_id}`
                       : "Sin clave de socio"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {user.phone
+                      ? `Teléfono: ${user.phone}`
+                      : "Sin teléfono"}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Rol actual: {user.role}

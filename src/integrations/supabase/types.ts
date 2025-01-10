@@ -270,6 +270,7 @@ export type Database = {
           full_name: string | null
           id: string
           member_id: string | null
+          phone: string | null
         }
         Insert: {
           active_bookings?: number | null
@@ -278,6 +279,7 @@ export type Database = {
           full_name?: string | null
           id: string
           member_id?: string | null
+          phone?: string | null
         }
         Update: {
           active_bookings?: number | null
@@ -286,6 +288,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           member_id?: string | null
+          phone?: string | null
         }
         Relationships: []
       }
