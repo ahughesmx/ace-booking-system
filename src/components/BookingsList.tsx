@@ -3,7 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import { format, addDays, startOfToday, isAfter, isBefore, endOfTomorrow } from "date-fns";
+import { format, addDays, startOfToday, isAfter, isBefore, endOfTomorrow, isToday, isTomorrow } from "date-fns";
 import type { Booking } from "@/types/booking";
 import { EmptyBookingsList } from "./booking/EmptyBookingsList";
 import { BookingsListContent } from "./booking/BookingsListContent";
@@ -70,9 +70,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   // Validar que la fecha seleccionada sea hoy o mañana
   const isValidDate = (date?: Date) => {
     if (!date) return false;
-    const today = startOfToday();
-    const tomorrow = endOfTomorrow();
-    return !isBefore(date, today) && !isAfter(date, tomorrow);
+    return isToday(date) || isTomorrow(date);
   };
 
   if (!isValidDate(selectedDate)) {
