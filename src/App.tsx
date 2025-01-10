@@ -26,7 +26,10 @@ function AdminRoute() {
   const { toast } = useToast();
   const location = useLocation();
 
-  // Mostrar loading mientras se verifica la autenticación y el rol
+  console.log("AdminRoute - User:", user);
+  console.log("AdminRoute - UserRole:", userRole);
+  console.log("AdminRoute - Loading states:", { authLoading, roleLoading });
+
   if (authLoading || roleLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -35,13 +38,13 @@ function AdminRoute() {
     );
   }
 
-  // Si no hay usuario, redirigir al login y guardar la ruta actual
   if (!user) {
+    console.log("AdminRoute - No user, redirecting to login");
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  // Si el usuario no es admin, mostrar mensaje y redirigir
   if (userRole?.role !== "admin") {
+    console.log("AdminRoute - User is not admin");
     toast({
       title: "Acceso denegado",
       description: "No tienes permisos para acceder al panel de control",
@@ -50,12 +53,16 @@ function AdminRoute() {
     return <Navigate to="/" replace />;
   }
 
+  console.log("AdminRoute - Rendering admin panel");
   return <AdminIndex />;
 }
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
+
+  console.log("RequireAuth - User:", user);
+  console.log("RequireAuth - Loading:", loading);
 
   if (loading) {
     return (
@@ -66,7 +73,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    // Guardar la ruta actual para redirigir después del login
+    console.log("RequireAuth - No user, redirecting to login");
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
