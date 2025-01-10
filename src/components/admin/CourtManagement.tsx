@@ -142,13 +142,13 @@ export default function CourtManagement() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex gap-4 items-center">
-          <div className="relative flex-1 max-w-sm">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+          <div className="relative flex-1 w-full sm:max-w-sm">
             <Input
               placeholder="Nombre de la cancha"
               value={newCourtName}
               onChange={(e) => setNewCourtName(e.target.value)}
-              className="pl-4 h-11 border-gray-200 focus:border-primary focus:ring-primary"
+              className="w-full pl-4 h-11 border-gray-200 focus:border-primary focus:ring-primary"
             />
           </div>
           <AdminButton
@@ -156,99 +156,106 @@ export default function CourtManagement() {
             disabled={loading || !newCourtName.trim()}
             size="lg"
             icon={<Plus className="w-5 h-5" />}
-            className="bg-primary hover:bg-primary/90 text-white shadow-sm transition-colors"
+            fullWidth
+            className="w-full sm:w-auto"
           >
             Agregar cancha
           </AdminButton>
         </div>
 
         <div className="rounded-lg border border-gray-100 overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-600">
-                  Nombre
-                </TableHead>
-                <TableHead className="font-semibold text-gray-600">
-                  Fecha de creación
-                </TableHead>
-                <TableHead className="font-semibold text-gray-600 text-right">
-                  Acciones
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {courts?.map((court) => (
-                <TableRow
-                  key={court.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <TableCell className="font-medium">
-                    {editingId === court.id ? (
-                      <Input
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        className="max-w-xs"
-                      />
-                    ) : (
-                      <span className="text-gray-700">{court.name}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-gray-500">
-                    {new Date(court.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2 justify-end">
-                      {editingId === court.id ? (
-                        <>
-                          <AdminButton
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditCourt(court.id)}
-                            disabled={loading || !editName.trim()}
-                            icon={<Check className="w-4 h-4" />}
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
-                          >
-                            Guardar
-                          </AdminButton>
-                          <AdminButton
-                            variant="outline"
-                            size="sm"
-                            onClick={cancelEditing}
-                            disabled={loading}
-                            icon={<X className="w-4 h-4" />}
-                            className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 border-gray-200"
-                          >
-                            Cancelar
-                          </AdminButton>
-                        </>
-                      ) : (
-                        <AdminButton
-                          variant="outline"
-                          size="sm"
-                          onClick={() => startEditing(court)}
-                          disabled={loading}
-                          icon={<Pencil className="w-4 h-4" />}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
-                        >
-                          Editar
-                        </AdminButton>
-                      )}
-                      <AdminButton
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteCourt(court.id)}
-                        disabled={loading}
-                        icon={<Trash2 className="w-4 h-4" />}
-                      >
-                        Eliminar
-                      </AdminButton>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableHead className="font-semibold text-gray-600">
+                    Nombre
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-600">
+                    Fecha de creación
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-600 text-right">
+                    Acciones
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {courts?.map((court) => (
+                  <TableRow
+                    key={court.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <TableCell className="font-medium">
+                      {editingId === court.id ? (
+                        <Input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="max-w-xs"
+                        />
+                      ) : (
+                        <span className="text-gray-700">{court.name}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-gray-500">
+                      {new Date(court.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col sm:flex-row gap-2 justify-end">
+                        {editingId === court.id ? (
+                          <>
+                            <AdminButton
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditCourt(court.id)}
+                              disabled={loading || !editName.trim()}
+                              icon={<Check className="w-4 h-4" />}
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                              fullWidth
+                            >
+                              Guardar
+                            </AdminButton>
+                            <AdminButton
+                              variant="outline"
+                              size="sm"
+                              onClick={cancelEditing}
+                              disabled={loading}
+                              icon={<X className="w-4 h-4" />}
+                              className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 border-gray-200"
+                              fullWidth
+                            >
+                              Cancelar
+                            </AdminButton>
+                          </>
+                        ) : (
+                          <AdminButton
+                            variant="outline"
+                            size="sm"
+                            onClick={() => startEditing(court)}
+                            disabled={loading}
+                            icon={<Pencil className="w-4 h-4" />}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                            fullWidth
+                          >
+                            Editar
+                          </AdminButton>
+                        )}
+                        <AdminButton
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteCourt(court.id)}
+                          disabled={loading}
+                          icon={<Trash2 className="w-4 h-4" />}
+                          fullWidth
+                        >
+                          Eliminar
+                        </AdminButton>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </CardContent>
     </Card>
