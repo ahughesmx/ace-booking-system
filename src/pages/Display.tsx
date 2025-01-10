@@ -71,7 +71,7 @@ export default function Display() {
   });
 
   useEffect(() => {
-    // Actualizar el tiempo cada minuto
+    // Update time every minute
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
