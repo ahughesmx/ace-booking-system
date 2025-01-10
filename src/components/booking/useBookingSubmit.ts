@@ -13,44 +13,64 @@ export function useBookingSubmit(onSuccess: () => void) {
   const queryClient = useQueryClient();
 
   const checkExistingBookings = async (date: Date, selectedTime: string) => {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    try {
+      // Primero, obtener las reglas de reserva
+      const { data: rules, error: rulesError } = await supabase
+        .from("booking_rules")
+        .select("time_between_bookings")
+        .single();
 
-    const { data: existingBookings, error } = await supabase
-      .from("bookings")
-      .select("start_time, end_time")
-      .eq("user_id", user?.id)
-      .gte("start_time", startOfDay.toISOString())
-      .lte("end_time", endOfDay.toISOString());
-
-    if (error) {
-      console.error("Error checking existing bookings:", error);
-      return false;
-    }
-
-    if (!existingBookings?.length) return true;
-
-    const newBookingTime = new Date(date);
-    const [hours] = selectedTime.split(":");
-    newBookingTime.setHours(parseInt(hours), 0, 0, 0);
-
-    // Verificar que haya al menos 1 hora entre la nueva reserva y las existentes
-    for (const booking of existingBookings) {
-      const existingStart = new Date(booking.start_time);
-      const existingEnd = new Date(booking.end_time);
-      
-      const timeDiffStart = Math.abs(newBookingTime.getTime() - existingEnd.getTime()) / (1000 * 60 * 60);
-      const timeDiffEnd = Math.abs(existingStart.getTime() - newBookingTime.getTime()) / (1000 * 60 * 60);
-      
-      if (timeDiffStart < 1 || timeDiffEnd < 1) {
+      if (rulesError) {
+        console.error("Error fetching booking rules:", rulesError);
         return false;
       }
-    }
 
-    return true;
+      // Convertir el intervalo de tiempo a horas
+      const timeInterval = rules.time_between_bookings;
+      const [hours] = timeInterval.split(':').map(Number);
+
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const { data: existingBookings, error } = await supabase
+        .from("bookings")
+        .select("start_time, end_time")
+        .eq("user_id", user?.id)
+        .gte("start_time", startOfDay.toISOString())
+        .lte("end_time", endOfDay.toISOString());
+
+      if (error) {
+        console.error("Error checking existing bookings:", error);
+        return false;
+      }
+
+      if (!existingBookings?.length) return true;
+
+      const newBookingTime = new Date(date);
+      const [bookingHours] = selectedTime.split(':');
+      newBookingTime.setHours(parseInt(bookingHours), 0, 0, 0);
+
+      // Verificar que haya el espacio configurado entre la nueva reserva y las existentes
+      for (const booking of existingBookings) {
+        const existingStart = new Date(booking.start_time);
+        const existingEnd = new Date(booking.end_time);
+        
+        const timeDiffStart = Math.abs(newBookingTime.getTime() - existingEnd.getTime()) / (1000 * 60 * 60);
+        const timeDiffEnd = Math.abs(existingStart.getTime() - newBookingTime.getTime()) / (1000 * 60 * 60);
+        
+        if (timeDiffStart < hours || timeDiffEnd < hours) {
+          return false;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in checkExistingBookings:", error);
+      return false;
+    }
   };
 
   const handleBooking = async (
@@ -80,9 +100,14 @@ export function useBookingSubmit(onSuccess: () => void) {
     // Verificar el espacio entre reservas antes de intentar crear una nueva
     const isValidSpacing = await checkExistingBookings(selectedDate, selectedTime);
     if (!isValidSpacing) {
+      const { data: rules } = await supabase
+        .from("booking_rules")
+        .select("time_between_bookings")
+        .single();
+
       toast({
         title: "Error",
-        description: "Debe haber un espacio de al menos 1 hora entre tus reservas del mismo día. Por favor selecciona un horario diferente.",
+        description: `Debe haber un espacio de al menos ${rules?.time_between_bookings || '1:00:00'} entre tus reservas del mismo día. Por favor selecciona un horario diferente.`,
         variant: "destructive",
       });
       return;
