@@ -25,6 +25,7 @@ import {
   Monitor,
   Home,
   LogOut,
+  Menu,
 } from "lucide-react";
 
 const menuItems = [
@@ -82,13 +83,20 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50/50">
+        {/* Botón de menú móvil fijo en la parte superior */}
+        <div className="fixed top-0 left-0 z-50 w-full bg-white border-b md:hidden">
+          <div className="flex items-center justify-between p-4">
+            <h1 className="text-lg font-semibold">Panel de Control</h1>
+            <SidebarTrigger className="p-2">
+              <Menu className="h-6 w-6" />
+            </SidebarTrigger>
+          </div>
+        </div>
+
         <Sidebar className="border-r">
           <SidebarHeader className="border-b px-6 py-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Panel de Control</h2>
-              <div className="md:hidden">
-                <SidebarTrigger />
-              </div>
+              <h2 className="text-lg font-semibold hidden md:block">Panel de Control</h2>
             </div>
           </SidebarHeader>
           <SidebarContent>
@@ -136,7 +144,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
             </div>
           </SidebarFooter>
         </Sidebar>
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto pt-[72px] md:pt-0">
           <div className="container max-w-6xl py-6 px-4 md:px-6">
             {children}
           </div>
