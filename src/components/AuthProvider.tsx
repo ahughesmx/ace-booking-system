@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase-client";
@@ -27,46 +28,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        // Set up auth state listener FIRST
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+          console.log("Auth event:", event);
+          
+          if (currentSession) {
+            setSession(currentSession);
+            setUser(currentSession.user);
+          } else {
+            setSession(null);
+            setUser(null);
+          }
+
+          if (event === "SIGNED_IN") {
+            toast({
+              title: "Sesión iniciada",
+              description: "Has iniciado sesión exitosamente",
+            });
+          } else if (event === "SIGNED_OUT") {
+            toast({
+              title: "Sesión cerrada",
+              description: "Has cerrado sesión exitosamente",
+            });
+          }
+        });
+
+        // THEN check for existing session
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         if (initialSession) {
           setSession(initialSession);
           setUser(initialSession.user);
         }
+        
+        setLoading(false);
+        
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (error) {
         console.error("Error initializing auth:", error);
-      } finally {
         setLoading(false);
       }
     };
 
-    initializeAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log("Auth event:", event);
-      
-      if (currentSession) {
-        setSession(currentSession);
-        setUser(currentSession.user);
-      } else {
-        setSession(null);
-        setUser(null);
-      }
-
-      if (event === "SIGNED_IN") {
-        toast({
-          title: "Sesión iniciada",
-          description: "Has iniciado sesión exitosamente",
-        });
-      } else if (event === "SIGNED_OUT") {
-        toast({
-          title: "Sesión cerrada",
-          description: "Has cerrado sesión exitosamente",
-        });
-      }
-    });
-
+    const cleanup = initializeAuth();
+    
     return () => {
-      subscription.unsubscribe();
+      cleanup.then(unsubscribe => unsubscribe && unsubscribe());
     };
   }, [toast]);
 
@@ -74,14 +82,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setLoading(true);
       
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      if (!currentSession) {
-        setSession(null);
-        setUser(null);
-        return;
-      }
-
       const { error } = await supabase.auth.signOut();
       
       if (error) {
