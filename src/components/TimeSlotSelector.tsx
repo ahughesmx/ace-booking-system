@@ -52,7 +52,11 @@ export function TimeSlotSelector({
   businessHours 
 }: TimeSlotSelectorProps) {
   const { data: courts = [] } = useCourts(courtType);
-  const { data: settings } = useCourtTypeSettings(courtType);
+  const { data: settingsData } = useCourtTypeSettings(courtType);
+  
+  // Ensure we get the correct type - when courtType is provided, we get a single object
+  const settings = courtType && settingsData && !Array.isArray(settingsData) ? settingsData : null;
+  
   const totalCourts = courts.length;
   
   // Usar las configuraciones específicas del tipo de cancha si están disponibles
