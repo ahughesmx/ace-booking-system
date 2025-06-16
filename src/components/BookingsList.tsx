@@ -27,9 +27,12 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   const isAdmin = userRole?.role === "admin";
   const queryClient = useQueryClient();
 
-  console.log("BookingsList props:", { 
+  console.log("BookingsList received props:", { 
     bookingsCount: bookings.length, 
-    selectedDate, 
+    selectedDate,
+    selectedDateType: typeof selectedDate,
+    selectedDateInstanceOfDate: selectedDate instanceof Date,
+    selectedDateValid: selectedDate ? !isNaN(selectedDate.getTime()) : false,
     user: !!user,
     bookings 
   });
@@ -105,7 +108,8 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   };
 
   // Si no hay una fecha seleccionada válida, mostrar mensaje apropiado
-  if (!selectedDate || !isValidDate(selectedDate)) {
+  if (!selectedDate || !(selectedDate instanceof Date) || isNaN(selectedDate.getTime()) || !isValidDate(selectedDate)) {
+    console.log("Invalid selectedDate or outside valid range");
     return (
       <EmptyBookingsList
         isAuthenticated={!!user}
@@ -134,7 +138,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
 
   // Si hay usuario autenticado pero no hay reservas, mostrar mensaje de día vacío
   if (!bookings.length) {
-    console.log("No bookings found for selected date");
+    console.log("No bookings found for selected date, showing empty state");
     return (
       <EmptyBookingsList
         isAuthenticated={true}

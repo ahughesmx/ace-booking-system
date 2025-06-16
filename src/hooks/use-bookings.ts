@@ -4,10 +4,22 @@ import { supabase } from "@/lib/supabase-client";
 import { startOfDay, endOfDay } from "date-fns";
 
 export function useBookings(selectedDate?: Date) {
+  console.log("useBookings hook called with selectedDate:", selectedDate);
+  console.log("selectedDate type:", typeof selectedDate);
+  console.log("selectedDate instanceof Date:", selectedDate instanceof Date);
+  
   return useQuery({
     queryKey: ["bookings", selectedDate?.toISOString()],
     queryFn: async () => {
-      if (!selectedDate) return [];
+      if (!selectedDate) {
+        console.log("No selectedDate provided, returning empty array");
+        return [];
+      }
+
+      if (!(selectedDate instanceof Date) || isNaN(selectedDate.getTime())) {
+        console.error("Invalid selectedDate provided:", selectedDate);
+        return [];
+      }
 
       const start = startOfDay(selectedDate);
       const end = endOfDay(selectedDate);
@@ -40,6 +52,6 @@ export function useBookings(selectedDate?: Date) {
       
       return data || [];
     },
-    enabled: !!selectedDate,
+    enabled: !!selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime()),
   });
 }
