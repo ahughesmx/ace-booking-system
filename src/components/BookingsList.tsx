@@ -97,19 +97,14 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     }
   };
 
-  // Validar que la fecha seleccionada esté dentro del rango permitido por las reglas administrativas
-  const isValidDate = (date?: Date) => {
-    if (!date || !bookingRules) return false;
-    
-    const today = startOfToday();
-    const maxDate = addDays(today, bookingRules.max_days_ahead);
-    
-    return date >= today && date <= maxDate;
+  // Simplificar la validación de fecha - solo verificar que sea una fecha válida
+  const isValidDateForDisplay = (date?: Date) => {
+    return date && date instanceof Date && !isNaN(date.getTime());
   };
 
   // Si no hay una fecha seleccionada válida, mostrar mensaje apropiado
-  if (!selectedDate || !(selectedDate instanceof Date) || isNaN(selectedDate.getTime()) || !isValidDate(selectedDate)) {
-    console.log("Invalid selectedDate or outside valid range");
+  if (!isValidDateForDisplay(selectedDate)) {
+    console.log("Invalid selectedDate - not a valid Date object");
     return (
       <EmptyBookingsList
         isAuthenticated={!!user}
@@ -119,6 +114,8 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
       />
     );
   }
+
+  console.log("Valid selectedDate detected, proceeding with bookings display");
 
   // Si no hay usuario autenticado, mostrar horarios disponibles
   if (!user) {
