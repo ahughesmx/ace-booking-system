@@ -10,15 +10,15 @@ export default function Index() {
   const navigate = useNavigate();
 
   const handleReserveClick = () => {
-    navigate("/bookings");
+    navigate("/", { state: { defaultTab: "bookings" } });
   };
 
   const handleMatchClick = () => {
-    navigate("/matches");
+    navigate("/", { state: { defaultTab: "matches" } });
   };
 
   const handleRankingClick = () => {
-    navigate("/ranking");
+    navigate("/", { state: { defaultTab: "ranking" } });
   };
 
   return (
