@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,20 +34,25 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
     if (selectedCourtType && courtTypeSettings && !Array.isArray(courtTypeSettings)) {
       return addDays(today, courtTypeSettings.advance_booking_days);
     }
-    // Fallback a 7 días si no hay configuración específica
-    return addDays(today, 7);
+    // Si no hay tipo de cancha seleccionado, usar fecha muy restrictiva (solo hoy)
+    return today;
   };
 
-  // Verificar si un día está en los días de operación del tipo de cancha
+  // Verificar si un día está deshabilitado
   const isDayDisabled = (date: Date) => {
     // Siempre deshabilitar fechas pasadas
     if (date < today) return true;
+    
+    // Si no hay tipo de cancha seleccionado, deshabilitar todo excepto hoy
+    if (!selectedCourtType) {
+      return date > today;
+    }
     
     // Deshabilitar fechas más allá del máximo permitido
     if (date > getMaxDate()) return true;
 
     // Si hay un tipo de cancha seleccionado y configuraciones específicas
-    if (selectedCourtType && courtTypeSettings && !Array.isArray(courtTypeSettings)) {
+    if (courtTypeSettings && !Array.isArray(courtTypeSettings)) {
       const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
       const dayOfWeek = dayNames[date.getDay()];
       
@@ -63,8 +68,21 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
   const maxDate = getMaxDate();
 
   const handleCourtTypeChange = (courtType: 'tennis' | 'padel' | null) => {
+    console.log('BookingCalendar - Court type changed to:', courtType);
     setSelectedCourtType(courtType);
+    
+    // Si se deselecciona el tipo de cancha, resetear la fecha a hoy
+    if (!courtType) {
+      setSelectedDate(new Date());
+    }
   };
+
+  // Actualizar cuando cambia el tipo de cancha inicial
+  useEffect(() => {
+    if (initialCourtType !== selectedCourtType) {
+      setSelectedCourtType(initialCourtType || null);
+    }
+  }, [initialCourtType]);
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
