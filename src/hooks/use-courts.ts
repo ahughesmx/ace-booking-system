@@ -26,6 +26,6 @@ export function useCourts(courtType?: 'tennis' | 'padel' | null) {
     staleTime: 1000 * 60 * 5, // 5 minutos
     retry: 1,
     retryDelay: 1000,
-    enabled: courtType !== null, // Solo ejecutar cuando se haya seleccionado un tipo
+    // Remover la condición enabled para que siempre se ejecute
   });
 }

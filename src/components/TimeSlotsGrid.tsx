@@ -1,3 +1,4 @@
+
 import { TimeSlot } from "./TimeSlot";
 import { format, addHours, isBefore, isToday } from "date-fns";
 import { useCourts } from "@/hooks/use-courts";
@@ -39,7 +40,8 @@ function generateTimeSlots(businessHours: { start: number; end: number }, select
 
 export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate }: TimeSlotsGridProps) {
   const timeSlots = generateTimeSlots(businessHours, selectedDate);
-  const { data: courts = [] } = useCourts();
+  // Obtener todas las canchas (tanto tenis como pádel) para el conteo total
+  const { data: courts = [] } = useCourts(); // Sin filtro para obtener todas las canchas
   const totalCourts = courts.length;
 
   // Función para contar cuántas reservas hay en un horario específico
