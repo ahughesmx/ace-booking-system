@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import { format, addDays, startOfToday, isAfter, isBefore } from "date-fns";
+import { addDays, startOfToday } from "date-fns";
 import type { Booking } from "@/types/booking";
 import { EmptyBookingsList } from "./booking/EmptyBookingsList";
 import { BookingsListContent } from "./booking/BookingsListContent";
@@ -14,11 +14,6 @@ interface BookingsListProps {
   onCancelSuccess: () => void;
   selectedDate?: Date;
 }
-
-const BUSINESS_HOURS = {
-  start: 8,
-  end: 22,
-};
 
 export function BookingsList({ bookings, onCancelSuccess, selectedDate }: BookingsListProps) {
   const { user } = useAuth();
@@ -84,7 +79,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
 
   // Validar que la fecha seleccionada esté dentro del rango permitido por las reglas administrativas
   const isValidDate = (date?: Date) => {
-    if (!date || !bookingRules) return false;
+    if (!date || !bookingRules) return true; // Permitir mostrar el módulo aunque no haya reglas
     
     const today = startOfToday();
     const maxDate = addDays(today, bookingRules.max_days_ahead);
@@ -92,50 +87,26 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     return date >= today && date <= maxDate;
   };
 
-  // Si la fecha no es válida según las reglas administrativas, mostrar mensaje apropiado
-  if (!isValidDate(selectedDate)) {
+  // Siempre mostrar el módulo "Reservas del día"
+  // Si hay reservas, mostrar la lista
+  if (bookings.length > 0) {
     return (
-      <EmptyBookingsList
-        isAuthenticated={false}
-        bookedSlots={new Set()}
-        businessHours={BUSINESS_HOURS}
-        selectedDate={selectedDate}
+      <BookingsListContent
+        bookings={bookings}
+        isAdmin={isAdmin}
+        userId={user?.id}
+        onCancel={handleCancelBooking}
       />
     );
   }
 
-  if (!user) {
-    const bookedSlots = new Set(
-      bookings.map(booking => format(new Date(booking.start_time), "HH:00"))
-    );
-
-    return (
-      <EmptyBookingsList
-        isAuthenticated={false}
-        bookedSlots={bookedSlots}
-        businessHours={BUSINESS_HOURS}
-        selectedDate={selectedDate}
-      />
-    );
-  }
-
-  if (!bookings.length) {
-    return (
-      <EmptyBookingsList
-        isAuthenticated={true}
-        bookedSlots={new Set()}
-        businessHours={BUSINESS_HOURS}
-        selectedDate={selectedDate}
-      />
-    );
-  }
-
+  // Si no hay reservas, mostrar el módulo vacío pero siempre como "Reservas del día"
   return (
-    <BookingsListContent
-      bookings={bookings}
-      isAdmin={isAdmin}
-      userId={user.id}
-      onCancel={handleCancelBooking}
+    <EmptyBookingsList
+      isAuthenticated={!!user}
+      bookedSlots={new Set()}
+      businessHours={{ start: 8, end: 22 }}
+      selectedDate={selectedDate}
     />
   );
 }
