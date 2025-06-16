@@ -48,10 +48,35 @@ export function TimeSlotSelector({
   const totalCourts = courts.length;
   const timeSlots = generateTimeSlots(businessHours, selectedDate);
 
+  console.log('TimeSlotSelector - courtType:', courtType);
+  console.log('TimeSlotSelector - courts:', courts);
+  console.log('TimeSlotSelector - totalCourts:', totalCourts);
+  console.log('TimeSlotSelector - bookedSlots:', Array.from(bookedSlots));
+
   const getAvailableSlots = (slot: string) => {
+    // Contar cuántas reservas hay para este horario específico del tipo de cancha seleccionado
     const bookingsCount = bookedSlots.has(slot) ? 1 : 0;
-    return totalCourts - bookingsCount;
+    const available = Math.max(0, totalCourts - bookingsCount);
+    
+    console.log(`Slot ${slot}: totalCourts=${totalCourts}, bookingsCount=${bookingsCount}, available=${available}`);
+    
+    return available;
   };
+
+  if (totalCourts === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center">
+          <h4 className="text-lg font-semibold text-[#1e3a8a] mb-2">
+            Selecciona tu horario para {courtType}
+          </h4>
+          <p className="text-sm text-red-500">
+            No hay canchas de {courtType} disponibles
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
