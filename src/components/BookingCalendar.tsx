@@ -10,7 +10,7 @@ import { BookingForm } from "@/components/BookingForm";
 import { BookingsList } from "@/components/BookingsList";
 import { useBookings } from "@/hooks/use-bookings";
 import { startOfToday, addDays, format } from "date-fns";
-import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
+import { useBookingRules } from "@/hooks/use-booking-rules";
 
 interface BookingCalendarProps {
   selectedCourtType?: 'tennis' | 'padel' | null;
@@ -24,15 +24,15 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
   const navigate = useNavigate();
   const { data: bookings = [], refetch: refetchBookings } = useBookings(selectedDate);
 
-  // Obtener configuraciones específicas del tipo de cancha seleccionado
-  const { data: courtTypeSettings } = useCourtTypeSettings(selectedCourtType);
+  // Obtener las reglas de reserva específicas del tipo de cancha seleccionado
+  const { data: bookingRules } = useBookingRules(selectedCourtType);
 
   const today = startOfToday();
   
-  // Calcular la fecha máxima basada únicamente en court_type_settings
+  // Calcular la fecha máxima basada en booking_rules
   const getMaxDate = () => {
-    if (selectedCourtType && courtTypeSettings && !Array.isArray(courtTypeSettings)) {
-      return addDays(today, courtTypeSettings.advance_booking_days);
+    if (selectedCourtType && bookingRules && !Array.isArray(bookingRules)) {
+      return addDays(today, bookingRules.max_days_ahead);
     }
     // Si no hay tipo de cancha seleccionado, usar fecha muy restrictiva (solo hoy)
     return today;
@@ -48,19 +48,8 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
       return date > today;
     }
     
-    // Deshabilitar fechas más allá del máximo permitido según court_type_settings
+    // Deshabilitar fechas más allá del máximo permitido según booking_rules
     if (date > getMaxDate()) return true;
-
-    // Si hay configuraciones específicas del tipo de cancha, verificar días de operación
-    if (courtTypeSettings && !Array.isArray(courtTypeSettings)) {
-      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const dayOfWeek = dayNames[date.getDay()];
-      
-      // Verificar si el día está en los días de operación
-      if (!courtTypeSettings.operating_days.includes(dayOfWeek)) {
-        return true;
-      }
-    }
 
     return false;
   };
@@ -91,9 +80,9 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
           <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
             Reserva tu Cancha
           </CardTitle>
-          {selectedCourtType && courtTypeSettings && !Array.isArray(courtTypeSettings) && (
+          {selectedCourtType && bookingRules && !Array.isArray(bookingRules) && (
             <p className="text-sm text-muted-foreground">
-              Reservas hasta {courtTypeSettings.advance_booking_days} días adelante • {selectedCourtType === 'tennis' ? 'Tenis' : 'Pádel'}
+              Reservas hasta {bookingRules.max_days_ahead} días adelante • {selectedCourtType === 'tennis' ? 'Tenis' : 'Pádel'}
             </p>
           )}
         </CardHeader>
