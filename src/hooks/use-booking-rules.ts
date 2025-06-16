@@ -14,6 +14,9 @@ type BookingRules = {
   updated_at: string;
 };
 
+// Overload signatures for better type inference
+export function useBookingRules(courtType: 'tennis' | 'padel'): ReturnType<typeof useQuery<BookingRules | null>>;
+export function useBookingRules(): ReturnType<typeof useQuery<BookingRules[]>>;
 export function useBookingRules(courtType?: 'tennis' | 'padel') {
   return useQuery({
     queryKey: ["booking-rules", courtType],
