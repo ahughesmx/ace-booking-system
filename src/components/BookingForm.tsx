@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { CanchaSelector } from "@/components/CourtSelector";
@@ -160,7 +161,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
             Cambiar tipo de cancha
           </Button>
           <span className="text-sm text-muted-foreground capitalize">
-            Canchas de {selectedCourtType === 'tennis' ? 'Tenis' : 'Pádel'}
+            Canchas de {selectedCourtType === 'tennis' ? 'tenis' : 'pádel'}
           </span>
         </div>
 
