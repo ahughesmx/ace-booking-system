@@ -34,40 +34,64 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
   const isMobile = useIsMobile();
   const { user } = useAuth();
 
-  const { data: bookings = [] } = useQuery({
+  const { data: bookings = [], isLoading: isLoadingBookings } = useQuery({
     queryKey: ["active-bookings", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
 
-      // Primero obtenemos las reservas que ya tienen partidos
-      const { data: matchesData } = await supabase
-        .from("matches")
-        .select("booking_id");
+      console.log("Fetching active bookings for user:", user.id);
 
-      const bookingsWithMatches = new Set(matchesData?.map(match => match.booking_id) || []);
-
-      // Luego obtenemos las reservas del usuario que no tienen partidos
+      // Obtener todas las reservas activas del usuario
       const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
         .select(`
           id,
           start_time,
+          end_time,
           court:courts(name, court_type)
         `)
         .eq('user_id', user.id)
         .gte("end_time", new Date().toISOString())
         .order("start_time", { ascending: true });
 
-      if (bookingsError) throw bookingsError;
+      if (bookingsError) {
+        console.error("Error fetching bookings:", bookingsError);
+        throw bookingsError;
+      }
 
-      // Filtramos las reservas que ya tienen partidos
-      return (bookingsData || []).filter(booking => !bookingsWithMatches.has(booking.id));
+      console.log("Found bookings:", bookingsData);
+
+      // Obtener los IDs de reservas que ya tienen partidos
+      const { data: matchesData, error: matchesError } = await supabase
+        .from("matches")
+        .select("booking_id");
+
+      if (matchesError) {
+        console.error("Error fetching matches:", matchesError);
+        throw matchesError;
+      }
+
+      console.log("Found matches:", matchesData);
+
+      const bookingsWithMatches = new Set(matchesData?.map(match => match.booking_id) || []);
+      console.log("Bookings with matches:", bookingsWithMatches);
+
+      // Filtrar las reservas que no tienen partidos
+      const availableBookings = (bookingsData || []).filter(booking => {
+        const hasMatch = bookingsWithMatches.has(booking.id);
+        console.log(`Booking ${booking.id} has match: ${hasMatch}`);
+        return !hasMatch;
+      });
+
+      console.log("Available bookings for match creation:", availableBookings);
+      return availableBookings;
     },
     enabled: !!user?.id,
   });
 
   const handleCreateMatch = (isDoubles: boolean) => {
     if (selectedBooking) {
+      console.log("Creating match for booking:", selectedBooking);
       onCreateMatch(isDoubles, selectedBooking);
       setIsDialogOpen(false);
       setSelectedBooking("");
@@ -86,6 +110,13 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
     }
   };
 
+  console.log("MatchHeader render:", {
+    user: !!user,
+    bookingsCount: bookings.length,
+    isLoadingBookings,
+    bookings
+  });
+
   return (
     <div className="relative">
       <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between md:items-center bg-gradient-to-r from-[#6898FE]/10 to-transparent p-6 rounded-lg border border-[#6898FE]/20">
@@ -101,12 +132,13 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button
-              disabled={isLoading || bookings.length === 0}
+              disabled={isLoading || isLoadingBookings || bookings.length === 0}
               className="bg-[#6898FE] hover:bg-[#0FA0CE] transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               size={isMobile ? "sm" : "default"}
             >
               <Plus className="h-5 w-5 mr-2" />
               {!user ? "Inicia sesión para crear partidos" : 
+                isLoadingBookings ? "Cargando reservas..." :
                 bookings.length === 0 ? "Reserva una cancha primero" : "Crear Partido"}
             </Button>
           </DialogTrigger>
