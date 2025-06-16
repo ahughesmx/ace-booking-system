@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import MainNav from "@/components/MainNav";
 import { MatchManagement } from "@/components/MatchManagement";
-import { RankingTable } from "@/components/RankingTable";
+import RankingTable from "@/components/RankingTable";
 
 export default function Index() {
   const location = useLocation();
