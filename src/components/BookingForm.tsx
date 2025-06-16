@@ -1,6 +1,8 @@
+
 import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { CanchaSelector } from "@/components/CourtSelector";
+import { CourtTypeSelector } from "@/components/CourtTypeSelector";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 import { useCourts } from "@/hooks/use-courts";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +11,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { BookingAlert } from "./booking/BookingAlert";
 import { BookingButton } from "./booking/BookingButton";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 interface BookingFormProps {
   selectedDate?: Date;
@@ -22,10 +26,11 @@ const availableTimeSlots = [
 ];
 
 export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps) {
+  const [selectedCourtType, setSelectedCourtType] = useState<'tennis' | 'padel' | null>(null);
   const [selectedCourt, setSelectedCourt] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const { user } = useAuth();
-  const { data: courts = [] } = useCourts();
+  const { data: courts = [] } = useCourts(selectedCourtType);
   const navigate = useNavigate();
   const { handleBooking, isSubmitting } = useBookingSubmit(onBookingSuccess);
 
@@ -47,6 +52,18 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     navigate('/login');
   };
 
+  const handleCourtTypeSelect = (type: 'tennis' | 'padel') => {
+    setSelectedCourtType(type);
+    setSelectedCourt(null); // Reset court selection when type changes
+    setSelectedTime(null); // Reset time selection when type changes
+  };
+
+  const handleBackToTypeSelection = () => {
+    setSelectedCourtType(null);
+    setSelectedCourt(null);
+    setSelectedTime(null);
+  };
+
   return (
     <div className="space-y-4">
       {userActiveBookings >= 4 && (
@@ -55,14 +72,49 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
         />
       )}
 
-      {courts && courts.length > 0 && (
-        <CanchaSelector
-          courts={courts}
-          selectedCourt={selectedCourt}
-          onCourtSelect={setSelectedCourt}
+      {/* Paso 1: Selección de tipo de cancha */}
+      {!selectedCourtType && (
+        <CourtTypeSelector
+          selectedType={selectedCourtType}
+          onTypeSelect={handleCourtTypeSelect}
         />
       )}
 
+      {/* Paso 2: Selección de cancha específica */}
+      {selectedCourtType && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBackToTypeSelection}
+              className="text-[#6898FE] hover:text-[#0FA0CE] hover:bg-[#6898FE]/10"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Cambiar tipo de cancha
+            </Button>
+            <span className="text-sm text-muted-foreground capitalize">
+              Canchas de {selectedCourtType}
+            </span>
+          </div>
+
+          {courts && courts.length > 0 ? (
+            <CanchaSelector
+              courts={courts}
+              selectedCourt={selectedCourt}
+              onCourtSelect={setSelectedCourt}
+            />
+          ) : (
+            <div className="text-center p-6 bg-[#6898FE]/5 rounded-lg border border-[#6898FE]/20">
+              <p className="text-sm text-muted-foreground">
+                No hay canchas de {selectedCourtType} disponibles en este momento
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Paso 3: Selección de horario */}
       {selectedCourt && (
         <TimeSlotPicker
           availableTimeSlots={availableTimeSlots}
@@ -80,13 +132,16 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
         />
       )}
 
-      <BookingButton 
-        isSubmitting={isSubmitting}
-        isDisabled={!selectedDate || !selectedTime || !selectedCourt || userActiveBookings >= 4}
-        onClick={() => handleBooking(selectedDate, selectedTime, selectedCourt)}
-        loginRedirect={handleLoginRedirect}
-        isAuthenticated={!!user}
-      />
+      {/* Botón de reserva */}
+      {selectedCourtType && (
+        <BookingButton 
+          isSubmitting={isSubmitting}
+          isDisabled={!selectedDate || !selectedTime || !selectedCourt || userActiveBookings >= 4}
+          onClick={() => handleBooking(selectedDate, selectedTime, selectedCourt)}
+          loginRedirect={handleLoginRedirect}
+          isAuthenticated={!!user}
+        />
+      )}
     </div>
   );
 }
