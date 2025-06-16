@@ -171,7 +171,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
             Cambiar tipo de cancha
           </Button>
           <span className="text-sm text-muted-foreground capitalize">
-            Canchas de {selectedCourtType === 'tennis' ? 'tenis' : 'pádel'}
+            Cancha de pádel
           </span>
         </div>
 
