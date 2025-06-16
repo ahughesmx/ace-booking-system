@@ -29,7 +29,7 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
 
   const today = startOfToday();
   
-  // Calcular la fecha máxima basada en la configuración específica del tipo de cancha
+  // Calcular la fecha máxima basada únicamente en court_type_settings
   const getMaxDate = () => {
     if (selectedCourtType && courtTypeSettings && !Array.isArray(courtTypeSettings)) {
       return addDays(today, courtTypeSettings.advance_booking_days);
@@ -48,10 +48,10 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
       return date > today;
     }
     
-    // Deshabilitar fechas más allá del máximo permitido
+    // Deshabilitar fechas más allá del máximo permitido según court_type_settings
     if (date > getMaxDate()) return true;
 
-    // Si hay un tipo de cancha seleccionado y configuraciones específicas
+    // Si hay configuraciones específicas del tipo de cancha, verificar días de operación
     if (courtTypeSettings && !Array.isArray(courtTypeSettings)) {
       const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
       const dayOfWeek = dayNames[date.getDay()];
