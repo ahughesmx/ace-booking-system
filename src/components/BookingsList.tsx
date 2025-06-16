@@ -97,11 +97,11 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     return date >= today && date <= maxDate;
   };
 
-  // Si la fecha no es válida según las reglas administrativas, mostrar mensaje apropiado
-  if (!isValidDate(selectedDate)) {
+  // Si no hay una fecha seleccionada válida, mostrar mensaje apropiado
+  if (!selectedDate || !isValidDate(selectedDate)) {
     return (
       <EmptyBookingsList
-        isAuthenticated={false}
+        isAuthenticated={!!user}
         bookedSlots={new Set()}
         businessHours={BUSINESS_HOURS}
         selectedDate={selectedDate}
@@ -109,6 +109,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     );
   }
 
+  // Si no hay usuario autenticado, mostrar horarios disponibles
   if (!user) {
     const bookedSlots = new Set(
       bookings.map(booking => format(new Date(booking.start_time), "HH:00"))
@@ -124,6 +125,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     );
   }
 
+  // Si hay usuario autenticado, siempre mostrar las reservas del día (aunque esté vacío)
   if (!bookings.length) {
     return (
       <EmptyBookingsList
@@ -135,6 +137,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     );
   }
 
+  // Mostrar las reservas del día
   return (
     <BookingsListContent
       bookings={bookings}
