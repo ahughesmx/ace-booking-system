@@ -13,44 +13,45 @@ import BookingRulesManagement from "@/components/admin/BookingRulesManagement";
 import DisplayManagement from "@/components/admin/DisplayManagement";
 
 const AdminPage = () => {
+  // Todos los hooks se ejecutan siempre en el mismo orden
   const { user, loading: authLoading } = useAuth();
   const { data: userRole, isLoading: roleLoading } = useGlobalRole(user?.id);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("users");
-  const [shouldRedirect, setShouldRedirect] = useState(false);
-  const [redirectReason, setRedirectReason] = useState("");
 
   console.log("AdminPage - Rendering with:", { user, userRole, authLoading, roleLoading });
 
-  // Handle redirects in useEffect to avoid conditional returns before hooks
+  // Efecto para manejar redirecciones
   useEffect(() => {
-    if (!authLoading && !roleLoading) {
-      if (!user) {
-        console.log("AdminPage - No user found, will redirect to home");
-        setShouldRedirect(true);
-        setRedirectReason("no-user");
-      } else if (userRole && userRole.role !== "admin") {
-        console.log("AdminPage - User is not admin, will redirect");
-        setShouldRedirect(true);
-        setRedirectReason("not-admin");
-      }
+    if (authLoading || roleLoading) {
+      // Aún cargando, no hacer nada
+      return;
     }
-  }, [user, userRole, authLoading, roleLoading]);
 
-  // Execute redirects
-  useEffect(() => {
-    if (shouldRedirect) {
-      if (redirectReason === "not-admin") {
-        toast({
-          title: "Acceso denegado",
-          description: "No tienes permisos para acceder al panel de control",
-          variant: "destructive",
-        });
-      }
-      navigate("/");
+    if (!user) {
+      console.log("AdminPage - No user found, redirecting to login");
+      navigate("/login");
+      return;
     }
-  }, [shouldRedirect, redirectReason, navigate, toast]);
+
+    if (!userRole) {
+      console.log("AdminPage - No role found, redirecting to home");
+      navigate("/");
+      return;
+    }
+
+    if (userRole.role !== "admin") {
+      console.log("AdminPage - User is not admin, redirecting");
+      toast({
+        title: "Acceso denegado",
+        description: "No tienes permisos para acceder al panel de control",
+        variant: "destructive",
+      });
+      navigate("/");
+      return;
+    }
+  }, [user, userRole, authLoading, roleLoading, navigate, toast]);
 
   const renderContent = () => {
     console.log("AdminPage - Rendering content for tab:", activeTab);
@@ -73,53 +74,29 @@ const AdminPage = () => {
     }
   };
 
-  // Show loading state
-  if (authLoading || roleLoading) {
-    console.log("AdminPage - Loading state");
+  // Siempre mostrar loading mientras se cargan datos o se verifica acceso
+  if (authLoading || roleLoading || !user || !userRole || userRole.role !== "admin") {
+    const loadingMessage = authLoading || roleLoading 
+      ? "Verificando permisos..." 
+      : !user 
+        ? "Redirigiendo al login..." 
+        : !userRole 
+          ? "Verificando rol..." 
+          : "Acceso denegado...";
+
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Verificando permisos...</div>
+        <div className="text-lg">{loadingMessage}</div>
       </div>
     );
   }
 
-  // Show loading while redirecting
-  if (shouldRedirect) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">
-          {redirectReason === "no-user" ? "Redirigiendo..." : "Acceso denegado..."}
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading if no role data yet
-  if (!userRole && user) {
-    console.log("AdminPage - No role data yet");
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Cargando panel de administración...</div>
-      </div>
-    );
-  }
-
-  // Only render admin layout if we have confirmed admin access
-  if (user && userRole && userRole.role === "admin") {
-    console.log("AdminPage - Rendering AdminLayout");
-    
-    return (
-      <AdminLayout activeTab={activeTab} onTabChange={setActiveTab}>
-        {renderContent()}
-      </AdminLayout>
-    );
-  }
-
-  // Fallback loading state
+  // Solo renderizar si tenemos usuario admin confirmado
+  console.log("AdminPage - Rendering AdminLayout");
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-lg">Cargando...</div>
-    </div>
+    <AdminLayout activeTab={activeTab} onTabChange={setActiveTab}>
+      {renderContent()}
+    </AdminLayout>
   );
 };
 
