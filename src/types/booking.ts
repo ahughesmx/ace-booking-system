@@ -1,3 +1,4 @@
+
 export type Booking = {
   id: string;
   court_id: string;
@@ -6,6 +7,7 @@ export type Booking = {
   end_time: string;
   court?: {
     name: string;
+    court_type: string;
   };
   user?: {
     full_name: string;

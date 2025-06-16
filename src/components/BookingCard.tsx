@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
@@ -27,6 +28,18 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
 
   const active = isActive();
 
+  // Función para formatear el tipo de cancha
+  const formatCourtType = (courtType: string) => {
+    switch (courtType) {
+      case 'padel':
+        return 'Pádel';
+      case 'tennis':
+        return 'Tenis';
+      default:
+        return courtType;
+    }
+  };
+
   // Agregar console.logs detallados para debugging
   console.log('Booking data:', {
     bookingId: booking.id,
@@ -45,6 +58,11 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
               <p className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
                 {booking.court?.name || "Cancha sin nombre"}
               </p>
+              {booking.court?.court_type && (
+                <span className="text-xs px-2 py-1 rounded-full bg-[#6898FE]/10 text-[#6898FE] border border-[#6898FE]/20">
+                  {formatCourtType(booking.court.court_type)}
+                </span>
+              )}
               {!active && (
                 <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-600">
                   Finalizada
