@@ -89,16 +89,19 @@ export type Database = {
       }
       courts: {
         Row: {
+          court_type: string
           created_at: string | null
           id: string
           name: string
         }
         Insert: {
+          court_type?: string
           created_at?: string | null
           id?: string
           name: string
         }
         Update: {
+          court_type?: string
           created_at?: string | null
           id?: string
           name?: string

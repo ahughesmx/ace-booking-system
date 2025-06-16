@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
@@ -9,6 +10,7 @@ import { CourtsList } from "./courts/CourtsList";
 type Court = {
   id: string;
   name: string;
+  court_type: string;
   created_at: string;
 };
 
@@ -29,12 +31,15 @@ export default function CourtManagement() {
     },
   });
 
-  const handleAddCourt = async (newCourtName: string) => {
+  const handleAddCourt = async (newCourtName: string, courtType: 'tennis' | 'padel') => {
     try {
       setLoading(true);
       const { error } = await supabase
         .from("courts")
-        .insert([{ name: newCourtName.trim() }]);
+        .insert([{ 
+          name: newCourtName.trim(),
+          court_type: courtType
+        }]);
 
       if (error) throw error;
 
