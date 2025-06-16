@@ -101,7 +101,8 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   // Función para determinar por qué el botón está deshabilitado
   const getDisabledReason = () => {
     if (!user) return null;
-    if (userActiveBookings >= bookingRules?.max_active_bookings || 4) return `Ya tienes el máximo de ${bookingRules?.max_active_bookings || 4} reservas activas`;
+    const maxBookings = bookingRules?.max_active_bookings || 4;
+    if (userActiveBookings >= maxBookings) return `Ya tienes el máximo de ${maxBookings} reservas activas`;
     if (!selectedDate) return "Selecciona una fecha";
     if (!selectedCourtType) return "Selecciona un tipo de cancha";
     // Solo mostrar el mensaje de seleccionar cancha si hay más de una cancha disponible
@@ -112,12 +113,13 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
 
   const disabledReason = getDisabledReason();
   const isButtonDisabled = !!disabledReason || isSubmitting;
+  const maxBookings = bookingRules?.max_active_bookings || 4;
 
   return (
     <div className="space-y-4">
-      {userActiveBookings >= bookingRules?.max_active_bookings || 4 && (
+      {userActiveBookings >= maxBookings && (
         <BookingAlert 
-          message={`Ya tienes el máximo de ${bookingRules?.max_active_bookings || 4} reservas activas permitidas para ${selectedCourtType || 'este tipo de cancha'}. Debes esperar a que finalicen o cancelar alguna reserva existente.`}
+          message={`Ya tienes el máximo de ${maxBookings} reservas activas permitidas para ${selectedCourtType || 'este tipo de cancha'}. Debes esperar a que finalicen o cancelar alguna reserva existente.`}
         />
       )}
 
