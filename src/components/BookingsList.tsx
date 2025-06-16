@@ -1,9 +1,10 @@
+
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import { format, addDays, startOfToday, isAfter, isBefore, endOfTomorrow, isToday, isTomorrow } from "date-fns";
+import { format, addDays, startOfToday, isAfter, isBefore } from "date-fns";
 import type { Booking } from "@/types/booking";
 import { EmptyBookingsList } from "./booking/EmptyBookingsList";
 import { BookingsListContent } from "./booking/BookingsListContent";
@@ -25,6 +26,20 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   const { data: userRole } = useUserRole(user?.id);
   const isAdmin = userRole?.role === "admin";
   const queryClient = useQueryClient();
+
+  // Obtener las reglas de reserva para validar fechas
+  const { data: bookingRules } = useQuery({
+    queryKey: ["bookingRules"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("booking_rules")
+        .select("*")
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
@@ -67,12 +82,17 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     }
   };
 
-  // Validar que la fecha seleccionada sea hoy o mañana
+  // Validar que la fecha seleccionada esté dentro del rango permitido por las reglas administrativas
   const isValidDate = (date?: Date) => {
-    if (!date) return false;
-    return isToday(date) || isTomorrow(date);
+    if (!date || !bookingRules) return false;
+    
+    const today = startOfToday();
+    const maxDate = addDays(today, bookingRules.max_days_ahead);
+    
+    return date >= today && date <= maxDate;
   };
 
+  // Si la fecha no es válida según las reglas administrativas, mostrar mensaje apropiado
   if (!isValidDate(selectedDate)) {
     return (
       <EmptyBookingsList
