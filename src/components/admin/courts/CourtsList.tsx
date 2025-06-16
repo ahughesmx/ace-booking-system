@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Table,
@@ -14,6 +15,7 @@ import { Check, X, Pencil, Trash2 } from "lucide-react";
 type Court = {
   id: string;
   name: string;
+  court_type: string;
   created_at: string;
 };
 
@@ -38,6 +40,10 @@ export function CourtsList({ courts, onEditCourt, onDeleteCourt, loading }: Cour
     setEditName("");
   };
 
+  const getCourtTypeLabel = (courtType: string) => {
+    return courtType === 'tennis' ? 'Tenis' : 'Pádel';
+  };
+
   return (
     <div className="rounded-lg border border-gray-100 overflow-hidden">
       <div className="overflow-x-auto">
@@ -45,6 +51,7 @@ export function CourtsList({ courts, onEditCourt, onDeleteCourt, loading }: Cour
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead className="font-semibold text-gray-600">Nombre</TableHead>
+              <TableHead className="font-semibold text-gray-600">Tipo</TableHead>
               <TableHead className="font-semibold text-gray-600">
                 Fecha de creación
               </TableHead>
@@ -69,6 +76,15 @@ export function CourtsList({ courts, onEditCourt, onDeleteCourt, loading }: Cour
                   ) : (
                     <span className="text-gray-700">{court.name}</span>
                   )}
+                </TableCell>
+                <TableCell className="text-gray-600">
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    court.court_type === 'tennis' 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-green-100 text-green-800'
+                  }`}>
+                    {getCourtTypeLabel(court.court_type)}
+                  </span>
                 </TableCell>
                 <TableCell className="text-gray-500">
                   {new Date(court.created_at).toLocaleDateString()}

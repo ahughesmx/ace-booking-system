@@ -23,7 +23,7 @@ export default function CourtManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("courts")
-        .select("*")
+        .select("id, name, court_type, created_at")
         .order("name");
 
       if (error) throw error;
@@ -46,9 +46,10 @@ export default function CourtManagement() {
       await refetch();
       toast({
         title: "Cancha agregada",
-        description: "La cancha ha sido agregada exitosamente.",
+        description: `La cancha de ${courtType === 'tennis' ? 'tenis' : 'pádel'} ha sido agregada exitosamente.`,
       });
     } catch (error) {
+      console.error("Error adding court:", error);
       toast({
         title: "Error",
         description: "No se pudo agregar la cancha.",
@@ -75,6 +76,7 @@ export default function CourtManagement() {
         description: "El nombre de la cancha ha sido actualizado exitosamente.",
       });
     } catch (error) {
+      console.error("Error updating court:", error);
       toast({
         title: "Error",
         description: "No se pudo actualizar el nombre de la cancha.",
@@ -101,6 +103,7 @@ export default function CourtManagement() {
         description: "La cancha ha sido eliminada exitosamente.",
       });
     } catch (error) {
+      console.error("Error deleting court:", error);
       toast({
         title: "Error",
         description: "No se pudo eliminar la cancha.",
