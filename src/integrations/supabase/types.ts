@@ -12,6 +12,7 @@ export type Database = {
       booking_rules: {
         Row: {
           allow_consecutive_bookings: boolean
+          court_type: string
           created_at: string | null
           id: string
           max_active_bookings: number
@@ -22,6 +23,7 @@ export type Database = {
         }
         Insert: {
           allow_consecutive_bookings?: boolean
+          court_type: string
           created_at?: string | null
           id?: string
           max_active_bookings?: number
@@ -32,6 +34,7 @@ export type Database = {
         }
         Update: {
           allow_consecutive_bookings?: boolean
+          court_type?: string
           created_at?: string | null
           id?: string
           max_active_bookings?: number

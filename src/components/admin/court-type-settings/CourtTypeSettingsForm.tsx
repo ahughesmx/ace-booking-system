@@ -116,7 +116,7 @@ export function CourtTypeSettingsForm({
         {/* Configuración de Reservas */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Configuración de Reservas</CardTitle>
+            <CardTitle className="text-lg">Duración de Reservas</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -155,50 +155,43 @@ export function CourtTypeSettingsForm({
                 onChange={(e) => setFormData({ ...formData, max_capacity: parseInt(e.target.value) })}
               />
             </div>
-            <div>
-              <Label htmlFor="advance_booking_days">Días de Anticipación Máximos</Label>
-              <Input
-                id="advance_booking_days"
-                type="number"
-                value={formData.advance_booking_days}
-                onChange={(e) => setFormData({ ...formData, advance_booking_days: parseInt(e.target.value) })}
-              />
-            </div>
           </CardContent>
         </Card>
 
         {/* Configuración de Precios */}
-        <Card>
+        <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle className="text-lg">Configuración de Precios</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="price_per_hour">Precio por Hora ($)</Label>
-              <Input
-                id="price_per_hour"
-                type="number"
-                step="0.01"
-                value={formData.price_per_hour}
-                onChange={(e) => setFormData({ ...formData, price_per_hour: parseFloat(e.target.value) })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="weekend_price_multiplier">Multiplicador Fin de Semana</Label>
-              <Input
-                id="weekend_price_multiplier"
-                type="number"
-                step="0.01"
-                value={formData.weekend_price_multiplier}
-                onChange={(e) => setFormData({ ...formData, weekend_price_multiplier: parseFloat(e.target.value) })}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="price_per_hour">Precio por Hora ($)</Label>
+                <Input
+                  id="price_per_hour"
+                  type="number"
+                  step="0.01"
+                  value={formData.price_per_hour}
+                  onChange={(e) => setFormData({ ...formData, price_per_hour: parseFloat(e.target.value) })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="weekend_price_multiplier">Multiplicador Fin de Semana</Label>
+                <Input
+                  id="weekend_price_multiplier"
+                  type="number"
+                  step="0.01"
+                  value={formData.weekend_price_multiplier}
+                  onChange={(e) => setFormData({ ...formData, weekend_price_multiplier: parseFloat(e.target.value) })}
+                />
+              </div>
             </div>
             
             <Separator />
             
             <div className="space-y-4">
               <h4 className="font-medium">Horarios Pico</h4>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="peak_hours_start">Inicio Hora Pico</Label>
                   <Input
@@ -217,16 +210,16 @@ export function CourtTypeSettingsForm({
                     onChange={(e) => setFormData({ ...formData, peak_hours_end: e.target.value })}
                   />
                 </div>
-              </div>
-              <div>
-                <Label htmlFor="peak_hours_multiplier">Multiplicador Hora Pico</Label>
-                <Input
-                  id="peak_hours_multiplier"
-                  type="number"
-                  step="0.01"
-                  value={formData.peak_hours_multiplier}
-                  onChange={(e) => setFormData({ ...formData, peak_hours_multiplier: parseFloat(e.target.value) })}
-                />
+                <div>
+                  <Label htmlFor="peak_hours_multiplier">Multiplicador Hora Pico</Label>
+                  <Input
+                    id="peak_hours_multiplier"
+                    type="number"
+                    step="0.01"
+                    value={formData.peak_hours_multiplier}
+                    onChange={(e) => setFormData({ ...formData, peak_hours_multiplier: parseFloat(e.target.value) })}
+                  />
+                </div>
               </div>
             </div>
           </CardContent>

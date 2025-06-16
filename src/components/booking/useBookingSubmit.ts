@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createBookingTimes } from "./TimeValidation";
 import { validateBookingTime } from "./BookingValidation";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
+import { useBookingRules } from "@/hooks/use-booking-rules";
 import { Database } from "@/integrations/supabase/types";
 
 type BookingRules = Database['public']['Tables']['booking_rules']['Row'];
@@ -19,15 +20,34 @@ export function useBookingSubmit(onSuccess: () => void) {
 
   const checkBookingRules = async (date: Date, selectedTime: string, courtType?: 'tennis' | 'padel') => {
     try {
-      // Obtener las reglas generales de reserva
-      const { data: rules, error: rulesError } = await supabase
-        .from("booking_rules")
-        .select("*")
-        .single();
+      // Obtener las reglas específicas del tipo de cancha si se proporciona
+      let rules: BookingRules | null = null;
+      
+      if (courtType) {
+        const { data: courtTypeRules, error: courtTypeRulesError } = await supabase
+          .from("booking_rules")
+          .select("*")
+          .eq("court_type", courtType)
+          .single();
 
-      if (rulesError) {
-        console.error("Error fetching booking rules:", rulesError);
-        return false;
+        if (!courtTypeRulesError && courtTypeRules) {
+          rules = courtTypeRules;
+        }
+      }
+
+      // Si no hay reglas específicas, usar las generales (tennis por defecto)
+      if (!rules) {
+        const { data: generalRules, error: generalRulesError } = await supabase
+          .from("booking_rules")
+          .select("*")
+          .eq("court_type", "tennis")
+          .single();
+
+        if (generalRulesError) {
+          console.error("Error fetching booking rules:", generalRulesError);
+          return false;
+        }
+        rules = generalRules;
       }
 
       // Obtener configuraciones específicas del tipo de cancha si se proporciona
@@ -59,7 +79,7 @@ export function useBookingSubmit(onSuccess: () => void) {
       if (activeBookings.active_bookings >= (rules as BookingRules).max_active_bookings) {
         toast({
           title: "Límite de reservas alcanzado",
-          description: `Ya tienes el máximo de ${(rules as BookingRules).max_active_bookings} reservas activas permitidas.`,
+          description: `Ya tienes el máximo de ${(rules as BookingRules).max_active_bookings} reservas activas permitidas para canchas de ${courtType}.`,
           variant: "destructive",
         });
         return false;
@@ -94,7 +114,7 @@ export function useBookingSubmit(onSuccess: () => void) {
           return false;
         }
 
-        // Verificar días de operación - Corregir el formato de toLocaleDateString
+        // Verificar días de operación
         const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const dayOfWeek = dayNames[date.getDay()];
         
@@ -147,7 +167,7 @@ export function useBookingSubmit(onSuccess: () => void) {
         if (timeDiffStart < hours || timeDiffEnd < hours) {
           toast({
             title: "Espacio entre reservas insuficiente",
-            description: `Debe haber un espacio de al menos ${timeInterval} entre reservas del mismo día.`,
+            description: `Debe haber un espacio de al menos ${timeInterval} entre reservas del mismo día para canchas de ${courtType}.`,
             variant: "destructive",
           });
           return false;

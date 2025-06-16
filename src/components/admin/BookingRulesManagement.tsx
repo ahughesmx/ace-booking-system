@@ -1,6 +1,6 @@
+
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase-client";
+import { useBookingRules } from "@/hooks/use-booking-rules";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,33 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase-client";
 
-interface BookingRules {
-  id: string;
-  max_active_bookings: number;
-  min_cancellation_time: string;
-  allow_consecutive_bookings: boolean;
-  time_between_bookings: string;
-  max_days_ahead: number;
+interface BookingRulesFormProps {
+  courtType: 'tennis' | 'padel';
+  courtTypeLabel: string;
 }
 
-export default function BookingRulesManagement() {
+function BookingRulesForm({ courtType, courtTypeLabel }: BookingRulesFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const { data: rules, isLoading, refetch } = useQuery({
-    queryKey: ["bookingRules"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("booking_rules")
-        .select("*")
-        .limit(1)
-        .single();
-
-      if (error) throw error;
-      return data as BookingRules;
-    },
-  });
+  const { data: rules, isLoading, refetch } = useBookingRules(courtType);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -57,20 +41,20 @@ export default function BookingRulesManagement() {
           time_between_bookings: `${timeBetweenHours}:00:00`,
           max_days_ahead: maxDaysAhead,
         })
-        .eq("id", rules?.id);
+        .eq("court_type", courtType);
 
       if (error) throw error;
 
       toast({
         title: "Reglas actualizadas",
-        description: "Las reglas de reserva se han actualizado correctamente.",
+        description: `Las reglas de reserva para ${courtTypeLabel} se han actualizado correctamente.`,
       });
       refetch();
     } catch (error) {
       console.error("Error updating booking rules:", error);
       toast({
         title: "Error",
-        description: "No se pudieron actualizar las reglas de reserva.",
+        description: `No se pudieron actualizar las reglas de reserva para ${courtTypeLabel}.`,
         variant: "destructive",
       });
     } finally {
@@ -80,14 +64,14 @@ export default function BookingRulesManagement() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex justify-center items-center h-32">
+        <Loader2 className="h-6 w-6 animate-spin" />
       </div>
     );
   }
 
   if (!rules) {
-    return <div>No se encontraron reglas de reserva.</div>;
+    return <div>No se encontraron reglas de reserva para {courtTypeLabel}.</div>;
   }
 
   const minCancellationHours = parseInt(rules.min_cancellation_time.split(":")[0]);
@@ -96,14 +80,14 @@ export default function BookingRulesManagement() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Reglas de Reserva</CardTitle>
+        <CardTitle>Reglas de Reserva - {courtTypeLabel}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="maxBookings">Máximo de reservas activas por usuario</Label>
+            <Label htmlFor={`maxBookings-${courtType}`}>Máximo de reservas activas por usuario</Label>
             <Input
-              id="maxBookings"
+              id={`maxBookings-${courtType}`}
               name="maxBookings"
               type="number"
               min="1"
@@ -113,11 +97,11 @@ export default function BookingRulesManagement() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="maxDaysAhead">
+            <Label htmlFor={`maxDaysAhead-${courtType}`}>
               Días permitidos para reservar hacia adelante
             </Label>
             <Input
-              id="maxDaysAhead"
+              id={`maxDaysAhead-${courtType}`}
               name="maxDaysAhead"
               type="number"
               min="1"
@@ -127,11 +111,11 @@ export default function BookingRulesManagement() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="minCancellationHours">
+            <Label htmlFor={`minCancellationHours-${courtType}`}>
               Tiempo mínimo para cancelar (horas)
             </Label>
             <Input
-              id="minCancellationHours"
+              id={`minCancellationHours-${courtType}`}
               name="minCancellationHours"
               type="number"
               min="1"
@@ -142,19 +126,19 @@ export default function BookingRulesManagement() {
 
           <div className="flex items-center space-x-2">
             <Switch
-              id="allowConsecutive"
+              id={`allowConsecutive-${courtType}`}
               name="allowConsecutive"
               defaultChecked={rules.allow_consecutive_bookings}
             />
-            <Label htmlFor="allowConsecutive">Permitir reservas consecutivas</Label>
+            <Label htmlFor={`allowConsecutive-${courtType}`}>Permitir reservas consecutivas</Label>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="timeBetweenHours">
+            <Label htmlFor={`timeBetweenHours-${courtType}`}>
               Tiempo mínimo entre reservas (horas)
             </Label>
             <Input
-              id="timeBetweenHours"
+              id={`timeBetweenHours-${courtType}`}
               name="timeBetweenHours"
               type="number"
               min="1"
@@ -170,11 +154,22 @@ export default function BookingRulesManagement() {
                 Guardando...
               </>
             ) : (
-              "Guardar cambios"
+              `Guardar cambios para ${courtTypeLabel}`
             )}
           </Button>
         </form>
       </CardContent>
     </Card>
+  );
+}
+
+export default function BookingRulesManagement() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <BookingRulesForm courtType="tennis" courtTypeLabel="Tenis" />
+        <BookingRulesForm courtType="padel" courtTypeLabel="Pádel" />
+      </div>
+    </div>
   );
 }
