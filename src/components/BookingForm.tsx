@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { CanchaSelector } from "@/components/CourtSelector";
 import { CourtTypeSelector } from "@/components/CourtTypeSelector";
-import { TimeSlotPicker } from "@/components/TimeSlotPicker";
+import { TimeSlotSelector } from "@/components/TimeSlotSelector";
 import { useCourts } from "@/hooks/use-courts";
 import { useNavigate } from "react-router-dom";
 import { useBookingSubmit } from "./booking/useBookingSubmit";
@@ -13,7 +13,6 @@ import { BookingAlert } from "./booking/BookingAlert";
 import { BookingButton } from "./booking/BookingButton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { TimeSlotsGrid } from "@/components/TimeSlotsGrid";
 import { useBookings } from "@/hooks/use-bookings";
 
 interface BookingFormProps {
@@ -21,11 +20,10 @@ interface BookingFormProps {
   onBookingSuccess: () => void;
 }
 
-const availableTimeSlots = [
-  "08:00", "09:00", "10:00", "11:00", "12:00",
-  "13:00", "14:00", "15:00", "16:00", "17:00",
-  "18:00", "19:00", "20:00", "21:00", "22:00"
-];
+const BUSINESS_HOURS = {
+  start: 8,
+  end: 22,
+};
 
 export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps) {
   const [selectedCourtType, setSelectedCourtType] = useState<'tennis' | 'padel' | null>(null);
@@ -55,7 +53,6 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const bookedSlots = new Set<string>();
   if (selectedDate && selectedCourtType) {
     bookings.forEach(booking => {
-      // Ahora court incluye court_type desde la consulta mejorada
       if (booking.court && booking.court.court_type === selectedCourtType) {
         const hour = new Date(booking.start_time).getHours();
         bookedSlots.add(`${hour.toString().padStart(2, '0')}:00`);
@@ -69,8 +66,8 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
 
   const handleCourtTypeSelect = (type: 'tennis' | 'padel') => {
     setSelectedCourtType(type);
-    setSelectedCourt(null); // Reset court selection when type changes
-    setSelectedTime(null); // Reset time selection when type changes
+    setSelectedCourt(null);
+    setSelectedTime(null);
   };
 
   const handleBackToTypeSelection = () => {
@@ -121,19 +118,16 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
                 onCourtSelect={setSelectedCourt}
               />
               
-              {/* Mostrar horarios disponibles cuando se haya seleccionado el tipo de cancha */}
+              {/* Mostrar selector de horarios cuando se haya seleccionado el tipo de cancha */}
               {selectedDate && (
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-[#1e3a8a]">
-                    Horarios disponibles para {selectedCourtType}
-                  </h4>
-                  <TimeSlotsGrid
-                    bookedSlots={bookedSlots}
-                    businessHours={{ start: 8, end: 22 }}
-                    selectedDate={selectedDate}
-                    courtType={selectedCourtType}
-                  />
-                </div>
+                <TimeSlotSelector
+                  selectedDate={selectedDate}
+                  courtType={selectedCourtType}
+                  bookedSlots={bookedSlots}
+                  selectedTime={selectedTime}
+                  onTimeSelect={setSelectedTime}
+                  businessHours={BUSINESS_HOURS}
+                />
               )}
             </>
           ) : (
@@ -144,24 +138,6 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
             </div>
           )}
         </div>
-      )}
-
-      {/* Paso 3: Selección de horario */}
-      {selectedCourt && (
-        <TimeSlotPicker
-          availableTimeSlots={availableTimeSlots}
-          selectedTime={selectedTime}
-          selectedCourt={selectedCourt}
-          isTimeSlotAvailable={(time, courtId) => {
-            if (!selectedDate) return false;
-            const [hours] = time.split(":");
-            const slotDate = new Date(selectedDate);
-            slotDate.setHours(parseInt(hours), 0, 0, 0);
-            const now = new Date();
-            return slotDate > now;
-          }}
-          onTimeSelect={setSelectedTime}
-        />
       )}
 
       {/* Botón de reserva */}
