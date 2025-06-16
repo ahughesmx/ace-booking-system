@@ -94,8 +94,10 @@ export function useBookingSubmit(onSuccess: () => void) {
           return false;
         }
 
-        // Verificar días de operación
-        const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'lowercase' });
+        // Verificar días de operación - Corregir el formato de toLocaleDateString
+        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const dayOfWeek = dayNames[date.getDay()];
+        
         if (!courtTypeSettings.operating_days.includes(dayOfWeek)) {
           toast({
             title: "Día no disponible",
