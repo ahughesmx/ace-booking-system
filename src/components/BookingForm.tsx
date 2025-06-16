@@ -41,16 +41,25 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   // Obtener las reglas específicas del tipo de cancha seleccionado
   const { data: bookingRules } = useBookingRules(selectedCourtType);
 
+  // Verificar reservas activas directamente desde la tabla bookings
   const { data: userActiveBookings = 0 } = useQuery({
     queryKey: ["userActiveBookings", user?.id],
     queryFn: async () => {
       if (!user?.id) return 0;
-      const { data } = await supabase
-        .from("profiles")
-        .select("active_bookings")
-        .eq("id", user.id)
-        .single();
-      return data?.active_bookings || 0;
+      
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("id")
+        .eq("user_id", user.id)
+        .or(`end_time.gt.${new Date().toISOString()},end_time.gt.${new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()}`);
+      
+      if (error) {
+        console.error("Error fetching active bookings:", error);
+        return 0;
+      }
+      
+      console.log("Active bookings found:", data?.length || 0);
+      return data?.length || 0;
     },
     enabled: !!user?.id
   });
