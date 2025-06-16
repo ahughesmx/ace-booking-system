@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { CanchaSelector } from "@/components/CourtSelector";
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useBookings } from "@/hooks/use-bookings";
 import { useBookingRules } from "@/hooks/use-booking-rules";
+import { BookingCalendar } from "@/components/BookingCalendar";
 
 interface BookingFormProps {
   selectedDate?: Date;
@@ -115,95 +117,98 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const isButtonDisabled = !!disabledReason || isSubmitting;
   const maxBookings = bookingRules?.max_active_bookings || 4;
 
-  return (
-    <div className="space-y-4">
-      {userActiveBookings >= maxBookings && (
-        <BookingAlert 
-          message={`Ya tienes el máximo de ${maxBookings} reservas activas permitidas para ${selectedCourtType || 'este tipo de cancha'}. Debes esperar a que finalicen o cancelar alguna reserva existente.`}
-        />
-      )}
-
-      {/* Paso 1: Selección de tipo de cancha */}
-      {!selectedCourtType && (
+  // Si hay un tipo de cancha seleccionado, mostrar el formulario normal
+  // Si no, mostrar el calendario con la lógica de días deshabilitados
+  if (!selectedCourtType) {
+    return (
+      <div className="space-y-4">
         <CourtTypeSelector
           selectedType={selectedCourtType}
           onTypeSelect={handleCourtTypeSelect}
         />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {userActiveBookings >= maxBookings && (
+        <BookingAlert 
+          message={`Ya tienes el máximo de ${maxBookings} reservas activas permitidas para ${selectedCourtType === 'tennis' ? 'tenis' : 'pádel'}. Debes esperar a que finalicen o cancelar alguna reserva existente.`}
+        />
       )}
 
       {/* Paso 2: Selección de cancha específica */}
-      {selectedCourtType && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBackToTypeSelection}
-              className="text-[#6898FE] hover:text-[#0FA0CE] hover:bg-[#6898FE]/10"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Cambiar tipo de cancha
-            </Button>
-            <span className="text-sm text-muted-foreground capitalize">
-              Canchas de {selectedCourtType}
-            </span>
-          </div>
-
-          {/* Mostrar información de las reglas específicas */}
-          {bookingRules && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-sm text-blue-800">
-                <span className="font-medium">Reglas para {selectedCourtType}:</span> 
-                {` Máximo ${bookingRules.max_active_bookings} reservas activas, `}
-                {`reservar hasta ${bookingRules.max_days_ahead} días adelante`}
-              </p>
-            </div>
-          )}
-
-          {courts && courts.length > 0 ? (
-            <>
-              {/* Solo mostrar selector de canchas si hay más de una cancha */}
-              {courts.length > 1 && (
-                <CanchaSelector
-                  courts={courts}
-                  selectedCourt={selectedCourt}
-                  onCourtSelect={setSelectedCourt}
-                />
-              )}
-              
-              {/* Mostrar información de cancha única seleccionada automáticamente */}
-              {courts.length === 1 && (
-                <div className="bg-[#6898FE]/5 border border-[#6898FE]/20 rounded-lg p-3 text-center">
-                  <p className="text-sm text-[#1e3a8a]">
-                    ✓ Cancha seleccionada: <span className="font-semibold">{courts[0].name}</span>
-                  </p>
-                </div>
-              )}
-              
-              {/* Mostrar selector de horarios cuando se haya seleccionado el tipo de cancha */}
-              {selectedDate && (
-                <TimeSlotSelector
-                  selectedDate={selectedDate}
-                  courtType={selectedCourtType}
-                  bookedSlots={bookedSlots}
-                  selectedTime={selectedTime}
-                  onTimeSelect={setSelectedTime}
-                  businessHours={{ start: 8, end: 22 }}
-                />
-              )}
-            </>
-          ) : (
-            <div className="text-center p-6 bg-[#6898FE]/5 rounded-lg border border-[#6898FE]/20">
-              <p className="text-sm text-muted-foreground">
-                No hay canchas de {selectedCourtType} disponibles en este momento
-              </p>
-            </div>
-          )}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBackToTypeSelection}
+            className="text-[#6898FE] hover:text-[#0FA0CE] hover:bg-[#6898FE]/10"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Cambiar tipo de cancha
+          </Button>
+          <span className="text-sm text-muted-foreground capitalize">
+            Canchas de {selectedCourtType === 'tennis' ? 'Tenis' : 'Pádel'}
+          </span>
         </div>
-      )}
+
+        {/* Mostrar información de las reglas específicas */}
+        {bookingRules && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-800">
+              <span className="font-medium">Reglas para {selectedCourtType === 'tennis' ? 'tenis' : 'pádel'}:</span> 
+              {` Máximo ${bookingRules.max_active_bookings} reservas activas, `}
+              {`reservar hasta ${bookingRules.max_days_ahead} días adelante`}
+            </p>
+          </div>
+        )}
+
+        {courts && courts.length > 0 ? (
+          <>
+            {/* Solo mostrar selector de canchas si hay más de una cancha */}
+            {courts.length > 1 && (
+              <CanchaSelector
+                courts={courts}
+                selectedCourt={selectedCourt}
+                onCourtSelect={setSelectedCourt}
+              />
+            )}
+            
+            {/* Mostrar información de cancha única seleccionada automáticamente */}
+            {courts.length === 1 && (
+              <div className="bg-[#6898FE]/5 border border-[#6898FE]/20 rounded-lg p-3 text-center">
+                <p className="text-sm text-[#1e3a8a]">
+                  ✓ Cancha seleccionada: <span className="font-semibold">{courts[0].name}</span>
+                </p>
+              </div>
+            )}
+            
+            {/* Mostrar selector de horarios cuando se haya seleccionado el tipo de cancha */}
+            {selectedDate && (
+              <TimeSlotSelector
+                selectedDate={selectedDate}
+                courtType={selectedCourtType}
+                bookedSlots={bookedSlots}
+                selectedTime={selectedTime}
+                onTimeSelect={setSelectedTime}
+                businessHours={{ start: 8, end: 22 }}
+              />
+            )}
+          </>
+        ) : (
+          <div className="text-center p-6 bg-[#6898FE]/5 rounded-lg border border-[#6898FE]/20">
+            <p className="text-sm text-muted-foreground">
+              No hay canchas de {selectedCourtType === 'tennis' ? 'tenis' : 'pádel'} disponibles en este momento
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Mostrar información sobre por qué el botón está deshabilitado */}
-      {selectedCourtType && disabledReason && user && (
+      {disabledReason && user && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
           <p className="text-sm text-yellow-800">
             <span className="font-medium">Información:</span> {disabledReason}
@@ -212,23 +217,21 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
       )}
 
       {/* Botón de reserva */}
-      {selectedCourtType && (
-        <BookingButton 
-          isSubmitting={isSubmitting}
-          isDisabled={isButtonDisabled}
-          onClick={() => {
-            console.log('Attempting booking with:', {
-              selectedDate,
-              selectedTime,
-              selectedCourt,
-              selectedCourtType
-            });
-            handleBooking(selectedDate, selectedTime, selectedCourt, selectedCourtType);
-          }}
-          loginRedirect={handleLoginRedirect}
-          isAuthenticated={!!user}
-        />
-      )}
+      <BookingButton 
+        isSubmitting={isSubmitting}
+        isDisabled={isButtonDisabled}
+        onClick={() => {
+          console.log('Attempting booking with:', {
+            selectedDate,
+            selectedTime,
+            selectedCourt,
+            selectedCourtType
+          });
+          handleBooking(selectedDate, selectedTime, selectedCourt, selectedCourtType);
+        }}
+        loginRedirect={handleLoginRedirect}
+        isAuthenticated={!!user}
+      />
     </div>
   );
 }

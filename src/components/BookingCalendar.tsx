@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar } from "@/components/ui/calendar";
@@ -8,32 +9,57 @@ import { useAuth } from "@/components/AuthProvider";
 import { BookingForm } from "@/components/BookingForm";
 import { BookingsList } from "@/components/BookingsList";
 import { useBookings } from "@/hooks/use-bookings";
-import { startOfToday, addDays } from "date-fns";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase-client";
+import { startOfToday, addDays, format } from "date-fns";
+import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 
-export function BookingCalendar() {
+interface BookingCalendarProps {
+  selectedCourtType?: 'tennis' | 'padel' | null;
+}
+
+export function BookingCalendar({ selectedCourtType }: BookingCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: bookings = [], refetch: refetchBookings } = useBookings(selectedDate);
 
-  const { data: bookingRules } = useQuery({
-    queryKey: ["bookingRules"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("booking_rules")
-        .select("*")
-        .single();
-
-      if (error) throw error;
-      return data;
-    }
-  });
+  // Obtener configuraciones específicas del tipo de cancha seleccionado
+  const { data: courtTypeSettings } = useCourtTypeSettings(selectedCourtType);
 
   const today = startOfToday();
-  const maxDate = bookingRules ? addDays(today, bookingRules.max_days_ahead) : addDays(today, 1);
+  
+  // Calcular la fecha máxima basada en la configuración específica del tipo de cancha
+  const getMaxDate = () => {
+    if (selectedCourtType && courtTypeSettings && !Array.isArray(courtTypeSettings)) {
+      return addDays(today, courtTypeSettings.advance_booking_days);
+    }
+    // Fallback a 7 días si no hay configuración específica
+    return addDays(today, 7);
+  };
+
+  // Verificar si un día está en los días de operación del tipo de cancha
+  const isDayDisabled = (date: Date) => {
+    // Siempre deshabilitar fechas pasadas
+    if (date < today) return true;
+    
+    // Deshabilitar fechas más allá del máximo permitido
+    if (date > getMaxDate()) return true;
+
+    // Si hay un tipo de cancha seleccionado y configuraciones específicas
+    if (selectedCourtType && courtTypeSettings && !Array.isArray(courtTypeSettings)) {
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const dayOfWeek = dayNames[date.getDay()];
+      
+      // Verificar si el día está en los días de operación
+      if (!courtTypeSettings.operating_days.includes(dayOfWeek)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const maxDate = getMaxDate();
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -42,6 +68,11 @@ export function BookingCalendar() {
           <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
             Reserva tu Cancha
           </CardTitle>
+          {selectedCourtType && courtTypeSettings && !Array.isArray(courtTypeSettings) && (
+            <p className="text-sm text-muted-foreground">
+              Reservas hasta {courtTypeSettings.advance_booking_days} días adelante • {selectedCourtType === 'tennis' ? 'Tenis' : 'Pádel'}
+            </p>
+          )}
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="rounded-lg border border-[#6898FE]/20 p-3">
@@ -49,7 +80,7 @@ export function BookingCalendar() {
               mode="single"
               selected={selectedDate}
               onSelect={setSelectedDate}
-              disabled={(date) => date < today || date > maxDate}
+              disabled={isDayDisabled}
               className="mx-auto"
               initialFocus
             />
