@@ -41,12 +41,13 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
   };
 
   // Agregar console.logs detallados para debugging
-  console.log('Booking data:', {
+  console.log('Booking card data:', {
     bookingId: booking.id,
     userId: booking.user_id,
     userData: booking.user,
-    memberId: booking.user?.member_id,
-    fullUserObject: booking
+    courtData: booking.court,
+    isOwner,
+    active
   });
 
   return (

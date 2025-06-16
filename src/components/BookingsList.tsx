@@ -27,6 +27,13 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   const isAdmin = userRole?.role === "admin";
   const queryClient = useQueryClient();
 
+  console.log("BookingsList props:", { 
+    bookingsCount: bookings.length, 
+    selectedDate, 
+    user: !!user,
+    bookings 
+  });
+
   // Obtener las reglas de reserva para validar fechas
   const { data: bookingRules } = useQuery({
     queryKey: ["bookingRules"],
@@ -125,8 +132,9 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     );
   }
 
-  // Si hay usuario autenticado, siempre mostrar las reservas del día (aunque esté vacío)
+  // Si hay usuario autenticado pero no hay reservas, mostrar mensaje de día vacío
   if (!bookings.length) {
+    console.log("No bookings found for selected date");
     return (
       <EmptyBookingsList
         isAuthenticated={true}
@@ -138,6 +146,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   }
 
   // Mostrar las reservas del día
+  console.log("Showing bookings list with", bookings.length, "bookings");
   return (
     <BookingsListContent
       bookings={bookings}

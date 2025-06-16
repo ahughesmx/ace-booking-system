@@ -12,18 +12,26 @@ export function useBookings(selectedDate?: Date) {
       const start = startOfDay(selectedDate);
       const end = endOfDay(selectedDate);
 
+      console.log("Fetching bookings for date:", selectedDate);
+      console.log("Date range:", { start: start.toISOString(), end: end.toISOString() });
+
       const { data, error } = await supabase
         .from("bookings")
         .select(`
           *,
           court:courts(id, name, court_type),
-          user:profiles(full_name)
+          user:profiles(full_name, member_id)
         `)
         .gte("start_time", start.toISOString())
         .lte("start_time", end.toISOString())
         .order("start_time");
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching bookings:", error);
+        throw error;
+      }
+
+      console.log("Fetched bookings:", data);
       return data || [];
     },
     enabled: !!selectedDate,
