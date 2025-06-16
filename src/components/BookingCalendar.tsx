@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/AuthProvider";
 import { BookingForm } from "@/components/BookingForm";
 import { BookingsList } from "@/components/BookingsList";
+import { TimeSlotsGrid } from "@/components/TimeSlotsGrid";
 import { useBookings } from "@/hooks/use-bookings";
 import { startOfToday, addDays, format } from "date-fns";
 import { useBookingRules } from "@/hooks/use-booking-rules";
@@ -15,6 +16,11 @@ import { useBookingRules } from "@/hooks/use-booking-rules";
 interface BookingCalendarProps {
   selectedCourtType?: 'tennis' | 'padel' | null;
 }
+
+const BUSINESS_HOURS = {
+  start: 8,
+  end: 22,
+};
 
 export function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -24,7 +30,7 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
   const navigate = useNavigate();
   const { data: bookings = [], refetch: refetchBookings } = useBookings(selectedDate);
 
-  // Obtener las reglas de reserva específicas del tipo de cancha seleccionado
+  // Obtener las reglas de reserva
   const { data: bookingRules } = useBookingRules(selectedCourtType);
 
   const today = startOfToday();
@@ -66,6 +72,17 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
     }
   };
 
+  // Crear set de slots reservados para el tipo de cancha seleccionado
+  const bookedSlots = new Set<string>();
+  if (selectedDate && selectedCourtType) {
+    bookings.forEach(booking => {
+      if (booking.court && booking.court.court_type === selectedCourtType) {
+        const hour = new Date(booking.start_time).getHours();
+        bookedSlots.add(`${hour.toString().padStart(2, '0')}:00`);
+      }
+    });
+  }
+
   // Actualizar cuando cambia el tipo de cancha inicial
   useEffect(() => {
     if (initialCourtType !== selectedCourtType) {
@@ -97,6 +114,26 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
               initialFocus
             />
           </div>
+
+          {/* Mostrar horarios disponibles cuando hay fecha y tipo de cancha seleccionados */}
+          {selectedDate && selectedCourtType && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <h4 className="text-lg font-semibold text-[#1e3a8a] mb-2">
+                  Horarios disponibles
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  {format(selectedDate, "EEEE, d 'de' MMMM")} • {selectedCourtType === 'tennis' ? 'Tenis' : 'Pádel'}
+                </p>
+              </div>
+              <TimeSlotsGrid
+                bookedSlots={bookedSlots}
+                businessHours={BUSINESS_HOURS}
+                selectedDate={selectedDate}
+                courtType={selectedCourtType}
+              />
+            </div>
+          )}
           
           {user ? (
             <BookingForm 
