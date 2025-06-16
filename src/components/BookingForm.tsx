@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { CanchaSelector } from "@/components/CourtSelector";
 import { CourtTypeSelector } from "@/components/CourtTypeSelector";
@@ -49,6 +49,20 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     enabled: !!user?.id
   });
 
+  // Selección automática de cancha cuando solo hay una disponible
+  useEffect(() => {
+    if (courts.length === 1 && !selectedCourt) {
+      setSelectedCourt(courts[0].id);
+      console.log('Auto-selecting single court:', courts[0].id);
+    } else if (courts.length !== 1 && selectedCourt) {
+      // Si había una cancha seleccionada automáticamente pero ahora hay más opciones, resetear
+      const courtExists = courts.some(court => court.id === selectedCourt);
+      if (!courtExists) {
+        setSelectedCourt(null);
+      }
+    }
+  }, [courts, selectedCourt]);
+
   // Crear set de slots reservados para el tipo de cancha seleccionado
   const bookedSlots = new Set<string>();
   if (selectedDate && selectedCourtType) {
@@ -66,6 +80,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   console.log('BookingForm - selectedDate:', selectedDate);
   console.log('BookingForm - user:', user);
   console.log('BookingForm - userActiveBookings:', userActiveBookings);
+  console.log('BookingForm - courts.length:', courts.length);
 
   const handleLoginRedirect = () => {
     navigate('/login');
@@ -89,7 +104,8 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     if (userActiveBookings >= 4) return "Ya tienes el máximo de 4 reservas activas";
     if (!selectedDate) return "Selecciona una fecha";
     if (!selectedCourtType) return "Selecciona un tipo de cancha";
-    if (!selectedCourt) return "Selecciona una cancha específica";
+    // Solo mostrar el mensaje de seleccionar cancha si hay más de una cancha disponible
+    if (courts.length > 1 && !selectedCourt) return "Selecciona una cancha específica";
     if (!selectedTime) return "Selecciona un horario";
     return null;
   };
@@ -133,11 +149,23 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
 
           {courts && courts.length > 0 ? (
             <>
-              <CanchaSelector
-                courts={courts}
-                selectedCourt={selectedCourt}
-                onCourtSelect={setSelectedCourt}
-              />
+              {/* Solo mostrar selector de canchas si hay más de una cancha */}
+              {courts.length > 1 && (
+                <CanchaSelector
+                  courts={courts}
+                  selectedCourt={selectedCourt}
+                  onCourtSelect={setSelectedCourt}
+                />
+              )}
+              
+              {/* Mostrar información de cancha única seleccionada automáticamente */}
+              {courts.length === 1 && (
+                <div className="bg-[#6898FE]/5 border border-[#6898FE]/20 rounded-lg p-3 text-center">
+                  <p className="text-sm text-[#1e3a8a]">
+                    ✓ Cancha seleccionada: <span className="font-semibold">{courts[0].name}</span>
+                  </p>
+                </div>
+              )}
               
               {/* Mostrar selector de horarios cuando se haya seleccionado el tipo de cancha */}
               {selectedDate && (
