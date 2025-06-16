@@ -1,7 +1,6 @@
 
 import { BookingCalendar } from "@/components/BookingCalendar";
 import MainNav from "@/components/MainNav";
-import { BookingAnalysis } from "@/components/BookingAnalysis";
 
 export default function Index() {
   return (
@@ -17,9 +16,6 @@ export default function Index() {
               Reserva tu cancha de tenis o pádel de manera fácil y rápida
             </p>
           </div>
-          
-          {/* Análisis temporal */}
-          <BookingAnalysis />
           
           <BookingCalendar />
         </div>

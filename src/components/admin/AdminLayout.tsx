@@ -14,7 +14,8 @@ import {
   Menu,
   LogOut,
   Home,
-  Cog
+  Cog,
+  FileText
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { useNavigate } from "react-router-dom";
@@ -32,6 +33,7 @@ const menuItems = [
   { id: "booking-rules", label: "Reglas de Reserva", icon: Settings },
   { id: "member-ids", label: "IDs de Miembros", icon: Shield },
   { id: "statistics", label: "Estadísticas", icon: BarChart3 },
+  { id: "booking-analysis", label: "Análisis de Reservas", icon: FileText },
   { id: "display", label: "Display Público", icon: Monitor },
 ];
 
