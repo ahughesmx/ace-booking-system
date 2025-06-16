@@ -55,7 +55,8 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const bookedSlots = new Set<string>();
   if (selectedDate && selectedCourtType) {
     bookings.forEach(booking => {
-      if (booking.court?.court_type === selectedCourtType) {
+      // Ahora court incluye court_type desde la consulta mejorada
+      if (booking.court && booking.court.court_type === selectedCourtType) {
         const hour = new Date(booking.start_time).getHours();
         bookedSlots.add(`${hour.toString().padStart(2, '0')}:00`);
       }
