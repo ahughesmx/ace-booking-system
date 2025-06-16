@@ -1,6 +1,6 @@
 
 import { BookingCalendar } from "@/components/BookingCalendar";
-import { MainNav } from "@/components/MainNav";
+import MainNav from "@/components/MainNav";
 import { BookingAnalysis } from "@/components/BookingAnalysis";
 
 export default function Index() {
