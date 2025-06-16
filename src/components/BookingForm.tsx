@@ -13,6 +13,8 @@ import { BookingAlert } from "./booking/BookingAlert";
 import { BookingButton } from "./booking/BookingButton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { TimeSlotsGrid } from "@/components/TimeSlotsGrid";
+import { useBookings } from "@/hooks/use-bookings";
 
 interface BookingFormProps {
   selectedDate?: Date;
@@ -33,6 +35,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const { data: courts = [] } = useCourts(selectedCourtType);
   const navigate = useNavigate();
   const { handleBooking, isSubmitting } = useBookingSubmit(onBookingSuccess);
+  const { data: bookings = [] } = useBookings(selectedDate);
 
   const { data: userActiveBookings = 0 } = useQuery({
     queryKey: ["userActiveBookings", user?.id],
@@ -47,6 +50,17 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     },
     enabled: !!user?.id
   });
+
+  // Crear set de slots reservados para el tipo de cancha seleccionado
+  const bookedSlots = new Set<string>();
+  if (selectedDate && selectedCourtType) {
+    bookings.forEach(booking => {
+      if (booking.court?.court_type === selectedCourtType) {
+        const hour = new Date(booking.start_time).getHours();
+        bookedSlots.add(`${hour.toString().padStart(2, '0')}:00`);
+      }
+    });
+  }
 
   const handleLoginRedirect = () => {
     navigate('/login');
@@ -99,11 +113,28 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
           </div>
 
           {courts && courts.length > 0 ? (
-            <CanchaSelector
-              courts={courts}
-              selectedCourt={selectedCourt}
-              onCourtSelect={setSelectedCourt}
-            />
+            <>
+              <CanchaSelector
+                courts={courts}
+                selectedCourt={selectedCourt}
+                onCourtSelect={setSelectedCourt}
+              />
+              
+              {/* Mostrar horarios disponibles cuando se haya seleccionado el tipo de cancha */}
+              {selectedDate && (
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-[#1e3a8a]">
+                    Horarios disponibles para {selectedCourtType}
+                  </h4>
+                  <TimeSlotsGrid
+                    bookedSlots={bookedSlots}
+                    businessHours={{ start: 8, end: 22 }}
+                    selectedDate={selectedDate}
+                    courtType={selectedCourtType}
+                  />
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center p-6 bg-[#6898FE]/5 rounded-lg border border-[#6898FE]/20">
               <p className="text-sm text-muted-foreground">

@@ -16,6 +16,7 @@ interface TimeSlotsGridProps {
     end: number;
   };
   selectedDate?: Date;
+  courtType?: 'tennis' | 'padel' | null;
 }
 
 function generateTimeSlots(businessHours: { start: number; end: number }, selectedDate: Date = new Date()) {
@@ -38,11 +39,15 @@ function generateTimeSlots(businessHours: { start: number; end: number }, select
   return slots;
 }
 
-export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate }: TimeSlotsGridProps) {
+export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtType }: TimeSlotsGridProps) {
   const timeSlots = generateTimeSlots(businessHours, selectedDate);
-  // Obtener todas las canchas (tanto tenis como pádel) para el conteo total
-  const { data: courts = [] } = useCourts(); // Sin filtro para obtener todas las canchas
+  // Obtener canchas filtradas por tipo cuando se haya seleccionado un tipo
+  const { data: courts = [] } = useCourts(courtType);
   const totalCourts = courts.length;
+
+  console.log("TimeSlotsGrid - Court type:", courtType);
+  console.log("TimeSlotsGrid - Courts:", courts);
+  console.log("TimeSlotsGrid - Total courts:", totalCourts);
 
   // Función para contar cuántas reservas hay en un horario específico
   const getBookingsCountForSlot = (slot: string) => {

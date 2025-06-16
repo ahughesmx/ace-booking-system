@@ -11,8 +11,8 @@ export function useCourts(courtType?: 'tennis' | 'padel' | null) {
     queryFn: async () => {
       let query = supabase.from("courts").select("*");
       
-      // Filtrar por tipo de cancha si se especifica
-      if (courtType) {
+      // Filtrar por tipo de cancha si se especifica y no es null
+      if (courtType && courtType !== null) {
         query = query.eq('court_type', courtType);
       }
       
@@ -21,11 +21,13 @@ export function useCourts(courtType?: 'tennis' | 'padel' | null) {
       if (error) throw error;
       if (!data) return [];
       
+      console.log("useCourts - courtType:", courtType);
+      console.log("useCourts - data:", data);
+      
       return data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
     retry: 1,
     retryDelay: 1000,
-    // Remover la condición enabled para que siempre se ejecute
   });
 }
