@@ -23,7 +23,7 @@ export function useBookings(selectedDate?: Date) {
           user:profiles(full_name, member_id)
         `)
         .gte("start_time", start.toISOString())
-        .lte("start_time", end.toISOString())
+        .lt("start_time", end.toISOString())
         .order("start_time");
 
       if (error) {
@@ -32,6 +32,12 @@ export function useBookings(selectedDate?: Date) {
       }
 
       console.log("Fetched bookings:", data);
+      console.log("Query used:", {
+        start: start.toISOString(),
+        end: end.toISOString(),
+        filter: "start_time >= start AND start_time < end"
+      });
+      
       return data || [];
     },
     enabled: !!selectedDate,
