@@ -28,7 +28,7 @@ interface AdminLayoutProps {
 const menuItems = [
   { id: "users", label: "Usuarios", icon: Users },
   { id: "courts", label: "Canchas", icon: Calendar },
-  { id: "court-settings", label: "Configuración de Canchas", icon: Cog },
+  { id: "court-settings", label: "Configurar Canchas", icon: Cog },
   { id: "booking-rules", label: "Reglas de Reserva", icon: Settings },
   { id: "member-ids", label: "IDs de Miembros", icon: Shield },
   { id: "statistics", label: "Estadísticas", icon: BarChart3 },
