@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { CanchaSelector } from "@/components/CourtSelector";
@@ -15,11 +14,12 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useBookings } from "@/hooks/use-bookings";
 import { useBookingRules } from "@/hooks/use-booking-rules";
-import { BookingCalendar } from "@/components/BookingCalendar";
 
 interface BookingFormProps {
   selectedDate?: Date;
   onBookingSuccess: () => void;
+  initialCourtType?: 'tennis' | 'padel' | null;
+  onCourtTypeChange?: (courtType: 'tennis' | 'padel' | null) => void;
 }
 
 const BUSINESS_HOURS = {
@@ -27,8 +27,8 @@ const BUSINESS_HOURS = {
   end: 22,
 };
 
-export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps) {
-  const [selectedCourtType, setSelectedCourtType] = useState<'tennis' | 'padel' | null>(null);
+export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, onCourtTypeChange }: BookingFormProps) {
+  const [selectedCourtType, setSelectedCourtType] = useState<'tennis' | 'padel' | null>(initialCourtType || null);
   const [selectedCourt, setSelectedCourt] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const { user } = useAuth();
@@ -53,6 +53,13 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     },
     enabled: !!user?.id
   });
+
+  // Actualizar el tipo de cancha inicial
+  useEffect(() => {
+    if (initialCourtType && initialCourtType !== selectedCourtType) {
+      setSelectedCourtType(initialCourtType);
+    }
+  }, [initialCourtType]);
 
   // Selección automática de cancha cuando solo hay una disponible
   useEffect(() => {
@@ -92,12 +99,14 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     setSelectedCourtType(type);
     setSelectedCourt(null);
     setSelectedTime(null);
+    onCourtTypeChange?.(type);
   };
 
   const handleBackToTypeSelection = () => {
     setSelectedCourtType(null);
     setSelectedCourt(null);
     setSelectedTime(null);
+    onCourtTypeChange?.(null);
   };
 
   // Función para determinar por qué el botón está deshabilitado

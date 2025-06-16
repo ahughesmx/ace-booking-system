@@ -16,8 +16,9 @@ interface BookingCalendarProps {
   selectedCourtType?: 'tennis' | 'padel' | null;
 }
 
-export function BookingCalendar({ selectedCourtType }: BookingCalendarProps) {
+export function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedCourtType, setSelectedCourtType] = useState<'tennis' | 'padel' | null>(initialCourtType || null);
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -61,6 +62,10 @@ export function BookingCalendar({ selectedCourtType }: BookingCalendarProps) {
 
   const maxDate = getMaxDate();
 
+  const handleCourtTypeChange = (courtType: 'tennis' | 'padel' | null) => {
+    setSelectedCourtType(courtType);
+  };
+
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <Card className="md:sticky md:top-4 h-fit border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
@@ -89,6 +94,8 @@ export function BookingCalendar({ selectedCourtType }: BookingCalendarProps) {
           {user ? (
             <BookingForm 
               selectedDate={selectedDate}
+              initialCourtType={selectedCourtType}
+              onCourtTypeChange={handleCourtTypeChange}
               onBookingSuccess={() => {
                 refetchBookings();
                 toast({

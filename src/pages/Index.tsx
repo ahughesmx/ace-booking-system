@@ -9,6 +9,7 @@ import MainNav from "@/components/MainNav";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { useUserRole } from "@/hooks/use-user-role";
+import { useState } from "react";
 
 export default function Index() {
   const { user, loading } = useAuth();
@@ -16,12 +17,16 @@ export default function Index() {
   const navigate = useNavigate();
   const { data: userRole } = useUserRole(user?.id);
   const defaultTab = location.state?.defaultTab;
+  const [selectedCourtType, setSelectedCourtType] = useState<'tennis' | 'padel' | null>(null);
 
   if (loading) {
     return <div>Cargando...</div>;
   }
 
-  const handleNavigation = (tab: string) => {
+  const handleNavigation = (tab: string, courtType?: 'tennis' | 'padel') => {
+    if (courtType) {
+      setSelectedCourtType(courtType);
+    }
     navigate("/", { state: { defaultTab: tab } });
   };
 
@@ -39,19 +44,35 @@ export default function Index() {
       </h2>
 
       <div className="grid grid-cols-2 gap-4">
-        <button onClick={() => handleNavigation("bookings")} className="w-full text-left">
-          <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
-            <CardContent className="p-4">
-              <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
-                <Search className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
-                Reserva una cancha
-              </h3>
-              <p className="text-sm text-[#6898FE]/70">Si ya sabes con quién vas a jugar</p>
-            </CardContent>
-          </Card>
-        </button>
+        <div className="space-y-2">
+          <button onClick={() => handleNavigation("bookings", "tennis")} className="w-full text-left">
+            <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
+              <CardContent className="p-4">
+                <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
+                  <Search className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                  Reserva Tenis
+                </h3>
+                <p className="text-sm text-[#6898FE]/70">Canchas de tenis disponibles</p>
+              </CardContent>
+            </Card>
+          </button>
+          
+          <button onClick={() => handleNavigation("bookings", "padel")} className="w-full text-left">
+            <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
+              <CardContent className="p-4">
+                <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
+                  <Search className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                  Reserva Pádel
+                </h3>
+                <p className="text-sm text-[#6898FE]/70">Canchas de pádel disponibles</p>
+              </CardContent>
+            </Card>
+          </button>
+        </div>
 
         <button onClick={() => handleNavigation("matches")} className="w-full text-left">
           <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
@@ -99,7 +120,7 @@ export default function Index() {
 
     switch (defaultTab) {
       case "bookings":
-        return <BookingCalendar />;
+        return <BookingCalendar selectedCourtType={selectedCourtType} />;
       case "matches":
         return <MatchManagement />;
       case "ranking":
