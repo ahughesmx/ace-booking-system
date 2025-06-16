@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format, addHours, isBefore, isToday } from "date-fns";
 import { useCourts } from "@/hooks/use-courts";
+import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 
 interface TimeSlotSelectorProps {
   selectedDate?: Date;
@@ -16,11 +17,17 @@ interface TimeSlotSelectorProps {
   };
 }
 
-function generateTimeSlots(businessHours: { start: number; end: number }, selectedDate: Date = new Date()) {
+function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
   const slots = [];
   const now = new Date();
   
-  for (let hour = businessHours.start; hour <= businessHours.end; hour++) {
+  if (!settings) return slots;
+
+  // Convertir horas de configuración a números
+  const startHour = parseInt(settings.operating_hours_start.split(':')[0]);
+  const endHour = parseInt(settings.operating_hours_end.split(':')[0]);
+  
+  for (let hour = startHour; hour <= endHour; hour++) {
     const startTime = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour);
     const endTime = addHours(startTime, 1);
     
@@ -45,11 +52,20 @@ export function TimeSlotSelector({
   businessHours 
 }: TimeSlotSelectorProps) {
   const { data: courts = [] } = useCourts(courtType);
+  const { data: settings } = useCourtTypeSettings(courtType);
   const totalCourts = courts.length;
-  const timeSlots = generateTimeSlots(businessHours, selectedDate);
+  
+  // Usar las configuraciones específicas del tipo de cancha si están disponibles
+  const timeSlots = settings 
+    ? generateTimeSlots(settings, selectedDate) 
+    : generateTimeSlots({ 
+        operating_hours_start: `${businessHours.start}:00:00`, 
+        operating_hours_end: `${businessHours.end}:00:00` 
+      }, selectedDate);
 
   console.log('TimeSlotSelector - courtType:', courtType);
   console.log('TimeSlotSelector - courts:', courts);
+  console.log('TimeSlotSelector - settings:', settings);
   console.log('TimeSlotSelector - totalCourts:', totalCourts);
   console.log('TimeSlotSelector - bookedSlots:', Array.from(bookedSlots));
   console.log('TimeSlotSelector - selectedTime:', selectedTime);
@@ -92,6 +108,12 @@ export function TimeSlotSelector({
         <p className="text-sm text-muted-foreground">
           {totalCourts} {totalCourts === 1 ? 'cancha disponible' : 'canchas disponibles'}
         </p>
+        {settings && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Horarios: {settings.operating_hours_start.slice(0, 5)} - {settings.operating_hours_end.slice(0, 5)} 
+            {settings.price_per_hour && ` | $${settings.price_per_hour}/hora`}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -144,6 +166,11 @@ export function TimeSlotSelector({
         <div className="bg-[#6898FE]/10 border border-[#6898FE]/20 rounded-lg p-3 text-center">
           <p className="text-sm text-[#1e3a8a]">
             ✓ Horario seleccionado: <span className="font-semibold">{selectedTime}</span>
+            {settings?.price_per_hour && (
+              <span className="ml-2 text-xs">
+                (${settings.price_per_hour}/hora)
+              </span>
+            )}
           </p>
         </div>
       )}

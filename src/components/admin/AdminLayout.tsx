@@ -1,169 +1,134 @@
-import { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/components/AuthProvider";
-import { Button } from "@/components/ui/button";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarProvider,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar,
-} from "@/components/ui/sidebar";
-import {
-  Users,
-  LayoutGrid,
-  BarChart3,
-  IdCard,
-  CalendarRange,
-  Monitor,
-  Home,
-  LogOut,
-  Menu,
-} from "lucide-react";
 
-const menuItems = [
-  {
-    title: "Usuarios",
-    icon: Users,
-    id: "users",
-  },
-  {
-    title: "Canchas",
-    icon: LayoutGrid,
-    id: "courts",
-  },
-  {
-    title: "Estadísticas",
-    icon: BarChart3,
-    id: "statistics",
-  },
-  {
-    title: "IDs de Miembros",
-    icon: IdCard,
-    id: "member-ids",
-  },
-  {
-    title: "Reglas de Reserva",
-    icon: CalendarRange,
-    id: "booking-rules",
-  },
-  {
-    title: "Display",
-    icon: Monitor,
-    id: "display",
-  },
-];
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { 
+  Users, 
+  Calendar, 
+  BarChart3, 
+  Settings, 
+  Shield, 
+  Monitor,
+  Menu,
+  LogOut,
+  Home,
+  Cog
+} from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
+import { useNavigate } from "react-router-dom";
 
 interface AdminLayoutProps {
-  children: ReactNode;
+  children: React.ReactNode;
   activeTab: string;
-  onTabChange: (tabId: string) => void;
+  onTabChange: (tab: string) => void;
 }
 
-function AdminLayoutContent({ children, activeTab, onTabChange }: AdminLayoutProps) {
+const menuItems = [
+  { id: "users", label: "Usuarios", icon: Users },
+  { id: "courts", label: "Canchas", icon: Calendar },
+  { id: "court-settings", label: "Configuración de Canchas", icon: Cog },
+  { id: "booking-rules", label: "Reglas de Reserva", icon: Settings },
+  { id: "member-ids", label: "IDs de Miembros", icon: Shield },
+  { id: "statistics", label: "Estadísticas", icon: BarChart3 },
+  { id: "display", label: "Display Público", icon: Monitor },
+];
+
+export default function AdminLayout({ children, activeTab, onTabChange }: AdminLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { signOut } = useAuth();
   const navigate = useNavigate();
-  const { setOpenMobile } = useSidebar();
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
 
-  const handleHomeClick = () => {
-    setOpenMobile(false);
-    navigate("/");
-  };
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      <div className="p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Panel de Control</h2>
+        <nav className="space-y-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Button
+                key={item.id}
+                variant={activeTab === item.id ? "default" : "ghost"}
+                className={`w-full justify-start ${
+                  activeTab === item.id
+                    ? "bg-[#6898FE] text-white hover:bg-[#0FA0CE]"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+                onClick={() => {
+                  onTabChange(item.id);
+                  setSidebarOpen(false);
+                }}
+              >
+                <Icon className="mr-3 h-4 w-4" />
+                {item.label}
+              </Button>
+            );
+          })}
+        </nav>
+      </div>
 
-  const handleTabChange = (tabId: string) => {
-    setOpenMobile(false);
-    onTabChange(tabId);
-  };
+      <div className="mt-auto p-6 space-y-2">
+        <Separator />
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-gray-700 hover:bg-gray-100"
+          onClick={() => navigate("/")}
+        >
+          <Home className="mr-3 h-4 w-4" />
+          Volver al Inicio
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-red-600 hover:bg-red-50"
+          onClick={handleSignOut}
+        >
+          <LogOut className="mr-3 h-4 w-4" />
+          Cerrar Sesión
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen flex w-full bg-gray-50/50">
-      {/* Botón de menú móvil fijo en la parte superior */}
-      <div className="fixed top-0 left-0 z-50 w-full bg-white border-b md:hidden">
-        <div className="flex items-center justify-between p-4">
-          <h1 className="text-lg font-semibold">Panel de Control</h1>
-          <SidebarTrigger className="p-2">
-            <Menu className="h-6 w-6" />
-          </SidebarTrigger>
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar para desktop */}
+      <div className="hidden md:flex md:w-64 md:flex-col">
+        <div className="flex flex-col h-full bg-white shadow-sm border-r">
+          <SidebarContent />
         </div>
       </div>
 
-      <Sidebar className="border-r">
-        <SidebarHeader className="border-b px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold hidden md:block">Panel de Control</h2>
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>Gestión</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {menuItems.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      onClick={() => handleTabChange(item.id)}
-                      className={`w-full justify-start gap-2 ${
-                        activeTab === item.id ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""
-                      }`}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter className="border-t p-4">
-          <div className="flex gap-2 flex-col sm:flex-row">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleHomeClick}
-              className="w-full gap-2"
-            >
-              <Home className="h-4 w-4" />
-              <span>Inicio</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSignOut}
-              className="w-full gap-2 text-red-600 hover:text-red-600"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Salir</span>
-            </Button>
-          </div>
-        </SidebarFooter>
-      </Sidebar>
-      <main className="flex-1 overflow-y-auto pt-[72px] md:pt-0">
-        <div className="container max-w-6xl py-6 px-4 md:px-6">
-          {children}
-        </div>
-      </main>
-    </div>
-  );
-}
+      {/* Sidebar móvil */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="md:hidden fixed top-4 left-4 z-50"
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="p-0 w-64">
+          <SidebarContent />
+        </SheetContent>
+      </Sheet>
 
-export default function AdminLayout(props: AdminLayoutProps) {
-  return (
-    <SidebarProvider>
-      <AdminLayoutContent {...props} />
-    </SidebarProvider>
+      {/* Contenido principal */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 overflow-auto">
+          <div className="p-6">
+            {children}
+          </div>
+        </main>
+      </div>
+    </div>
   );
 }

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
@@ -5,6 +6,7 @@ import { supabase } from "@/lib/supabase-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { createBookingTimes } from "./TimeValidation";
 import { validateBookingTime } from "./BookingValidation";
+import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { Database } from "@/integrations/supabase/types";
 
 type BookingRules = Database['public']['Tables']['booking_rules']['Row'];
@@ -15,9 +17,9 @@ export function useBookingSubmit(onSuccess: () => void) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const checkBookingRules = async (date: Date, selectedTime: string) => {
+  const checkBookingRules = async (date: Date, selectedTime: string, courtType?: 'tennis' | 'padel') => {
     try {
-      // Primero, obtener las reglas de reserva
+      // Obtener las reglas generales de reserva
       const { data: rules, error: rulesError } = await supabase
         .from("booking_rules")
         .select("*")
@@ -26,6 +28,20 @@ export function useBookingSubmit(onSuccess: () => void) {
       if (rulesError) {
         console.error("Error fetching booking rules:", rulesError);
         return false;
+      }
+
+      // Obtener configuraciones específicas del tipo de cancha si se proporciona
+      let courtTypeSettings = null;
+      if (courtType) {
+        const { data: settings, error: settingsError } = await supabase
+          .from("court_type_settings")
+          .select("*")
+          .eq("court_type", courtType)
+          .single();
+
+        if (!settingsError && settings) {
+          courtTypeSettings = settings;
+        }
       }
 
       // Verificar el número máximo de reservas activas
@@ -47,6 +63,47 @@ export function useBookingSubmit(onSuccess: () => void) {
           variant: "destructive",
         });
         return false;
+      }
+
+      // Verificar días de anticipación máximos usando configuración específica si está disponible
+      const maxDaysAhead = courtTypeSettings?.advance_booking_days || (rules as BookingRules).max_days_ahead;
+      const maxBookingDate = new Date();
+      maxBookingDate.setDate(maxBookingDate.getDate() + maxDaysAhead);
+
+      if (date > maxBookingDate) {
+        toast({
+          title: "Fecha muy adelantada",
+          description: `Solo se pueden hacer reservas hasta ${maxDaysAhead} días hacia adelante para canchas de ${courtType}.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Verificar horarios de operación específicos del tipo de cancha
+      if (courtTypeSettings) {
+        const selectedHour = parseInt(selectedTime.split(':')[0]);
+        const operatingStart = parseInt(courtTypeSettings.operating_hours_start.split(':')[0]);
+        const operatingEnd = parseInt(courtTypeSettings.operating_hours_end.split(':')[0]);
+
+        if (selectedHour < operatingStart || selectedHour > operatingEnd) {
+          toast({
+            title: "Horario no disponible",
+            description: `Las canchas de ${courtType} operan de ${courtTypeSettings.operating_hours_start.slice(0, 5)} a ${courtTypeSettings.operating_hours_end.slice(0, 5)}.`,
+            variant: "destructive",
+          });
+          return false;
+        }
+
+        // Verificar días de operación
+        const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'lowercase' });
+        if (!courtTypeSettings.operating_days.includes(dayOfWeek)) {
+          toast({
+            title: "Día no disponible",
+            description: `Las canchas de ${courtType} no operan los ${dayOfWeek}s.`,
+            variant: "destructive",
+          });
+          return false;
+        }
       }
 
       const timeInterval = (rules as BookingRules).time_between_bookings as string;
@@ -106,6 +163,7 @@ export function useBookingSubmit(onSuccess: () => void) {
     selectedDate: Date | undefined,
     selectedTime: string | null,
     selectedCourt: string | null,
+    courtType?: 'tennis' | 'padel'
   ) => {
     if (!selectedDate || !selectedTime || !selectedCourt || !user) {
       toast({
@@ -127,7 +185,7 @@ export function useBookingSubmit(onSuccess: () => void) {
     }
 
     // Verificar las reglas de reserva antes de intentar crear una nueva
-    const isValidBooking = await checkBookingRules(selectedDate, selectedTime);
+    const isValidBooking = await checkBookingRules(selectedDate, selectedTime, courtType);
     if (!isValidBooking) return;
 
     setIsSubmitting(true);

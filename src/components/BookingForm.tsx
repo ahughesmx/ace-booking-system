@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { CanchaSelector } from "@/components/CourtSelector";
@@ -210,7 +209,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
               selectedCourt,
               selectedCourtType
             });
-            handleBooking(selectedDate, selectedTime, selectedCourt);
+            handleBooking(selectedDate, selectedTime, selectedCourt, selectedCourtType);
           }}
           loginRedirect={handleLoginRedirect}
           isAuthenticated={!!user}

@@ -87,6 +87,66 @@ export type Database = {
           },
         ]
       }
+      court_type_settings: {
+        Row: {
+          advance_booking_days: number
+          court_type: string
+          created_at: string
+          default_booking_duration: number
+          id: string
+          max_booking_duration: number
+          max_capacity: number
+          min_booking_duration: number
+          operating_days: string[] | null
+          operating_hours_end: string
+          operating_hours_start: string
+          peak_hours_end: string | null
+          peak_hours_multiplier: number | null
+          peak_hours_start: string | null
+          price_per_hour: number
+          updated_at: string
+          weekend_price_multiplier: number | null
+        }
+        Insert: {
+          advance_booking_days?: number
+          court_type: string
+          created_at?: string
+          default_booking_duration?: number
+          id?: string
+          max_booking_duration?: number
+          max_capacity?: number
+          min_booking_duration?: number
+          operating_days?: string[] | null
+          operating_hours_end?: string
+          operating_hours_start?: string
+          peak_hours_end?: string | null
+          peak_hours_multiplier?: number | null
+          peak_hours_start?: string | null
+          price_per_hour?: number
+          updated_at?: string
+          weekend_price_multiplier?: number | null
+        }
+        Update: {
+          advance_booking_days?: number
+          court_type?: string
+          created_at?: string
+          default_booking_duration?: number
+          id?: string
+          max_booking_duration?: number
+          max_capacity?: number
+          min_booking_duration?: number
+          operating_days?: string[] | null
+          operating_hours_end?: string
+          operating_hours_start?: string
+          peak_hours_end?: string | null
+          peak_hours_multiplier?: number | null
+          peak_hours_start?: string | null
+          price_per_hour?: number
+          updated_at?: string
+          weekend_price_multiplier?: number | null
+        }
+        Relationships: []
+      }
       courts: {
         Row: {
           court_type: string

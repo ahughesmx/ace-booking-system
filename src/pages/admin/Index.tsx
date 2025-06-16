@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "@/components/admin/AdminLayout";
 import UserManagement from "@/components/admin/UserManagement";
 import CourtManagement from "@/components/admin/CourtManagement";
+import CourtTypeSettings from "@/components/admin/CourtTypeSettings";
 import Statistics from "@/components/admin/Statistics";
 import ValidMemberIdManagement from "@/components/admin/ValidMemberIdManagement";
 import BookingRulesManagement from "@/components/admin/BookingRulesManagement";
@@ -61,6 +62,8 @@ const AdminPage = () => {
         return <UserManagement />;
       case "courts":
         return <CourtManagement />;
+      case "court-settings":
+        return <CourtTypeSettings />;
       case "statistics":
         return <Statistics />;
       case "member-ids":
