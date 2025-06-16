@@ -12,7 +12,6 @@ import Statistics from "@/components/admin/Statistics";
 import ValidMemberIdManagement from "@/components/admin/ValidMemberIdManagement";
 import BookingRulesManagement from "@/components/admin/BookingRulesManagement";
 import DisplayManagement from "@/components/admin/DisplayManagement";
-import { BookingAnalysis } from "@/components/BookingAnalysis";
 
 const AdminPage = () => {
   // Todos los hooks se ejecutan siempre en el mismo orden
@@ -73,8 +72,6 @@ const AdminPage = () => {
         return <BookingRulesManagement />;
       case "display":
         return <DisplayManagement />;
-      case "booking-analysis":
-        return <BookingAnalysis />;
       default:
         return <UserManagement />;
     }
