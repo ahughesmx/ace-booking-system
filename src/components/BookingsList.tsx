@@ -66,9 +66,14 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
 
       if (error) throw error;
 
-      const bookingDate = new Date(booking.start_time);
+      // Invalidar todas las queries relacionadas con reservas para actualizar los contadores
       await queryClient.invalidateQueries({ 
-        queryKey: ["bookings", bookingDate, booking.court_id]
+        queryKey: ["bookings"] 
+      });
+      
+      // Invalidar específicamente la query de reservas activas del usuario
+      await queryClient.invalidateQueries({ 
+        queryKey: ["userActiveBookings", user?.id] 
       });
 
       onCancelSuccess();
