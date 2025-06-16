@@ -30,10 +30,12 @@ export function useBookingRules(courtType?: 'tennis' | 'padel') {
 
       if (error) throw error;
 
+      // When a specific courtType is provided, return single object or null
       if (courtType) {
         return data?.[0] as BookingRules | null;
       }
 
+      // When no courtType is provided, return array
       return data as BookingRules[];
     },
   });
