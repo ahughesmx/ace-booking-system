@@ -1,3 +1,4 @@
+
 import { Plus, Users, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,7 +52,7 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
         .select(`
           id,
           start_time,
-          court:courts(name)
+          court:courts(name, court_type)
         `)
         .eq('user_id', user.id)
         .gte("end_time", new Date().toISOString())
@@ -70,6 +71,18 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
       onCreateMatch(isDoubles, selectedBooking);
       setIsDialogOpen(false);
       setSelectedBooking("");
+    }
+  };
+
+  // Función para formatear el tipo de cancha
+  const formatCourtType = (courtType: string) => {
+    switch (courtType) {
+      case 'padel':
+        return 'Pádel';
+      case 'tennis':
+        return 'Tenis';
+      default:
+        return courtType;
     }
   };
 
@@ -118,7 +131,14 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
                   <SelectContent>
                     {bookings.map((booking) => (
                       <SelectItem key={booking.id} value={booking.id}>
-                        {format(new Date(booking.start_time), "dd/MM/yyyy HH:mm")} - {booking.court?.name}
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {format(new Date(booking.start_time), "dd/MM/yyyy HH:mm")} - {booking.court?.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            Cancha de {formatCourtType(booking.court?.court_type || '')}
+                          </span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
