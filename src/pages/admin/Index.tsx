@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGlobalRole } from "@/hooks/use-global-role";
 import { useAuth } from "@/components/AuthProvider";
@@ -18,8 +18,39 @@ const AdminPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("users");
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [redirectReason, setRedirectReason] = useState("");
 
   console.log("AdminPage - Rendering with:", { user, userRole, authLoading, roleLoading });
+
+  // Handle redirects in useEffect to avoid conditional returns before hooks
+  useEffect(() => {
+    if (!authLoading && !roleLoading) {
+      if (!user) {
+        console.log("AdminPage - No user found, will redirect to home");
+        setShouldRedirect(true);
+        setRedirectReason("no-user");
+      } else if (userRole && userRole.role !== "admin") {
+        console.log("AdminPage - User is not admin, will redirect");
+        setShouldRedirect(true);
+        setRedirectReason("not-admin");
+      }
+    }
+  }, [user, userRole, authLoading, roleLoading]);
+
+  // Execute redirects
+  useEffect(() => {
+    if (shouldRedirect) {
+      if (redirectReason === "not-admin") {
+        toast({
+          title: "Acceso denegado",
+          description: "No tienes permisos para acceder al panel de control",
+          variant: "destructive",
+        });
+      }
+      navigate("/");
+    }
+  }, [shouldRedirect, redirectReason, navigate, toast]);
 
   const renderContent = () => {
     console.log("AdminPage - Rendering content for tab:", activeTab);
@@ -42,7 +73,7 @@ const AdminPage = () => {
     }
   };
 
-  // Handle loading states
+  // Show loading state
   if (authLoading || roleLoading) {
     console.log("AdminPage - Loading state");
     return (
@@ -52,19 +83,19 @@ const AdminPage = () => {
     );
   }
 
-  // Handle no user
-  if (!user) {
-    console.log("AdminPage - No user found, redirecting to home");
-    setTimeout(() => navigate("/"), 0);
+  // Show loading while redirecting
+  if (shouldRedirect) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Redirigiendo...</div>
+        <div className="text-lg">
+          {redirectReason === "no-user" ? "Redirigiendo..." : "Acceso denegado..."}
+        </div>
       </div>
     );
   }
 
-  // Handle no role yet
-  if (!userRole) {
+  // Show loading if no role data yet
+  if (!userRole && user) {
     console.log("AdminPage - No role data yet");
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -73,30 +104,22 @@ const AdminPage = () => {
     );
   }
 
-  // Handle non-admin users
-  if (userRole.role !== "admin") {
-    console.log("AdminPage - User is not admin, redirecting");
-    setTimeout(() => {
-      toast({
-        title: "Acceso denegado",
-        description: "No tienes permisos para acceder al panel de control",
-        variant: "destructive",
-      });
-      navigate("/");
-    }, 0);
+  // Only render admin layout if we have confirmed admin access
+  if (user && userRole && userRole.role === "admin") {
+    console.log("AdminPage - Rendering AdminLayout");
+    
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Acceso denegado...</div>
-      </div>
+      <AdminLayout activeTab={activeTab} onTabChange={setActiveTab}>
+        {renderContent()}
+      </AdminLayout>
     );
   }
 
-  console.log("AdminPage - Rendering AdminLayout");
-  
+  // Fallback loading state
   return (
-    <AdminLayout activeTab={activeTab} onTabChange={setActiveTab}>
-      {renderContent()}
-    </AdminLayout>
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-lg">Cargando...</div>
+    </div>
   );
 };
 
