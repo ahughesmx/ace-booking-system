@@ -60,6 +60,13 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     });
   }
 
+  console.log('BookingForm - selectedCourtType:', selectedCourtType);
+  console.log('BookingForm - selectedCourt:', selectedCourt);
+  console.log('BookingForm - selectedTime:', selectedTime);
+  console.log('BookingForm - selectedDate:', selectedDate);
+  console.log('BookingForm - user:', user);
+  console.log('BookingForm - userActiveBookings:', userActiveBookings);
+
   const handleLoginRedirect = () => {
     navigate('/login');
   };
@@ -75,6 +82,20 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
     setSelectedCourt(null);
     setSelectedTime(null);
   };
+
+  // Función para determinar por qué el botón está deshabilitado
+  const getDisabledReason = () => {
+    if (!user) return null;
+    if (userActiveBookings >= 4) return "Ya tienes el máximo de 4 reservas activas";
+    if (!selectedDate) return "Selecciona una fecha";
+    if (!selectedCourtType) return "Selecciona un tipo de cancha";
+    if (!selectedCourt) return "Selecciona una cancha específica";
+    if (!selectedTime) return "Selecciona un horario";
+    return null;
+  };
+
+  const disabledReason = getDisabledReason();
+  const isButtonDisabled = !!disabledReason || isSubmitting;
 
   return (
     <div className="space-y-4">
@@ -140,12 +161,29 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
         </div>
       )}
 
+      {/* Mostrar información sobre por qué el botón está deshabilitado */}
+      {selectedCourtType && disabledReason && user && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+          <p className="text-sm text-yellow-800">
+            <span className="font-medium">Información:</span> {disabledReason}
+          </p>
+        </div>
+      )}
+
       {/* Botón de reserva */}
       {selectedCourtType && (
         <BookingButton 
           isSubmitting={isSubmitting}
-          isDisabled={!selectedDate || !selectedTime || !selectedCourt || userActiveBookings >= 4}
-          onClick={() => handleBooking(selectedDate, selectedTime, selectedCourt)}
+          isDisabled={isButtonDisabled}
+          onClick={() => {
+            console.log('Attempting booking with:', {
+              selectedDate,
+              selectedTime,
+              selectedCourt,
+              selectedCourtType
+            });
+            handleBooking(selectedDate, selectedTime, selectedCourt);
+          }}
           loginRedirect={handleLoginRedirect}
           isAuthenticated={!!user}
         />

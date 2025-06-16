@@ -52,8 +52,11 @@ export function TimeSlotSelector({
   console.log('TimeSlotSelector - courts:', courts);
   console.log('TimeSlotSelector - totalCourts:', totalCourts);
   console.log('TimeSlotSelector - bookedSlots:', Array.from(bookedSlots));
+  console.log('TimeSlotSelector - selectedTime:', selectedTime);
 
   const getAvailableSlots = (slot: string) => {
+    if (totalCourts === 0) return 0;
+    
     // Contar cuántas reservas hay para este horario específico del tipo de cancha seleccionado
     const bookingsCount = bookedSlots.has(slot) ? 1 : 0;
     const available = Math.max(0, totalCourts - bookingsCount);
@@ -70,9 +73,11 @@ export function TimeSlotSelector({
           <h4 className="text-lg font-semibold text-[#1e3a8a] mb-2">
             Selecciona tu horario para {courtType}
           </h4>
-          <p className="text-sm text-red-500">
-            No hay canchas de {courtType} disponibles
-          </p>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-sm text-red-600">
+              No hay canchas de {courtType} disponibles en el sistema
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -95,6 +100,8 @@ export function TimeSlotSelector({
           const isAvailable = !timeSlot.isPast && availableSlots > 0;
           const isSelected = selectedTime === timeSlot.start;
           
+          console.log(`TimeSlot ${timeSlot.start}: isPast=${timeSlot.isPast}, availableSlots=${availableSlots}, isAvailable=${isAvailable}`);
+          
           return (
             <Button
               key={timeSlot.start}
@@ -107,7 +114,12 @@ export function TimeSlotSelector({
                 isSelected && "bg-[#6898FE] text-white border-[#6898FE]"
               )}
               disabled={!isAvailable}
-              onClick={() => isAvailable && onTimeSelect(timeSlot.start)}
+              onClick={() => {
+                console.log(`Clicking time slot: ${timeSlot.start}, isAvailable: ${isAvailable}`);
+                if (isAvailable) {
+                  onTimeSelect(timeSlot.start);
+                }
+              }}
             >
               <span className="font-medium text-sm">
                 {timeSlot.start} - {timeSlot.end}
