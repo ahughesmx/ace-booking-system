@@ -13,6 +13,7 @@ import { BookingButton } from "./booking/BookingButton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useBookings } from "@/hooks/use-bookings";
+import { useBookingRules } from "@/hooks/use-booking-rules";
 
 interface BookingFormProps {
   selectedDate?: Date;
@@ -33,6 +34,9 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   const navigate = useNavigate();
   const { handleBooking, isSubmitting } = useBookingSubmit(onBookingSuccess);
   const { data: bookings = [] } = useBookings(selectedDate);
+  
+  // Obtener las reglas específicas del tipo de cancha seleccionado
+  const { data: bookingRules } = useBookingRules(selectedCourtType);
 
   const { data: userActiveBookings = 0 } = useQuery({
     queryKey: ["userActiveBookings", user?.id],
@@ -74,12 +78,9 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   }
 
   console.log('BookingForm - selectedCourtType:', selectedCourtType);
-  console.log('BookingForm - selectedCourt:', selectedCourt);
-  console.log('BookingForm - selectedTime:', selectedTime);
-  console.log('BookingForm - selectedDate:', selectedDate);
-  console.log('BookingForm - user:', user);
+  console.log('BookingForm - bookingRules:', bookingRules);
+  console.log('BookingForm - maxActiveBookings:', bookingRules?.max_active_bookings || 4);
   console.log('BookingForm - userActiveBookings:', userActiveBookings);
-  console.log('BookingForm - courts.length:', courts.length);
 
   const handleLoginRedirect = () => {
     navigate('/login');
@@ -100,7 +101,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
   // Función para determinar por qué el botón está deshabilitado
   const getDisabledReason = () => {
     if (!user) return null;
-    if (userActiveBookings >= 4) return "Ya tienes el máximo de 4 reservas activas";
+    if (userActiveBookings >= bookingRules?.max_active_bookings || 4) return `Ya tienes el máximo de ${bookingRules?.max_active_bookings || 4} reservas activas`;
     if (!selectedDate) return "Selecciona una fecha";
     if (!selectedCourtType) return "Selecciona un tipo de cancha";
     // Solo mostrar el mensaje de seleccionar cancha si hay más de una cancha disponible
@@ -114,9 +115,9 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
 
   return (
     <div className="space-y-4">
-      {userActiveBookings >= 4 && (
+      {userActiveBookings >= bookingRules?.max_active_bookings || 4 && (
         <BookingAlert 
-          message="Ya tienes el máximo de 4 reservas activas permitidas. Debes esperar a que finalicen o cancelar alguna reserva existente."
+          message={`Ya tienes el máximo de ${bookingRules?.max_active_bookings || 4} reservas activas permitidas para ${selectedCourtType || 'este tipo de cancha'}. Debes esperar a que finalicen o cancelar alguna reserva existente.`}
         />
       )}
 
@@ -146,6 +147,17 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
             </span>
           </div>
 
+          {/* Mostrar información de las reglas específicas */}
+          {bookingRules && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-800">
+                <span className="font-medium">Reglas para {selectedCourtType}:</span> 
+                {` Máximo ${bookingRules.max_active_bookings} reservas activas, `}
+                {`reservar hasta ${bookingRules.max_days_ahead} días adelante`}
+              </p>
+            </div>
+          )}
+
           {courts && courts.length > 0 ? (
             <>
               {/* Solo mostrar selector de canchas si hay más de una cancha */}
@@ -174,7 +186,7 @@ export function BookingForm({ selectedDate, onBookingSuccess }: BookingFormProps
                   bookedSlots={bookedSlots}
                   selectedTime={selectedTime}
                   onTimeSelect={setSelectedTime}
-                  businessHours={BUSINESS_HOURS}
+                  businessHours={{ start: 8, end: 22 }}
                 />
               )}
             </>

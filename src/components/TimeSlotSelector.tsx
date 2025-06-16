@@ -27,7 +27,15 @@ function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
   const startHour = parseInt(settings.operating_hours_start.split(':')[0]);
   const endHour = parseInt(settings.operating_hours_end.split(':')[0]);
   
-  for (let hour = startHour; hour <= endHour; hour++) {
+  // Verificar días de operación
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const dayOfWeek = dayNames[selectedDate.getDay()];
+  
+  if (!settings.operating_days.includes(dayOfWeek)) {
+    return []; // No generar slots si no opera este día
+  }
+  
+  for (let hour = startHour; hour < endHour; hour++) {
     const startTime = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour);
     const endTime = addHours(startTime, 1);
     
@@ -64,15 +72,13 @@ export function TimeSlotSelector({
     ? generateTimeSlots(settings, selectedDate) 
     : generateTimeSlots({ 
         operating_hours_start: `${businessHours.start}:00:00`, 
-        operating_hours_end: `${businessHours.end}:00:00` 
+        operating_hours_end: `${businessHours.end}:00:00`,
+        operating_days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
       }, selectedDate);
 
   console.log('TimeSlotSelector - courtType:', courtType);
-  console.log('TimeSlotSelector - courts:', courts);
   console.log('TimeSlotSelector - settings:', settings);
-  console.log('TimeSlotSelector - totalCourts:', totalCourts);
-  console.log('TimeSlotSelector - bookedSlots:', Array.from(bookedSlots));
-  console.log('TimeSlotSelector - selectedTime:', selectedTime);
+  console.log('TimeSlotSelector - timeSlots generated:', timeSlots.length);
 
   const getAvailableSlots = (slot: string) => {
     if (totalCourts === 0) return 0;
@@ -80,8 +86,6 @@ export function TimeSlotSelector({
     // Contar cuántas reservas hay para este horario específico del tipo de cancha seleccionado
     const bookingsCount = bookedSlots.has(slot) ? 1 : 0;
     const available = Math.max(0, totalCourts - bookingsCount);
-    
-    console.log(`Slot ${slot}: totalCourts=${totalCourts}, bookingsCount=${bookingsCount}, available=${available}`);
     
     return available;
   };
@@ -97,6 +101,38 @@ export function TimeSlotSelector({
             <p className="text-sm text-red-600">
               No hay canchas de {courtType} disponibles en el sistema
             </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Verificar si no hay slots disponibles por día no operativo
+  if (timeSlots.length === 0) {
+    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const dayName = dayNames[selectedDate?.getDay() || 0];
+    
+    return (
+      <div className="space-y-4">
+        <div className="text-center">
+          <h4 className="text-lg font-semibold text-[#1e3a8a] mb-2">
+            Selecciona tu horario para {courtType}
+          </h4>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-sm text-yellow-600">
+              Las canchas de {courtType} no operan los {dayName}s
+            </p>
+            {settings && (
+              <p className="text-xs text-yellow-500 mt-1">
+                Días de operación: {settings.operating_days.map((day: string) => {
+                  const dayMap: { [key: string]: string } = {
+                    'monday': 'Lun', 'tuesday': 'Mar', 'wednesday': 'Mié', 
+                    'thursday': 'Jue', 'friday': 'Vie', 'saturday': 'Sáb', 'sunday': 'Dom'
+                  };
+                  return dayMap[day];
+                }).join(', ')}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -126,8 +162,6 @@ export function TimeSlotSelector({
           const isAvailable = !timeSlot.isPast && availableSlots > 0;
           const isSelected = selectedTime === timeSlot.start;
           
-          console.log(`TimeSlot ${timeSlot.start}: isPast=${timeSlot.isPast}, availableSlots=${availableSlots}, isAvailable=${isAvailable}`);
-          
           return (
             <Button
               key={timeSlot.start}
@@ -141,7 +175,6 @@ export function TimeSlotSelector({
               )}
               disabled={!isAvailable}
               onClick={() => {
-                console.log(`Clicking time slot: ${timeSlot.start}, isAvailable: ${isAvailable}`);
                 if (isAvailable) {
                   onTimeSelect(timeSlot.start);
                 }

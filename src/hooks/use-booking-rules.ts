@@ -27,18 +27,14 @@ export function useBookingRules(courtType?: 'tennis' | 'padel') {
 
       if (courtType) {
         query = query.eq("court_type", courtType);
+        
+        const { data, error } = await query.maybeSingle();
+        if (error) throw error;
+        return data as BookingRules | null;
       }
 
       const { data, error } = await query.order("court_type");
-
       if (error) throw error;
-
-      // When a specific courtType is provided, return single object or null
-      if (courtType) {
-        return data?.[0] as BookingRules | null;
-      }
-
-      // When no courtType is provided, return array
       return data as BookingRules[];
     },
   });
