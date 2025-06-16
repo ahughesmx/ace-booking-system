@@ -1,10 +1,11 @@
+
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/components/AuthProvider";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import Index from "./pages/Index";
 import AdminIndex from "./pages/admin/Index";
 import Login from "./pages/auth/Login";
@@ -20,8 +21,6 @@ const queryClient = new QueryClient({
 });
 
 function AdminRoute() {
-  // Simplificamos AdminRoute - solo verifica autenticación básica
-  // La verificación de roles la manejará AdminIndex internamente
   return <AdminIndex />;
 }
 
