@@ -10,15 +10,15 @@ export default function Index() {
   const navigate = useNavigate();
 
   const handleReserveClick = () => {
-    navigate("/", { state: { defaultTab: "bookings" } });
+    navigate("/bookings");
   };
 
   const handleMatchClick = () => {
-    navigate("/", { state: { defaultTab: "matches" } });
+    navigate("/matches");
   };
 
   const handleRankingClick = () => {
-    navigate("/", { state: { defaultTab: "ranking" } });
+    navigate("/ranking");
   };
 
   return (
@@ -28,10 +28,10 @@ export default function Index() {
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Welcome Section */}
           <div className="space-y-4">
-            <h1 className="text-3xl md:text-4xl font-bold text-[#1e3a8a]">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#1e3a8a]">
               Hola {user ? user.email?.split('@')[0] : 'Usuario'} 👋
             </h1>
-            <h2 className="text-2xl md:text-3xl font-semibold text-gray-700">
+            <h2 className="text-xl md:text-2xl font-semibold text-gray-700">
               Juega tu partido perfecto
             </h2>
           </div>
@@ -48,10 +48,10 @@ export default function Index() {
                   <Search className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-[#6898FE] mb-2">
+                  <h3 className="text-lg font-semibold text-[#6898FE] mb-2">
                     Reserva una cancha
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-sm text-gray-600">
                     Si ya sabes con quien vas a jugar
                   </p>
                 </div>
@@ -68,10 +68,10 @@ export default function Index() {
                   <Clock className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-[#6898FE] mb-2">
+                  <h3 className="text-lg font-semibold text-[#6898FE] mb-2">
                     Registra un partido
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-sm text-gray-600">
                     Si quieres rankear tu posición
                   </p>
                 </div>
@@ -85,10 +85,10 @@ export default function Index() {
                   <GraduationCap className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-[#6898FE] mb-2">
+                  <h3 className="text-lg font-semibold text-[#6898FE] mb-2">
                     Clases
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-sm text-gray-600">
                     Próximamente disponible
                   </p>
                 </div>
@@ -105,10 +105,10 @@ export default function Index() {
                   <Shield className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-[#6898FE] mb-2">
+                  <h3 className="text-lg font-semibold text-[#6898FE] mb-2">
                     Competencias
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-sm text-gray-600">
                     Ver ranking y competencias
                   </p>
                 </div>
