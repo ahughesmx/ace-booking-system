@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -232,7 +231,7 @@ export function CourtTypeSettingsForm({
           disabled={loading}
           className="bg-[#6898FE] hover:bg-[#0FA0CE] text-white"
         >
-          {loading ? "Guardando..." : `Guardar Configuración de ${courtTypeLabel}`}
+          {loading ? "Guardando..." : "Guardar Configuración"}
         </Button>
       </div>
     </form>
