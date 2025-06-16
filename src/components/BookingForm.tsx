@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { CanchaSelector } from "@/components/CourtSelector";
@@ -41,25 +40,27 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   // Obtener las reglas específicas del tipo de cancha seleccionado
   const { data: bookingRules } = useBookingRules(selectedCourtType);
 
-  // Verificar reservas activas directamente desde la tabla bookings
+  // Usar el campo active_bookings de la tabla profiles (más eficiente)
   const { data: userActiveBookings = 0 } = useQuery({
     queryKey: ["userActiveBookings", user?.id],
     queryFn: async () => {
       if (!user?.id) return 0;
       
+      console.log("Fetching active bookings from profiles table for user:", user.id);
+      
       const { data, error } = await supabase
-        .from("bookings")
-        .select("id")
-        .eq("user_id", user.id)
-        .or(`end_time.gt.${new Date().toISOString()},end_time.gt.${new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()}`);
+        .from("profiles")
+        .select("active_bookings")
+        .eq("id", user.id)
+        .single();
       
       if (error) {
-        console.error("Error fetching active bookings:", error);
+        console.error("Error fetching active bookings from profiles:", error);
         return 0;
       }
       
-      console.log("Active bookings found:", data?.length || 0);
-      return data?.length || 0;
+      console.log("Active bookings from profiles table:", data?.active_bookings || 0);
+      return data?.active_bookings || 0;
     },
     enabled: !!user?.id
   });
@@ -99,7 +100,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   console.log('BookingForm - selectedCourtType:', selectedCourtType);
   console.log('BookingForm - bookingRules:', bookingRules);
   console.log('BookingForm - maxActiveBookings:', bookingRules?.max_active_bookings || 4);
-  console.log('BookingForm - userActiveBookings:', userActiveBookings);
+  console.log('BookingForm - userActiveBookings from profiles:', userActiveBookings);
 
   const handleLoginRedirect = () => {
     navigate('/login');
