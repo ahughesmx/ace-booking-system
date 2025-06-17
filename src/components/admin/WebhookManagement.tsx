@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminAuth } from "@/hooks/use-admin-auth";
 import { 
   Trash2, 
   Plus, 
@@ -36,6 +37,12 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { 
+  validateWebhookUrl, 
+  validateWebhookHeaders, 
+  sanitizeInput, 
+  validateEventType 
+} from "@/utils/validation";
 
 interface Webhook {
   id: string;
@@ -48,6 +55,7 @@ interface Webhook {
 }
 
 const WebhookManagement = () => {
+  const { isAdmin, isLoading: adminLoading } = useAdminAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newWebhook, setNewWebhook] = useState({
     name: "",
@@ -58,6 +66,15 @@ const WebhookManagement = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Don't render anything until admin auth is verified
+  if (adminLoading || !isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Verificando permisos de administrador...</div>
+      </div>
+    );
+  }
+
   const { data: webhooks, isLoading } = useQuery({
     queryKey: ["webhooks"],
     queryFn: async () => {
@@ -66,7 +83,10 @@ const WebhookManagement = () => {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching webhooks:", error);
+        throw error;
+      }
       return data as Webhook[];
     },
   });
@@ -79,7 +99,10 @@ const WebhookManagement = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating webhook:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -91,10 +114,11 @@ const WebhookManagement = () => {
         description: "El webhook se ha configurado correctamente",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Webhook creation error:", error);
       toast({
         title: "Error",
-        description: "No se pudo crear el webhook",
+        description: error.message || "No se pudo crear el webhook",
         variant: "destructive",
       });
     },
@@ -107,7 +131,10 @@ const WebhookManagement = () => {
         .delete()
         .eq("id", id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting webhook:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["webhooks"] });
@@ -125,7 +152,10 @@ const WebhookManagement = () => {
         .update({ is_active })
         .eq("id", id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error toggling webhook:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["webhooks"] });
@@ -168,7 +198,8 @@ const WebhookManagement = () => {
         description: "El webhook respondió correctamente",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Webhook test error:", error);
       toast({
         title: "Error en webhook",
         description: `El webhook falló: ${error.message}`,
@@ -178,7 +209,11 @@ const WebhookManagement = () => {
   });
 
   const handleCreateWebhook = () => {
-    if (!newWebhook.name || !newWebhook.url) {
+    // Input validation
+    const sanitizedName = sanitizeInput(newWebhook.name, 100);
+    const sanitizedUrl = sanitizeInput(newWebhook.url, 500);
+
+    if (!sanitizedName || !sanitizedUrl) {
       toast({
         title: "Error",
         description: "El nombre y la URL son requeridos",
@@ -187,22 +222,45 @@ const WebhookManagement = () => {
       return;
     }
 
-    try {
-      const headers = JSON.parse(newWebhook.headers);
-      createWebhookMutation.mutate({
-        name: newWebhook.name,
-        url: newWebhook.url,
-        event_type: newWebhook.event_type,
-        is_active: true,
-        headers,
-      });
-    } catch (error) {
+    // Validate URL
+    const urlError = validateWebhookUrl(sanitizedUrl);
+    if (urlError) {
       toast({
         title: "Error",
-        description: "Los headers deben ser un JSON válido",
+        description: urlError,
         variant: "destructive",
       });
+      return;
     }
+
+    // Validate event type
+    if (!validateEventType(newWebhook.event_type)) {
+      toast({
+        title: "Error",
+        description: "Tipo de evento inválido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate headers
+    const headersValidation = validateWebhookHeaders(newWebhook.headers);
+    if (!headersValidation.isValid) {
+      toast({
+        title: "Error",
+        description: headersValidation.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createWebhookMutation.mutate({
+      name: sanitizedName,
+      url: sanitizedUrl,
+      event_type: newWebhook.event_type,
+      is_active: true,
+      headers: headersValidation.headers,
+    });
   };
 
   const copyWebhookUrl = () => {
@@ -255,15 +313,17 @@ const WebhookManagement = () => {
                   value={newWebhook.name}
                   onChange={(e) => setNewWebhook({ ...newWebhook, name: e.target.value })}
                   placeholder="Mi Sistema Externo (ej: n8n Integration)"
+                  maxLength={100}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="url">URL del Webhook</Label>
+                <Label htmlFor="url">URL del Webhook (HTTPS únicamente)</Label>
                 <Input
                   id="url"
                   value={newWebhook.url}
                   onChange={(e) => setNewWebhook({ ...newWebhook, url: e.target.value })}
                   placeholder="https://mi-sistema.com/webhook"
+                  maxLength={500}
                 />
               </div>
               <div className="grid gap-2">
@@ -292,6 +352,7 @@ const WebhookManagement = () => {
                   onChange={(e) => setNewWebhook({ ...newWebhook, headers: e.target.value })}
                   placeholder='{"Authorization": "Bearer token", "X-API-Key": "key"}'
                   rows={3}
+                  maxLength={2000}
                 />
               </div>
             </div>

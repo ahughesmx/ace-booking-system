@@ -1,9 +1,6 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useGlobalRole } from "@/hooks/use-global-role";
-import { useAuth } from "@/components/AuthProvider";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { useAdminAuth } from "@/hooks/use-admin-auth";
 import AdminLayout from "@/components/admin/AdminLayout";
 import UserManagement from "@/components/admin/UserManagement";
 import CourtManagement from "@/components/admin/CourtManagement";
@@ -15,48 +12,10 @@ import DisplayManagement from "@/components/admin/DisplayManagement";
 import WebhookManagement from "@/components/admin/WebhookManagement";
 
 const AdminPage = () => {
-  // Todos los hooks se ejecutan siempre en el mismo orden
-  const { user, loading: authLoading } = useAuth();
-  const { data: userRole, isLoading: roleLoading } = useGlobalRole(user?.id);
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const { isAdmin, isLoading } = useAdminAuth();
   const [activeTab, setActiveTab] = useState("users");
 
-  console.log("AdminPage - Rendering with:", { user, userRole, authLoading, roleLoading });
-
-  // Efecto para manejar redirecciones
-  useEffect(() => {
-    if (authLoading || roleLoading) {
-      return;
-    }
-
-    if (!user) {
-      console.log("AdminPage - No user found, redirecting to login");
-      navigate("/login");
-      return;
-    }
-
-    if (!userRole) {
-      console.log("AdminPage - No role found, redirecting to home");
-      navigate("/");
-      return;
-    }
-
-    if (userRole.role !== "admin") {
-      console.log("AdminPage - User is not admin, redirecting");
-      toast({
-        title: "Acceso denegado",
-        description: "No tienes permisos para acceder al panel de control",
-        variant: "destructive",
-      });
-      navigate("/");
-      return;
-    }
-  }, [user, userRole, authLoading, roleLoading, navigate, toast]);
-
   const renderContent = () => {
-    console.log("AdminPage - Rendering content for tab:", activeTab);
-    
     switch (activeTab) {
       case "users":
         return <UserManagement />;
@@ -79,24 +38,15 @@ const AdminPage = () => {
     }
   };
 
-  // Siempre mostrar loading mientras se cargan datos o se verifica acceso
-  if (authLoading || roleLoading || !user || !userRole || userRole.role !== "admin") {
-    const loadingMessage = authLoading || roleLoading 
-      ? "Verificando permisos..." 
-      : !user 
-        ? "Redirigiendo al login..." 
-        : !userRole 
-          ? "Verificando rol..." 
-          : "Acceso denegado...";
-
+  // Show loading while verifying admin access
+  if (isLoading || !isAdmin) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">{loadingMessage}</div>
+        <div className="text-lg">Verificando permisos de administrador...</div>
       </div>
     );
   }
 
-  console.log("AdminPage - Rendering AdminLayout");
   return (
     <AdminLayout activeTab={activeTab} onTabChange={setActiveTab}>
       {renderContent()}

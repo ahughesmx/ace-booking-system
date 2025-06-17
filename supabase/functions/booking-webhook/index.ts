@@ -19,6 +19,14 @@ interface WebhookRequest {
   apiKey: string;     // Simple API key for basic authentication
 }
 
+// Enhanced security logging function
+function logSecurityEvent(event: string, details: any = {}) {
+  console.log(`[SECURITY] ${event}:`, {
+    timestamp: new Date().toISOString(),
+    ...details
+  });
+}
+
 // Function to trigger configured webhooks
 async function triggerWebhooks(eventType: string, data: any) {
   try {
@@ -29,7 +37,7 @@ async function triggerWebhooks(eventType: string, data: any) {
       .eq("is_active", true);
 
     if (error) {
-      console.error("Error fetching webhooks:", error);
+      console.error("Error fetching webhooks:", error.message);
       return;
     }
 
@@ -56,13 +64,17 @@ async function triggerWebhooks(eventType: string, data: any) {
           }),
         });
 
-        console.log(`Webhook ${webhook.name} triggered:`, response.status);
+        console.log(`Webhook ${webhook.name} triggered with status:`, response.status);
       } catch (error) {
-        console.error(`Error triggering webhook ${webhook.name}:`, error);
+        console.error(`Error triggering webhook ${webhook.name}:`, error.message);
+        logSecurityEvent("WEBHOOK_FAILED", { 
+          webhookName: webhook.name, 
+          error: error.message 
+        });
       }
     }
   } catch (error) {
-    console.error("Error in triggerWebhooks:", error);
+    console.error("Error in triggerWebhooks:", error.message);
   }
 }
 
@@ -72,23 +84,52 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const clientIP = req.headers.get("x-forwarded-for") || 
+                   req.headers.get("x-real-ip") || 
+                   "unknown";
+
   try {
     // Check content type
     const contentType = req.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
+      logSecurityEvent("INVALID_CONTENT_TYPE", { 
+        contentType, 
+        clientIP 
+      });
       return new Response(
         JSON.stringify({ error: "Content-Type must be application/json" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Parse request body
-    const requestData: WebhookRequest = await req.json();
-    console.log("Webhook request received:", requestData);
+    // Parse request body with size limit
+    const text = await req.text();
+    if (text.length > 10000) { // 10KB limit
+      logSecurityEvent("REQUEST_TOO_LARGE", { 
+        size: text.length, 
+        clientIP 
+      });
+      return new Response(
+        JSON.stringify({ error: "Request body too large" }),
+        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const requestData: WebhookRequest = JSON.parse(text);
+    
+    // Log sanitized request info (no API key)
+    console.log("Webhook request received:", {
+      date: requestData.date,
+      time: requestData.time,
+      courtId: requestData.courtId,
+      userId: requestData.userId,
+      clientIP
+    });
 
     // Simple API key verification
     const validApiKey = Deno.env.get("WEBHOOK_API_KEY");
     if (!validApiKey || requestData.apiKey !== validApiKey) {
+      logSecurityEvent("INVALID_API_KEY", { clientIP });
       return new Response(
         JSON.stringify({ error: "Invalid API key" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -97,6 +138,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Validate required fields
     if (!requestData.date || !requestData.time || !requestData.courtId || !requestData.userId) {
+      logSecurityEvent("MISSING_REQUIRED_FIELDS", { 
+        missingFields: {
+          date: !requestData.date,
+          time: !requestData.time,
+          courtId: !requestData.courtId,
+          userId: !requestData.userId
+        },
+        clientIP 
+      });
       return new Response(
         JSON.stringify({ error: "Missing required fields: date, time, courtId, and userId are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -107,6 +157,12 @@ const handler = async (req: Request): Promise<Response> => {
     const selectedDate = new Date(requestData.date);
     const validationError = validateBookingTime(selectedDate, requestData.time);
     if (validationError) {
+      logSecurityEvent("INVALID_BOOKING_TIME", { 
+        error: validationError, 
+        date: requestData.date,
+        time: requestData.time,
+        clientIP 
+      });
       return new Response(
         JSON.stringify({ error: validationError }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -121,7 +177,10 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (courtError || !court) {
-      console.error("Court not found:", courtError);
+      logSecurityEvent("COURT_NOT_FOUND", { 
+        courtId: requestData.courtId, 
+        clientIP 
+      });
       return new Response(
         JSON.stringify({ error: "La cancha especificada no existe" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -136,7 +195,10 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (userError || !user) {
-      console.error("User not found:", userError);
+      logSecurityEvent("USER_NOT_FOUND", { 
+        userId: requestData.userId, 
+        clientIP 
+      });
       return new Response(
         JSON.stringify({ error: "El usuario especificado no existe" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -150,7 +212,7 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (rulesError || !rules) {
-      console.error("Error fetching booking rules:", rulesError);
+      console.error("Error fetching booking rules:", rulesError?.message);
       return new Response(
         JSON.stringify({ error: "Error interno al obtener reglas de reservación" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -159,6 +221,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Check active bookings limit
     if (user.active_bookings >= rules.max_active_bookings) {
+      logSecurityEvent("MAX_BOOKINGS_EXCEEDED", { 
+        userId: requestData.userId,
+        activeBookings: user.active_bookings,
+        maxAllowed: rules.max_active_bookings,
+        clientIP 
+      });
       return new Response(
         JSON.stringify({ 
           error: `El usuario ya tiene el máximo de ${rules.max_active_bookings} reservas activas permitidas` 
@@ -170,6 +238,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Calculate booking times
     const times = createBookingTimes(selectedDate, requestData.time);
     if (!times) {
+      console.error("Error creating booking times");
       return new Response(
         JSON.stringify({ error: "Error al crear los horarios de la reserva" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -185,7 +254,7 @@ const handler = async (req: Request): Promise<Response> => {
       .gte("end_time", times.startTime.toISOString());
 
     if (bookingsError) {
-      console.error("Error checking existing bookings:", bookingsError);
+      console.error("Error checking existing bookings:", bookingsError.message);
       return new Response(
         JSON.stringify({ error: "Error al verificar disponibilidad de la cancha" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -193,6 +262,12 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (existingBookings && existingBookings.length > 0) {
+      logSecurityEvent("COURT_NOT_AVAILABLE", { 
+        courtId: requestData.courtId,
+        requestedTime: requestData.time,
+        existingBookings: existingBookings.length,
+        clientIP 
+      });
       return new Response(
         JSON.stringify({ 
           error: "La cancha no está disponible para el horario solicitado",
@@ -213,24 +288,23 @@ const handler = async (req: Request): Promise<Response> => {
         user_id: requestData.userId,
         start_time: times.startTime.toISOString(),
         end_time: times.endTime.toISOString(),
-        booking_made_at: new Date().toISOString()
       })
       .select()
       .single();
 
     if (insertError) {
-      console.error("Error creating booking:", insertError);
+      console.error("Booking creation error:", insertError.message);
+      logSecurityEvent("BOOKING_CREATION_FAILED", { 
+        error: insertError.message,
+        userId: requestData.userId,
+        courtId: requestData.courtId,
+        clientIP 
+      });
+      
       let errorMessage = "No se pudo realizar la reserva. Por favor intenta de nuevo.";
       
-      try {
-        if (insertError.message.includes("violates row-level security policy")) {
-          errorMessage = "No tienes permiso para realizar esta reserva";
-        } else {
-          const parsedError = JSON.parse(insertError.message);
-          errorMessage = parsedError.message || errorMessage;
-        }
-      } catch {
-        errorMessage = insertError.message || errorMessage;
+      if (insertError.message.includes("violates row-level security policy")) {
+        errorMessage = "No tienes permiso para realizar esta reserva";
       }
       
       return new Response(
@@ -238,6 +312,15 @@ const handler = async (req: Request): Promise<Response> => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Log successful booking creation
+    logSecurityEvent("BOOKING_CREATED", { 
+      bookingId: booking.id,
+      userId: requestData.userId,
+      courtId: requestData.courtId,
+      courtName: court.name,
+      clientIP 
+    });
 
     // Trigger configured webhooks for booking_created event
     const bookingData = {
@@ -265,11 +348,14 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
   } catch (error) {
-    console.error("Unexpected error in booking webhook:", error);
+    console.error("Unexpected error in booking webhook:", error.message);
+    logSecurityEvent("UNEXPECTED_ERROR", { 
+      error: error.message,
+      clientIP 
+    });
     return new Response(
       JSON.stringify({ 
-        error: "Error interno del servidor", 
-        details: error.message 
+        error: "Error interno del servidor"
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
