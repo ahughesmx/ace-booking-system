@@ -14,7 +14,9 @@ import {
   ExternalLink, 
   Webhook,
   Settings,
-  TestTube
+  TestTube,
+  Copy,
+  AlertCircle
 } from "lucide-react";
 import {
   Dialog,
@@ -33,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Webhook {
   id: string;
@@ -202,6 +205,15 @@ const WebhookManagement = () => {
     }
   };
 
+  const copyWebhookUrl = () => {
+    const webhookUrl = `https://bpjinatcgdmxqetfxjji.supabase.co/functions/v1/booking-webhook`;
+    navigator.clipboard.writeText(webhookUrl);
+    toast({
+      title: "URL copiada",
+      description: "La URL del webhook se ha copiado al portapapeles",
+    });
+  };
+
   const eventTypes = [
     { value: "booking_created", label: "Reserva creada" },
     { value: "booking_cancelled", label: "Reserva cancelada" },
@@ -242,7 +254,7 @@ const WebhookManagement = () => {
                   id="name"
                   value={newWebhook.name}
                   onChange={(e) => setNewWebhook({ ...newWebhook, name: e.target.value })}
-                  placeholder="Mi Sistema Externo"
+                  placeholder="Mi Sistema Externo (ej: n8n Integration)"
                 />
               </div>
               <div className="grid gap-2">
@@ -294,6 +306,20 @@ const WebhookManagement = () => {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Information card for booking webhook integration */}
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription className="flex items-center justify-between">
+          <div>
+            <strong>URL del Webhook de Reservas:</strong> Para recibir eventos de reservas, usa esta URL en tu sistema externo
+          </div>
+          <Button variant="outline" size="sm" onClick={copyWebhookUrl}>
+            <Copy className="h-4 w-4 mr-2" />
+            Copiar URL
+          </Button>
+        </AlertDescription>
+      </Alert>
 
       {webhooks && webhooks.length > 0 ? (
         <div className="grid gap-4">

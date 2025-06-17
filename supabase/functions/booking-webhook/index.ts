@@ -19,6 +19,53 @@ interface WebhookRequest {
   apiKey: string;     // Simple API key for basic authentication
 }
 
+// Function to trigger configured webhooks
+async function triggerWebhooks(eventType: string, data: any) {
+  try {
+    const { data: webhooks, error } = await supabase
+      .from("webhooks")
+      .select("*")
+      .eq("event_type", eventType)
+      .eq("is_active", true);
+
+    if (error) {
+      console.error("Error fetching webhooks:", error);
+      return;
+    }
+
+    if (!webhooks || webhooks.length === 0) {
+      console.log("No active webhooks found for event:", eventType);
+      return;
+    }
+
+    for (const webhook of webhooks) {
+      try {
+        const headers = {
+          "Content-Type": "application/json",
+          ...webhook.headers,
+        };
+
+        const response = await fetch(webhook.url, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            event: eventType,
+            timestamp: new Date().toISOString(),
+            data,
+            webhook_name: webhook.name
+          }),
+        });
+
+        console.log(`Webhook ${webhook.name} triggered:`, response.status);
+      } catch (error) {
+        console.error(`Error triggering webhook ${webhook.name}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error("Error in triggerWebhooks:", error);
+  }
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -163,7 +210,7 @@ const handler = async (req: Request): Promise<Response> => {
       .from("bookings")
       .insert({
         court_id: requestData.courtId,
-        user_id: requestData.userId, // ✅ Ahora se incluye correctamente el user_id
+        user_id: requestData.userId,
         start_time: times.startTime.toISOString(),
         end_time: times.endTime.toISOString(),
         booking_made_at: new Date().toISOString()
@@ -173,11 +220,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (insertError) {
       console.error("Error creating booking:", insertError);
-      // Try to parse the error message from the database trigger
       let errorMessage = "No se pudo realizar la reserva. Por favor intenta de nuevo.";
       
       try {
-        // Check if the error is from our RLS policy
         if (insertError.message.includes("violates row-level security policy")) {
           errorMessage = "No tienes permiso para realizar esta reserva";
         } else {
@@ -185,7 +230,6 @@ const handler = async (req: Request): Promise<Response> => {
           errorMessage = parsedError.message || errorMessage;
         }
       } catch {
-        // If parsing fails, use the raw message
         errorMessage = insertError.message || errorMessage;
       }
       
@@ -195,18 +239,27 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Trigger configured webhooks for booking_created event
+    const bookingData = {
+      id: booking.id,
+      courtName: court.name,
+      courtId: requestData.courtId,
+      startTime: times.startTime.toISOString(),
+      endTime: times.endTime.toISOString(),
+      userName: user.full_name,
+      userId: requestData.userId,
+      date: requestData.date,
+      time: requestData.time
+    };
+
+    await triggerWebhooks("booking_created", bookingData);
+
     // Return success response
     return new Response(
       JSON.stringify({
         success: true,
         message: "Reserva creada exitosamente",
-        booking: {
-          id: booking.id,
-          courtName: court.name,
-          startTime: times.startTime.toISOString(),
-          endTime: times.endTime.toISOString(),
-          userName: user.full_name
-        }
+        booking: bookingData
       }),
       { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
