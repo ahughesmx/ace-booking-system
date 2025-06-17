@@ -38,18 +38,19 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
     queryKey: ["active-bookings", user?.id],
     queryFn: async () => {
       if (!user?.id) {
-        console.log("❌ No user ID available");
+        console.log("🚫 No user ID available for bookings query");
         return [];
       }
 
-      console.log("🔍 === SIMPLIFIED BOOKING QUERY ===");
+      console.log("🔍 === DEBUGGING BOOKINGS QUERY ===");
       console.log("👤 User ID:", user.id);
       
-      const nowUTC = new Date();
-      console.log("⏰ Current time UTC:", nowUTC.toISOString());
+      const now = new Date();
+      console.log("⏰ Current time:", now.toISOString());
 
-      // Obtener todas las reservas del usuario que aún no han terminado
-      const { data: bookingsData, error: bookingsError } = await supabase
+      // Step 1: Get ALL bookings for the user
+      console.log("📋 Step 1: Fetching ALL user bookings...");
+      const { data: allBookings, error: bookingsError } = await supabase
         .from("bookings")
         .select(`
           id,
@@ -58,7 +59,6 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
           court:courts(name, court_type)
         `)
         .eq('user_id', user.id)
-        .gt('end_time', nowUTC.toISOString())
         .order("start_time", { ascending: true });
 
       if (bookingsError) {
@@ -66,16 +66,33 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
         throw bookingsError;
       }
 
-      console.log("📅 Raw bookings from database:", bookingsData);
-      console.log("📊 Number of bookings found:", bookingsData?.length || 0);
+      console.log("📊 Total bookings found:", allBookings?.length || 0);
+      console.log("📅 All bookings:", allBookings);
 
-      if (!bookingsData || bookingsData.length === 0) {
-        console.log("⚠️ No active bookings found for user");
+      if (!allBookings || allBookings.length === 0) {
+        console.log("⚠️ No bookings found at all for user");
         return [];
       }
 
-      // Obtener los IDs de reservas que ya tienen partidos
-      const { data: matchesData, error: matchesError } = await supabase
+      // Step 2: Filter for future bookings only
+      console.log("📋 Step 2: Filtering for future bookings...");
+      const futureBookings = allBookings.filter(booking => {
+        const endTime = new Date(booking.end_time);
+        const isFuture = endTime > now;
+        console.log(`📅 Booking ${booking.id}:`, {
+          endTime: endTime.toISOString(),
+          currentTime: now.toISOString(),
+          isFuture,
+          courtName: booking.court?.name
+        });
+        return isFuture;
+      });
+
+      console.log("✅ Future bookings count:", futureBookings.length);
+
+      // Step 3: Get ALL matches to see which bookings have matches
+      console.log("📋 Step 3: Fetching ALL matches...");
+      const { data: allMatches, error: matchesError } = await supabase
         .from("matches")
         .select("booking_id");
 
@@ -84,27 +101,28 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
         throw matchesError;
       }
 
-      console.log("🏆 Matches found:", matchesData?.length || 0);
-      const bookingsWithMatches = new Set(matchesData?.map(match => match.booking_id) || []);
-      console.log("🚫 Booking IDs with matches:", Array.from(bookingsWithMatches));
+      console.log("🏆 Total matches found:", allMatches?.length || 0);
+      console.log("🏆 All matches:", allMatches);
 
-      // Filtrar reservas que no tienen partidos
-      const availableBookings = bookingsData.filter(booking => {
+      const bookingsWithMatches = new Set(allMatches?.map(match => match.booking_id) || []);
+      console.log("🚫 Booking IDs that have matches:", Array.from(bookingsWithMatches));
+
+      // Step 4: Filter out bookings that already have matches
+      console.log("📋 Step 4: Filtering out bookings with existing matches...");
+      const availableBookings = futureBookings.filter(booking => {
         const hasMatch = bookingsWithMatches.has(booking.id);
-        
-        console.log(`📋 Booking ${booking.id}:`, {
+        console.log(`🔍 Checking booking ${booking.id}:`, {
           courtName: booking.court?.name,
           startTime: booking.start_time,
-          endTime: booking.end_time,
           hasMatch,
           available: !hasMatch
         });
-        
         return !hasMatch;
       });
 
-      console.log("✅ Available bookings for matches:", availableBookings.length);
-      console.log("🔚 === END SIMPLIFIED QUERY ===");
+      console.log("✅ Final available bookings:", availableBookings.length);
+      console.log("📋 Available bookings details:", availableBookings);
+      console.log("🔚 === END DEBUGGING ===");
       
       return availableBookings;
     },
@@ -131,12 +149,21 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
     }
   };
 
-  console.log("🖥️ MatchHeader render:", {
+  console.log("🖥️ MatchHeader render state:", {
     userExists: !!user,
+    userId: user?.id,
     bookingsCount: bookings.length,
     isLoadingBookings,
-    buttonDisabled: isLoading || isLoadingBookings || bookings.length === 0
+    buttonDisabled: isLoading || isLoadingBookings || bookings.length === 0,
+    bookingsData: bookings
   });
+
+  const getButtonText = () => {
+    if (!user) return "Inicia sesión para crear partidos";
+    if (isLoadingBookings) return "Cargando reservas...";
+    if (bookings.length === 0) return "Sin reservas disponibles";
+    return "Crear Partido";
+  };
 
   return (
     <div className="relative">
@@ -158,9 +185,7 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
               size={isMobile ? "sm" : "default"}
             >
               <Plus className="h-5 w-5 mr-2" />
-              {!user ? "Inicia sesión para crear partidos" : 
-                isLoadingBookings ? "Cargando reservas..." :
-                bookings.length === 0 ? "No hay reservas disponibles" : "Crear Partido"}
+              {getButtonText()}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
