@@ -1,4 +1,3 @@
-
 import { Plus, Users, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,9 +36,14 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
   const { data: bookings = [], isLoading: isLoadingBookings } = useQuery({
     queryKey: ["active-bookings", user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id) {
+        console.log("No user ID available");
+        return [];
+      }
 
-      console.log("Fetching active bookings for user:", user.id);
+      console.log("=== DEBUGGING BOOKING QUERY ===");
+      console.log("User ID:", user.id);
+      console.log("Current time:", new Date().toISOString());
 
       // Obtener todas las reservas activas del usuario
       const { data: bookingsData, error: bookingsError } = await supabase
@@ -59,7 +63,8 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
         throw bookingsError;
       }
 
-      console.log("Found bookings:", bookingsData);
+      console.log("Raw bookings from database:", bookingsData);
+      console.log("Number of bookings found:", bookingsData?.length || 0);
 
       // Obtener los IDs de reservas que ya tienen partidos
       const { data: matchesData, error: matchesError } = await supabase
@@ -71,19 +76,28 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
         throw matchesError;
       }
 
-      console.log("Found matches:", matchesData);
-
+      console.log("Matches found in database:", matchesData);
       const bookingsWithMatches = new Set(matchesData?.map(match => match.booking_id) || []);
-      console.log("Bookings with matches:", bookingsWithMatches);
+      console.log("Booking IDs that already have matches:", Array.from(bookingsWithMatches));
 
       // Filtrar las reservas que no tienen partidos
       const availableBookings = (bookingsData || []).filter(booking => {
         const hasMatch = bookingsWithMatches.has(booking.id);
-        console.log(`Booking ${booking.id} has match: ${hasMatch}`);
-        return !hasMatch;
+        const isFuture = new Date(booking.end_time) > new Date();
+        console.log(`Booking ${booking.id}:`, {
+          hasMatch,
+          isFuture,
+          endTime: booking.end_time,
+          startTime: booking.start_time,
+          courtName: booking.court?.name,
+          available: !hasMatch && isFuture
+        });
+        return !hasMatch && isFuture;
       });
 
-      console.log("Available bookings for match creation:", availableBookings);
+      console.log("Final available bookings:", availableBookings);
+      console.log("=== END DEBUGGING ===");
+      
       return availableBookings;
     },
     enabled: !!user?.id,
@@ -110,11 +124,12 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
     }
   };
 
-  console.log("MatchHeader render:", {
+  console.log("MatchHeader render state:", {
     user: !!user,
     bookingsCount: bookings.length,
     isLoadingBookings,
-    bookings
+    bookings,
+    buttonDisabled: isLoading || isLoadingBookings || bookings.length === 0
   });
 
   return (
@@ -168,7 +183,7 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
                             {format(new Date(booking.start_time), "dd/MM/yyyy HH:mm")} - {booking.court?.name}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            Cancha de {formatCourtType(booking.court?.court_type || '')}
+                            Cancha de {booking.court?.court_type === 'padel' ? 'Pádel' : 'Tenis'}
                           </span>
                         </div>
                       </SelectItem>
