@@ -19,7 +19,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { format } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -39,21 +38,17 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
     queryKey: ["active-bookings", user?.id],
     queryFn: async () => {
       if (!user?.id) {
-        console.log("No user ID available");
+        console.log("❌ No user ID available");
         return [];
       }
 
-      console.log("=== DEBUGGING BOOKING QUERY ===");
-      console.log("User ID:", user.id);
+      console.log("🔍 === SIMPLIFIED BOOKING QUERY ===");
+      console.log("👤 User ID:", user.id);
       
-      // Obtener el tiempo actual en zona horaria de México
-      const nowMexicoTime = toZonedTime(new Date(), 'America/Mexico_City');
       const nowUTC = new Date();
-      
-      console.log("Current time UTC:", nowUTC.toISOString());
-      console.log("Current time Mexico:", nowMexicoTime.toISOString());
+      console.log("⏰ Current time UTC:", nowUTC.toISOString());
 
-      // Obtener todas las reservas del usuario (sin filtro de tiempo aquí)
+      // Obtener todas las reservas del usuario que aún no han terminado
       const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
         .select(`
@@ -63,15 +58,21 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
           court:courts(name, court_type)
         `)
         .eq('user_id', user.id)
+        .gt('end_time', nowUTC.toISOString())
         .order("start_time", { ascending: true });
 
       if (bookingsError) {
-        console.error("Error fetching bookings:", bookingsError);
+        console.error("❌ Error fetching bookings:", bookingsError);
         throw bookingsError;
       }
 
-      console.log("Raw bookings from database:", bookingsData);
-      console.log("Number of bookings found:", bookingsData?.length || 0);
+      console.log("📅 Raw bookings from database:", bookingsData);
+      console.log("📊 Number of bookings found:", bookingsData?.length || 0);
+
+      if (!bookingsData || bookingsData.length === 0) {
+        console.log("⚠️ No active bookings found for user");
+        return [];
+      }
 
       // Obtener los IDs de reservas que ya tienen partidos
       const { data: matchesData, error: matchesError } = await supabase
@@ -79,42 +80,31 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
         .select("booking_id");
 
       if (matchesError) {
-        console.error("Error fetching matches:", matchesError);
+        console.error("❌ Error fetching matches:", matchesError);
         throw matchesError;
       }
 
-      console.log("Matches found in database:", matchesData);
+      console.log("🏆 Matches found:", matchesData?.length || 0);
       const bookingsWithMatches = new Set(matchesData?.map(match => match.booking_id) || []);
-      console.log("Booking IDs that already have matches:", Array.from(bookingsWithMatches));
+      console.log("🚫 Booking IDs with matches:", Array.from(bookingsWithMatches));
 
-      // Filtrar las reservas que no tienen partidos y que aún no han terminado
-      const availableBookings = (bookingsData || []).filter(booking => {
+      // Filtrar reservas que no tienen partidos
+      const availableBookings = bookingsData.filter(booking => {
         const hasMatch = bookingsWithMatches.has(booking.id);
         
-        // Convertir las fechas de la reserva a zona horaria de México para comparar
-        const endTimeMexico = toZonedTime(new Date(booking.end_time), 'America/Mexico_City');
-        const startTimeMexico = toZonedTime(new Date(booking.start_time), 'America/Mexico_City');
-        
-        // Una reserva está activa si aún no ha terminado (considerando zona horaria de México)
-        const isActive = endTimeMexico > nowMexicoTime;
-        
-        console.log(`Booking ${booking.id}:`, {
-          hasMatch,
-          isActive,
-          endTime: booking.end_time,
-          endTimeMexico: endTimeMexico.toISOString(),
-          startTime: booking.start_time,
-          startTimeMexico: startTimeMexico.toISOString(),
+        console.log(`📋 Booking ${booking.id}:`, {
           courtName: booking.court?.name,
-          nowMexico: nowMexicoTime.toISOString(),
-          available: !hasMatch && isActive
+          startTime: booking.start_time,
+          endTime: booking.end_time,
+          hasMatch,
+          available: !hasMatch
         });
         
-        return !hasMatch && isActive;
+        return !hasMatch;
       });
 
-      console.log("Final available bookings:", availableBookings);
-      console.log("=== END DEBUGGING ===");
+      console.log("✅ Available bookings for matches:", availableBookings.length);
+      console.log("🔚 === END SIMPLIFIED QUERY ===");
       
       return availableBookings;
     },
@@ -123,14 +113,13 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
 
   const handleCreateMatch = (isDoubles: boolean) => {
     if (selectedBooking) {
-      console.log("Creating match for booking:", selectedBooking);
+      console.log("🎾 Creating match for booking:", selectedBooking);
       onCreateMatch(isDoubles, selectedBooking);
       setIsDialogOpen(false);
       setSelectedBooking("");
     }
   };
 
-  // Función para formatear el tipo de cancha
   const formatCourtType = (courtType: string) => {
     switch (courtType) {
       case 'padel':
@@ -142,11 +131,10 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
     }
   };
 
-  console.log("MatchHeader render state:", {
-    user: !!user,
+  console.log("🖥️ MatchHeader render:", {
+    userExists: !!user,
     bookingsCount: bookings.length,
     isLoadingBookings,
-    bookings,
     buttonDisabled: isLoading || isLoadingBookings || bookings.length === 0
   });
 
@@ -172,7 +160,7 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
               <Plus className="h-5 w-5 mr-2" />
               {!user ? "Inicia sesión para crear partidos" : 
                 isLoadingBookings ? "Cargando reservas..." :
-                bookings.length === 0 ? "Reserva una cancha primero" : "Crear Partido"}
+                bookings.length === 0 ? "No hay reservas disponibles" : "Crear Partido"}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
@@ -198,10 +186,10 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
                       <SelectItem key={booking.id} value={booking.id}>
                         <div className="flex flex-col">
                           <span className="font-medium">
-                            {format(toZonedTime(new Date(booking.start_time), 'America/Mexico_City'), "dd/MM/yyyy HH:mm")} - {booking.court?.name}
+                            {format(new Date(booking.start_time), "dd/MM/yyyy HH:mm")} - {booking.court?.name}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            Cancha de {booking.court?.court_type === 'padel' ? 'Pádel' : 'Tenis'}
+                            Cancha de {formatCourtType(booking.court?.court_type || '')}
                           </span>
                         </div>
                       </SelectItem>
