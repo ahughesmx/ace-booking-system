@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -14,7 +13,8 @@ import {
   Menu,
   LogOut,
   Home,
-  Cog
+  Cog,
+  Webhook
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { useNavigate } from "react-router-dom";
@@ -31,6 +31,7 @@ const menuItems = [
   { id: "court-settings", label: "Configurar Canchas", icon: Cog },
   { id: "booking-rules", label: "Reglas de Reserva", icon: Settings },
   { id: "member-ids", label: "IDs de Miembros", icon: Shield },
+  { id: "webhooks", label: "Webhooks e Integraciones", icon: Webhook },
   { id: "statistics", label: "Estadísticas", icon: BarChart3 },
   { id: "display", label: "Display Público", icon: Monitor },
 ];

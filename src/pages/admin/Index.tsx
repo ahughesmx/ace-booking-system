@@ -12,6 +12,7 @@ import Statistics from "@/components/admin/Statistics";
 import ValidMemberIdManagement from "@/components/admin/ValidMemberIdManagement";
 import BookingRulesManagement from "@/components/admin/BookingRulesManagement";
 import DisplayManagement from "@/components/admin/DisplayManagement";
+import WebhookManagement from "@/components/admin/WebhookManagement";
 
 const AdminPage = () => {
   // Todos los hooks se ejecutan siempre en el mismo orden
@@ -26,7 +27,6 @@ const AdminPage = () => {
   // Efecto para manejar redirecciones
   useEffect(() => {
     if (authLoading || roleLoading) {
-      // Aún cargando, no hacer nada
       return;
     }
 
@@ -70,6 +70,8 @@ const AdminPage = () => {
         return <ValidMemberIdManagement />;
       case "booking-rules":
         return <BookingRulesManagement />;
+      case "webhooks":
+        return <WebhookManagement />;
       case "display":
         return <DisplayManagement />;
       default:
@@ -94,7 +96,6 @@ const AdminPage = () => {
     );
   }
 
-  // Solo renderizar si tenemos usuario admin confirmado
   console.log("AdminPage - Rendering AdminLayout");
   return (
     <AdminLayout activeTab={activeTab} onTabChange={setActiveTab}>
