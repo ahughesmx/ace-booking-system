@@ -68,28 +68,41 @@ export function useBookingSubmit(onBookingSuccess: () => void) {
       const endTime = new Date(startTime);
       endTime.setHours(startTime.getHours() + 1);
 
-      console.log('Submitting booking:', {
+      console.log('🔥 DEBUGGING BOOKING INSERTION - START');
+      console.log('User from auth:', user);
+      console.log('User ID:', user.id);
+      console.log('Court ID:', courtId);
+      console.log('Start time:', startTime.toISOString());
+      console.log('End time:', endTime.toISOString());
+
+      const bookingData = {
         court_id: courtId,
         user_id: user.id,
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
-        selectedDate,
-        selectedTime
-      });
+      };
 
-      const { error } = await supabase
+      console.log('Booking data to insert:', bookingData);
+
+      const { data: insertedBooking, error } = await supabase
         .from("bookings")
-        .insert({
-          court_id: courtId,
-          user_id: user.id, // ✅ Ahora se incluye el user_id
-          start_time: startTime.toISOString(),
-          end_time: endTime.toISOString(),
-        });
+        .insert(bookingData)
+        .select('*');
+
+      console.log('Insert response - data:', insertedBooking);
+      console.log('Insert response - error:', error);
 
       if (error) {
-        console.error("Booking error:", error);
+        console.error("🚨 Booking error:", error);
         throw error;
       }
+
+      if (insertedBooking && insertedBooking.length > 0) {
+        console.log('✅ Successfully inserted booking:', insertedBooking[0]);
+        console.log('✅ Inserted booking user_id:', insertedBooking[0].user_id);
+      }
+
+      console.log('🔥 DEBUGGING BOOKING INSERTION - END');
 
       // Invalidar todas las queries relacionadas con reservas para actualizar los contadores
       await queryClient.invalidateQueries({ 
