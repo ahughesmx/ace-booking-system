@@ -1,3 +1,4 @@
+
 import { Plus, Users, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -43,9 +45,15 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
 
       console.log("=== DEBUGGING BOOKING QUERY ===");
       console.log("User ID:", user.id);
-      console.log("Current time:", new Date().toISOString());
+      
+      // Obtener el tiempo actual en zona horaria de México
+      const nowMexicoTime = toZonedTime(new Date(), 'America/Mexico_City');
+      const nowUTC = new Date();
+      
+      console.log("Current time UTC:", nowUTC.toISOString());
+      console.log("Current time Mexico:", nowMexicoTime.toISOString());
 
-      // Obtener todas las reservas activas del usuario
+      // Obtener todas las reservas del usuario (sin filtro de tiempo aquí)
       const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
         .select(`
@@ -55,7 +63,6 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
           court:courts(name, court_type)
         `)
         .eq('user_id', user.id)
-        .gte("end_time", new Date().toISOString())
         .order("start_time", { ascending: true });
 
       if (bookingsError) {
@@ -80,19 +87,30 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
       const bookingsWithMatches = new Set(matchesData?.map(match => match.booking_id) || []);
       console.log("Booking IDs that already have matches:", Array.from(bookingsWithMatches));
 
-      // Filtrar las reservas que no tienen partidos
+      // Filtrar las reservas que no tienen partidos y que aún no han terminado
       const availableBookings = (bookingsData || []).filter(booking => {
         const hasMatch = bookingsWithMatches.has(booking.id);
-        const isFuture = new Date(booking.end_time) > new Date();
+        
+        // Convertir las fechas de la reserva a zona horaria de México para comparar
+        const endTimeMexico = toZonedTime(new Date(booking.end_time), 'America/Mexico_City');
+        const startTimeMexico = toZonedTime(new Date(booking.start_time), 'America/Mexico_City');
+        
+        // Una reserva está activa si aún no ha terminado (considerando zona horaria de México)
+        const isActive = endTimeMexico > nowMexicoTime;
+        
         console.log(`Booking ${booking.id}:`, {
           hasMatch,
-          isFuture,
+          isActive,
           endTime: booking.end_time,
+          endTimeMexico: endTimeMexico.toISOString(),
           startTime: booking.start_time,
+          startTimeMexico: startTimeMexico.toISOString(),
           courtName: booking.court?.name,
-          available: !hasMatch && isFuture
+          nowMexico: nowMexicoTime.toISOString(),
+          available: !hasMatch && isActive
         });
-        return !hasMatch && isFuture;
+        
+        return !hasMatch && isActive;
       });
 
       console.log("Final available bookings:", availableBookings);
@@ -180,7 +198,7 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
                       <SelectItem key={booking.id} value={booking.id}>
                         <div className="flex flex-col">
                           <span className="font-medium">
-                            {format(new Date(booking.start_time), "dd/MM/yyyy HH:mm")} - {booking.court?.name}
+                            {format(toZonedTime(new Date(booking.start_time), 'America/Mexico_City'), "dd/MM/yyyy HH:mm")} - {booking.court?.name}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             Cancha de {booking.court?.court_type === 'padel' ? 'Pádel' : 'Tenis'}
