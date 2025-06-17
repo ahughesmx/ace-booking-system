@@ -390,7 +390,7 @@ export type Database = {
           {
             foreignKeyName: "rankings_user_id_fkey_profiles"
             columns: ["user_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -477,7 +477,7 @@ export type Database = {
     }
     Functions: {
       recalculate_active_bookings: {
-        Args: Record<PropertyKey, never>
+        Args: Record<PropertyKey, never> | { user_uuid: string }
         Returns: undefined
       }
     }
