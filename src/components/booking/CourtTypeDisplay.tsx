@@ -1,4 +1,5 @@
 
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
@@ -8,6 +9,10 @@ interface CourtTypeDisplayProps {
 }
 
 export function CourtTypeDisplay({ selectedCourtType, onBackToTypeSelection }: CourtTypeDisplayProps) {
+  const getCourtTypeLabel = (courtType: 'tennis' | 'padel') => {
+    return courtType === 'tennis' ? 'Cancha de tenis' : 'Cancha de pádel';
+  };
+
   return (
     <div className="flex items-center justify-between">
       <Button
@@ -19,9 +24,10 @@ export function CourtTypeDisplay({ selectedCourtType, onBackToTypeSelection }: C
         <ArrowLeft className="h-4 w-4 mr-2" />
         Cambiar tipo de cancha
       </Button>
-      <span className="text-sm text-muted-foreground capitalize">
-        Cancha de pádel
+      <span className="text-sm text-muted-foreground">
+        {getCourtTypeLabel(selectedCourtType)}
       </span>
     </div>
   );
 }
+
