@@ -26,6 +26,15 @@ export function useBookingSubmit(onBookingSuccess: () => void) {
       return;
     }
 
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "Debes iniciar sesión para hacer una reserva",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Si solo hay una cancha del tipo seleccionado, usar esa
     let courtId = selectedCourt;
     if (!courtId && selectedCourtType) {
@@ -61,6 +70,7 @@ export function useBookingSubmit(onBookingSuccess: () => void) {
 
       console.log('Submitting booking:', {
         court_id: courtId,
+        user_id: user.id,
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
         selectedDate,
@@ -71,6 +81,7 @@ export function useBookingSubmit(onBookingSuccess: () => void) {
         .from("bookings")
         .insert({
           court_id: courtId,
+          user_id: user.id, // ✅ Ahora se incluye el user_id
           start_time: startTime.toISOString(),
           end_time: endTime.toISOString(),
         });
@@ -88,6 +99,11 @@ export function useBookingSubmit(onBookingSuccess: () => void) {
       // Invalidar específicamente la query de reservas activas del usuario
       await queryClient.invalidateQueries({ 
         queryKey: ["userActiveBookings", user?.id] 
+      });
+
+      // Invalidar la query de reservas activas para el componente de partidos
+      await queryClient.invalidateQueries({ 
+        queryKey: ["active-bookings", user?.id] 
       });
 
       // Invalidar reglas de reserva por si hay cambios

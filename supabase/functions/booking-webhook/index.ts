@@ -158,12 +158,12 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create the booking
+    // Create the booking with user_id
     const { data: booking, error: insertError } = await supabase
       .from("bookings")
       .insert({
         court_id: requestData.courtId,
-        user_id: requestData.userId,
+        user_id: requestData.userId, // ✅ Ahora se incluye correctamente el user_id
         start_time: times.startTime.toISOString(),
         end_time: times.endTime.toISOString(),
         booking_made_at: new Date().toISOString()
