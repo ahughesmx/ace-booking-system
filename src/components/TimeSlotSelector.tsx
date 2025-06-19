@@ -75,9 +75,7 @@ export function TimeSlotSelector({
   const timeSlots = settings 
     ? generateTimeSlots(settings, selectedDate) 
     : generateTimeSlots({ 
-        operating_hours_start: `${businessH
-
-ours.start}:00:00`, 
+        operating_hours_start: `${businessHours.start}:00:00`, 
         operating_hours_end: `${businessHours.end}:00:00`,
         operating_days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
       }, selectedDate);
