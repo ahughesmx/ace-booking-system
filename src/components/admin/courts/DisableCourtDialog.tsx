@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -311,14 +312,20 @@ export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: Disabl
                         {selectedDate ? format(selectedDate, "dd/MM/yyyy") : "Seleccionar fecha"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 max-w-none" align="start">
+                    <PopoverContent 
+                      className="w-auto p-0" 
+                      align="start"
+                      side="bottom"
+                      sideOffset={5}
+                      style={{ minWidth: '300px' }}
+                    >
                       <Calendar
                         mode="single"
                         selected={selectedDate}
                         onSelect={(date) => date && setSelectedDate(date)}
                         disabled={(date) => date < new Date()}
                         initialFocus
-                        className="w-full"
+                        className="rounded-md border shadow-md"
                       />
                     </PopoverContent>
                   </Popover>
@@ -368,14 +375,20 @@ export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: Disabl
                           {startDate ? format(startDate, "dd/MM/yyyy") : "Fecha inicial"}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 max-w-none" align="start">
+                      <PopoverContent 
+                        className="w-auto p-0" 
+                        align="start"
+                        side="bottom"
+                        sideOffset={5}
+                        style={{ minWidth: '300px' }}
+                      >
                         <Calendar
                           mode="single"
                           selected={startDate}
                           onSelect={setStartDate}
                           disabled={(date) => date < new Date()}
                           initialFocus
-                          className="w-full"
+                          className="rounded-md border shadow-md"
                         />
                       </PopoverContent>
                     </Popover>
@@ -396,14 +409,20 @@ export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: Disabl
                           {endDate ? format(endDate, "dd/MM/yyyy") : "Fecha final"}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 max-w-none" align="start">
+                      <PopoverContent 
+                        className="w-auto p-0" 
+                        align="start"
+                        side="bottom"
+                        sideOffset={5}
+                        style={{ minWidth: '300px' }}
+                      >
                         <Calendar
                           mode="single"
                           selected={endDate}
                           onSelect={setEndDate}
                           disabled={(date) => date < (startDate || new Date())}
                           initialFocus
-                          className="w-full"
+                          className="rounded-md border shadow-md"
                         />
                       </PopoverContent>
                     </Popover>
