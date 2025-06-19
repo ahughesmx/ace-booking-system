@@ -7,10 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase-client";
-import { AlertTriangle, Clock, Calendar } from "lucide-react";
-import { addHours, addDays, format } from "date-fns";
+import { AlertTriangle, Clock, Calendar as CalendarIcon } from "lucide-react";
+import { format, addHours, addDays, startOfDay, endOfDay, setHours, setMinutes } from "date-fns";
+import { cn } from "@/lib/utils";
 
 type Court = {
   id: string;
@@ -37,24 +40,54 @@ type DisableCourtDialogProps = {
 
 export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: DisableCourtDialogProps) {
   const [timeUnit, setTimeUnit] = useState<'hours' | 'days'>('hours');
-  const [duration, setDuration] = useState('');
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [showConflictDialog, setShowConflictDialog] = useState(false);
   const [conflictingBookings, setConflictingBookings] = useState<Booking[]>([]);
   const [transferOptions, setTransferOptions] = useState<Court[]>([]);
+  
+  // Estados para el modo "Horas"
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [startHour, setStartHour] = useState('');
+  const [endHour, setEndHour] = useState('');
+  
+  // Estados para el modo "Días"
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+  
   const { toast } = useToast();
+
+  // Calcular las fechas de inicio y fin basadas en la configuración
+  const getMaintenancePeriod = () => {
+    if (timeUnit === 'hours') {
+      if (!selectedDate || !startHour || !endHour) return null;
+      
+      const [startH, startM] = startHour.split(':').map(Number);
+      const [endH, endM] = endHour.split(':').map(Number);
+      
+      const startTime = setMinutes(setHours(selectedDate, startH), startM || 0);
+      const endTime = setMinutes(setHours(selectedDate, endH), endM || 0);
+      
+      return { startTime, endTime };
+    } else {
+      if (!startDate || !endDate) return null;
+      
+      const startTime = startOfDay(startDate);
+      const endTime = endOfDay(endDate);
+      
+      return { startTime, endTime };
+    }
+  };
+
+  const maintenancePeriod = getMaintenancePeriod();
 
   // Query para obtener reservas existentes
   const { data: existingBookings } = useQuery({
-    queryKey: ["court-bookings", court?.id, duration, timeUnit],
+    queryKey: ["court-bookings", court?.id, maintenancePeriod?.startTime, maintenancePeriod?.endTime],
     queryFn: async () => {
-      if (!court || !duration) return [];
+      if (!court || !maintenancePeriod) return [];
       
-      const startTime = new Date();
-      const endTime = timeUnit === 'hours' 
-        ? addHours(startTime, parseInt(duration))
-        : addDays(startTime, parseInt(duration));
+      const { startTime, endTime } = maintenancePeriod;
 
       const { data, error } = await supabase
         .from("bookings")
@@ -70,7 +103,7 @@ export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: Disabl
       if (error) throw error;
       return data || [];
     },
-    enabled: !!(court && duration && parseInt(duration) > 0),
+    enabled: !!(court && maintenancePeriod),
   });
 
   // Query para obtener canchas alternativas (solo para tenis)
@@ -91,21 +124,21 @@ export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: Disabl
     enabled: !!(court && court.court_type === 'tennis'),
   });
 
+  const isFormValid = () => {
+    if (!reason.trim()) return false;
+    
+    if (timeUnit === 'hours') {
+      return !!(selectedDate && startHour && endHour);
+    } else {
+      return !!(startDate && endDate);
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!court || !duration || !reason.trim()) {
+    if (!court || !isFormValid()) {
       toast({
         title: "Error",
         description: "Por favor completa todos los campos",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const durationNum = parseInt(duration);
-    if (durationNum <= 0) {
-      toast({
-        title: "Error", 
-        description: "La duración debe ser mayor que 0",
         variant: "destructive",
       });
       return;
@@ -124,15 +157,12 @@ export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: Disabl
   };
 
   const processDisabling = async (cancelBookings: boolean, transferToCourtId: string | null) => {
-    if (!court) return;
+    if (!court || !maintenancePeriod) return;
     
     try {
       setLoading(true);
 
-      const startTime = new Date();
-      const endTime = timeUnit === 'hours' 
-        ? addHours(startTime, parseInt(duration))
-        : addDays(startTime, parseInt(duration));
+      const { startTime, endTime } = maintenancePeriod;
 
       // Crear registro de mantenimiento
       const { error: maintenanceError } = await supabase
@@ -180,9 +210,13 @@ export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: Disabl
         }
       }
 
+      const periodDescription = timeUnit === 'hours' 
+        ? `desde ${format(startTime, 'dd/MM/yyyy HH:mm')} hasta ${format(endTime, 'dd/MM/yyyy HH:mm')}`
+        : `desde ${format(startTime, 'dd/MM/yyyy')} hasta ${format(endTime, 'dd/MM/yyyy')}`;
+
       toast({
         title: "Cancha inhabilitada",
-        description: `La cancha ${court.name} ha sido inhabilitada por ${duration} ${timeUnit === 'hours' ? 'horas' : 'días'}`,
+        description: `La cancha ${court.name} ha sido inhabilitada ${periodDescription}`,
       });
 
       onSuccess();
@@ -200,9 +234,13 @@ export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: Disabl
   };
 
   const handleClose = () => {
-    setDuration('');
     setReason('');
     setTimeUnit('hours');
+    setSelectedDate(new Date());
+    setStartHour('');
+    setEndHour('');
+    setStartDate(undefined);
+    setEndDate(undefined);
     setShowConflictDialog(false);
     setConflictingBookings([]);
     setTransferOptions([]);
@@ -214,7 +252,7 @@ export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: Disabl
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-orange-500" />
@@ -222,46 +260,158 @@ export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: Disabl
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
               <p className="text-sm text-orange-800">
                 <strong>Cancha:</strong> {court.name} ({court.court_type === 'tennis' ? 'Tenis' : 'Pádel'})
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Período de inhabilitación</Label>
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  placeholder="Cantidad"
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  min="1"
-                  className="flex-1"
-                />
-                <RadioGroup
-                  value={timeUnit}
-                  onValueChange={(value: 'hours' | 'days') => setTimeUnit(value)}
-                  className="flex flex-row gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="hours" id="hours" />
-                    <Label htmlFor="hours" className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      Horas
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="days" id="days" />
-                    <Label htmlFor="days" className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      Días
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
+            {/* Selector de tipo de período */}
+            <div className="space-y-3">
+              <Label>Tipo de período</Label>
+              <RadioGroup
+                value={timeUnit}
+                onValueChange={(value: 'hours' | 'days') => setTimeUnit(value)}
+                className="flex flex-row gap-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="hours" id="hours" />
+                  <Label htmlFor="hours" className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Por Horas (mismo día)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="days" id="days" />
+                  <Label htmlFor="days" className="flex items-center gap-2">
+                    <CalendarIcon className="w-4 h-4" />
+                    Por Días (rango de fechas)
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
+
+            {/* Configuración para modo "Horas" */}
+            {timeUnit === 'hours' && (
+              <div className="space-y-4 bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-medium text-blue-900">Configuración por horas</h4>
+                
+                <div className="space-y-2">
+                  <Label>Seleccionar día</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !selectedDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(selectedDate, "dd/MM/yyyy") : "Seleccionar fecha"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => date && setSelectedDate(date)}
+                        disabled={(date) => date < new Date()}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="start-hour">Hora de inicio</Label>
+                    <Input
+                      id="start-hour"
+                      type="time"
+                      value={startHour}
+                      onChange={(e) => setStartHour(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="end-hour">Hora de fin</Label>
+                    <Input
+                      id="end-hour"
+                      type="time"
+                      value={endHour}
+                      onChange={(e) => setEndHour(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Configuración para modo "Días" */}
+            {timeUnit === 'days' && (
+              <div className="space-y-4 bg-green-50 p-4 rounded-lg">
+                <h4 className="font-medium text-green-900">Configuración por días</h4>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Día inicial</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !startDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {startDate ? format(startDate, "dd/MM/yyyy") : "Fecha inicial"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          onSelect={setStartDate}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Día final</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !endDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {endDate ? format(endDate, "dd/MM/yyyy") : "Fecha final"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={endDate}
+                          onSelect={setEndDate}
+                          disabled={(date) => date < (startDate || new Date())}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="reason">Motivo de la inhabilitación</Label>
@@ -274,16 +424,13 @@ export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: Disabl
               />
             </div>
 
-            {duration && parseInt(duration) > 0 && (
+            {/* Resumen del período */}
+            {maintenancePeriod && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-sm text-blue-800">
-                  <strong>Período:</strong> Desde ahora hasta{' '}
-                  {format(
-                    timeUnit === 'hours' 
-                      ? addHours(new Date(), parseInt(duration))
-                      : addDays(new Date(), parseInt(duration)),
-                    'dd/MM/yyyy HH:mm'
-                  )}
+                  <strong>Período de inhabilitación:</strong><br />
+                  Desde: {format(maintenancePeriod.startTime, 'dd/MM/yyyy HH:mm')}<br />
+                  Hasta: {format(maintenancePeriod.endTime, 'dd/MM/yyyy HH:mm')}
                 </p>
               </div>
             )}
@@ -294,7 +441,7 @@ export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: Disabl
               </Button>
               <Button 
                 onClick={handleSubmit} 
-                disabled={loading || !duration || !reason.trim()}
+                disabled={loading || !isFormValid()}
                 className="flex-1"
               >
                 {loading ? "Procesando..." : "Inhabilitar"}
@@ -304,7 +451,7 @@ export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: Disabl
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de conflictos */}
+      {/* Diálogo de conflictos - mantener el mismo código existente */}
       <Dialog open={showConflictDialog} onOpenChange={() => setShowConflictDialog(false)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
