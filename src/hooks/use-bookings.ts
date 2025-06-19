@@ -55,3 +55,36 @@ export function useBookings(selectedDate?: Date) {
     enabled: !!selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime()),
   });
 }
+
+// Nueva función para verificar si una cancha está en mantenimiento
+export function useCourtAvailability(courtId: string, startTime: Date, endTime: Date) {
+  return useQuery({
+    queryKey: ["court-availability", courtId, startTime.toISOString(), endTime.toISOString()],
+    queryFn: async () => {
+      const { data: maintenanceData, error: maintenanceError } = await supabase
+        .from("court_maintenance")
+        .select("id, start_time, end_time, reason")
+        .eq("court_id", courtId)
+        .eq("is_active", true)
+        .or(`and(start_time.lte.${startTime.toISOString()},end_time.gt.${startTime.toISOString()}),and(start_time.lt.${endTime.toISOString()},end_time.gte.${endTime.toISOString()}),and(start_time.gte.${startTime.toISOString()},end_time.lte.${endTime.toISOString()})`);
+
+      if (maintenanceError) throw maintenanceError;
+
+      const { data: bookingData, error: bookingError } = await supabase
+        .from("bookings")
+        .select("id")
+        .eq("court_id", courtId)
+        .or(`and(start_time.lt.${endTime.toISOString()},end_time.gt.${startTime.toISOString()})`);
+
+      if (bookingError) throw bookingError;
+
+      return {
+        isAvailable: !maintenanceData?.length && !bookingData?.length,
+        maintenanceReason: maintenanceData?.[0]?.reason,
+        hasBookings: !!bookingData?.length,
+        hasMaintenace: !!maintenanceData?.length
+      };
+    },
+    enabled: !!(courtId && startTime && endTime),
+  });
+}

@@ -90,6 +90,50 @@ export type Database = {
           },
         ]
       }
+      court_maintenance: {
+        Row: {
+          court_id: string
+          created_at: string
+          created_by: string
+          end_time: string
+          id: string
+          is_active: boolean
+          reason: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          court_id: string
+          created_at?: string
+          created_by: string
+          end_time: string
+          id?: string
+          is_active?: boolean
+          reason: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          court_id?: string
+          created_at?: string
+          created_by?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          reason?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "court_maintenance_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       court_type_settings: {
         Row: {
           advance_booking_days: number

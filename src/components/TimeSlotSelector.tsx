@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { format, addHours, isBefore, isToday } from "date-fns";
 import { useCourts } from "@/hooks/use-courts";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
+import { useActiveMaintenancePeriods } from "@/hooks/use-court-maintenance";
 
 interface TimeSlotSelectorProps {
   selectedDate?: Date;
@@ -61,17 +62,22 @@ export function TimeSlotSelector({
 }: TimeSlotSelectorProps) {
   const { data: courts = [] } = useCourts(courtType);
   const { data: settingsData } = useCourtTypeSettings(courtType);
+  const { data: maintenanceCourts = new Set() } = useActiveMaintenancePeriods();
   
   // Ensure we get the correct type - when courtType is provided, we get a single object
   const settings = courtType && settingsData && !Array.isArray(settingsData) ? settingsData : null;
   
-  const totalCourts = courts.length;
+  // Filtrar canchas que no están en mantenimiento
+  const availableCourts = courts.filter(court => !maintenanceCourts.has(court.id));
+  const totalCourts = availableCourts.length;
   
   // Usar las configuraciones específicas del tipo de cancha si están disponibles
   const timeSlots = settings 
     ? generateTimeSlots(settings, selectedDate) 
     : generateTimeSlots({ 
-        operating_hours_start: `${businessHours.start}:00:00`, 
+        operating_hours_start: `${businessH
+
+ours.start}:00:00`, 
         operating_hours_end: `${businessHours.end}:00:00`,
         operating_days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
       }, selectedDate);
@@ -79,6 +85,8 @@ export function TimeSlotSelector({
   console.log('TimeSlotSelector - courtType:', courtType);
   console.log('TimeSlotSelector - settings:', settings);
   console.log('TimeSlotSelector - timeSlots generated:', timeSlots.length);
+  console.log('TimeSlotSelector - courts in maintenance:', maintenanceCourts.size);
+  console.log('TimeSlotSelector - available courts:', totalCourts);
 
   const getAvailableSlots = (slot: string) => {
     if (totalCourts === 0) return 0;
@@ -91,6 +99,8 @@ export function TimeSlotSelector({
   };
 
   if (totalCourts === 0) {
+    const hasMaintenanceCourts = courts.length > availableCourts.length;
+    
     return (
       <div className="space-y-4">
         <div className="text-center">
@@ -99,7 +109,10 @@ export function TimeSlotSelector({
           </h4>
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-sm text-red-600">
-              No hay canchas de {courtType} disponibles en el sistema
+              {hasMaintenanceCourts 
+                ? `Todas las canchas de ${courtType} están temporalmente fuera de servicio`
+                : `No hay canchas de ${courtType} disponibles en el sistema`
+              }
             </p>
           </div>
         </div>
@@ -147,6 +160,11 @@ export function TimeSlotSelector({
         </h4>
         <p className="text-sm text-muted-foreground">
           {totalCourts} {totalCourts === 1 ? 'cancha disponible' : 'canchas disponibles'}
+          {courts.length > totalCourts && (
+            <span className="text-orange-600 ml-1">
+              ({courts.length - totalCourts} en mantenimiento)
+            </span>
+          )}
         </p>
         {settings && (
           <p className="text-xs text-muted-foreground mt-1">
