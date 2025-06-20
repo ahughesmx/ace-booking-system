@@ -1,10 +1,10 @@
-
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CheckSquare, Square } from "lucide-react";
+import { CheckSquare, Square, Monitor, Building2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Generate time slots from 7:00 to 23:00
 const timeSlots = Array.from({ length: 17 }, (_, i) => {
@@ -14,6 +14,8 @@ const timeSlots = Array.from({ length: 17 }, (_, i) => {
 
 export default function Display() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [viewMode, setViewMode] = useState<'all' | 'single'>('all');
+  const [selectedCourtId, setSelectedCourtId] = useState<string>('');
 
   const { data: displaySettings } = useQuery({
     queryKey: ["display-settings"],
@@ -107,8 +109,10 @@ export default function Display() {
     );
   };
 
-  const courtsCount = courts?.length || 0;
-  const rowHeight = courtsCount > 0 ? `calc((100vh - 120px) / ${timeSlots.length})` : '60px';
+  const selectedCourt = courts?.find(court => court.id === selectedCourtId);
+  const displayCourts = viewMode === 'single' && selectedCourt ? [selectedCourt] : courts;
+  const courtsCount = displayCourts?.length || 0;
+  const rowHeight = courtsCount > 0 ? `calc((100vh - 180px) / ${timeSlots.length})` : '60px';
 
   return (
     <div className="h-screen w-screen bg-white overflow-hidden flex flex-col">
@@ -127,6 +131,42 @@ export default function Display() {
             {format(currentTime, "h:mm a")}
           </p>
         </div>
+      </div>
+
+      {/* View Mode Controls */}
+      <div className="flex items-center justify-center gap-4 py-3 bg-gray-50 border-b border-gray-200">
+        <Button
+          variant={viewMode === 'all' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setViewMode('all')}
+          className="flex items-center gap-2"
+        >
+          <Building2 className="w-4 h-4" />
+          Todas las Canchas
+        </Button>
+        <Button
+          variant={viewMode === 'single' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setViewMode('single')}
+          className="flex items-center gap-2"
+        >
+          <Monitor className="w-4 h-4" />
+          Cancha Individual
+        </Button>
+        {viewMode === 'single' && (
+          <select
+            value={selectedCourtId}
+            onChange={(e) => setSelectedCourtId(e.target.value)}
+            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Seleccionar Cancha</option>
+            {courts?.map((court) => (
+              <option key={court.id} value={court.id}>
+                {court.name}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Main Content */}
@@ -172,7 +212,7 @@ export default function Display() {
               height: '60px'
             }}
           >
-            {courts?.map((court, index) => (
+            {displayCourts?.map((court, index) => (
               <div
                 key={`header-${court.id}`}
                 className={`flex items-center justify-center ${
@@ -201,29 +241,19 @@ export default function Display() {
                     height: rowHeight
                   }}
                 >
-                  {courts?.map((court, courtIndex) => {
+                  {displayCourts?.map((court, courtIndex) => {
                     const booked = isBooked(court.id, slot);
                     return (
                       <div
                         key={`${court.id}-${slot}`}
                         className={`flex justify-center items-center ${
                           courtIndex < courtsCount - 1 ? 'border-r border-gray-300' : ''
-                        } hover:bg-gray-100 transition-colors duration-200`}
+                        } hover:bg-gray-100 transition-colors duration-200 p-2`}
                       >
                         {booked ? (
-                          <div className="flex flex-col items-center">
-                            <CheckSquare className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-green-600 drop-shadow-sm" />
-                            <span className="text-xs text-green-700 font-medium mt-1 hidden sm:block">
-                              Reservado
-                            </span>
-                          </div>
+                          <CheckSquare className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-green-600 drop-shadow-sm" />
                         ) : (
-                          <div className="flex flex-col items-center opacity-60">
-                            <Square className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-gray-400" />
-                            <span className="text-xs text-gray-500 mt-1 hidden sm:block">
-                              Disponible
-                            </span>
-                          </div>
+                          <Square className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-gray-400 opacity-50" />
                         )}
                       </div>
                     );
