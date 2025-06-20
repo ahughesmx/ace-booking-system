@@ -28,7 +28,6 @@ export default function Display() {
         throw error;
       }
 
-      // Return default settings if none exist
       return data || {
         is_enabled: true,
         rotation_interval: 10000,
@@ -55,7 +54,7 @@ export default function Display() {
       if (error) throw error;
       return data;
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
   });
 
   const { data: courts } = useQuery({
@@ -72,12 +71,10 @@ export default function Display() {
   });
 
   useEffect(() => {
-    // Update time every minute
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
 
-    // Prevent screen from sleeping
     const wakeLock = async () => {
       try {
         await navigator.wakeLock.request("screen");
@@ -111,93 +108,122 @@ export default function Display() {
   };
 
   const courtsCount = courts?.length || 0;
+  const rowHeight = courtsCount > 0 ? `calc((100vh - 120px) / ${timeSlots.length})` : '60px';
 
   return (
     <div className="h-screen w-screen bg-white overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-50 to-white border-b-2 border-blue-100">
+      <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-50 to-white border-b-2 border-blue-200 shadow-sm">
         <img
           src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
           alt="CDV Logo"
-          className="h-12 sm:h-16 md:h-20"
+          className="h-12 sm:h-14 md:h-16 lg:h-18"
         />
         <div className="text-right">
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-1">
             {format(currentTime, "EEEE d 'de' MMMM", { locale: es })}
           </h2>
-          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-blue-600 font-medium">
+          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-blue-600 font-semibold">
             {format(currentTime, "h:mm a")}
           </p>
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Time slots column - Left */}
-        <div className="w-16 sm:w-20 md:w-24 bg-gray-50 border-r-2 border-gray-200 flex flex-col">
-          <div className="h-12 sm:h-14 md:h-16 bg-blue-100 border-b-2 border-gray-200"></div>
+      {/* Main Content */}
+      <div className="flex-1 flex">
+        {/* Left Time Column */}
+        <div className="w-20 sm:w-24 md:w-28 bg-gradient-to-b from-gray-50 to-gray-100 border-r-2 border-gray-300 flex flex-col">
+          {/* Header spacer */}
+          <div 
+            className="bg-blue-200 border-b-2 border-gray-300 flex items-center justify-center"
+            style={{ height: '60px' }}
+          >
+            <span className="text-sm md:text-base font-bold text-gray-700">Hora</span>
+          </div>
+          
+          {/* Time slots */}
           {timeSlots.map((slot) => {
             const isCurrent = format(currentTime, "HH:00") === slot;
             return (
               <div
                 key={`left-${slot}`}
-                className={`flex-1 flex items-center justify-center text-xs sm:text-sm md:text-base lg:text-lg font-medium border-b border-gray-200 ${
+                className={`flex items-center justify-center border-b border-gray-300 ${
                   isCurrent
-                    ? "bg-blue-200 text-blue-800 font-bold"
-                    : "text-gray-700"
-                }`}
+                    ? "bg-blue-300 text-blue-900 font-bold shadow-inner"
+                    : "text-gray-700 hover:bg-gray-200"
+                } transition-colors duration-200`}
+                style={{ height: rowHeight }}
               >
-                {slot}
+                <span className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
+                  {slot}
+                </span>
               </div>
             );
           })}
         </div>
 
-        {/* Courts grid */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Courts header */}
+        {/* Center Content */}
+        <div className="flex-1 flex flex-col">
+          {/* Courts Header */}
           <div 
-            className="h-12 sm:h-14 md:h-16 bg-blue-100 border-b-2 border-gray-200 grid"
-            style={{ gridTemplateColumns: `repeat(${courtsCount}, 1fr)` }}
+            className="bg-gradient-to-r from-blue-200 to-blue-300 border-b-2 border-gray-300 grid shadow-sm"
+            style={{ 
+              gridTemplateColumns: `repeat(${courtsCount}, 1fr)`,
+              height: '60px'
+            }}
           >
-            {courts?.map((court) => (
+            {courts?.map((court, index) => (
               <div
                 key={`header-${court.id}`}
-                className="flex items-center justify-center border-r border-gray-200 last:border-r-0"
+                className={`flex items-center justify-center ${
+                  index < courtsCount - 1 ? 'border-r-2 border-gray-300' : ''
+                } hover:bg-blue-400 transition-colors duration-200`}
               >
-                <h3 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 text-center">
+                <h3 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 text-center px-2">
                   {court.name}
                 </h3>
               </div>
             ))}
           </div>
 
-          {/* Time slots grid */}
-          <div className="flex-1 overflow-hidden">
-            {timeSlots.map((slot) => {
+          {/* Time Slots Grid */}
+          <div className="flex-1">
+            {timeSlots.map((slot, slotIndex) => {
               const isCurrent = format(currentTime, "HH:00") === slot;
               return (
                 <div
                   key={slot}
-                  className={`grid border-b border-gray-200 ${
-                    isCurrent ? "bg-blue-50" : "bg-white"
-                  }`}
+                  className={`grid border-b border-gray-300 ${
+                    isCurrent ? "bg-blue-50 shadow-inner" : "bg-white hover:bg-gray-50"
+                  } transition-colors duration-200`}
                   style={{ 
                     gridTemplateColumns: `repeat(${courtsCount}, 1fr)`,
-                    height: `calc((100vh - 200px) / ${timeSlots.length})`
+                    height: rowHeight
                   }}
                 >
-                  {courts?.map((court) => {
+                  {courts?.map((court, courtIndex) => {
                     const booked = isBooked(court.id, slot);
                     return (
                       <div
                         key={`${court.id}-${slot}`}
-                        className="flex justify-center items-center border-r border-gray-200 last:border-r-0"
+                        className={`flex justify-center items-center ${
+                          courtIndex < courtsCount - 1 ? 'border-r border-gray-300' : ''
+                        } hover:bg-gray-100 transition-colors duration-200`}
                       >
                         {booked ? (
-                          <CheckSquare className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-blue-500" />
+                          <div className="flex flex-col items-center">
+                            <CheckSquare className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-green-600 drop-shadow-sm" />
+                            <span className="text-xs text-green-700 font-medium mt-1 hidden sm:block">
+                              Reservado
+                            </span>
+                          </div>
                         ) : (
-                          <Square className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-gray-300" />
+                          <div className="flex flex-col items-center opacity-60">
+                            <Square className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-gray-400" />
+                            <span className="text-xs text-gray-500 mt-1 hidden sm:block">
+                              Disponible
+                            </span>
+                          </div>
                         )}
                       </div>
                     );
@@ -208,21 +234,32 @@ export default function Display() {
           </div>
         </div>
 
-        {/* Time slots column - Right */}
-        <div className="w-16 sm:w-20 md:w-24 bg-gray-50 border-l-2 border-gray-200 flex flex-col">
-          <div className="h-12 sm:h-14 md:h-16 bg-blue-100 border-b-2 border-gray-200"></div>
+        {/* Right Time Column */}
+        <div className="w-20 sm:w-24 md:w-28 bg-gradient-to-b from-gray-50 to-gray-100 border-l-2 border-gray-300 flex flex-col">
+          {/* Header spacer */}
+          <div 
+            className="bg-blue-200 border-b-2 border-gray-300 flex items-center justify-center"
+            style={{ height: '60px' }}
+          >
+            <span className="text-sm md:text-base font-bold text-gray-700">Hora</span>
+          </div>
+          
+          {/* Time slots */}
           {timeSlots.map((slot) => {
             const isCurrent = format(currentTime, "HH:00") === slot;
             return (
               <div
                 key={`right-${slot}`}
-                className={`flex-1 flex items-center justify-center text-xs sm:text-sm md:text-base lg:text-lg font-medium border-b border-gray-200 ${
+                className={`flex items-center justify-center border-b border-gray-300 ${
                   isCurrent
-                    ? "bg-blue-200 text-blue-800 font-bold"
-                    : "text-gray-700"
-                }`}
+                    ? "bg-blue-300 text-blue-900 font-bold shadow-inner"
+                    : "text-gray-700 hover:bg-gray-200"
+                } transition-colors duration-200`}
+                style={{ height: rowHeight }}
               >
-                {slot}
+                <span className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
+                  {slot}
+                </span>
               </div>
             );
           })}
