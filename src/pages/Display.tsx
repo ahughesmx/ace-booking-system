@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
@@ -17,7 +18,7 @@ export default function Display() {
   const { data: displaySettings } = useQuery({
     queryKey: ["display-settings"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await subabase
         .from("display_settings")
         .select("*")
         .maybeSingle();
@@ -109,90 +110,122 @@ export default function Display() {
     );
   };
 
+  const courtsCount = courts?.length || 0;
+
   return (
-    <div className="min-h-screen bg-white p-8">
-      <div className="max-w-[1800px] mx-auto space-y-8">
-        <div className="flex items-center justify-between mb-12">
-          <img
-            src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
-            alt="CDV Logo"
-            className="h-20"
-          />
-          <div className="text-right">
-            <h2 className="text-4xl font-bold">
-              {format(currentTime, "EEEE d 'de' MMMM", { locale: es })}
-            </h2>
-            <p className="text-3xl text-muted-foreground">
-              {format(currentTime, "h:mm a")}
-            </p>
+    <div className="h-screen w-screen bg-white overflow-hidden flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-50 to-white border-b-2 border-blue-100">
+        <img
+          src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
+          alt="CDV Logo"
+          className="h-12 sm:h-16 md:h-20"
+        />
+        <div className="text-right">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800">
+            {format(currentTime, "EEEE d 'de' MMMM", { locale: es })}
+          </h2>
+          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-blue-600 font-medium">
+            {format(currentTime, "h:mm a")}
+          </p>
+        </div>
+      </div>
+
+      {/* Main Grid */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Time slots column - Left */}
+        <div className="w-16 sm:w-20 md:w-24 bg-gray-50 border-r-2 border-gray-200 flex flex-col">
+          <div className="h-12 sm:h-14 md:h-16 bg-blue-100 border-b-2 border-gray-200"></div>
+          {timeSlots.map((slot) => {
+            const isCurrent = format(currentTime, "HH:00") === slot;
+            return (
+              <div
+                key={`left-${slot}`}
+                className={`flex-1 flex items-center justify-center text-xs sm:text-sm md:text-base lg:text-lg font-medium border-b border-gray-200 ${
+                  isCurrent
+                    ? "bg-blue-200 text-blue-800 font-bold"
+                    : "text-gray-700"
+                }`}
+              >
+                {slot}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Courts grid */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Courts header */}
+          <div 
+            className="h-12 sm:h-14 md:h-16 bg-blue-100 border-b-2 border-gray-200 grid"
+            style={{ gridTemplateColumns: `repeat(${courtsCount}, 1fr)` }}
+          >
+            {courts?.map((court) => (
+              <div
+                key={`header-${court.id}`}
+                className="flex items-center justify-center border-r border-gray-200 last:border-r-0"
+              >
+                <h3 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 text-center">
+                  {court.name}
+                </h3>
+              </div>
+            ))}
+          </div>
+
+          {/* Time slots grid */}
+          <div className="flex-1 overflow-hidden">
+            {timeSlots.map((slot) => {
+              const isCurrent = format(currentTime, "HH:00") === slot;
+              return (
+                <div
+                  key={slot}
+                  className={`grid border-b border-gray-200 ${
+                    isCurrent ? "bg-blue-50" : "bg-white"
+                  }`}
+                  style={{ 
+                    gridTemplateColumns: `repeat(${courtsCount}, 1fr)`,
+                    height: `calc((100vh - 200px) / ${timeSlots.length})`
+                  }}
+                >
+                  {courts?.map((court) => {
+                    const booked = isBooked(court.id, slot);
+                    return (
+                      <div
+                        key={`${court.id}-${slot}`}
+                        className="flex justify-center items-center border-r border-gray-200 last:border-r-0"
+                      >
+                        {booked ? (
+                          <CheckSquare className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-blue-500" />
+                        ) : (
+                          <Square className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-gray-300" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        <div className="grid grid-cols-[auto,1fr,auto] gap-8">
-          {/* Indicadores izquierdos */}
-          <div className="space-y-4">
-            {timeSlots.map((slot) => (
-              <div
-                key={`left-${slot}`}
-                className={`h-16 flex items-center justify-end pr-4 text-xl font-medium ${
-                  format(currentTime, "HH:00") === slot
-                    ? "text-blue-500 font-bold"
-                    : ""
-                }`}
-              >
-                {slot}
-              </div>
-            ))}
-          </div>
-
-          {/* Tabla central */}
-          <div className="border-2 rounded-lg overflow-hidden shadow-lg bg-white">
-            <div className="grid grid-cols-4 divide-x-2">
-              {courts?.map((court) => (
-                <div key={court.id} className="text-center">
-                  <div className="bg-blue-50 p-6">
-                    <h3 className="text-2xl font-bold">{court.name}</h3>
-                  </div>
-                  <div className="divide-y-2">
-                    {timeSlots.map((slot) => {
-                      const booked = isBooked(court.id, slot);
-                      const isCurrent = format(currentTime, "HH:00") === slot;
-                      return (
-                        <div
-                          key={`${court.id}-${slot}`}
-                          className={`h-16 flex justify-center items-center ${
-                            isCurrent ? "bg-blue-50" : ""
-                          }`}
-                        >
-                          {booked ? (
-                            <CheckSquare className="w-8 h-8 text-blue-500" />
-                          ) : (
-                            <Square className="w-8 h-8 text-gray-300" />
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Indicadores derechos */}
-          <div className="space-y-4">
-            {timeSlots.map((slot) => (
+        {/* Time slots column - Right */}
+        <div className="w-16 sm:w-20 md:w-24 bg-gray-50 border-l-2 border-gray-200 flex flex-col">
+          <div className="h-12 sm:h-14 md:h-16 bg-blue-100 border-b-2 border-gray-200"></div>
+          {timeSlots.map((slot) => {
+            const isCurrent = format(currentTime, "HH:00") === slot;
+            return (
               <div
                 key={`right-${slot}`}
-                className={`h-16 flex items-center pl-4 text-xl font-medium ${
-                  format(currentTime, "HH:00") === slot
-                    ? "text-blue-500 font-bold"
-                    : ""
+                className={`flex-1 flex items-center justify-center text-xs sm:text-sm md:text-base lg:text-lg font-medium border-b border-gray-200 ${
+                  isCurrent
+                    ? "bg-blue-200 text-blue-800 font-bold"
+                    : "text-gray-700"
                 }`}
               >
                 {slot}
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
     </div>
