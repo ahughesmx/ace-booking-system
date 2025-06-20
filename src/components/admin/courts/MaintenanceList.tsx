@@ -12,11 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
+import { format, differenceInDays, isSameDay } from "date-fns";
 import { es } from "date-fns/locale";
-import { Calendar, Clock, AlertTriangle, X } from "lucide-react";
+import { Calendar, Clock, AlertTriangle, X, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { AddMaintenanceDialog } from "./AddMaintenanceDialog";
 
 type MaintenancePeriod = {
   id: string;
@@ -93,11 +94,41 @@ export function MaintenanceList() {
     const end = new Date(endTime);
 
     if (now < start) {
-      return { status: "programado", color: "bg-blue-100 text-blue-800" };
+      return { status: "programado", color: "bg-blue-100 text-blue-800", variant: "secondary" as const };
     } else if (now >= start && now <= end) {
-      return { status: "activo", color: "bg-red-100 text-red-800" };
+      return { status: "activo", color: "bg-red-100 text-red-800", variant: "destructive" as const };
     } else {
-      return { status: "finalizado", color: "bg-gray-100 text-gray-800" };
+      return { status: "finalizado", color: "bg-gray-100 text-gray-800", variant: "outline" as const };
+    }
+  };
+
+  const formatDateRange = (startTime: string, endTime: string) => {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const daysDiff = differenceInDays(end, start);
+    const isSameDate = isSameDay(start, end);
+
+    if (isSameDate) {
+      // Mismo día - mostrar fecha y rango de horas
+      return {
+        dateText: format(start, "dd MMM yyyy", { locale: es }),
+        timeText: `${format(start, "HH:mm")} - ${format(end, "HH:mm")}`,
+        type: "hourly"
+      };
+    } else if (daysDiff >= 1) {
+      // Múltiples días - mostrar rango de fechas
+      return {
+        dateText: `${format(start, "dd MMM")} - ${format(end, "dd MMM yyyy", { locale: es })}`,
+        timeText: `${format(start, "HH:mm")} - ${format(end, "HH:mm")}`,
+        type: "multi-day"
+      };
+    } else {
+      // Cruce de medianoche - mostrar fechas y horas
+      return {
+        dateText: `${format(start, "dd MMM")} - ${format(end, "dd MMM yyyy", { locale: es })}`,
+        timeText: `${format(start, "HH:mm")} - ${format(end, "HH:mm")}`,
+        type: "overnight"
+      };
     }
   };
 
@@ -108,16 +139,20 @@ export function MaintenanceList() {
   if (!maintenancePeriods?.length) {
     return (
       <Card className="bg-white shadow-md">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
             <Calendar className="w-5 h-5" />
             Períodos de Mantenimiento
           </CardTitle>
+          <AddMaintenanceDialog onMaintenanceAdded={refetch} />
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
             <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">No hay períodos de mantenimiento programados</p>
+            <p className="text-gray-500 mb-4">No hay períodos de mantenimiento programados</p>
+            <p className="text-sm text-gray-400">
+              Usa el botón "Programar Mantenimiento" para añadir nuevos períodos
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -126,11 +161,12 @@ export function MaintenanceList() {
 
   return (
     <Card className="bg-white shadow-md">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
           <Calendar className="w-5 h-5" />
           Períodos de Mantenimiento ({maintenancePeriods.length})
         </CardTitle>
+        <AddMaintenanceDialog onMaintenanceAdded={refetch} />
       </CardHeader>
       <CardContent>
         <div className="rounded-lg border border-gray-100 overflow-hidden">
@@ -142,14 +178,18 @@ export function MaintenanceList() {
                   <TableHead className="font-semibold text-gray-600">Período</TableHead>
                   <TableHead className="font-semibold text-gray-600">Estado</TableHead>
                   <TableHead className="font-semibold text-gray-600">Motivo</TableHead>
-                  <TableHead className="font-semibold text-gray-600 text-right">
+                  <TableHead className="font-semibold text-gray-600 text-center">
                     Acciones
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {maintenancePeriods.map((maintenance) => {
-                  const { status, color } = getMaintenanceStatus(
+                  const { status, variant } = getMaintenanceStatus(
+                    maintenance.start_time,
+                    maintenance.end_time
+                  );
+                  const { dateText, timeText, type } = formatDateRange(
                     maintenance.start_time,
                     maintenance.end_time
                   );
@@ -174,21 +214,21 @@ export function MaintenanceList() {
                         <div className="space-y-1">
                           <div className="flex items-center gap-1 text-sm">
                             <Calendar className="w-4 h-4 text-gray-400" />
-                            <span>
-                              {format(new Date(maintenance.start_time), "dd MMM yyyy", { locale: es })}
-                            </span>
+                            <span className="font-medium">{dateText}</span>
                           </div>
                           <div className="flex items-center gap-1 text-sm text-gray-600">
                             <Clock className="w-4 h-4 text-gray-400" />
-                            <span>
-                              {format(new Date(maintenance.start_time), "HH:mm")} - {" "}
-                              {format(new Date(maintenance.end_time), "HH:mm")}
-                            </span>
+                            <span>{timeText}</span>
                           </div>
+                          {type === "multi-day" && (
+                            <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                              Múltiples días
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={`${color} border-0`}>
+                        <Badge variant={variant} className="capitalize">
                           {status}
                         </Badge>
                       </TableCell>
@@ -197,19 +237,31 @@ export function MaintenanceList() {
                           {maintenance.reason}
                         </p>
                       </TableCell>
-                      <TableCell className="text-right">
-                        {isActive && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleCancelMaintenance(maintenance.id, maintenance.court.name)}
-                            disabled={loading}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                          >
-                            <X className="w-4 h-4 mr-1" />
-                            Cancelar
-                          </Button>
-                        )}
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-1">
+                          {isActive && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-gray-600 hover:text-gray-700 hover:bg-gray-100"
+                                title="Editar"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleCancelMaintenance(maintenance.id, maintenance.court.name)}
+                                disabled={loading}
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                title="Cancelar"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
