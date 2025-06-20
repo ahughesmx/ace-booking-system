@@ -1,9 +1,10 @@
+
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CheckSquare, Square, Monitor, Building2 } from "lucide-react";
+import { Monitor, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Generate time slots from 7:00 to 23:00
@@ -112,7 +113,6 @@ export default function Display() {
   const selectedCourt = courts?.find(court => court.id === selectedCourtId);
   const displayCourts = viewMode === 'single' && selectedCourt ? [selectedCourt] : courts;
   const courtsCount = displayCourts?.length || 0;
-  const rowHeight = courtsCount > 0 ? `calc((100vh - 180px) / ${timeSlots.length})` : '60px';
 
   return (
     <div className="h-screen w-screen bg-white overflow-hidden flex flex-col">
@@ -174,10 +174,7 @@ export default function Display() {
         {/* Left Time Column */}
         <div className="w-20 sm:w-24 md:w-28 bg-gradient-to-b from-gray-50 to-gray-100 border-r-2 border-gray-300 flex flex-col">
           {/* Header spacer */}
-          <div 
-            className="bg-blue-200 border-b-2 border-gray-300 flex items-center justify-center"
-            style={{ height: '60px' }}
-          >
+          <div className="h-16 bg-blue-200 border-b-2 border-gray-300 flex items-center justify-center">
             <span className="text-sm md:text-base font-bold text-gray-700">Hora</span>
           </div>
           
@@ -187,12 +184,11 @@ export default function Display() {
             return (
               <div
                 key={`left-${slot}`}
-                className={`flex items-center justify-center border-b border-gray-300 ${
+                className={`h-16 flex items-center justify-center border-b border-gray-300 ${
                   isCurrent
                     ? "bg-blue-300 text-blue-900 font-bold shadow-inner"
                     : "text-gray-700 hover:bg-gray-200"
                 } transition-colors duration-200`}
-                style={{ height: rowHeight }}
               >
                 <span className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
                   {slot}
@@ -206,10 +202,9 @@ export default function Display() {
         <div className="flex-1 flex flex-col">
           {/* Courts Header */}
           <div 
-            className="bg-gradient-to-r from-blue-200 to-blue-300 border-b-2 border-gray-300 grid shadow-sm"
+            className="h-16 bg-gradient-to-r from-blue-200 to-blue-300 border-b-2 border-gray-300 grid shadow-sm"
             style={{ 
-              gridTemplateColumns: `repeat(${courtsCount}, 1fr)`,
-              height: '60px'
+              gridTemplateColumns: `repeat(${courtsCount}, 1fr)`
             }}
           >
             {displayCourts?.map((court, index) => (
@@ -233,12 +228,9 @@ export default function Display() {
               return (
                 <div
                   key={slot}
-                  className={`grid border-b border-gray-300 ${
-                    isCurrent ? "bg-blue-50 shadow-inner" : "bg-white hover:bg-gray-50"
-                  } transition-colors duration-200`}
+                  className={`h-16 grid border-b border-gray-300 transition-colors duration-200`}
                   style={{ 
-                    gridTemplateColumns: `repeat(${courtsCount}, 1fr)`,
-                    height: rowHeight
+                    gridTemplateColumns: `repeat(${courtsCount}, 1fr)`
                   }}
                 >
                   {displayCourts?.map((court, courtIndex) => {
@@ -248,12 +240,18 @@ export default function Display() {
                         key={`${court.id}-${slot}`}
                         className={`flex justify-center items-center ${
                           courtIndex < courtsCount - 1 ? 'border-r border-gray-300' : ''
-                        } hover:bg-gray-100 transition-colors duration-200 p-2`}
+                        } transition-colors duration-200 ${
+                          booked
+                            ? 'bg-red-500 text-white font-semibold shadow-inner'
+                            : isCurrent
+                            ? 'bg-blue-50 hover:bg-blue-100'
+                            : 'bg-white hover:bg-gray-50'
+                        }`}
                       >
-                        {booked ? (
-                          <CheckSquare className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-green-600 drop-shadow-sm" />
-                        ) : (
-                          <Square className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-gray-400 opacity-50" />
+                        {booked && (
+                          <span className="text-xs sm:text-sm md:text-base font-bold">
+                            RESERVADO
+                          </span>
                         )}
                       </div>
                     );
@@ -267,10 +265,7 @@ export default function Display() {
         {/* Right Time Column */}
         <div className="w-20 sm:w-24 md:w-28 bg-gradient-to-b from-gray-50 to-gray-100 border-l-2 border-gray-300 flex flex-col">
           {/* Header spacer */}
-          <div 
-            className="bg-blue-200 border-b-2 border-gray-300 flex items-center justify-center"
-            style={{ height: '60px' }}
-          >
+          <div className="h-16 bg-blue-200 border-b-2 border-gray-300 flex items-center justify-center">
             <span className="text-sm md:text-base font-bold text-gray-700">Hora</span>
           </div>
           
@@ -280,12 +275,11 @@ export default function Display() {
             return (
               <div
                 key={`right-${slot}`}
-                className={`flex items-center justify-center border-b border-gray-300 ${
+                className={`h-16 flex items-center justify-center border-b border-gray-300 ${
                   isCurrent
                     ? "bg-blue-300 text-blue-900 font-bold shadow-inner"
                     : "text-gray-700 hover:bg-gray-200"
                 } transition-colors duration-200`}
-                style={{ height: rowHeight }}
               >
                 <span className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
                   {slot}
