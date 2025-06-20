@@ -18,7 +18,7 @@ export default function Display() {
   const { data: displaySettings } = useQuery({
     queryKey: ["display-settings"],
     queryFn: async () => {
-      const { data, error } = await subabase
+      const { data, error } = await supabase
         .from("display_settings")
         .select("*")
         .maybeSingle();
