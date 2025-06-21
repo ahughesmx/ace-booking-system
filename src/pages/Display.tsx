@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
@@ -114,10 +115,10 @@ export default function Display() {
   // Render All Courts View
   if (viewMode === 'all') {
     return (
-      <div className="h-screen w-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col">
+      <div className="h-screen w-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col overflow-hidden">
         {/* Header - Fixed height */}
         <div className="bg-white shadow-lg border-b-4 border-blue-500 flex-shrink-0">
-          <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center justify-between px-6 py-3">
             <img
               src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
               alt="CDV Logo"
@@ -153,12 +154,12 @@ export default function Display() {
           </div>
         </div>
 
-        {/* Main Grid - Flex grow to fill remaining space */}
-        <div className="flex-1 p-3 min-h-0">
-          <div className="bg-white rounded-lg shadow-xl h-full flex flex-col">
+        {/* Main Grid - Uses remaining space */}
+        <div className="flex-1 p-4 min-h-0">
+          <div className="bg-white rounded-lg shadow-xl h-full flex flex-col overflow-hidden">
             {/* Courts Header - Fixed height */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-2 flex-shrink-0">
-              <div className="grid gap-2" style={{ gridTemplateColumns: `80px repeat(${courts?.length || 0}, 1fr)` }}>
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 flex-shrink-0">
+              <div className="grid gap-2" style={{ gridTemplateColumns: `100px repeat(${courts?.length || 0}, 1fr)` }}>
                 <div className="font-bold text-sm text-center">Hora</div>
                 {courts?.map((court) => (
                   <div key={court.id} className="text-center font-bold text-sm truncate">
@@ -168,37 +169,42 @@ export default function Display() {
               </div>
             </div>
 
-            {/* Time Slots Grid - Scrollable if needed */}
-            <div className="flex-1 overflow-auto">
-              {timeSlots.map((slot, index) => {
-                const isCurrent = format(currentTime, "HH:00") === slot;
-                return (
-                  <div
-                    key={slot}
-                    className={`grid gap-2 p-2 border-b border-gray-100 transition-colors ${
-                      isCurrent ? 'bg-blue-50 border-l-4 border-blue-500' : 'hover:bg-gray-50'
-                    }`}
-                    style={{ gridTemplateColumns: `80px repeat(${courts?.length || 0}, 1fr)` }}
-                  >
-                    <div className={`text-center font-semibold text-sm ${isCurrent ? 'text-blue-700' : 'text-gray-700'}`}>
-                      {slot}
+            {/* Time Slots Grid - Fills remaining space exactly */}
+            <div className="flex-1 overflow-hidden">
+              <div className="h-full flex flex-col">
+                {timeSlots.map((slot, index) => {
+                  const isCurrent = format(currentTime, "HH:00") === slot;
+                  return (
+                    <div
+                      key={slot}
+                      className={`grid gap-2 px-3 border-b border-gray-100 transition-colors flex-1 min-h-0 ${
+                        isCurrent ? 'bg-blue-50 border-l-4 border-blue-500' : 'hover:bg-gray-50'
+                      }`}
+                      style={{ 
+                        gridTemplateColumns: `100px repeat(${courts?.length || 0}, 1fr)`,
+                        height: `${100 / timeSlots.length}%`
+                      }}
+                    >
+                      <div className={`text-center font-semibold text-sm flex items-center justify-center ${isCurrent ? 'text-blue-700' : 'text-gray-700'}`}>
+                        {slot}
+                      </div>
+                      {courts?.map((court) => {
+                        const booked = isBooked(court.id, slot);
+                        return (
+                          <div
+                            key={`${court.id}-${slot}`}
+                            className={`rounded transition-all m-1 ${
+                              booked
+                                ? 'bg-red-500'
+                                : 'bg-green-100'
+                            }`}
+                          />
+                        );
+                      })}
                     </div>
-                    {courts?.map((court) => {
-                      const booked = isBooked(court.id, slot);
-                      return (
-                        <div
-                          key={`${court.id}-${slot}`}
-                          className={`h-8 rounded transition-all ${
-                            booked
-                              ? 'bg-red-500'
-                              : 'bg-green-100'
-                          }`}
-                        />
-                      );
-                    })}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -222,10 +228,10 @@ export default function Display() {
 
   // Render Single Court View
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col">
+    <div className="h-screen w-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col overflow-hidden">
       {/* Header - Fixed height */}
       <div className="bg-white shadow-lg border-b-4 border-blue-500 flex-shrink-0">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-6 py-3">
           <img
             src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
             alt="CDV Logo"
@@ -278,32 +284,32 @@ export default function Display() {
         </div>
       </div>
 
-      {/* Single Court Content - Flex grow to fill remaining space */}
+      {/* Single Court Content - Uses remaining space */}
       {selectedCourt ? (
         <div className="flex-1 p-4 min-h-0">
-          <div className="h-full bg-white rounded-xl shadow-2xl flex flex-col">
+          <div className="h-full bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden">
             {/* Court Header - Fixed height */}
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 text-center flex-shrink-0">
               <h2 className="text-2xl font-bold">{selectedCourt.name}</h2>
               <p className="text-base opacity-90">Horarios del Día</p>
             </div>
 
-            {/* Time Slots - Two Column Layout - Flex grow */}
+            {/* Time Slots - Two Column Layout filling remaining space */}
             <div className="flex-1 p-4 min-h-0">
               <div className="grid grid-cols-2 gap-4 h-full">
                 {/* Morning Column */}
-                <div className="flex flex-col">
-                  <h3 className="text-lg font-bold text-gray-800 mb-3 text-center border-b-2 border-blue-200 pb-2">
-                    Mañana
+                <div className="flex flex-col min-h-0">
+                  <h3 className="text-lg font-bold text-gray-800 mb-2 text-center border-b-2 border-blue-200 pb-2 flex-shrink-0">
+                    Mañana (7:00 - 15:00)
                   </h3>
-                  <div className="flex-1 space-y-2 overflow-auto">
+                  <div className="flex-1 flex flex-col gap-1 min-h-0">
                     {timeSlots.slice(0, 9).map((slot) => {
                       const booked = isBooked(selectedCourt.id, slot);
                       const isCurrent = format(currentTime, "HH:00") === slot;
                       return (
                         <div
                           key={slot}
-                          className={`p-3 rounded-lg border-2 transition-all text-center ${
+                          className={`p-2 rounded-lg border-2 transition-all text-center flex-1 min-h-0 flex flex-col justify-center ${
                             booked
                               ? 'bg-red-500 border-red-600 text-white shadow-lg'
                               : isCurrent
@@ -311,8 +317,8 @@ export default function Display() {
                               : 'bg-green-100 border-green-300 text-green-800'
                           }`}
                         >
-                          <div className="text-lg font-bold">{slot}</div>
-                          <div className="text-xs font-medium mt-1">
+                          <div className="text-base font-bold">{slot}</div>
+                          <div className="text-xs font-medium">
                             {booked ? 'RESERVADO' : 'DISPONIBLE'}
                           </div>
                         </div>
@@ -322,18 +328,18 @@ export default function Display() {
                 </div>
 
                 {/* Afternoon/Evening Column */}
-                <div className="flex flex-col">
-                  <h3 className="text-lg font-bold text-gray-800 mb-3 text-center border-b-2 border-blue-200 pb-2">
-                    Tarde/Noche
+                <div className="flex flex-col min-h-0">
+                  <h3 className="text-lg font-bold text-gray-800 mb-2 text-center border-b-2 border-blue-200 pb-2 flex-shrink-0">
+                    Tarde/Noche (16:00 - 23:00)
                   </h3>
-                  <div className="flex-1 space-y-2 overflow-auto">
+                  <div className="flex-1 flex flex-col gap-1 min-h-0">
                     {timeSlots.slice(9).map((slot) => {
                       const booked = isBooked(selectedCourt.id, slot);
                       const isCurrent = format(currentTime, "HH:00") === slot;
                       return (
                         <div
                           key={slot}
-                          className={`p-3 rounded-lg border-2 transition-all text-center ${
+                          className={`p-2 rounded-lg border-2 transition-all text-center flex-1 min-h-0 flex flex-col justify-center ${
                             booked
                               ? 'bg-red-500 border-red-600 text-white shadow-lg'
                               : isCurrent
@@ -341,8 +347,8 @@ export default function Display() {
                               : 'bg-green-100 border-green-300 text-green-800'
                           }`}
                         >
-                          <div className="text-lg font-bold">{slot}</div>
-                          <div className="text-xs font-medium mt-1">
+                          <div className="text-base font-bold">{slot}</div>
+                          <div className="text-xs font-medium">
                             {booked ? 'RESERVADO' : 'DISPONIBLE'}
                           </div>
                         </div>
