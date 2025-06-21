@@ -302,24 +302,27 @@ export default function Display() {
                   <h3 className="text-lg font-bold text-gray-800 mb-2 text-center border-b-2 border-blue-200 pb-2 flex-shrink-0">
                     Mañana (7:00 - 15:00)
                   </h3>
-                  <div className="flex-1 flex flex-col gap-1 min-h-0">
+                  <div className="flex-1 space-y-1 overflow-hidden">
                     {timeSlots.slice(0, 9).map((slot) => {
                       const booked = isBooked(selectedCourt.id, slot);
                       const isCurrent = format(currentTime, "HH:00") === slot;
                       return (
                         <div
                           key={slot}
-                          className={`p-2 rounded-lg border-2 transition-all text-center flex-1 min-h-0 flex flex-col justify-center ${
+                          className={`rounded-lg border-2 transition-all text-center flex items-center justify-center ${
                             booked
                               ? 'bg-red-500 border-red-600 text-white shadow-lg'
                               : isCurrent
                               ? 'bg-blue-100 border-blue-400 text-blue-800 shadow-md'
                               : 'bg-green-100 border-green-300 text-green-800'
                           }`}
+                          style={{ height: 'calc((100% - 32px) / 9)' }}
                         >
-                          <div className="text-base font-bold">{slot}</div>
-                          <div className="text-xs font-medium">
-                            {booked ? 'RESERVADO' : 'DISPONIBLE'}
+                          <div className="flex flex-col items-center justify-center">
+                            <div className="text-lg font-bold mb-1">{slot}</div>
+                            <div className="text-sm font-medium">
+                              {booked ? 'RESERVADO' : 'DISPONIBLE'}
+                            </div>
                           </div>
                         </div>
                       );
@@ -332,24 +335,27 @@ export default function Display() {
                   <h3 className="text-lg font-bold text-gray-800 mb-2 text-center border-b-2 border-blue-200 pb-2 flex-shrink-0">
                     Tarde/Noche (16:00 - 23:00)
                   </h3>
-                  <div className="flex-1 flex flex-col gap-1 min-h-0">
+                  <div className="flex-1 space-y-1 overflow-hidden">
                     {timeSlots.slice(9).map((slot) => {
                       const booked = isBooked(selectedCourt.id, slot);
                       const isCurrent = format(currentTime, "HH:00") === slot;
                       return (
                         <div
                           key={slot}
-                          className={`p-2 rounded-lg border-2 transition-all text-center flex-1 min-h-0 flex flex-col justify-center ${
+                          className={`rounded-lg border-2 transition-all text-center flex items-center justify-center ${
                             booked
                               ? 'bg-red-500 border-red-600 text-white shadow-lg'
                               : isCurrent
                               ? 'bg-blue-100 border-blue-400 text-blue-800 shadow-md'
                               : 'bg-green-100 border-green-300 text-green-800'
                           }`}
+                          style={{ height: 'calc((100% - 28px) / 8)' }}
                         >
-                          <div className="text-base font-bold">{slot}</div>
-                          <div className="text-xs font-medium">
-                            {booked ? 'RESERVADO' : 'DISPONIBLE'}
+                          <div className="flex flex-col items-center justify-center">
+                            <div className="text-lg font-bold mb-1">{slot}</div>
+                            <div className="text-sm font-medium">
+                              {booked ? 'RESERVADO' : 'DISPONIBLE'}
+                            </div>
                           </div>
                         </div>
                       );
