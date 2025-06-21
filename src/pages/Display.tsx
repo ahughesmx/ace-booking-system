@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Monitor, Building2 } from "lucide-react";
+import { Monitor, Building2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Generate time slots from 7:00 to 23:00
@@ -111,53 +111,163 @@ export default function Display() {
   };
 
   const selectedCourt = courts?.find(court => court.id === selectedCourtId);
-  const displayCourts = viewMode === 'single' && selectedCourt ? [selectedCourt] : courts;
-  const courtsCount = displayCourts?.length || 0;
 
+  // Render All Courts View
+  if (viewMode === 'all') {
+    return (
+      <div className="h-screen w-screen bg-gradient-to-br from-slate-50 to-blue-50 overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="bg-white shadow-lg border-b-4 border-blue-500">
+          <div className="flex items-center justify-between px-8 py-6">
+            <img
+              src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
+              alt="CDV Logo"
+              className="h-16"
+            />
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-gray-800 mb-2">
+                {format(currentTime, "EEEE d 'de' MMMM", { locale: es })}
+              </h1>
+              <p className="text-2xl text-blue-600 font-semibold flex items-center justify-center gap-2">
+                <Clock className="w-6 h-6" />
+                {format(currentTime, "h:mm a")}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="default"
+                onClick={() => setViewMode('all')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg"
+              >
+                <Building2 className="w-5 h-5 mr-2" />
+                Todas las Canchas
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setViewMode('single')}
+                className="border-blue-600 text-blue-600 hover:bg-blue-50 px-6 py-3 text-lg"
+              >
+                <Monitor className="w-5 h-5 mr-2" />
+                Vista Individual
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Grid */}
+        <div className="flex-1 p-6 overflow-auto">
+          <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+            {/* Courts Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4">
+              <div className="grid gap-4" style={{ gridTemplateColumns: `120px repeat(${courts?.length || 0}, 1fr)` }}>
+                <div className="font-bold text-lg text-center">Horario</div>
+                {courts?.map((court) => (
+                  <div key={court.id} className="text-center font-bold text-lg">
+                    {court.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Time Slots Grid */}
+            <div className="divide-y divide-gray-200">
+              {timeSlots.map((slot, index) => {
+                const isCurrent = format(currentTime, "HH:00") === slot;
+                return (
+                  <div
+                    key={slot}
+                    className={`grid gap-4 p-4 transition-colors ${
+                      isCurrent ? 'bg-blue-50 border-l-4 border-blue-500' : 'hover:bg-gray-50'
+                    } ${index % 2 === 0 ? 'bg-gray-25' : 'bg-white'}`}
+                    style={{ gridTemplateColumns: `120px repeat(${courts?.length || 0}, 1fr)` }}
+                  >
+                    <div className={`text-center font-semibold text-lg ${isCurrent ? 'text-blue-700' : 'text-gray-700'}`}>
+                      {slot}
+                    </div>
+                    {courts?.map((court) => {
+                      const booked = isBooked(court.id, slot);
+                      return (
+                        <div
+                          key={`${court.id}-${slot}`}
+                          className={`h-12 rounded-lg border-2 transition-all ${
+                            booked
+                              ? 'bg-red-500 border-red-600 shadow-md'
+                              : 'bg-green-100 border-green-300 hover:bg-green-200'
+                          }`}
+                        />
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="bg-white border-t p-4">
+          <div className="flex justify-center gap-8">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-green-100 border-2 border-green-300 rounded"></div>
+              <span className="text-gray-700 font-medium">Disponible</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-red-500 border-2 border-red-600 rounded"></div>
+              <span className="text-gray-700 font-medium">Reservado</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render Single Court View
   return (
-    <div className="h-screen w-screen bg-white overflow-hidden flex flex-col">
+    <div className="h-screen w-screen bg-gradient-to-br from-slate-50 to-blue-50 overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-50 to-white border-b-2 border-blue-200 shadow-sm">
-        <img
-          src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
-          alt="CDV Logo"
-          className="h-12 sm:h-14 md:h-16 lg:h-18"
-        />
-        <div className="text-right">
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-1">
-            {format(currentTime, "EEEE d 'de' MMMM", { locale: es })}
-          </h2>
-          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-blue-600 font-semibold">
-            {format(currentTime, "h:mm a")}
-          </p>
+      <div className="bg-white shadow-lg border-b-4 border-blue-500">
+        <div className="flex items-center justify-between px-8 py-6">
+          <img
+            src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
+            alt="CDV Logo"
+            className="h-16"
+          />
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">
+              {format(currentTime, "EEEE d 'de' MMMM", { locale: es })}
+            </h1>
+            <p className="text-2xl text-blue-600 font-semibold flex items-center justify-center gap-2">
+              <Clock className="w-6 h-6" />
+              {format(currentTime, "h:mm a")}
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setViewMode('all')}
+              className="border-blue-600 text-blue-600 hover:bg-blue-50 px-6 py-3 text-lg"
+            >
+              <Building2 className="w-5 h-5 mr-2" />
+              Todas las Canchas
+            </Button>
+            <Button
+              variant="default"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg"
+            >
+              <Monitor className="w-5 h-5 mr-2" />
+              Vista Individual
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* View Mode Controls */}
-      <div className="flex items-center justify-center gap-4 py-3 bg-gray-50 border-b border-gray-200">
-        <Button
-          variant={viewMode === 'all' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setViewMode('all')}
-          className="flex items-center gap-2"
-        >
-          <Building2 className="w-4 h-4" />
-          Todas las Canchas
-        </Button>
-        <Button
-          variant={viewMode === 'single' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setViewMode('single')}
-          className="flex items-center gap-2"
-        >
-          <Monitor className="w-4 h-4" />
-          Cancha Individual
-        </Button>
-        {viewMode === 'single' && (
+      {/* Court Selector */}
+      <div className="bg-white border-b p-4">
+        <div className="flex justify-center">
           <select
             value={selectedCourtId}
             onChange={(e) => setSelectedCourtId(e.target.value)}
-            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-6 py-3 border-2 border-blue-300 rounded-lg text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[300px]"
           >
             <option value="">Seleccionar Cancha</option>
             {courts?.map((court) => (
@@ -166,129 +276,113 @@ export default function Display() {
               </option>
             ))}
           </select>
-        )}
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex">
-        {/* Left Time Column */}
-        <div className="w-20 sm:w-24 md:w-28 bg-gradient-to-b from-gray-50 to-gray-100 border-r-2 border-gray-300 flex flex-col">
-          {/* Header spacer */}
-          <div className="h-16 bg-blue-200 border-b-2 border-gray-300 flex items-center justify-center">
-            <span className="text-sm md:text-base font-bold text-gray-700">Hora</span>
-          </div>
-          
-          {/* Time slots */}
-          {timeSlots.map((slot) => {
-            const isCurrent = format(currentTime, "HH:00") === slot;
-            return (
-              <div
-                key={`left-${slot}`}
-                className={`h-16 flex items-center justify-center border-b border-gray-300 ${
-                  isCurrent
-                    ? "bg-blue-300 text-blue-900 font-bold shadow-inner"
-                    : "text-gray-700 hover:bg-gray-200"
-                } transition-colors duration-200`}
-              >
-                <span className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
-                  {slot}
-                </span>
+      {/* Single Court Content */}
+      {selectedCourt ? (
+        <div className="flex-1 p-8 overflow-auto">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+              {/* Court Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-8 text-center">
+                <h2 className="text-4xl font-bold mb-2">{selectedCourt.name}</h2>
+                <p className="text-xl opacity-90">Horarios del Día</p>
               </div>
-            );
-          })}
-        </div>
 
-        {/* Center Content */}
-        <div className="flex-1 flex flex-col">
-          {/* Courts Header */}
-          <div 
-            className="h-16 bg-gradient-to-r from-blue-200 to-blue-300 border-b-2 border-gray-300 grid shadow-sm"
-            style={{ 
-              gridTemplateColumns: `repeat(${courtsCount}, 1fr)`
-            }}
-          >
-            {displayCourts?.map((court, index) => (
-              <div
-                key={`header-${court.id}`}
-                className={`flex items-center justify-center ${
-                  index < courtsCount - 1 ? 'border-r-2 border-gray-300' : ''
-                } hover:bg-blue-400 transition-colors duration-200`}
-              >
-                <h3 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 text-center px-2">
-                  {court.name}
-                </h3>
-              </div>
-            ))}
-          </div>
+              {/* Time Slots - Two Column Layout */}
+              <div className="p-8">
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Morning Column */}
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center border-b-2 border-blue-200 pb-3">
+                      Mañana
+                    </h3>
+                    <div className="space-y-3">
+                      {timeSlots.slice(0, 9).map((slot) => {
+                        const booked = isBooked(selectedCourt.id, slot);
+                        const isCurrent = format(currentTime, "HH:00") === slot;
+                        return (
+                          <div
+                            key={slot}
+                            className={`p-4 rounded-xl border-2 transition-all text-center ${
+                              booked
+                                ? 'bg-red-500 border-red-600 text-white shadow-lg'
+                                : isCurrent
+                                ? 'bg-blue-100 border-blue-400 text-blue-800 shadow-md'
+                                : 'bg-green-100 border-green-300 text-green-800 hover:bg-green-200'
+                            }`}
+                          >
+                            <div className="text-xl font-bold">{slot}</div>
+                            <div className="text-sm font-medium mt-1">
+                              {booked ? 'RESERVADO' : 'DISPONIBLE'}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-          {/* Time Slots Grid */}
-          <div className="flex-1">
-            {timeSlots.map((slot, slotIndex) => {
-              const isCurrent = format(currentTime, "HH:00") === slot;
-              return (
-                <div
-                  key={slot}
-                  className={`h-16 grid border-b border-gray-300 transition-colors duration-200`}
-                  style={{ 
-                    gridTemplateColumns: `repeat(${courtsCount}, 1fr)`
-                  }}
-                >
-                  {displayCourts?.map((court, courtIndex) => {
-                    const booked = isBooked(court.id, slot);
-                    return (
-                      <div
-                        key={`${court.id}-${slot}`}
-                        className={`flex justify-center items-center ${
-                          courtIndex < courtsCount - 1 ? 'border-r border-gray-300' : ''
-                        } transition-colors duration-200 ${
-                          booked
-                            ? 'bg-red-500 text-white font-semibold shadow-inner'
-                            : isCurrent
-                            ? 'bg-blue-50 hover:bg-blue-100'
-                            : 'bg-white hover:bg-gray-50'
-                        }`}
-                      >
-                        {booked && (
-                          <span className="text-xs sm:text-sm md:text-base font-bold">
-                            RESERVADO
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
+                  {/* Afternoon/Evening Column */}
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center border-b-2 border-blue-200 pb-3">
+                      Tarde/Noche
+                    </h3>
+                    <div className="space-y-3">
+                      {timeSlots.slice(9).map((slot) => {
+                        const booked = isBooked(selectedCourt.id, slot);
+                        const isCurrent = format(currentTime, "HH:00") === slot;
+                        return (
+                          <div
+                            key={slot}
+                            className={`p-4 rounded-xl border-2 transition-all text-center ${
+                              booked
+                                ? 'bg-red-500 border-red-600 text-white shadow-lg'
+                                : isCurrent
+                                ? 'bg-blue-100 border-blue-400 text-blue-800 shadow-md'
+                                : 'bg-green-100 border-green-300 text-green-800 hover:bg-green-200'
+                            }`}
+                          >
+                            <div className="text-xl font-bold">{slot}</div>
+                            <div className="text-sm font-medium mt-1">
+                              {booked ? 'RESERVADO' : 'DISPONIBLE'}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Right Time Column */}
-        <div className="w-20 sm:w-24 md:w-28 bg-gradient-to-b from-gray-50 to-gray-100 border-l-2 border-gray-300 flex flex-col">
-          {/* Header spacer */}
-          <div className="h-16 bg-blue-200 border-b-2 border-gray-300 flex items-center justify-center">
-            <span className="text-sm md:text-base font-bold text-gray-700">Hora</span>
-          </div>
-          
-          {/* Time slots */}
-          {timeSlots.map((slot) => {
-            const isCurrent = format(currentTime, "HH:00") === slot;
-            return (
-              <div
-                key={`right-${slot}`}
-                className={`h-16 flex items-center justify-center border-b border-gray-300 ${
-                  isCurrent
-                    ? "bg-blue-300 text-blue-900 font-bold shadow-inner"
-                    : "text-gray-700 hover:bg-gray-200"
-                } transition-colors duration-200`}
-              >
-                <span className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
-                  {slot}
-                </span>
               </div>
-            );
-          })}
+
+              {/* Legend */}
+              <div className="bg-gray-50 p-6 border-t">
+                <div className="flex justify-center gap-8">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-green-100 border-2 border-green-300 rounded-lg"></div>
+                    <span className="text-gray-700 font-medium text-lg">Disponible</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-red-500 border-2 border-red-600 rounded-lg"></div>
+                    <span className="text-gray-700 font-medium text-lg">Reservado</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-blue-100 border-2 border-blue-400 rounded-lg"></div>
+                    <span className="text-gray-700 font-medium text-lg">Hora Actual</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <Monitor className="w-16 h-16 mx-auto mb-4 opacity-50" />
+            <p className="text-xl">Selecciona una cancha para ver sus horarios</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
