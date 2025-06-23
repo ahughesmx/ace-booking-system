@@ -56,6 +56,71 @@ export function useBookings(selectedDate?: Date) {
   });
 }
 
+// Hook para obtener reservas especiales
+export function useSpecialBookings(selectedDate?: Date) {
+  return useQuery({
+    queryKey: ["special-bookings", selectedDate?.toISOString()],
+    queryFn: async () => {
+      if (!selectedDate) {
+        return [];
+      }
+
+      if (!(selectedDate instanceof Date) || isNaN(selectedDate.getTime())) {
+        return [];
+      }
+
+      const start = startOfDay(selectedDate);
+      const end = endOfDay(selectedDate);
+
+      const { data, error } = await supabase
+        .from("special_bookings")
+        .select(`
+          *,
+          court:courts(id, name, court_type)
+        `)
+        .gte("start_time", start.toISOString())
+        .lt("start_time", end.toISOString())
+        .order("start_time");
+
+      if (error) {
+        console.error("Error fetching special bookings:", error);
+        throw error;
+      }
+
+      return data || [];
+    },
+    enabled: !!selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime()),
+  });
+}
+
+// Hook combinado para obtener todas las reservas (normales + especiales)
+export function useAllBookings(selectedDate?: Date) {
+  const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate);
+  const { data: specialBookings = [], isLoading: loadingSpecial } = useSpecialBookings(selectedDate);
+
+  return {
+    data: [
+      ...regularBookings,
+      ...(specialBookings?.map(sb => ({
+        id: `special-${sb.id}`,
+        court_id: sb.court_id,
+        user_id: null,
+        start_time: sb.start_time,
+        end_time: sb.end_time,
+        created_at: sb.created_at,
+        booking_made_at: sb.created_at,
+        user: null,
+        court: sb.court,
+        isSpecial: true,
+        event_type: sb.event_type,
+        title: sb.title,
+        description: sb.description,
+      })) || [])
+    ],
+    isLoading: loadingRegular || loadingSpecial
+  };
+}
+
 // Nueva función para verificar si una cancha está en mantenimiento
 export function useCourtAvailability(courtId: string, startTime: Date, endTime: Date) {
   return useQuery({
@@ -78,10 +143,20 @@ export function useCourtAvailability(courtId: string, startTime: Date, endTime: 
 
       if (bookingError) throw bookingError;
 
+      // Verificar reservas especiales
+      const { data: specialBookingData, error: specialBookingError } = await supabase
+        .from("special_bookings")
+        .select("id")
+        .eq("court_id", courtId)
+        .or(`and(start_time.lt.${endTime.toISOString()},end_time.gt.${startTime.toISOString()})`);
+
+      if (specialBookingError) throw specialBookingError;
+
       return {
-        isAvailable: !maintenanceData?.length && !bookingData?.length,
+        isAvailable: !maintenanceData?.length && !bookingData?.length && !specialBookingData?.length,
         maintenanceReason: maintenanceData?.[0]?.reason,
         hasBookings: !!bookingData?.length,
+        hasSpecialBookings: !!specialBookingData?.length,
         hasMaintenace: !!maintenanceData?.length
       };
     },

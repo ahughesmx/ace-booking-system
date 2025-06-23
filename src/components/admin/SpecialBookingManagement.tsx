@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
@@ -12,7 +11,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Calendar as CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, addDays, addWeeks, getDay } from "date-fns";
 import { es } from "date-fns/locale";
 
 type SpecialBooking = {
@@ -35,13 +34,13 @@ type SpecialBooking = {
 };
 
 const DAYS_OF_WEEK = [
-  { value: 'monday', label: 'Lunes' },
-  { value: 'tuesday', label: 'Martes' },
-  { value: 'wednesday', label: 'Miércoles' },
-  { value: 'thursday', label: 'Jueves' },
-  { value: 'friday', label: 'Viernes' },
-  { value: 'saturday', label: 'Sábado' },
-  { value: 'sunday', label: 'Domingo' }
+  { value: 'sunday', label: 'Domingo', dayIndex: 0 },
+  { value: 'monday', label: 'Lunes', dayIndex: 1 },
+  { value: 'tuesday', label: 'Martes', dayIndex: 2 },
+  { value: 'wednesday', label: 'Miércoles', dayIndex: 3 },
+  { value: 'thursday', label: 'Jueves', dayIndex: 4 },
+  { value: 'friday', label: 'Viernes', dayIndex: 5 },
+  { value: 'saturday', label: 'Sábado', dayIndex: 6 }
 ];
 
 const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => {
@@ -67,9 +66,11 @@ export default function SpecialBookingManagement() {
     price_type: 'normal',
     custom_price: 0,
     is_recurring: false,
-    recurrence_pattern: [] as string[]
+    recurrence_pattern: [] as string[],
+    recurrence_weeks: 4 // Número de semanas para generar
   });
 
+  // Queries
   const { data: courts } = useQuery({
     queryKey: ["courts"],
     queryFn: async () => {
@@ -97,6 +98,28 @@ export default function SpecialBookingManagement() {
     },
   });
 
+  // Función para generar fechas recurrentes
+  const generateRecurringDates = (startDate: Date, recurrencePattern: string[], weeks: number) => {
+    const dates: Date[] = [];
+    const dayIndices = recurrencePattern.map(day => 
+      DAYS_OF_WEEK.find(d => d.value === day)?.dayIndex ?? 0
+    );
+
+    for (let week = 0; week < weeks; week++) {
+      for (const dayIndex of dayIndices) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + (week * 7) + (dayIndex - getDay(startDate)));
+        
+        // Solo agregar fechas futuras
+        if (date >= startDate) {
+          dates.push(date);
+        }
+      }
+    }
+
+    return dates.sort((a, b) => a.getTime() - b.getTime());
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.court_id || !formData.event_type || !formData.title || !formData.selected_date || !formData.start_time || !formData.end_time) {
@@ -111,36 +134,72 @@ export default function SpecialBookingManagement() {
     try {
       setLoading(true);
 
-      const startDateTime = new Date(formData.selected_date);
-      const [startHour, startMinute] = formData.start_time.split(':').map(Number);
-      startDateTime.setHours(startHour, startMinute, 0, 0);
+      const bookingsToCreate = [];
 
-      const endDateTime = new Date(formData.selected_date);
-      const [endHour, endMinute] = formData.end_time.split(':').map(Number);
-      endDateTime.setHours(endHour, endMinute, 0, 0);
+      if (formData.is_recurring && formData.recurrence_pattern.length > 0) {
+        // Generar múltiples reservas para los días recurrentes
+        const recurringDates = generateRecurringDates(
+          formData.selected_date,
+          formData.recurrence_pattern,
+          formData.recurrence_weeks
+        );
 
-      const bookingData = {
-        court_id: formData.court_id,
-        event_type: formData.event_type,
-        title: formData.title,
-        description: formData.description,
-        start_time: startDateTime.toISOString(),
-        end_time: endDateTime.toISOString(),
-        price_type: formData.price_type,
-        custom_price: formData.price_type === 'custom' ? formData.custom_price : null,
-        is_recurring: formData.is_recurring,
-        recurrence_pattern: formData.is_recurring ? formData.recurrence_pattern : null
-      };
+        for (const date of recurringDates) {
+          const startDateTime = new Date(date);
+          const [startHour, startMinute] = formData.start_time.split(':').map(Number);
+          startDateTime.setHours(startHour, startMinute, 0, 0);
 
+          const endDateTime = new Date(date);
+          const [endHour, endMinute] = formData.end_time.split(':').map(Number);
+          endDateTime.setHours(endHour, endMinute, 0, 0);
+
+          bookingsToCreate.push({
+            court_id: formData.court_id,
+            event_type: formData.event_type,
+            title: formData.title,
+            description: formData.description,
+            start_time: startDateTime.toISOString(),
+            end_time: endDateTime.toISOString(),
+            price_type: formData.price_type,
+            custom_price: formData.price_type === 'custom' ? formData.custom_price : null,
+            is_recurring: true,
+            recurrence_pattern: formData.recurrence_pattern
+          });
+        }
+      } else {
+        // Crear una sola reserva
+        const startDateTime = new Date(formData.selected_date);
+        const [startHour, startMinute] = formData.start_time.split(':').map(Number);
+        startDateTime.setHours(startHour, startMinute, 0, 0);
+
+        const endDateTime = new Date(formData.selected_date);
+        const [endHour, endMinute] = formData.end_time.split(':').map(Number);
+        endDateTime.setHours(endHour, endMinute, 0, 0);
+
+        bookingsToCreate.push({
+          court_id: formData.court_id,
+          event_type: formData.event_type,
+          title: formData.title,
+          description: formData.description,
+          start_time: startDateTime.toISOString(),
+          end_time: endDateTime.toISOString(),
+          price_type: formData.price_type,
+          custom_price: formData.price_type === 'custom' ? formData.custom_price : null,
+          is_recurring: false,
+          recurrence_pattern: null
+        });
+      }
+
+      // Insertar todas las reservas
       const { error } = await supabase
         .from("special_bookings")
-        .insert(bookingData);
+        .insert(bookingsToCreate);
 
       if (error) throw error;
 
       toast({
         title: "¡Éxito!",
-        description: "Reserva especial creada correctamente",
+        description: `${bookingsToCreate.length} reserva(s) especial(es) creada(s) correctamente`,
       });
 
       // Reset form
@@ -155,7 +214,8 @@ export default function SpecialBookingManagement() {
         price_type: 'normal',
         custom_price: 0,
         is_recurring: false,
-        recurrence_pattern: []
+        recurrence_pattern: [],
+        recurrence_weeks: 4
       });
       setIsCreating(false);
       refetch();
@@ -350,7 +410,7 @@ export default function SpecialBookingManagement() {
                 )}
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="is_recurring"
@@ -361,31 +421,49 @@ export default function SpecialBookingManagement() {
                 </div>
 
                 {formData.is_recurring && (
-                  <div>
-                    <Label>Días de la Semana</Label>
-                    <div className="grid grid-cols-3 gap-2 mt-2">
-                      {DAYS_OF_WEEK.map((day) => (
-                        <div key={day.value} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={day.value}
-                            checked={formData.recurrence_pattern.includes(day.value)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setFormData({
-                                  ...formData,
-                                  recurrence_pattern: [...formData.recurrence_pattern, day.value]
-                                });
-                              } else {
-                                setFormData({
-                                  ...formData,
-                                  recurrence_pattern: formData.recurrence_pattern.filter(d => d !== day.value)
-                                });
-                              }
-                            }}
-                          />
-                          <Label htmlFor={day.value}>{day.label}</Label>
-                        </div>
-                      ))}
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Días de la Semana</Label>
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        {DAYS_OF_WEEK.map((day) => (
+                          <div key={day.value} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={day.value}
+                              checked={formData.recurrence_pattern.includes(day.value)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setFormData({
+                                    ...formData,
+                                    recurrence_pattern: [...formData.recurrence_pattern, day.value]
+                                  });
+                                } else {
+                                  setFormData({
+                                    ...formData,
+                                    recurrence_pattern: formData.recurrence_pattern.filter(d => d !== day.value)
+                                  });
+                                }
+                              }}
+                            />
+                            <Label htmlFor={day.value}>{day.label}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="recurrence_weeks">Número de Semanas</Label>
+                      <Input
+                        id="recurrence_weeks"
+                        type="number"
+                        min="1"
+                        max="52"
+                        value={formData.recurrence_weeks}
+                        onChange={(e) => setFormData({...formData, recurrence_weeks: Number(e.target.value)})}
+                        placeholder="4"
+                      />
+                      <p className="text-sm text-gray-500 mt-1">
+                        Se crearán reservas para {formData.recurrence_weeks} semanas
+                      </p>
                     </div>
                   </div>
                 )}
@@ -426,6 +504,11 @@ export default function SpecialBookingManagement() {
                     </p>
                     {booking.description && (
                       <p className="text-sm text-gray-600 mt-1">{booking.description}</p>
+                    )}
+                    {booking.is_recurring && (
+                      <p className="text-sm text-blue-600 mt-1">
+                        Recurrente: {booking.recurrence_pattern?.join(', ')}
+                      </p>
                     )}
                   </div>
                   <Button

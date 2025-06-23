@@ -2,6 +2,7 @@
 import { TimeSlot } from "./TimeSlot";
 import { format, addHours, isBefore, isToday } from "date-fns";
 import { useCourts } from "@/hooks/use-courts";
+import { useAllBookings } from "@/hooks/use-bookings";
 
 interface TimeSlot {
   start: string;
@@ -43,15 +44,30 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
   const timeSlots = generateTimeSlots(businessHours, selectedDate);
   // Obtener canchas filtradas por tipo cuando se haya seleccionado un tipo
   const { data: courts = [] } = useCourts(courtType);
+  // Obtener todas las reservas (normales + especiales) para calcular disponibilidad
+  const { data: allBookings = [] } = useAllBookings(selectedDate);
   const totalCourts = courts.length;
 
   console.log("TimeSlotsGrid - Court type:", courtType);
   console.log("TimeSlotsGrid - Courts:", courts);
   console.log("TimeSlotsGrid - Total courts:", totalCourts);
+  console.log("TimeSlotsGrid - All bookings:", allBookings);
 
-  // Función para contar cuántas reservas hay en un horario específico
+  // Función para contar cuántas reservas hay en un horario específico incluyendo especiales
   const getBookingsCountForSlot = (slot: string) => {
-    return bookedSlots.has(slot) ? 1 : 0; // Contamos cada reserva individual
+    const bookingsInSlot = allBookings.filter(booking => {
+      const bookingHour = format(new Date(booking.start_time), "HH:00");
+      const bookingCourtType = booking.court?.court_type;
+      
+      // Solo contar reservas del tipo de cancha seleccionado
+      if (courtType && bookingCourtType !== courtType) {
+        return false;
+      }
+      
+      return bookingHour === slot;
+    });
+    
+    return bookingsInSlot.length;
   };
 
   return (

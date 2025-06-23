@@ -2,12 +2,13 @@
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import { format, addDays, startOfToday, isAfter, isBefore } from "date-fns";
+import { format } from "date-fns";
 import type { Booking } from "@/types/booking";
 import { EmptyBookingsList } from "./booking/EmptyBookingsList";
 import { BookingsListContent } from "./booking/BookingsListContent";
+import { useAllBookings } from "@/hooks/use-bookings";
 
 interface BookingsListProps {
   bookings: Booking[];
@@ -20,31 +21,15 @@ const BUSINESS_HOURS = {
   end: 22,
 };
 
-interface SpecialBooking {
-  id: string;
-  court_id: string;
-  event_type: string;
-  title: string;
-  description: string;
-  start_time: string;
-  end_time: string;
-  price_type: string;
-  custom_price: number;
-  is_recurring: boolean;
-  recurrence_pattern: string[];
-  created_at: string;
-  court: {
-    name: string;
-    court_type: string;
-  };
-}
-
 export function BookingsList({ bookings, onCancelSuccess, selectedDate }: BookingsListProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { data: userRole } = useUserRole(user?.id);
   const isAdmin = userRole?.role === "admin";
   const queryClient = useQueryClient();
+
+  // Usar el hook combinado para obtener todas las reservas
+  const { data: allBookings = [], isLoading } = useAllBookings(selectedDate);
 
   console.log("BookingsList received props:", { 
     bookingsCount: bookings.length, 
@@ -53,79 +38,52 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     selectedDateInstanceOfDate: selectedDate instanceof Date,
     selectedDateValid: selectedDate ? !isNaN(selectedDate.getTime()) : false,
     user: !!user,
-    bookings 
-  });
-
-  // Get special bookings for the selected date
-  const { data: specialBookings } = useQuery({
-    queryKey: ["special-bookings-display", selectedDate?.toISOString()],
-    queryFn: async () => {
-      if (!selectedDate) return [];
-
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const { data, error } = await supabase
-        .from("special_bookings")
-        .select(`
-          *,
-          court:courts(name, court_type)
-        `)
-        .gte("start_time", startOfDay.toISOString())
-        .lte("end_time", endOfDay.toISOString())
-        .order("start_time", { ascending: true });
-
-      if (error) throw error;
-      return data as SpecialBooking[] || [];
-    },
-    enabled: !!selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime()),
-  });
-
-  // Obtener las reglas de reserva para validar fechas
-  const { data: bookingRules } = useQuery({
-    queryKey: ["bookingRules"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("booking_rules")
-        .select("*")
-        .single();
-
-      if (error) throw error;
-      return data;
-    }
+    allBookings: allBookings.length 
   });
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
-      const booking = bookings.find(b => b.id === bookingId);
-      if (!booking) return;
+      // Verificar si es una reserva especial
+      if (bookingId.startsWith('special-')) {
+        const realId = bookingId.replace('special-', '');
+        const { error } = await supabase
+          .from("special_bookings")
+          .delete()
+          .eq("id", realId);
 
-      const startTime = new Date(booking.start_time);
-      const now = new Date();
-      const hoursDifference = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+        if (error) throw error;
+      } else {
+        const booking = bookings.find(b => b.id === bookingId);
+        if (!booking) return;
 
-      if (!isAdmin && hoursDifference < 24) {
-        toast({
-          title: "No se puede cancelar",
-          description: "Las reservas solo pueden cancelarse con al menos 24 horas de anticipación.",
-          variant: "destructive",
-        });
-        return;
+        const startTime = new Date(booking.start_time);
+        const now = new Date();
+        const hoursDifference = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+        if (!isAdmin && hoursDifference < 24) {
+          toast({
+            title: "No se puede cancelar",
+            description: "Las reservas solo pueden cancelarse con al menos 24 horas de anticipación.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const { error } = await supabase
+          .from("bookings")
+          .delete()
+          .eq("id", bookingId);
+
+        if (error) throw error;
       }
-
-      const { error } = await supabase
-        .from("bookings")
-        .delete()
-        .eq("id", bookingId);
-
-      if (error) throw error;
 
       // Invalidar todas las queries relacionadas con reservas para actualizar los contadores
       await queryClient.invalidateQueries({ 
         queryKey: ["bookings"] 
+      });
+      
+      await queryClient.invalidateQueries({ 
+        queryKey: ["special-bookings"] 
       });
       
       // Invalidar específicamente la query de reservas activas del usuario
@@ -164,26 +122,6 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
 
   console.log("Valid selectedDate detected, proceeding with bookings display");
 
-  // Combine regular bookings and special bookings for display
-  const allBookings = [
-    ...bookings,
-    ...(specialBookings?.map(sb => ({
-      id: `special-${sb.id}`,
-      court_id: sb.court_id,
-      user_id: null,
-      start_time: sb.start_time,
-      end_time: sb.end_time,
-      created_at: sb.created_at,
-      booking_made_at: sb.created_at,
-      user: null,
-      court: sb.court,
-      isSpecial: true,
-      event_type: sb.event_type,
-      title: sb.title,
-      description: sb.description,
-    })) || [])
-  ];
-
   // Si no hay usuario autenticado, mostrar horarios disponibles
   if (!user) {
     const bookedSlots = new Set(
@@ -213,7 +151,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     );
   }
 
-  // Mostrar las reservas del día
+  // Mostrar las reservas del día (combinando normales y especiales)
   console.log("Showing bookings list with", allBookings.length, "bookings");
   return (
     <BookingsListContent

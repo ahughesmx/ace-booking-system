@@ -2,12 +2,13 @@
 import { useAuth } from "@/components/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import { useBookings } from "@/hooks/use-bookings";
+import { useAllBookings } from "@/hooks/use-bookings";
 import { useBookingRules } from "@/hooks/use-booking-rules";
+import { format } from "date-fns";
 
 export function useBookingLogic(selectedDate?: Date, selectedCourtType?: 'tennis' | 'padel' | null) {
   const { user } = useAuth();
-  const { data: bookings = [] } = useBookings(selectedDate);
+  const { data: allBookings = [] } = useAllBookings(selectedDate);
   const { data: bookingRules } = useBookingRules(selectedCourtType);
 
   // Usar el campo active_bookings de la tabla profiles
@@ -35,10 +36,10 @@ export function useBookingLogic(selectedDate?: Date, selectedCourtType?: 'tennis
     enabled: !!user?.id
   });
 
-  // Crear set de slots reservados para el tipo de cancha seleccionado
+  // Crear set de slots reservados para el tipo de cancha seleccionado (incluyendo reservas especiales)
   const bookedSlots = new Set<string>();
   if (selectedDate && selectedCourtType) {
-    bookings.forEach(booking => {
+    allBookings.forEach(booking => {
       if (booking.court && booking.court.court_type === selectedCourtType) {
         const hour = new Date(booking.start_time).getHours();
         bookedSlots.add(`${hour.toString().padStart(2, '0')}:00`);
