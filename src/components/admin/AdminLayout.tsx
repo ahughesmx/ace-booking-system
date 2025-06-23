@@ -1,23 +1,18 @@
-import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { 
-  Users, 
-  Calendar, 
-  BarChart3, 
-  Settings, 
-  Shield, 
+import { Card, CardContent } from "@/components/ui/card";
+import { MainNav } from "@/components/MainNav";
+import {
+  Users,
+  Settings,
+  BarChart3,
+  Wrench,
+  Calendar,
   Monitor,
-  Menu,
-  LogOut,
-  Home,
-  Cog,
-  Webhook
+  Webhook,
+  UserPlus,
+  CalendarCheck,
 } from "lucide-react";
-import { useAuth } from "@/components/AuthProvider";
-import { useNavigate } from "react-router-dom";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -25,110 +20,67 @@ interface AdminLayoutProps {
   onTabChange: (tab: string) => void;
 }
 
-const menuItems = [
-  { id: "users", label: "Usuarios", icon: Users },
-  { id: "courts", label: "Canchas", icon: Calendar },
-  { id: "court-settings", label: "Configurar Canchas", icon: Cog },
-  { id: "booking-rules", label: "Reglas de Reserva", icon: Settings },
-  { id: "member-ids", label: "IDs de Miembros", icon: Shield },
-  { id: "webhooks", label: "Webhooks e Integraciones", icon: Webhook },
-  { id: "statistics", label: "Estadísticas", icon: BarChart3 },
-  { id: "display", label: "Display Público", icon: Monitor },
-];
-
 export default function AdminLayout({ children, activeTab, onTabChange }: AdminLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { signOut } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
-
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      <div className="p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Panel de Control</h2>
-        <nav className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Button
-                key={item.id}
-                variant={activeTab === item.id ? "default" : "ghost"}
-                className={`w-full justify-start ${
-                  activeTab === item.id
-                    ? "bg-[#6898FE] text-white hover:bg-[#0FA0CE]"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-                onClick={() => {
-                  onTabChange(item.id);
-                  setSidebarOpen(false);
-                }}
-              >
-                <Icon className="mr-3 h-4 w-4" />
-                {item.label}
-              </Button>
-            );
-          })}
-        </nav>
-      </div>
-
-      <div className="mt-auto p-6 space-y-2">
-        <Separator />
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-gray-700 hover:bg-gray-100"
-          onClick={() => navigate("/")}
-        >
-          <Home className="mr-3 h-4 w-4" />
-          Volver al Inicio
-        </Button>
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-red-600 hover:bg-red-50"
-          onClick={handleSignOut}
-        >
-          <LogOut className="mr-3 h-4 w-4" />
-          Cerrar Sesión
-        </Button>
-      </div>
-    </div>
-  );
+  const tabs = [
+    { id: "users", label: "Usuarios", icon: Users },
+    { id: "courts", label: "Canchas", icon: Settings },
+    { id: "court-settings", label: "Configuración Canchas", icon: Wrench },
+    { id: "member-ids", label: "IDs de Miembros", icon: UserPlus },
+    { id: "booking-rules", label: "Reglas de Reserva", icon: Calendar },
+    { id: "special-bookings", label: "Reservas Especiales", icon: CalendarCheck },
+    { id: "statistics", label: "Estadísticas", icon: BarChart3 },
+    { id: "display", label: "Display", icon: Monitor },
+    { id: "webhooks", label: "Webhooks", icon: Webhook },
+  ];
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar para desktop */}
-      <div className="hidden md:flex md:w-64 md:flex-col">
-        <div className="flex flex-col h-full bg-white shadow-sm border-r">
-          <SidebarContent />
+    <div className="min-h-screen bg-gray-50">
+      <MainNav />
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Panel de Control</h1>
+          <p className="text-gray-600">Gestiona todos los aspectos del sistema</p>
         </div>
-      </div>
 
-      {/* Sidebar móvil */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="md:hidden fixed top-4 left-4 z-50"
-          >
-            <Menu className="h-4 w-4" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="p-0 w-64">
-          <SidebarContent />
-        </SheetContent>
-      </Sheet>
-
-      {/* Contenido principal */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-auto">
-          <div className="p-6">
-            {children}
+        <div className="flex gap-6">
+          {/* Sidebar */}
+          <div className="w-64 flex-shrink-0">
+            <Card>
+              <CardContent className="p-4">
+                <nav className="space-y-2">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <Button
+                        key={tab.id}
+                        variant={activeTab === tab.id ? "default" : "ghost"}
+                        className={`w-full justify-start ${
+                          activeTab === tab.id
+                            ? "bg-blue-600 text-white"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                        onClick={() => onTabChange(tab.id)}
+                      >
+                        <Icon className="mr-2 h-4 w-4" />
+                        {tab.label}
+                      </Button>
+                    );
+                  })}
+                </nav>
+              </CardContent>
+            </Card>
           </div>
-        </main>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            <Card>
+              <CardContent className="p-6">
+                {children}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

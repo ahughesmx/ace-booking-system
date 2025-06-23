@@ -49,13 +49,35 @@ export default function Display() {
 
       const { data, error } = await supabase
         .from("bookings")
-        .select("*, court:courts(*)")
+        .select("*, court:courts(*), user:profiles(full_name, member_id)")
         .gte("start_time", startOfDay.toISOString())
         .lte("end_time", endOfDay.toISOString())
         .order("start_time", { ascending: true });
 
       if (error) throw error;
       return data;
+    },
+    refetchInterval: 30000,
+  });
+
+  const { data: specialBookings } = useQuery({
+    queryKey: ["display-special-bookings"],
+    queryFn: async () => {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const { data, error } = await supabase
+        .from("special_bookings")
+        .select("*, court:courts(*)")
+        .gte("start_time", startOfDay.toISOString())
+        .lte("end_time", endOfDay.toISOString())
+        .order("start_time", { ascending: true });
+
+      if (error) throw error;
+      return data || [];
     },
     refetchInterval: 30000,
   });
@@ -108,6 +130,50 @@ export default function Display() {
         booking.court_id === courtId &&
         format(new Date(booking.start_time), "HH:00") === timeSlot
     );
+  };
+
+  const isSpecialBooked = (courtId: string, timeSlot: string) => {
+    return specialBookings?.some(
+      (booking) =>
+        booking.court_id === courtId &&
+        format(new Date(booking.start_time), "HH:00") === timeSlot
+    );
+  };
+
+  const getSlotInfo = (courtId: string, timeSlot: string) => {
+    const regularBooking = bookings?.find(
+      (booking) =>
+        booking.court_id === courtId &&
+        format(new Date(booking.start_time), "HH:00") === timeSlot
+    );
+
+    const specialBooking = specialBookings?.find(
+      (booking) =>
+        booking.court_id === courtId &&
+        format(new Date(booking.start_time), "HH:00") === timeSlot
+    );
+
+    if (specialBooking) {
+      return {
+        type: 'special',
+        booking: specialBooking,
+        isBooked: true
+      };
+    }
+
+    if (regularBooking) {
+      return {
+        type: 'regular',
+        booking: regularBooking,
+        isBooked: true
+      };
+    }
+
+    return {
+      type: 'available',
+      booking: null,
+      isBooked: false
+    };
   };
 
   const selectedCourt = courts?.find(court => court.id === selectedCourtId);
@@ -189,7 +255,7 @@ export default function Display() {
                         {slot}
                       </div>
                       {courts?.map((court) => {
-                        const booked = isBooked(court.id, slot);
+                        const booked = isBooked(court.id, slot) || isSpecialBooked(court.id, slot);
                         return (
                           <div
                             key={`${court.id}-${slot}`}
@@ -294,69 +360,129 @@ export default function Display() {
               <p className="text-base opacity-90">Horarios del Día</p>
             </div>
 
-            {/* Time Slots - Two Column Layout filling remaining space */}
+            {/* Time Slots Grid - 3 columns layout filling remaining space */}
             <div className="flex-1 p-4 min-h-0">
-              <div className="grid grid-cols-2 gap-4 h-full">
-                {/* Morning Column */}
-                <div className="flex flex-col min-h-0">
-                  <h3 className="text-lg font-bold text-gray-800 mb-2 text-center border-b-2 border-blue-200 pb-2 flex-shrink-0">
-                    Mañana (7:00 - 15:00)
+              <div className="grid grid-cols-3 gap-3 h-full">
+                {/* Morning Column (7:00 - 12:00) */}
+                <div className="flex flex-col">
+                  <h3 className="text-sm font-bold text-gray-800 mb-2 text-center border-b border-gray-200 pb-1 flex-shrink-0">
+                    Mañana (7:00 - 12:00)
                   </h3>
-                  <div className="flex-1 space-y-1 overflow-hidden">
-                    {timeSlots.slice(0, 9).map((slot) => {
-                      const booked = isBooked(selectedCourt.id, slot);
+                  <div className="flex-1 grid grid-rows-6 gap-1">
+                    {timeSlots.slice(0, 6).map((slot) => {
+                      const slotInfo = getSlotInfo(selectedCourt.id, slot);
                       const isCurrent = format(currentTime, "HH:00") === slot;
+                      
                       return (
                         <div
                           key={slot}
-                          className={`rounded-lg border-2 transition-all text-center flex items-center justify-center ${
-                            booked
-                              ? 'bg-red-500 border-red-600 text-white shadow-lg'
+                          className={`border rounded-lg p-2 text-center text-xs ${
+                            slotInfo.isBooked
+                              ? 'bg-red-100 border-red-300 text-red-800'
                               : isCurrent
-                              ? 'bg-blue-100 border-blue-400 text-blue-800 shadow-md'
-                              : 'bg-green-100 border-green-300 text-green-800'
+                              ? 'bg-blue-100 border-blue-300 text-blue-800'
+                              : 'bg-green-50 border-green-200 text-green-800'
                           }`}
-                          style={{ height: 'calc((100% - 32px) / 9)' }}
                         >
-                          <div className="flex flex-col items-center justify-center">
-                            <div className="text-lg font-bold mb-1">{slot}</div>
-                            <div className="text-sm font-medium">
-                              {booked ? 'RESERVADO' : 'DISPONIBLE'}
+                          <div className="font-bold text-sm mb-1">{slot}</div>
+                          {slotInfo.isBooked ? (
+                            <div className="space-y-1">
+                              {slotInfo.type === 'special' ? (
+                                <>
+                                  <div className="font-medium text-xs">{slotInfo.booking.title}</div>
+                                  <div className="text-xs capitalize">{slotInfo.booking.event_type}</div>
+                                </>
+                              ) : (
+                                <div className="text-xs">Reservado</div>
+                              )}
                             </div>
-                          </div>
+                          ) : (
+                            <div className="text-xs font-medium">Disponible</div>
+                          )}
                         </div>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* Afternoon/Evening Column */}
-                <div className="flex flex-col min-h-0">
-                  <h3 className="text-lg font-bold text-gray-800 mb-2 text-center border-b-2 border-blue-200 pb-2 flex-shrink-0">
-                    Tarde/Noche (16:00 - 23:00)
+                {/* Afternoon Column (13:00 - 18:00) */}
+                <div className="flex flex-col">
+                  <h3 className="text-sm font-bold text-gray-800 mb-2 text-center border-b border-gray-200 pb-1 flex-shrink-0">
+                    Tarde (13:00 - 18:00)
                   </h3>
-                  <div className="flex-1 space-y-1 overflow-hidden">
-                    {timeSlots.slice(9).map((slot) => {
-                      const booked = isBooked(selectedCourt.id, slot);
+                  <div className="flex-1 grid grid-rows-6 gap-1">
+                    {timeSlots.slice(6, 12).map((slot) => {
+                      const slotInfo = getSlotInfo(selectedCourt.id, slot);
                       const isCurrent = format(currentTime, "HH:00") === slot;
+                      
                       return (
                         <div
                           key={slot}
-                          className={`rounded-lg border-2 transition-all text-center flex items-center justify-center ${
-                            booked
-                              ? 'bg-red-500 border-red-600 text-white shadow-lg'
+                          className={`border rounded-lg p-2 text-center text-xs ${
+                            slotInfo.isBooked
+                              ? 'bg-red-100 border-red-300 text-red-800'
                               : isCurrent
-                              ? 'bg-blue-100 border-blue-400 text-blue-800 shadow-md'
-                              : 'bg-green-100 border-green-300 text-green-800'
+                              ? 'bg-blue-100 border-blue-300 text-blue-800'
+                              : 'bg-green-50 border-green-200 text-green-800'
                           }`}
-                          style={{ height: 'calc((100% - 28px) / 8)' }}
                         >
-                          <div className="flex flex-col items-center justify-center">
-                            <div className="text-lg font-bold mb-1">{slot}</div>
-                            <div className="text-sm font-medium">
-                              {booked ? 'RESERVADO' : 'DISPONIBLE'}
+                          <div className="font-bold text-sm mb-1">{slot}</div>
+                          {slotInfo.isBooked ? (
+                            <div className="space-y-1">
+                              {slotInfo.type === 'special' ? (
+                                <>
+                                  <div className="font-medium text-xs">{slotInfo.booking.title}</div>
+                                  <div className="text-xs capitalize">{slotInfo.booking.event_type}</div>
+                                </>
+                              ) : (
+                                <div className="text-xs">Reservado</div>
+                              )}
                             </div>
-                          </div>
+                          ) : (
+                            <div className="text-xs font-medium">Disponible</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Evening Column (19:00 - 23:00) */}
+                <div className="flex flex-col">
+                  <h3 className="text-sm font-bold text-gray-800 mb-2 text-center border-b border-gray-200 pb-1 flex-shrink-0">
+                    Noche (19:00 - 23:00)
+                  </h3>
+                  <div className="flex-1 grid grid-rows-5 gap-1">
+                    {timeSlots.slice(12).map((slot) => {
+                      const slotInfo = getSlotInfo(selectedCourt.id, slot);
+                      const isCurrent = format(currentTime, "HH:00") === slot;
+                      
+                      return (
+                        <div
+                          key={slot}
+                          className={`border rounded-lg p-2 text-center text-xs ${
+                            slotInfo.isBooked
+                              ? 'bg-red-100 border-red-300 text-red-800'
+                              : isCurrent
+                              ? 'bg-blue-100 border-blue-300 text-blue-800'
+                              : 'bg-green-50 border-green-200 text-green-800'
+                          }`}
+                        >
+                          <div className="font-bold text-sm mb-1">{slot}</div>
+                          {slotInfo.isBooked ? (
+                            <div className="space-y-1">
+                              {slotInfo.type === 'special' ? (
+                                <>
+                                  <div className="font-medium text-xs">{slotInfo.booking.title}</div>
+                                  <div className="text-xs capitalize">{slotInfo.booking.event_type}</div>
+                                </>
+                              ) : (
+                                <div className="text-xs">Reservado</div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-xs font-medium">Disponible</div>
+                          )}
                         </div>
                       );
                     })}
@@ -367,18 +493,18 @@ export default function Display() {
 
             {/* Legend - Fixed height */}
             <div className="bg-gray-50 p-3 border-t flex-shrink-0">
-              <div className="flex justify-center gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-green-100 border-2 border-green-300 rounded"></div>
-                  <span className="text-gray-700 font-medium text-sm">Disponible</span>
+              <div className="flex justify-center gap-4 text-xs">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-green-50 border border-green-200 rounded"></div>
+                  <span className="text-gray-700 font-medium">Disponible</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-red-500 border-2 border-red-600 rounded"></div>
-                  <span className="text-gray-700 font-medium text-sm">Reservado</span>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-red-100 border border-red-300 rounded"></div>
+                  <span className="text-gray-700 font-medium">Reservado</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-blue-100 border-2 border-blue-400 rounded"></div>
-                  <span className="text-gray-700 font-medium text-sm">Hora Actual</span>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
+                  <span className="text-gray-700 font-medium">Hora Actual</span>
                 </div>
               </div>
             </div>

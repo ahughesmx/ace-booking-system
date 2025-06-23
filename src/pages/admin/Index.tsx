@@ -10,6 +10,8 @@ import ValidMemberIdManagement from "@/components/admin/ValidMemberIdManagement"
 import BookingRulesManagement from "@/components/admin/BookingRulesManagement";
 import DisplayManagement from "@/components/admin/DisplayManagement";
 import WebhookManagement from "@/components/admin/WebhookManagement";
+import SpecialBookingManagement from "@/components/admin/SpecialBookingManagement";
+import UserRegistrationForm from "@/components/admin/UserRegistrationForm";
 
 const AdminPage = () => {
   const { isAdmin, isLoading } = useAdminAuth();
@@ -26,13 +28,20 @@ const AdminPage = () => {
       case "statistics":
         return <Statistics />;
       case "member-ids":
-        return <ValidMemberIdManagement />;
+        return (
+          <div className="space-y-6">
+            <ValidMemberIdManagement />
+            <UserRegistrationForm />
+          </div>
+        );
       case "booking-rules":
         return <BookingRulesManagement />;
       case "webhooks":
         return <WebhookManagement />;
       case "display":
         return <DisplayManagement />;
+      case "special-bookings":
+        return <SpecialBookingManagement />;
       default:
         return <UserManagement />;
     }

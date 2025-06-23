@@ -1,93 +1,110 @@
 
-import { Card, CardContent } from "@/components/ui/card";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Clock, MapPin, User, Calendar, Trophy, GraduationCap, Star } from "lucide-react";
 import type { Booking } from "@/types/booking";
-import { isAfter, subHours } from "date-fns";
 
-type BookingCardProps = {
-  booking: Booking;
+interface BookingCardProps {
+  booking: Booking & { isSpecial?: boolean; event_type?: string; title?: string; description?: string };
   isOwner: boolean;
   onCancel: (id: string) => void;
-};
+}
 
 export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
-  const formatTime = (date: string) => {
-    return new Date(date).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
-    });
-  };
+  const startTime = new Date(booking.start_time);
+  const endTime = new Date(booking.end_time);
 
-  const isActive = () => {
-    const endTime = new Date(booking.end_time);
-    const twoHoursAgo = subHours(new Date(), 2);
-    return isAfter(endTime, twoHoursAgo);
-  };
-
-  const active = isActive();
-
-  // Función para formatear el tipo de cancha
-  const formatCourtType = (courtType: string) => {
-    switch (courtType) {
-      case 'padel':
-        return 'Pádel';
-      case 'tennis':
-        return 'Tenis';
+  const getEventIcon = (eventType?: string) => {
+    switch (eventType) {
+      case 'torneo':
+        return <Trophy className="w-4 h-4" />;
+      case 'clases':
+        return <GraduationCap className="w-4 h-4" />;
+      case 'eventos':
+        return <Star className="w-4 h-4" />;
       default:
-        return courtType;
+        return <Calendar className="w-4 h-4" />;
     }
   };
 
-  // Agregar console.logs detallados para debugging
-  console.log('Booking card data:', {
-    bookingId: booking.id,
-    userId: booking.user_id,
-    userData: booking.user,
-    courtData: booking.court,
-    isOwner,
-    active
-  });
+  const getEventColor = (eventType?: string) => {
+    switch (eventType) {
+      case 'torneo':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'clases':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'eventos':
+        return 'bg-pink-100 text-pink-800 border-pink-200';
+      default:
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+    }
+  };
 
   return (
-    <Card className={`border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 hover:shadow-lg transition-all duration-300 ${!active ? 'opacity-50' : ''}`}>
-      <CardContent className="pt-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <div className="flex items-center gap-2">
-              <p className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
-                {booking.court?.name || "Cancha sin nombre"}
-              </p>
-              {booking.court?.court_type && (
-                <span className="text-xs px-2 py-1 rounded-full bg-[#6898FE]/10 text-[#6898FE] border border-[#6898FE]/20">
-                  {formatCourtType(booking.court.court_type)}
-                </span>
-              )}
-              {!active && (
-                <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-600">
-                  Finalizada
-                </span>
+    <Card className="w-full">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              {booking.isSpecial ? (
+                <>
+                  {getEventIcon(booking.event_type)}
+                  <h3 className="font-semibold text-lg">{booking.title || 'Evento Especial'}</h3>
+                  <Badge className={getEventColor(booking.event_type)}>
+                    {booking.event_type?.charAt(0).toUpperCase() + booking.event_type?.slice(1) || 'Evento'}
+                  </Badge>
+                </>
+              ) : (
+                <>
+                  <User className="w-4 h-4 text-gray-500" />
+                  <h3 className="font-semibold text-lg">
+                    {booking.user?.full_name || "Reserva Regular"}
+                  </h3>
+                  <Badge variant="outline">Reserva Regular</Badge>
+                </>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">
-              {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-            </p>
-            <div className="text-sm text-muted-foreground">
-              <p>Reservado por: {booking.user?.full_name || "Usuario desconocido"}</p>
-              <p className="text-xs">
-                Clave de socio: {booking.user?.member_id || "No disponible"}
-              </p>
+            
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Clock className="w-4 h-4" />
+                <span>
+                  {format(startTime, "HH:mm")} - {format(endTime, "HH:mm")}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <MapPin className="w-4 h-4" />
+                <span>{booking.court?.name}</span>
+                <Badge variant="secondary" className="text-xs">
+                  {booking.court?.court_type === 'tennis' ? 'Tenis' : 'Pádel'}
+                </Badge>
+              </div>
+
+              {booking.isSpecial && booking.description && (
+                <p className="text-sm text-gray-600 mt-2">{booking.description}</p>
+              )}
+
+              {!booking.isSpecial && booking.user?.member_id && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <User className="w-3 h-3" />
+                  <span>Socio: {booking.user.member_id}</span>
+                </div>
+              )}
             </div>
           </div>
-          {isOwner && active && (
+          
+          {isOwner && !booking.isSpecial && (
             <Button
-              variant="destructive"
-              size="icon"
+              variant="outline"
+              size="sm"
               onClick={() => onCancel(booking.id)}
-              className="hover:bg-red-600 transition-colors duration-200"
+              className="text-red-600 border-red-200 hover:bg-red-50"
             >
-              <Trash2 className="h-4 w-4" />
+              Cancelar
             </Button>
           )}
         </div>

@@ -37,6 +37,34 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     bookings 
   });
 
+  // Get special bookings for the selected date
+  const { data: specialBookings } = useQuery({
+    queryKey: ["special-bookings-display", selectedDate?.toISOString()],
+    queryFn: async () => {
+      if (!selectedDate) return [];
+
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const { data, error } = await supabase
+        .from("special_bookings")
+        .select(`
+          *,
+          court:courts(name, court_type)
+        `)
+        .gte("start_time", startOfDay.toISOString())
+        .lte("end_time", endOfDay.toISOString())
+        .order("start_time", { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime()),
+  });
+
   // Obtener las reglas de reserva para validar fechas
   const { data: bookingRules } = useQuery({
     queryKey: ["bookingRules"],
@@ -117,10 +145,23 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
 
   console.log("Valid selectedDate detected, proceeding with bookings display");
 
+  // Combine regular bookings and special bookings for display
+  const allBookings = [
+    ...bookings,
+    ...(specialBookings?.map(sb => ({
+      ...sb,
+      id: `special-${sb.id}`,
+      user_id: null,
+      booking_made_at: sb.created_at,
+      user: null,
+      isSpecial: true,
+    })) || [])
+  ];
+
   // Si no hay usuario autenticado, mostrar horarios disponibles
   if (!user) {
     const bookedSlots = new Set(
-      bookings.map(booking => format(new Date(booking.start_time), "HH:00"))
+      allBookings.map(booking => format(new Date(booking.start_time), "HH:00"))
     );
 
     return (
@@ -134,7 +175,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   }
 
   // Si hay usuario autenticado pero no hay reservas, mostrar mensaje de día vacío
-  if (!bookings.length) {
+  if (!allBookings.length) {
     console.log("No bookings found for selected date, showing empty state");
     return (
       <EmptyBookingsList
@@ -147,10 +188,10 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   }
 
   // Mostrar las reservas del día
-  console.log("Showing bookings list with", bookings.length, "bookings");
+  console.log("Showing bookings list with", allBookings.length, "bookings");
   return (
     <BookingsListContent
-      bookings={bookings}
+      bookings={allBookings}
       isAdmin={isAdmin}
       userId={user.id}
       onCancel={handleCancelBooking}

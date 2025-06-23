@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase-client";
@@ -22,19 +23,34 @@ export function useMatchActions(refetchMatches: () => void) {
         return;
       }
 
+      // Get the booking to check court type
+      const { data: booking, error: bookingError } = await supabase
+        .from("bookings")
+        .select(`
+          *,
+          court:courts(court_type)
+        `)
+        .eq("id", bookingId)
+        .single();
+
+      if (bookingError) throw bookingError;
+
+      // If court is padel, automatically set to doubles
+      const shouldBeDoubles = booking.court.court_type === 'padel' ? true : isDoubles;
+
       const { error: matchError } = await supabase
         .from("matches")
         .insert({
           booking_id: bookingId,
           player1_id: userId,
-          is_doubles: isDoubles,
+          is_doubles: shouldBeDoubles,
         });
 
       if (matchError) throw matchError;
 
       toast({
         title: "¡Éxito!",
-        description: `Partido de ${isDoubles ? 'dobles' : 'singles'} creado correctamente`,
+        description: `Partido de ${shouldBeDoubles ? 'dobles' : 'singles'} creado correctamente${booking.court.court_type === 'padel' ? ' (automáticamente configurado como dobles para pádel)' : ''}`,
       });
 
       refetchMatches();
