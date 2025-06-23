@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Monitor, Building2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAllBookings } from "@/hooks/use-bookings";
 
 // Generate time slots from 7:00 to 23:00
 const timeSlots = Array.from({ length: 17 }, (_, i) => {
@@ -37,6 +38,9 @@ export default function Display() {
   const [viewMode, setViewMode] = useState<'all' | 'single'>('all');
   const [selectedCourtId, setSelectedCourtId] = useState<string>('');
 
+  // Use the combined bookings hook that includes both regular and special bookings
+  const { data: allBookings = [] } = useAllBookings(new Date());
+
   const { data: displaySettings } = useQuery({
     queryKey: ["display-settings"],
     queryFn: async () => {
@@ -55,50 +59,6 @@ export default function Display() {
         rotation_interval: 10000,
       };
     },
-  });
-
-  const { data: bookings } = useQuery({
-    queryKey: ["display-bookings"],
-    queryFn: async () => {
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const endOfDay = new Date();
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const { data, error } = await supabase
-        .from("bookings")
-        .select("*, court:courts(*), user:profiles(full_name, member_id)")
-        .gte("start_time", startOfDay.toISOString())
-        .lte("end_time", endOfDay.toISOString())
-        .order("start_time", { ascending: true });
-
-      if (error) throw error;
-      return data;
-    },
-    refetchInterval: 30000,
-  });
-
-  const { data: specialBookings } = useQuery({
-    queryKey: ["display-special-bookings"],
-    queryFn: async () => {
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const endOfDay = new Date();
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const { data, error } = await supabase
-        .from("special_bookings")
-        .select("*, court:courts(*)")
-        .gte("start_time", startOfDay.toISOString())
-        .lte("end_time", endOfDay.toISOString())
-        .order("start_time", { ascending: true });
-
-      if (error) throw error;
-      return data as SpecialBooking[] || [];
-    },
-    refetchInterval: 30000,
   });
 
   const { data: courts } = useQuery({
@@ -143,47 +103,30 @@ export default function Display() {
     );
   }
 
+  // Updated function to check if a slot is booked (includes special bookings)
   const isBooked = (courtId: string, timeSlot: string) => {
-    return bookings?.some(
+    return allBookings?.some(
       (booking) =>
         booking.court_id === courtId &&
         format(new Date(booking.start_time), "HH:00") === timeSlot
     );
   };
 
-  const isSpecialBooked = (courtId: string, timeSlot: string) => {
-    return specialBookings?.some(
-      (booking) =>
-        booking.court_id === courtId &&
-        format(new Date(booking.start_time), "HH:00") === timeSlot
-    );
-  };
-
+  // Updated function to get slot information (includes special bookings)
   const getSlotInfo = (courtId: string, timeSlot: string) => {
-    const regularBooking = bookings?.find(
+    const booking = allBookings?.find(
       (booking) =>
         booking.court_id === courtId &&
         format(new Date(booking.start_time), "HH:00") === timeSlot
     );
 
-    const specialBooking = specialBookings?.find(
-      (booking) =>
-        booking.court_id === courtId &&
-        format(new Date(booking.start_time), "HH:00") === timeSlot
-    );
-
-    if (specialBooking) {
+    if (booking) {
+      // Check if it's a special booking (has the special- prefix in ID or isSpecial flag)
+      const isSpecial = booking.id.startsWith('special-') || booking.isSpecial;
+      
       return {
-        type: 'special' as const,
-        booking: specialBooking,
-        isBooked: true
-      };
-    }
-
-    if (regularBooking) {
-      return {
-        type: 'regular' as const,
-        booking: regularBooking,
+        type: isSpecial ? 'special' as const : 'regular' as const,
+        booking: booking,
         isBooked: true
       };
     }
@@ -274,7 +217,7 @@ export default function Display() {
                         {slot}
                       </div>
                       {courts?.map((court) => {
-                        const booked = isBooked(court.id, slot) || isSpecialBooked(court.id, slot);
+                        const booked = isBooked(court.id, slot);
                         return (
                           <div
                             key={`${court.id}-${slot}`}
@@ -408,8 +351,8 @@ export default function Display() {
                             <div className="space-y-1">
                               {slotInfo.type === 'special' && slotInfo.booking ? (
                                 <>
-                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
-                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
+                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title || 'Evento Especial'}</div>
+                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type || 'Especial'}</div>
                                 </>
                               ) : (
                                 <div className="text-xs">Reservado</div>
@@ -450,8 +393,8 @@ export default function Display() {
                             <div className="space-y-1">
                               {slotInfo.type === 'special' && slotInfo.booking ? (
                                 <>
-                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
-                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
+                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title || 'Evento Especial'}</div>
+                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type || 'Especial'}</div>
                                 </>
                               ) : (
                                 <div className="text-xs">Reservado</div>
@@ -492,8 +435,8 @@ export default function Display() {
                             <div className="space-y-1">
                               {slotInfo.type === 'special' && slotInfo.booking ? (
                                 <>
-                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
-                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
+                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title || 'Evento Especial'}</div>
+                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type || 'Especial'}</div>
                                 </>
                               ) : (
                                 <div className="text-xs">Reservado</div>
