@@ -20,6 +20,25 @@ const BUSINESS_HOURS = {
   end: 22,
 };
 
+interface SpecialBooking {
+  id: string;
+  court_id: string;
+  event_type: string;
+  title: string;
+  description: string;
+  start_time: string;
+  end_time: string;
+  price_type: string;
+  custom_price: number;
+  is_recurring: boolean;
+  recurrence_pattern: string[];
+  created_at: string;
+  court: {
+    name: string;
+    court_type: string;
+  };
+}
+
 export function BookingsList({ bookings, onCancelSuccess, selectedDate }: BookingsListProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -60,7 +79,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
         .order("start_time", { ascending: true });
 
       if (error) throw error;
-      return data || [];
+      return data as SpecialBooking[] || [];
     },
     enabled: !!selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime()),
   });
@@ -149,12 +168,19 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   const allBookings = [
     ...bookings,
     ...(specialBookings?.map(sb => ({
-      ...sb,
       id: `special-${sb.id}`,
+      court_id: sb.court_id,
       user_id: null,
+      start_time: sb.start_time,
+      end_time: sb.end_time,
+      created_at: sb.created_at,
       booking_made_at: sb.created_at,
       user: null,
+      court: sb.court,
       isSpecial: true,
+      event_type: sb.event_type,
+      title: sb.title,
+      description: sb.description,
     })) || [])
   ];
 

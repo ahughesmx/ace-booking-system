@@ -440,6 +440,62 @@ export type Database = {
           },
         ]
       }
+      special_bookings: {
+        Row: {
+          court_id: string
+          created_at: string
+          custom_price: number | null
+          description: string | null
+          end_time: string
+          event_type: string
+          id: string
+          is_recurring: boolean
+          price_type: string
+          recurrence_pattern: string[] | null
+          start_time: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          court_id: string
+          created_at?: string
+          custom_price?: number | null
+          description?: string | null
+          end_time: string
+          event_type: string
+          id?: string
+          is_recurring?: boolean
+          price_type?: string
+          recurrence_pattern?: string[] | null
+          start_time: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          court_id?: string
+          created_at?: string
+          custom_price?: number | null
+          description?: string | null
+          end_time?: string
+          event_type?: string
+          id?: string
+          is_recurring?: boolean
+          price_type?: string
+          recurrence_pattern?: string[] | null
+          start_time?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "special_bookings_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null

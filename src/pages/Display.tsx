@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
@@ -12,6 +11,25 @@ const timeSlots = Array.from({ length: 17 }, (_, i) => {
   const hour = i + 7;
   return `${hour.toString().padStart(2, "0")}:00`;
 });
+
+interface SpecialBooking {
+  id: string;
+  court_id: string;
+  event_type: string;
+  title: string;
+  description: string;
+  start_time: string;
+  end_time: string;
+  price_type: string;
+  custom_price: number;
+  is_recurring: boolean;
+  recurrence_pattern: string[];
+  created_at: string;
+  court: {
+    name: string;
+    court_type: string;
+  };
+}
 
 export default function Display() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -77,7 +95,7 @@ export default function Display() {
         .order("start_time", { ascending: true });
 
       if (error) throw error;
-      return data || [];
+      return data as SpecialBooking[] || [];
     },
     refetchInterval: 30000,
   });
