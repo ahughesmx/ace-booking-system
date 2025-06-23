@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
@@ -173,7 +174,7 @@ export default function Display() {
 
     if (specialBooking) {
       return {
-        type: 'special',
+        type: 'special' as const,
         booking: specialBooking,
         isBooked: true
       };
@@ -181,14 +182,14 @@ export default function Display() {
 
     if (regularBooking) {
       return {
-        type: 'regular',
+        type: 'regular' as const,
         booking: regularBooking,
         isBooked: true
       };
     }
 
     return {
-      type: 'available',
+      type: 'available' as const,
       booking: null,
       isBooked: false
     };
@@ -310,23 +311,23 @@ export default function Display() {
     );
   }
 
-  // Render Single Court View
+  // Render Single Court View - Optimized for responsiveness
   return (
     <div className="h-screen w-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col overflow-hidden">
-      {/* Header - Fixed height */}
+      {/* Compact Header */}
       <div className="bg-white shadow-lg border-b-4 border-blue-500 flex-shrink-0">
-        <div className="flex items-center justify-between px-6 py-3">
+        <div className="flex items-center justify-between px-4 py-2">
           <img
             src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
             alt="CDV Logo"
-            className="h-12"
+            className="h-8"
           />
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-800 mb-1">
+            <h1 className="text-lg font-bold text-gray-800">
               {format(currentTime, "EEEE d 'de' MMMM", { locale: es })}
             </h1>
-            <p className="text-lg text-blue-600 font-semibold flex items-center justify-center gap-2">
-              <Clock className="w-4 h-4" />
+            <p className="text-sm text-blue-600 font-semibold flex items-center justify-center gap-1">
+              <Clock className="w-3 h-3" />
               {format(currentTime, "h:mm a")}
             </p>
           </div>
@@ -334,29 +335,29 @@ export default function Display() {
             <Button
               variant="outline"
               onClick={() => setViewMode('all')}
-              className="border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-2 text-sm"
+              className="border-blue-600 text-blue-600 hover:bg-blue-50 px-3 py-1 text-xs"
             >
-              <Building2 className="w-4 h-4 mr-1" />
+              <Building2 className="w-3 h-3 mr-1" />
               Todas
             </Button>
             <Button
               variant="default"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs"
             >
-              <Monitor className="w-4 h-4 mr-1" />
+              <Monitor className="w-3 h-3 mr-1" />
               Individual
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Court Selector - Fixed height */}
-      <div className="bg-white border-b p-3 flex-shrink-0">
+      {/* Compact Court Selector */}
+      <div className="bg-white border-b p-2 flex-shrink-0">
         <div className="flex justify-center">
           <select
             value={selectedCourtId}
             onChange={(e) => setSelectedCourtId(e.target.value)}
-            className="px-4 py-2 border-2 border-blue-300 rounded-lg text-base font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[250px]"
+            className="px-3 py-1 border-2 border-blue-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[200px]"
           >
             <option value="">Seleccionar Cancha</option>
             {courts?.map((court) => (
@@ -368,25 +369,25 @@ export default function Display() {
         </div>
       </div>
 
-      {/* Single Court Content - Uses remaining space */}
+      {/* Single Court Content - Optimized layout */}
       {selectedCourt ? (
-        <div className="flex-1 p-4 min-h-0">
-          <div className="h-full bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden">
-            {/* Court Header - Fixed height */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 text-center flex-shrink-0">
-              <h2 className="text-2xl font-bold">{selectedCourt.name}</h2>
-              <p className="text-base opacity-90">Horarios del Día</p>
+        <div className="flex-1 p-2 min-h-0">
+          <div className="h-full bg-white rounded-lg shadow-xl flex flex-col overflow-hidden">
+            {/* Compact Court Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-2 text-center flex-shrink-0">
+              <h2 className="text-lg font-bold">{selectedCourt.name}</h2>
+              <p className="text-xs opacity-90">Horarios del Día</p>
             </div>
 
-            {/* Time Slots Grid - 3 columns layout filling remaining space */}
-            <div className="flex-1 p-4 min-h-0">
-              <div className="grid grid-cols-3 gap-3 h-full">
+            {/* Time Slots Grid - 3 columns layout optimized */}
+            <div className="flex-1 p-2 min-h-0">
+              <div className="grid grid-cols-3 gap-2 h-full">
                 {/* Morning Column (7:00 - 12:00) */}
                 <div className="flex flex-col">
-                  <h3 className="text-sm font-bold text-gray-800 mb-2 text-center border-b border-gray-200 pb-1 flex-shrink-0">
+                  <h3 className="text-xs font-bold text-gray-800 mb-1 text-center border-b border-gray-200 pb-1 flex-shrink-0">
                     Mañana (7:00 - 12:00)
                   </h3>
-                  <div className="flex-1 grid grid-rows-6 gap-1">
+                  <div className="flex-1 grid grid-rows-6 gap-1 min-h-0">
                     {timeSlots.slice(0, 6).map((slot) => {
                       const slotInfo = getSlotInfo(selectedCourt.id, slot);
                       const isCurrent = format(currentTime, "HH:00") === slot;
@@ -394,7 +395,7 @@ export default function Display() {
                       return (
                         <div
                           key={slot}
-                          className={`border rounded-lg p-2 text-center text-xs ${
+                          className={`border rounded p-1 text-center text-xs flex flex-col justify-center ${
                             slotInfo.isBooked
                               ? 'bg-red-100 border-red-300 text-red-800'
                               : isCurrent
@@ -405,10 +406,10 @@ export default function Display() {
                           <div className="font-bold text-sm mb-1">{slot}</div>
                           {slotInfo.isBooked ? (
                             <div className="space-y-1">
-                              {slotInfo.type === 'special' ? (
+                              {slotInfo.type === 'special' && slotInfo.booking ? (
                                 <>
-                                  <div className="font-medium text-xs">{slotInfo.booking.title}</div>
-                                  <div className="text-xs capitalize">{slotInfo.booking.event_type}</div>
+                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
+                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
                                 </>
                               ) : (
                                 <div className="text-xs">Reservado</div>
@@ -425,10 +426,10 @@ export default function Display() {
 
                 {/* Afternoon Column (13:00 - 18:00) */}
                 <div className="flex flex-col">
-                  <h3 className="text-sm font-bold text-gray-800 mb-2 text-center border-b border-gray-200 pb-1 flex-shrink-0">
+                  <h3 className="text-xs font-bold text-gray-800 mb-1 text-center border-b border-gray-200 pb-1 flex-shrink-0">
                     Tarde (13:00 - 18:00)
                   </h3>
-                  <div className="flex-1 grid grid-rows-6 gap-1">
+                  <div className="flex-1 grid grid-rows-6 gap-1 min-h-0">
                     {timeSlots.slice(6, 12).map((slot) => {
                       const slotInfo = getSlotInfo(selectedCourt.id, slot);
                       const isCurrent = format(currentTime, "HH:00") === slot;
@@ -436,7 +437,7 @@ export default function Display() {
                       return (
                         <div
                           key={slot}
-                          className={`border rounded-lg p-2 text-center text-xs ${
+                          className={`border rounded p-1 text-center text-xs flex flex-col justify-center ${
                             slotInfo.isBooked
                               ? 'bg-red-100 border-red-300 text-red-800'
                               : isCurrent
@@ -447,10 +448,10 @@ export default function Display() {
                           <div className="font-bold text-sm mb-1">{slot}</div>
                           {slotInfo.isBooked ? (
                             <div className="space-y-1">
-                              {slotInfo.type === 'special' ? (
+                              {slotInfo.type === 'special' && slotInfo.booking ? (
                                 <>
-                                  <div className="font-medium text-xs">{slotInfo.booking.title}</div>
-                                  <div className="text-xs capitalize">{slotInfo.booking.event_type}</div>
+                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
+                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
                                 </>
                               ) : (
                                 <div className="text-xs">Reservado</div>
@@ -467,10 +468,10 @@ export default function Display() {
 
                 {/* Evening Column (19:00 - 23:00) */}
                 <div className="flex flex-col">
-                  <h3 className="text-sm font-bold text-gray-800 mb-2 text-center border-b border-gray-200 pb-1 flex-shrink-0">
+                  <h3 className="text-xs font-bold text-gray-800 mb-1 text-center border-b border-gray-200 pb-1 flex-shrink-0">
                     Noche (19:00 - 23:00)
                   </h3>
-                  <div className="flex-1 grid grid-rows-5 gap-1">
+                  <div className="flex-1 grid grid-rows-5 gap-1 min-h-0">
                     {timeSlots.slice(12).map((slot) => {
                       const slotInfo = getSlotInfo(selectedCourt.id, slot);
                       const isCurrent = format(currentTime, "HH:00") === slot;
@@ -478,7 +479,7 @@ export default function Display() {
                       return (
                         <div
                           key={slot}
-                          className={`border rounded-lg p-2 text-center text-xs ${
+                          className={`border rounded p-1 text-center text-xs flex flex-col justify-center ${
                             slotInfo.isBooked
                               ? 'bg-red-100 border-red-300 text-red-800'
                               : isCurrent
@@ -489,10 +490,10 @@ export default function Display() {
                           <div className="font-bold text-sm mb-1">{slot}</div>
                           {slotInfo.isBooked ? (
                             <div className="space-y-1">
-                              {slotInfo.type === 'special' ? (
+                              {slotInfo.type === 'special' && slotInfo.booking ? (
                                 <>
-                                  <div className="font-medium text-xs">{slotInfo.booking.title}</div>
-                                  <div className="text-xs capitalize">{slotInfo.booking.event_type}</div>
+                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
+                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
                                 </>
                               ) : (
                                 <div className="text-xs">Reservado</div>
@@ -509,9 +510,9 @@ export default function Display() {
               </div>
             </div>
 
-            {/* Legend - Fixed height */}
-            <div className="bg-gray-50 p-3 border-t flex-shrink-0">
-              <div className="flex justify-center gap-4 text-xs">
+            {/* Compact Legend */}
+            <div className="bg-gray-50 p-2 border-t flex-shrink-0">
+              <div className="flex justify-center gap-3 text-xs">
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 bg-green-50 border border-green-200 rounded"></div>
                   <span className="text-gray-700 font-medium">Disponible</span>
