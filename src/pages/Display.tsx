@@ -14,24 +14,33 @@ const timeSlots = Array.from({ length: 17 }, (_, i) => {
   return `${hour.toString().padStart(2, "0")}:00`;
 });
 
-interface SpecialBooking {
-  id: string;
-  court_id: string;
+// Define types for special booking properties
+interface SpecialBookingProperties {
+  isSpecial: true;
   event_type: string;
   title: string;
-  description: string;
+  description?: string;
+}
+
+interface RegularBookingProperties {
+  isSpecial?: false;
+  user: {
+    full_name: string;
+    member_id?: string;
+  };
+}
+
+type BookingWithSpecialProps = {
+  id: string;
+  court_id: string;
+  user_id: string | null;
   start_time: string;
   end_time: string;
-  price_type: string;
-  custom_price: number;
-  is_recurring: boolean;
-  recurrence_pattern: string[];
-  created_at: string;
-  court: {
+  court?: {
     name: string;
     court_type: string;
   };
-}
+} & (SpecialBookingProperties | RegularBookingProperties);
 
 export default function Display() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -91,6 +100,12 @@ export default function Display() {
     return () => clearInterval(interval);
   }, []);
 
+  // Debug logging to check if special bookings are being received
+  useEffect(() => {
+    console.log("Display - All bookings:", allBookings);
+    console.log("Display - Special bookings:", allBookings.filter(b => b.id?.startsWith('special-') || b.isSpecial));
+  }, [allBookings]);
+
   if (!displaySettings?.is_enabled) {
     return (
       <div className="h-screen w-screen bg-white flex items-center justify-center">
@@ -103,9 +118,11 @@ export default function Display() {
     );
   }
 
-  // Type guard to check if booking is special
-  const isSpecialBooking = (booking: any): booking is (typeof booking & { isSpecial: true; title?: string; event_type?: string }) => {
-    return booking.id?.startsWith('special-') || booking.isSpecial === true;
+  // Improved type guard to check if booking is special
+  const isSpecialBooking = (booking: any): booking is BookingWithSpecialProps & SpecialBookingProperties => {
+    return (booking.id?.startsWith('special-') || booking.isSpecial === true) && 
+           booking.title !== undefined && 
+           booking.event_type !== undefined;
   };
 
   // Updated function to check if a slot is booked (includes special bookings)
@@ -126,7 +143,7 @@ export default function Display() {
     );
 
     if (booking) {
-      // Check if it's a special booking using the type guard
+      // Check if it's a special booking using the improved type guard
       const isSpecial = isSpecialBooking(booking);
       
       return {
@@ -223,14 +240,24 @@ export default function Display() {
                       </div>
                       {courts?.map((court) => {
                         const booked = isBooked(court.id, slot);
+                        const slotInfo = getSlotInfo(court.id, slot);
                         return (
                           <div
                             key={`${court.id}-${slot}`}
                             className={`rounded transition-all m-1 ${
                               booked
-                                ? 'bg-red-500'
+                                ? slotInfo.type === 'special' 
+                                  ? 'bg-purple-500' 
+                                  : 'bg-red-500'
                                 : 'bg-green-100'
                             }`}
+                            title={
+                              slotInfo.type === 'special' && isSpecialBooking(slotInfo.booking!)
+                                ? `${slotInfo.booking.title} - ${slotInfo.booking.event_type}`
+                                : booked
+                                ? 'Reservado'
+                                : 'Disponible'
+                            }
                           />
                         );
                       })}
@@ -252,6 +279,10 @@ export default function Display() {
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-red-500 rounded"></div>
               <span className="text-gray-700 text-sm font-medium">Reservado</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-purple-500 rounded"></div>
+              <span className="text-gray-700 text-sm font-medium">Evento Especial</span>
             </div>
           </div>
         </div>
@@ -345,7 +376,9 @@ export default function Display() {
                           key={slot}
                           className={`border rounded p-1 text-center text-xs flex flex-col justify-center ${
                             slotInfo.isBooked
-                              ? 'bg-red-100 border-red-300 text-red-800'
+                              ? slotInfo.type === 'special'
+                                ? 'bg-purple-100 border-purple-300 text-purple-800'
+                                : 'bg-red-100 border-red-300 text-red-800'
                               : isCurrent
                               ? 'bg-blue-100 border-blue-300 text-blue-800'
                               : 'bg-green-50 border-green-200 text-green-800'
@@ -354,10 +387,10 @@ export default function Display() {
                           <div className="font-bold text-sm mb-1">{slot}</div>
                           {slotInfo.isBooked ? (
                             <div className="space-y-1">
-                              {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
+                              {slotInfo.type === 'special' && isSpecialBooking(slotInfo.booking!) ? (
                                 <>
-                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title || 'Evento Especial'}</div>
-                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type || 'Especial'}</div>
+                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
+                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
                                 </>
                               ) : (
                                 <div className="text-xs">Reservado</div>
@@ -387,7 +420,9 @@ export default function Display() {
                           key={slot}
                           className={`border rounded p-1 text-center text-xs flex flex-col justify-center ${
                             slotInfo.isBooked
-                              ? 'bg-red-100 border-red-300 text-red-800'
+                              ? slotInfo.type === 'special'
+                                ? 'bg-purple-100 border-purple-300 text-purple-800'
+                                : 'bg-red-100 border-red-300 text-red-800'
                               : isCurrent
                               ? 'bg-blue-100 border-blue-300 text-blue-800'
                               : 'bg-green-50 border-green-200 text-green-800'
@@ -396,10 +431,10 @@ export default function Display() {
                           <div className="font-bold text-sm mb-1">{slot}</div>
                           {slotInfo.isBooked ? (
                             <div className="space-y-1">
-                              {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
+                              {slotInfo.type === 'special' && isSpecialBooking(slotInfo.booking!) ? (
                                 <>
-                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title || 'Evento Especial'}</div>
-                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type || 'Especial'}</div>
+                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
+                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
                                 </>
                               ) : (
                                 <div className="text-xs">Reservado</div>
@@ -429,7 +464,9 @@ export default function Display() {
                           key={slot}
                           className={`border rounded p-1 text-center text-xs flex flex-col justify-center ${
                             slotInfo.isBooked
-                              ? 'bg-red-100 border-red-300 text-red-800'
+                              ? slotInfo.type === 'special'
+                                ? 'bg-purple-100 border-purple-300 text-purple-800'
+                                : 'bg-red-100 border-red-300 text-red-800'
                               : isCurrent
                               ? 'bg-blue-100 border-blue-300 text-blue-800'
                               : 'bg-green-50 border-green-200 text-green-800'
@@ -438,10 +475,10 @@ export default function Display() {
                           <div className="font-bold text-sm mb-1">{slot}</div>
                           {slotInfo.isBooked ? (
                             <div className="space-y-1">
-                              {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
+                              {slotInfo.type === 'special' && isSpecialBooking(slotInfo.booking!) ? (
                                 <>
-                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title || 'Evento Especial'}</div>
-                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type || 'Especial'}</div>
+                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
+                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
                                 </>
                               ) : (
                                 <div className="text-xs">Reservado</div>
@@ -468,6 +505,10 @@ export default function Display() {
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 bg-red-100 border border-red-300 rounded"></div>
                   <span className="text-gray-700 font-medium">Reservado</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-purple-100 border border-purple-300 rounded"></div>
+                  <span className="text-gray-700 font-medium">Evento Especial</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
