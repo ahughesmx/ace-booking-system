@@ -28,30 +28,35 @@ export function useBookings(selectedDate?: Date) {
       console.log("Fetching bookings for date:", selectedDate);
       console.log("Date range:", { start: start.toISOString(), end: end.toISOString() });
 
-      const { data, error } = await supabase
-        .from("bookings")
-        .select(`
-          *,
-          court:courts(id, name, court_type),
-          user:profiles(full_name, member_id)
-        `)
-        .gte("start_time", start.toISOString())
-        .lt("start_time", end.toISOString())
-        .order("start_time");
+      try {
+        const { data, error } = await supabase
+          .from("bookings")
+          .select(`
+            *,
+            court:courts(id, name, court_type),
+            user:profiles(full_name, member_id)
+          `)
+          .gte("start_time", start.toISOString())
+          .lt("start_time", end.toISOString())
+          .order("start_time");
 
-      if (error) {
-        console.error("Error fetching bookings:", error);
+        if (error) {
+          console.error("Error fetching bookings:", error);
+          throw error;
+        }
+
+        console.log("Fetched regular bookings:", data);
+        console.log("Query used:", {
+          start: start.toISOString(),
+          end: end.toISOString(),
+          filter: "start_time >= start AND start_time < end"
+        });
+        
+        return data || [];
+      } catch (error) {
+        console.error("Network error fetching bookings:", error);
         throw error;
       }
-
-      console.log("Fetched regular bookings:", data);
-      console.log("Query used:", {
-        start: start.toISOString(),
-        end: end.toISOString(),
-        filter: "start_time >= start AND start_time < end"
-      });
-      
-      return data || [];
     },
     enabled: !!selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime()),
   });
@@ -83,38 +88,43 @@ export function useSpecialBookings(selectedDate?: Date) {
       console.log("- Query end time:", end.toISOString());
       console.log("- Timezone offset:", selectedDate.getTimezoneOffset());
 
-      const { data, error } = await supabase
-        .from("special_bookings")
-        .select(`
-          *,
-          court:courts(id, name, court_type)
-        `)
-        .gte("start_time", start.toISOString())
-        .lt("start_time", end.toISOString())
-        .order("start_time");
+      try {
+        const { data, error } = await supabase
+          .from("special_bookings")
+          .select(`
+            *,
+            court:courts(id, name, court_type)
+          `)
+          .gte("start_time", start.toISOString())
+          .lt("start_time", end.toISOString())
+          .order("start_time");
 
-      if (error) {
-        console.error("Error fetching special bookings:", error);
+        if (error) {
+          console.error("Error fetching special bookings:", error);
+          throw error;
+        }
+
+        console.log("🎯 SPECIAL BOOKINGS RAW DATA:", data);
+        console.log("🎯 Number of special bookings found:", data?.length || 0);
+        
+        // Debug cada reserva especial
+        data?.forEach((booking, index) => {
+          console.log(`🎯 Special booking #${index + 1}:`, {
+            id: booking.id,
+            title: booking.title,
+            event_type: booking.event_type,
+            start_time: booking.start_time,
+            start_time_date: new Date(booking.start_time),
+            court_id: booking.court_id,
+            court: booking.court
+          });
+        });
+        
+        return data || [];
+      } catch (error) {
+        console.error("Network error fetching special bookings:", error);
         throw error;
       }
-
-      console.log("🎯 SPECIAL BOOKINGS RAW DATA:", data);
-      console.log("🎯 Number of special bookings found:", data?.length || 0);
-      
-      // Debug cada reserva especial
-      data?.forEach((booking, index) => {
-        console.log(`🎯 Special booking #${index + 1}:`, {
-          id: booking.id,
-          title: booking.title,
-          event_type: booking.event_type,
-          start_time: booking.start_time,
-          start_time_date: new Date(booking.start_time),
-          court_id: booking.court_id,
-          court: booking.court
-        });
-      });
-      
-      return data || [];
     },
     enabled: !!selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime()),
   });
