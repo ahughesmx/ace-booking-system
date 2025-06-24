@@ -5,178 +5,106 @@ import { startOfDay, endOfDay } from "date-fns";
 import { Booking } from "@/types/booking";
 
 export function useBookings(selectedDate?: Date) {
-  console.log("useBookings hook called with selectedDate:", selectedDate);
-  console.log("selectedDate type:", typeof selectedDate);
-  console.log("selectedDate instanceof Date:", selectedDate instanceof Date);
-  
   return useQuery({
     queryKey: ["bookings", selectedDate?.toISOString()],
     queryFn: async () => {
       if (!selectedDate) {
-        console.log("No selectedDate provided, returning empty array");
-        return [];
-      }
-
-      if (!(selectedDate instanceof Date) || isNaN(selectedDate.getTime())) {
-        console.error("Invalid selectedDate provided:", selectedDate);
         return [];
       }
 
       const start = startOfDay(selectedDate);
       const end = endOfDay(selectedDate);
 
-      console.log("Fetching bookings for date:", selectedDate);
-      console.log("Date range:", { start: start.toISOString(), end: end.toISOString() });
+      console.log("📅 Regular bookings query:", {
+        selectedDate: selectedDate.toISOString(),
+        start: start.toISOString(),
+        end: end.toISOString()
+      });
 
-      try {
-        const { data, error } = await supabase
-          .from("bookings")
-          .select(`
-            *,
-            court:courts(id, name, court_type),
-            user:profiles(full_name, member_id)
-          `)
-          .gte("start_time", start.toISOString())
-          .lt("start_time", end.toISOString())
-          .order("start_time");
+      const { data, error } = await supabase
+        .from("bookings")
+        .select(`
+          *,
+          court:courts(id, name, court_type),
+          user:profiles(full_name, member_id)
+        `)
+        .gte("start_time", start.toISOString())
+        .lt("start_time", end.toISOString())
+        .order("start_time");
 
-        if (error) {
-          console.error("Error fetching bookings:", error);
-          throw error;
-        }
-
-        console.log("Fetched regular bookings:", data);
-        console.log("Query used:", {
-          start: start.toISOString(),
-          end: end.toISOString(),
-          filter: "start_time >= start AND start_time < end"
-        });
-        
-        return data || [];
-      } catch (error) {
-        console.error("Network error fetching bookings:", error);
-        throw error;
+      if (error) {
+        console.error("❌ Error fetching regular bookings:", error);
+        return [];
       }
+
+      console.log("✅ Regular bookings fetched:", data?.length || 0);
+      return data || [];
     },
-    enabled: !!selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime()),
+    enabled: !!selectedDate,
   });
 }
 
-// Hook para obtener reservas especiales
 export function useSpecialBookings(selectedDate?: Date) {
-  console.log("useSpecialBookings hook called with selectedDate:", selectedDate);
-  
   return useQuery({
     queryKey: ["special-bookings", selectedDate?.toISOString()],
     queryFn: async () => {
       if (!selectedDate) {
-        console.log("No selectedDate provided for special bookings, returning empty array");
-        return [];
-      }
-
-      if (!(selectedDate instanceof Date) || isNaN(selectedDate.getTime())) {
-        console.error("Invalid selectedDate provided for special bookings:", selectedDate);
         return [];
       }
 
       const start = startOfDay(selectedDate);
       const end = endOfDay(selectedDate);
 
-      console.log("🔍 SPECIAL BOOKINGS QUERY DEBUG:");
-      console.log("- Selected date:", selectedDate.toISOString());
-      console.log("- Query start time:", start.toISOString());
-      console.log("- Query end time:", end.toISOString());
-      console.log("- Timezone offset:", selectedDate.getTimezoneOffset());
+      console.log("🎯 Special bookings query:", {
+        selectedDate: selectedDate.toISOString(),
+        start: start.toISOString(),
+        end: end.toISOString()
+      });
 
-      try {
-        const { data, error } = await supabase
-          .from("special_bookings")
-          .select(`
-            *,
-            court:courts(id, name, court_type)
-          `)
-          .gte("start_time", start.toISOString())
-          .lt("start_time", end.toISOString())
-          .order("start_time");
+      const { data, error } = await supabase
+        .from("special_bookings")
+        .select(`
+          *,
+          court:courts(id, name, court_type)
+        `)
+        .gte("start_time", start.toISOString())
+        .lt("start_time", end.toISOString())
+        .order("start_time");
 
-        if (error) {
-          console.error("Error fetching special bookings:", error);
-          throw error;
-        }
-
-        console.log("🎯 SPECIAL BOOKINGS RAW DATA:", data);
-        console.log("🎯 Number of special bookings found:", data?.length || 0);
-        
-        // Debug cada reserva especial
-        data?.forEach((booking, index) => {
-          console.log(`🎯 Special booking #${index + 1}:`, {
-            id: booking.id,
-            title: booking.title,
-            event_type: booking.event_type,
-            start_time: booking.start_time,
-            start_time_date: new Date(booking.start_time),
-            court_id: booking.court_id,
-            court: booking.court
-          });
-        });
-        
-        return data || [];
-      } catch (error) {
-        console.error("Network error fetching special bookings:", error);
-        throw error;
+      if (error) {
+        console.error("❌ Error fetching special bookings:", error);
+        return [];
       }
+
+      console.log("✅ Special bookings fetched:", data?.length || 0);
+      return data || [];
     },
-    enabled: !!selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime()),
+    enabled: !!selectedDate,
   });
 }
 
-// Hook combinado para obtener todas las reservas (normales + especiales)
 export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoading: boolean } {
   const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate);
   const { data: specialBookings = [], isLoading: loadingSpecial } = useSpecialBookings(selectedDate);
 
-  console.log("📊 useAllBookings SUMMARY:");
-  console.log("- Regular bookings count:", regularBookings.length);
-  console.log("- Special bookings count:", specialBookings.length);
-  console.log("- Selected date:", selectedDate?.toISOString());
+  // Transform special bookings to match Booking interface
+  const transformedSpecialBookings: Booking[] = specialBookings?.map(sb => ({
+    id: `special-${sb.id}`,
+    court_id: sb.court_id,
+    user_id: null,
+    start_time: sb.start_time,
+    end_time: sb.end_time,
+    created_at: sb.created_at,
+    booking_made_at: sb.created_at,
+    user: null,
+    court: sb.court,
+    isSpecial: true,
+    event_type: sb.event_type,
+    title: sb.title,
+    description: sb.description,
+  })) || [];
 
-  // Transformar reservas especiales al formato común con tipos explícitos
-  const transformedSpecialBookings: Booking[] = specialBookings?.map(sb => {
-    console.log("🔄 Transforming special booking:", {
-      original_id: sb.id,
-      title: sb.title,
-      event_type: sb.event_type,
-      start_time: sb.start_time,
-      court_id: sb.court_id
-    });
-    
-    const transformed: Booking = {
-      id: `special-${sb.id}`,
-      court_id: sb.court_id,
-      user_id: null,
-      start_time: sb.start_time,
-      end_time: sb.end_time,
-      created_at: sb.created_at,
-      booking_made_at: sb.created_at,
-      user: null,
-      court: sb.court,
-      isSpecial: true,
-      event_type: sb.event_type,
-      title: sb.title,
-      description: sb.description,
-    };
-    
-    console.log("✅ Transformed result:", {
-      id: transformed.id,
-      isSpecial: transformed.isSpecial,
-      title: transformed.title,
-      event_type: transformed.event_type
-    });
-    
-    return transformed;
-  }) || [];
-
-  // Transformar reservas regulares para incluir isSpecial: false
+  // Transform regular bookings to include isSpecial: false
   const transformedRegularBookings: Booking[] = regularBookings.map(rb => ({
     ...rb,
     isSpecial: false
@@ -187,11 +115,12 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
     ...transformedSpecialBookings
   ];
 
-  console.log("📈 FINAL COMBINED BOOKINGS:");
-  console.log("- Total bookings:", allBookings.length);
-  console.log("- Regular bookings:", transformedRegularBookings.length);
-  console.log("- Special bookings:", transformedSpecialBookings.length);
-  console.log("- All bookings with isSpecial=true:", allBookings.filter(b => b.isSpecial === true).length);
+  console.log("📊 Combined bookings summary:", {
+    regular: transformedRegularBookings.length,
+    special: transformedSpecialBookings.length,
+    total: allBookings.length,
+    date: selectedDate?.toISOString()
+  });
 
   return {
     data: allBookings,
@@ -199,7 +128,6 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
   };
 }
 
-// Nueva función para verificar si una cancha está en mantenimiento
 export function useCourtAvailability(courtId: string, startTime: Date, endTime: Date) {
   return useQuery({
     queryKey: ["court-availability", courtId, startTime.toISOString(), endTime.toISOString()],
@@ -221,7 +149,6 @@ export function useCourtAvailability(courtId: string, startTime: Date, endTime: 
 
       if (bookingError) throw bookingError;
 
-      // Verificar reservas especiales
       const { data: specialBookingData, error: specialBookingError } = await supabase
         .from("special_bookings")
         .select("id")

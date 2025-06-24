@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
@@ -20,28 +21,13 @@ export default function Display() {
   const [selectedCourtId, setSelectedCourtId] = useState<string>('');
 
   const currentDate = new Date();
-  console.log("🚀 DISPLAY COMPONENT INIT:");
-  console.log("- Current date for query:", currentDate.toISOString());
-  console.log("- Current date local:", currentDate.toString());
-
-  // Use the combined bookings hook that includes both regular and special bookings
-  const { data: allBookings = [] } = useAllBookings(currentDate);
-
-  console.log("🖥️ DISPLAY COMPONENT BOOKINGS:");
-  console.log("- Total bookings received:", allBookings.length);
-  console.log("- Special bookings count:", allBookings.filter(b => b.isSpecial === true).length);
-  console.log("- Regular bookings count:", allBookings.filter(b => b.isSpecial === false).length);
-  
-  // Debug each booking
-  allBookings.forEach((booking, index) => {
-    console.log(`📋 Booking #${index + 1}:`, {
-      id: booking.id,
-      isSpecial: booking.isSpecial,
-      start_time: booking.start_time,
-      court_id: booking.court_id,
-      title: booking.isSpecial ? (booking as SpecialBooking).title : 'Regular booking'
-    });
+  console.log("🖥️ Display component initialized:", {
+    currentDate: currentDate.toISOString(),
+    viewMode
   });
+
+  // Use the combined bookings hook
+  const { data: allBookings = [], isLoading } = useAllBookings(currentDate);
 
   const { data: displaySettings } = useQuery({
     queryKey: ["display-settings"],
@@ -53,13 +39,10 @@ export default function Display() {
 
       if (error) {
         console.error("Error fetching display settings:", error);
-        throw error;
+        return { is_enabled: true, rotation_interval: 10000 };
       }
 
-      return data || {
-        is_enabled: true,
-        rotation_interval: 10000,
-      };
+      return data || { is_enabled: true, rotation_interval: 10000 };
     },
   });
 
@@ -71,8 +54,11 @@ export default function Display() {
         .select("*")
         .order("name");
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Error fetching courts:", error);
+        return [];
+      }
+      return data || [];
     },
   });
 
@@ -93,30 +79,6 @@ export default function Display() {
     return () => clearInterval(interval);
   }, []);
 
-  // Debug logging to check if special bookings are being received
-  useEffect(() => {
-    console.log("🔄 Display useEffect - Bookings changed:");
-    console.log("- All bookings:", allBookings.length);
-    console.log("- Special bookings:", allBookings.filter(b => b.isSpecial === true).length);
-    console.log("- Regular bookings:", allBookings.filter(b => b.isSpecial === false).length);
-    
-    // Check specific time slots
-    timeSlots.forEach(slot => {
-      const bookingsInSlot = allBookings.filter(booking => {
-        const bookingHour = format(new Date(booking.start_time), "HH:00");
-        return bookingHour === slot;
-      });
-      
-      if (bookingsInSlot.length > 0) {
-        console.log(`⏰ Slot ${slot} has ${bookingsInSlot.length} bookings:`, bookingsInSlot.map(b => ({
-          id: b.id,
-          isSpecial: b.isSpecial,
-          court_id: b.court_id
-        })));
-      }
-    });
-  }, [allBookings]);
-
   if (!displaySettings?.is_enabled) {
     return (
       <div className="h-screen w-screen bg-white flex items-center justify-center">
@@ -129,74 +91,29 @@ export default function Display() {
     );
   }
 
-  // Type guard to check if booking is special
+  // Type guard for special bookings
   const isSpecialBooking = (booking: Booking): booking is SpecialBooking => {
-    const result = booking.isSpecial === true;
-    console.log("🔍 isSpecialBooking check:", {
-      booking_id: booking.id,
-      isSpecial_property: booking.isSpecial,
-      result: result
-    });
-    return result;
+    return booking.isSpecial === true;
   };
 
-  // Function to check if a slot is booked (includes special bookings)
+  // Check if a slot is booked
   const isBooked = (courtId: string, timeSlot: string) => {
-    const bookingsInSlot = allBookings.filter(booking => {
+    return allBookings.some(booking => {
       const bookingHour = format(new Date(booking.start_time), "HH:00");
-      const matches = booking.court_id === courtId && bookingHour === timeSlot;
-      
-      if (matches) {
-        console.log("🎯 Found booking match:", {
-          timeSlot,
-          courtId,
-          booking_id: booking.id,
-          isSpecial: booking.isSpecial,
-          start_time: booking.start_time,
-          bookingHour
-        });
-      }
-      
-      return matches;
+      return booking.court_id === courtId && bookingHour === timeSlot;
     });
-    
-    const booked = bookingsInSlot.length > 0;
-    
-    if (booked) {
-      console.log(`✅ Slot ${timeSlot} court ${courtId} is booked:`, bookingsInSlot);
-    }
-    
-    return booked;
   };
 
-  // Function to get slot information (includes special bookings)
+  // Get slot information
   const getSlotInfo = (courtId: string, timeSlot: string) => {
     const booking = allBookings.find(booking => {
       const bookingHour = format(new Date(booking.start_time), "HH:00");
-      const matches = booking.court_id === courtId && bookingHour === timeSlot;
-      
-      if (matches) {
-        console.log("🔍 getSlotInfo found match:", {
-          timeSlot,
-          courtId,
-          booking_id: booking.id,
-          isSpecial: booking.isSpecial
-        });
-      }
-      
-      return matches;
+      return booking.court_id === courtId && bookingHour === timeSlot;
     });
 
     if (booking) {
-      const isSpecial = isSpecialBooking(booking);
-      console.log("📋 getSlotInfo result:", {
-        booking_id: booking.id,
-        isSpecial: isSpecial,
-        type: isSpecial ? 'special' : 'regular'
-      });
-      
       return {
-        type: isSpecial ? 'special' as const : 'regular' as const,
+        type: isSpecialBooking(booking) ? 'special' as const : 'regular' as const,
         booking: booking,
         isBooked: true
       };
@@ -215,7 +132,7 @@ export default function Display() {
   if (viewMode === 'all') {
     return (
       <div className="h-screen w-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col overflow-hidden">
-        {/* Header - Fixed height */}
+        {/* Header */}
         <div className="bg-white shadow-lg border-b-4 border-blue-500 flex-shrink-0">
           <div className="flex items-center justify-between px-6 py-3">
             <img
@@ -253,10 +170,10 @@ export default function Display() {
           </div>
         </div>
 
-        {/* Main Grid - Uses remaining space */}
+        {/* Main Grid */}
         <div className="flex-1 p-4 min-h-0">
           <div className="bg-white rounded-lg shadow-xl h-full flex flex-col overflow-hidden">
-            {/* Courts Header - Fixed height */}
+            {/* Courts Header */}
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 flex-shrink-0">
               <div className="grid gap-2" style={{ gridTemplateColumns: `100px repeat(${courts?.length || 0}, 1fr)` }}>
                 <div className="font-bold text-sm text-center">Hora</div>
@@ -268,10 +185,10 @@ export default function Display() {
               </div>
             </div>
 
-            {/* Time Slots Grid - Fills remaining space exactly */}
+            {/* Time Slots Grid */}
             <div className="flex-1 overflow-hidden">
               <div className="h-full flex flex-col">
-                {timeSlots.map((slot, index) => {
+                {timeSlots.map((slot) => {
                   const isCurrent = format(currentTime, "HH:00") === slot;
                   return (
                     <div
@@ -288,14 +205,12 @@ export default function Display() {
                         {slot}
                       </div>
                       {courts?.map((court) => {
-                        const booked = isBooked(court.id, slot);
                         const slotInfo = getSlotInfo(court.id, slot);
-                        console.log(`Court ${court.id} at ${slot}: booked=${booked}, slotInfo=`, slotInfo);
                         return (
                           <div
                             key={`${court.id}-${slot}`}
                             className={`rounded transition-all m-1 ${
-                              booked
+                              slotInfo.isBooked
                                 ? slotInfo.type === 'special' 
                                   ? 'bg-purple-500' 
                                   : 'bg-red-500'
@@ -304,7 +219,7 @@ export default function Display() {
                             title={
                               slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking)
                                 ? `${slotInfo.booking.title} - ${slotInfo.booking.event_type}`
-                                : booked
+                                : slotInfo.isBooked
                                 ? 'Reservado'
                                 : 'Disponible'
                             }
@@ -319,7 +234,7 @@ export default function Display() {
           </div>
         </div>
 
-        {/* Legend - Fixed height */}
+        {/* Legend */}
         <div className="bg-white border-t p-2 flex-shrink-0">
           <div className="flex justify-center gap-6">
             <div className="flex items-center gap-2">
@@ -340,10 +255,10 @@ export default function Display() {
     );
   }
 
-  // Render Single Court View - Optimized for responsiveness
+  // Render Single Court View
   return (
     <div className="h-screen w-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col overflow-hidden">
-      {/* Compact Header */}
+      {/* Header */}
       <div className="bg-white shadow-lg border-b-4 border-blue-500 flex-shrink-0">
         <div className="flex items-center justify-between px-4 py-2">
           <img
@@ -380,7 +295,7 @@ export default function Display() {
         </div>
       </div>
 
-      {/* Compact Court Selector */}
+      {/* Court Selector */}
       <div className="bg-white border-b p-2 flex-shrink-0">
         <div className="flex justify-center">
           <select
@@ -398,154 +313,70 @@ export default function Display() {
         </div>
       </div>
 
-      {/* Single Court Content - Optimized layout */}
+      {/* Single Court Content */}
       {selectedCourt ? (
         <div className="flex-1 p-2 min-h-0">
           <div className="h-full bg-white rounded-lg shadow-xl flex flex-col overflow-hidden">
-            {/* Compact Court Header */}
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-2 text-center flex-shrink-0">
               <h2 className="text-lg font-bold">{selectedCourt.name}</h2>
               <p className="text-xs opacity-90">Horarios del Día</p>
             </div>
 
-            {/* Time Slots Grid - 3 columns layout optimized */}
             <div className="flex-1 p-2 min-h-0">
               <div className="grid grid-cols-3 gap-2 h-full">
-                {/* Morning Column (7:00 - 12:00) */}
-                <div className="flex flex-col">
-                  <h3 className="text-xs font-bold text-gray-800 mb-1 text-center border-b border-gray-200 pb-1 flex-shrink-0">
-                    Mañana (7:00 - 12:00)
-                  </h3>
-                  <div className="flex-1 grid grid-rows-6 gap-1 min-h-0">
-                    {timeSlots.slice(0, 6).map((slot) => {
-                      const slotInfo = getSlotInfo(selectedCourt.id, slot);
-                      const isCurrent = format(currentTime, "HH:00") === slot;
-                      
-                      return (
-                        <div
-                          key={slot}
-                          className={`border rounded p-1 text-center text-xs flex flex-col justify-center ${
-                            slotInfo.isBooked
-                              ? slotInfo.type === 'special'
-                                ? 'bg-purple-100 border-purple-300 text-purple-800'
-                                : 'bg-red-100 border-red-300 text-red-800'
-                              : isCurrent
-                              ? 'bg-blue-100 border-blue-300 text-blue-800'
-                              : 'bg-green-50 border-green-200 text-green-800'
-                          }`}
-                        >
-                          <div className="font-bold text-sm mb-1">{slot}</div>
-                          {slotInfo.isBooked ? (
-                            <div className="space-y-1">
-                              {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
-                                <>
-                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
-                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
-                                </>
-                              ) : (
-                                <div className="text-xs">Reservado</div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="text-xs font-medium">Disponible</div>
-                          )}
-                        </div>
-                      );
-                    })}
+                {/* Morning, Afternoon, Evening columns */}
+                {[
+                  { title: "Mañana (7:00 - 12:00)", slots: timeSlots.slice(0, 6) },
+                  { title: "Tarde (13:00 - 18:00)", slots: timeSlots.slice(6, 12) },
+                  { title: "Noche (19:00 - 23:00)", slots: timeSlots.slice(12) }
+                ].map((period, periodIndex) => (
+                  <div key={periodIndex} className="flex flex-col">
+                    <h3 className="text-xs font-bold text-gray-800 mb-1 text-center border-b border-gray-200 pb-1 flex-shrink-0">
+                      {period.title}
+                    </h3>
+                    <div className={`flex-1 grid gap-1 min-h-0`} style={{ gridTemplateRows: `repeat(${period.slots.length}, 1fr)` }}>
+                      {period.slots.map((slot) => {
+                        const slotInfo = getSlotInfo(selectedCourt.id, slot);
+                        const isCurrent = format(currentTime, "HH:00") === slot;
+                        
+                        return (
+                          <div
+                            key={slot}
+                            className={`border rounded p-1 text-center text-xs flex flex-col justify-center ${
+                              slotInfo.isBooked
+                                ? slotInfo.type === 'special'
+                                  ? 'bg-purple-100 border-purple-300 text-purple-800'
+                                  : 'bg-red-100 border-red-300 text-red-800'
+                                : isCurrent
+                                ? 'bg-blue-100 border-blue-300 text-blue-800'
+                                : 'bg-green-50 border-green-200 text-green-800'
+                            }`}
+                          >
+                            <div className="font-bold text-sm mb-1">{slot}</div>
+                            {slotInfo.isBooked ? (
+                              <div className="space-y-1">
+                                {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
+                                  <>
+                                    <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
+                                    <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
+                                  </>
+                                ) : (
+                                  <div className="text-xs">Reservado</div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-xs font-medium">Disponible</div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-
-                {/* Afternoon Column (13:00 - 18:00) */}
-                <div className="flex flex-col">
-                  <h3 className="text-xs font-bold text-gray-800 mb-1 text-center border-b border-gray-200 pb-1 flex-shrink-0">
-                    Tarde (13:00 - 18:00)
-                  </h3>
-                  <div className="flex-1 grid grid-rows-6 gap-1 min-h-0">
-                    {timeSlots.slice(6, 12).map((slot) => {
-                      const slotInfo = getSlotInfo(selectedCourt.id, slot);
-                      const isCurrent = format(currentTime, "HH:00") === slot;
-                      
-                      return (
-                        <div
-                          key={slot}
-                          className={`border rounded p-1 text-center text-xs flex flex-col justify-center ${
-                            slotInfo.isBooked
-                              ? slotInfo.type === 'special'
-                                ? 'bg-purple-100 border-purple-300 text-purple-800'
-                                : 'bg-red-100 border-red-300 text-red-800'
-                              : isCurrent
-                              ? 'bg-blue-100 border-blue-300 text-blue-800'
-                              : 'bg-green-50 border-green-200 text-green-800'
-                          }`}
-                        >
-                          <div className="font-bold text-sm mb-1">{slot}</div>
-                          {slotInfo.isBooked ? (
-                            <div className="space-y-1">
-                              {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
-                                <>
-                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
-                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
-                                </>
-                              ) : (
-                                <div className="text-xs">Reservado</div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="text-xs font-medium">Disponible</div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Evening Column (19:00 - 23:00) */}
-                <div className="flex flex-col">
-                  <h3 className="text-xs font-bold text-gray-800 mb-1 text-center border-b border-gray-200 pb-1 flex-shrink-0">
-                    Noche (19:00 - 23:00)
-                  </h3>
-                  <div className="flex-1 grid grid-rows-5 gap-1 min-h-0">
-                    {timeSlots.slice(12).map((slot) => {
-                      const slotInfo = getSlotInfo(selectedCourt.id, slot);
-                      const isCurrent = format(currentTime, "HH:00") === slot;
-                      
-                      return (
-                        <div
-                          key={slot}
-                          className={`border rounded p-1 text-center text-xs flex flex-col justify-center ${
-                            slotInfo.isBooked
-                              ? slotInfo.type === 'special'
-                                ? 'bg-purple-100 border-purple-300 text-purple-800'
-                                : 'bg-red-100 border-red-300 text-red-800'
-                              : isCurrent
-                              ? 'bg-blue-100 border-blue-300 text-blue-800'
-                              : 'bg-green-50 border-green-200 text-green-800'
-                          }`}
-                        >
-                          <div className="font-bold text-sm mb-1">{slot}</div>
-                          {slotInfo.isBooked ? (
-                            <div className="space-y-1">
-                              {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
-                                <>
-                                  <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
-                                  <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
-                                </>
-                              ) : (
-                                <div className="text-xs">Reservado</div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="text-xs font-medium">Disponible</div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
-            {/* Compact Legend */}
+            {/* Legend */}
             <div className="bg-gray-50 p-2 border-t flex-shrink-0">
               <div className="flex justify-center gap-3 text-xs">
                 <div className="flex items-center gap-1">

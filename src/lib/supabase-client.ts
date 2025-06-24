@@ -8,18 +8,14 @@ const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
   auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce'
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
   },
   global: {
     headers: {
       'Content-Type': 'application/json',
     }
-  },
-  db: {
-    schema: 'public'
   }
 });
 
