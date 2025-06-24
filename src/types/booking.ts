@@ -13,4 +13,9 @@ export type Booking = {
     full_name: string;
     member_id?: string;
   };
+  // Special booking properties
+  isSpecial?: boolean;
+  event_type?: string;
+  title?: string;
+  description?: string;
 };

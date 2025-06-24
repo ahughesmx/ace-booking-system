@@ -103,6 +103,11 @@ export default function Display() {
     );
   }
 
+  // Type guard to check if booking is special
+  const isSpecialBooking = (booking: any): booking is (typeof booking & { isSpecial: true; title?: string; event_type?: string }) => {
+    return booking.id?.startsWith('special-') || booking.isSpecial === true;
+  };
+
   // Updated function to check if a slot is booked (includes special bookings)
   const isBooked = (courtId: string, timeSlot: string) => {
     return allBookings?.some(
@@ -121,8 +126,8 @@ export default function Display() {
     );
 
     if (booking) {
-      // Check if it's a special booking (has the special- prefix in ID or isSpecial flag)
-      const isSpecial = booking.id.startsWith('special-') || booking.isSpecial;
+      // Check if it's a special booking using the type guard
+      const isSpecial = isSpecialBooking(booking);
       
       return {
         type: isSpecial ? 'special' as const : 'regular' as const,
@@ -349,7 +354,7 @@ export default function Display() {
                           <div className="font-bold text-sm mb-1">{slot}</div>
                           {slotInfo.isBooked ? (
                             <div className="space-y-1">
-                              {slotInfo.type === 'special' && slotInfo.booking ? (
+                              {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
                                 <>
                                   <div className="font-medium text-xs truncate">{slotInfo.booking.title || 'Evento Especial'}</div>
                                   <div className="text-xs capitalize truncate">{slotInfo.booking.event_type || 'Especial'}</div>
@@ -391,7 +396,7 @@ export default function Display() {
                           <div className="font-bold text-sm mb-1">{slot}</div>
                           {slotInfo.isBooked ? (
                             <div className="space-y-1">
-                              {slotInfo.type === 'special' && slotInfo.booking ? (
+                              {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
                                 <>
                                   <div className="font-medium text-xs truncate">{slotInfo.booking.title || 'Evento Especial'}</div>
                                   <div className="text-xs capitalize truncate">{slotInfo.booking.event_type || 'Especial'}</div>
@@ -433,7 +438,7 @@ export default function Display() {
                           <div className="font-bold text-sm mb-1">{slot}</div>
                           {slotInfo.isBooked ? (
                             <div className="space-y-1">
-                              {slotInfo.type === 'special' && slotInfo.booking ? (
+                              {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
                                 <>
                                   <div className="font-medium text-xs truncate">{slotInfo.booking.title || 'Evento Especial'}</div>
                                   <div className="text-xs capitalize truncate">{slotInfo.booking.event_type || 'Especial'}</div>
