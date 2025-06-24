@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
@@ -27,6 +26,7 @@ export default function Display() {
   console.log("Display component - All bookings received:", allBookings);
   console.log("Display component - Bookings count:", allBookings.length);
   console.log("Display component - Special bookings:", allBookings.filter(b => b.isSpecial === true));
+  console.log("Display component - Regular bookings:", allBookings.filter(b => b.isSpecial === false));
 
   const { data: displaySettings } = useQuery({
     queryKey: ["display-settings"],
@@ -82,7 +82,7 @@ export default function Display() {
   useEffect(() => {
     console.log("Display useEffect - All bookings:", allBookings);
     console.log("Display useEffect - Special bookings:", allBookings.filter(b => b.isSpecial === true));
-    console.log("Display useEffect - Regular bookings:", allBookings.filter(b => !b.isSpecial));
+    console.log("Display useEffect - Regular bookings:", allBookings.filter(b => b.isSpecial === false));
   }, [allBookings]);
 
   if (!displaySettings?.is_enabled) {

@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { startOfDay, endOfDay } from "date-fns";
+import { Booking } from "@/types/booking";
 
 export function useBookings(selectedDate?: Date) {
   console.log("useBookings hook called with selectedDate:", selectedDate);
@@ -104,7 +105,7 @@ export function useSpecialBookings(selectedDate?: Date) {
 }
 
 // Hook combinado para obtener todas las reservas (normales + especiales)
-export function useAllBookings(selectedDate?: Date) {
+export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoading: boolean } {
   const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate);
   const { data: specialBookings = [], isLoading: loadingSpecial } = useSpecialBookings(selectedDate);
 
@@ -112,10 +113,10 @@ export function useAllBookings(selectedDate?: Date) {
   console.log("useAllBookings - Special bookings raw:", specialBookings);
   console.log("useAllBookings - Special bookings count:", specialBookings.length);
 
-  // Transformar reservas especiales al formato común
-  const transformedSpecialBookings = specialBookings?.map(sb => {
+  // Transformar reservas especiales al formato común con tipos explícitos
+  const transformedSpecialBookings: Booking[] = specialBookings?.map(sb => {
     console.log("Transforming special booking:", sb);
-    return {
+    const transformed: Booking = {
       id: `special-${sb.id}`,
       court_id: sb.court_id,
       user_id: null,
@@ -125,17 +126,24 @@ export function useAllBookings(selectedDate?: Date) {
       booking_made_at: sb.created_at,
       user: null,
       court: sb.court,
-      isSpecial: true as const,
+      isSpecial: true,
       event_type: sb.event_type,
       title: sb.title,
       description: sb.description,
     };
+    return transformed;
   }) || [];
 
   console.log("useAllBookings - Transformed special bookings:", transformedSpecialBookings);
 
+  // Transformar reservas regulares para incluir isSpecial: false
+  const transformedRegularBookings: Booking[] = regularBookings.map(rb => ({
+    ...rb,
+    isSpecial: false
+  }));
+
   const allBookings = [
-    ...regularBookings,
+    ...transformedRegularBookings,
     ...transformedSpecialBookings
   ];
 
