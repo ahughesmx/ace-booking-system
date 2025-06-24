@@ -23,6 +23,11 @@ export default function Display() {
   // Use the combined bookings hook that includes both regular and special bookings
   const { data: allBookings = [] } = useAllBookings(new Date());
 
+  console.log("Display component - Current date:", new Date());
+  console.log("Display component - All bookings received:", allBookings);
+  console.log("Display component - Bookings count:", allBookings.length);
+  console.log("Display component - Special bookings:", allBookings.filter(b => b.isSpecial === true));
+
   const { data: displaySettings } = useQuery({
     queryKey: ["display-settings"],
     queryFn: async () => {
@@ -75,8 +80,9 @@ export default function Display() {
 
   // Debug logging to check if special bookings are being received
   useEffect(() => {
-    console.log("Display - All bookings:", allBookings);
-    console.log("Display - Special bookings:", allBookings.filter(b => isSpecialBooking(b)));
+    console.log("Display useEffect - All bookings:", allBookings);
+    console.log("Display useEffect - Special bookings:", allBookings.filter(b => b.isSpecial === true));
+    console.log("Display useEffect - Regular bookings:", allBookings.filter(b => !b.isSpecial));
   }, [allBookings]);
 
   if (!displaySettings?.is_enabled) {
@@ -93,28 +99,38 @@ export default function Display() {
 
   // Type guard to check if booking is special
   const isSpecialBooking = (booking: Booking): booking is SpecialBooking => {
-    return booking.isSpecial === true && 'title' in booking && 'event_type' in booking;
+    const result = booking.isSpecial === true;
+    console.log("isSpecialBooking check for booking:", booking.id, "result:", result);
+    return result;
   };
 
   // Function to check if a slot is booked (includes special bookings)
   const isBooked = (courtId: string, timeSlot: string) => {
-    return allBookings?.some(
-      (booking) =>
-        booking.court_id === courtId &&
-        format(new Date(booking.start_time), "HH:00") === timeSlot
+    const booked = allBookings?.some(
+      (booking) => {
+        const bookingHour = format(new Date(booking.start_time), "HH:00");
+        const matches = booking.court_id === courtId && bookingHour === timeSlot;
+        if (matches) {
+          console.log("Found booking for court", courtId, "at", timeSlot, ":", booking);
+        }
+        return matches;
+      }
     );
+    return booked;
   };
 
   // Function to get slot information (includes special bookings)
   const getSlotInfo = (courtId: string, timeSlot: string) => {
     const booking = allBookings?.find(
-      (booking) =>
-        booking.court_id === courtId &&
-        format(new Date(booking.start_time), "HH:00") === timeSlot
+      (booking) => {
+        const bookingHour = format(new Date(booking.start_time), "HH:00");
+        return booking.court_id === courtId && bookingHour === timeSlot;
+      }
     );
 
     if (booking) {
       const isSpecial = isSpecialBooking(booking);
+      console.log("getSlotInfo - Found booking:", booking, "isSpecial:", isSpecial);
       
       return {
         type: isSpecial ? 'special' as const : 'regular' as const,
@@ -211,6 +227,7 @@ export default function Display() {
                       {courts?.map((court) => {
                         const booked = isBooked(court.id, slot);
                         const slotInfo = getSlotInfo(court.id, slot);
+                        console.log(`Court ${court.id} at ${slot}: booked=${booked}, slotInfo=`, slotInfo);
                         return (
                           <div
                             key={`${court.id}-${slot}`}
