@@ -7,40 +7,13 @@ import { es } from "date-fns/locale";
 import { Monitor, Building2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAllBookings } from "@/hooks/use-bookings";
+import { Booking, SpecialBooking } from "@/types/booking";
 
 // Generate time slots from 7:00 to 23:00
 const timeSlots = Array.from({ length: 17 }, (_, i) => {
   const hour = i + 7;
   return `${hour.toString().padStart(2, "0")}:00`;
 });
-
-// Define types for special booking properties
-interface SpecialBookingProperties {
-  isSpecial: true;
-  event_type: string;
-  title: string;
-  description?: string;
-}
-
-interface RegularBookingProperties {
-  isSpecial?: false;
-  user: {
-    full_name: string;
-    member_id?: string;
-  };
-}
-
-type BookingWithSpecialProps = {
-  id: string;
-  court_id: string;
-  user_id: string | null;
-  start_time: string;
-  end_time: string;
-  court?: {
-    name: string;
-    court_type: string;
-  };
-} & (SpecialBookingProperties | RegularBookingProperties);
 
 export default function Display() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -103,7 +76,7 @@ export default function Display() {
   // Debug logging to check if special bookings are being received
   useEffect(() => {
     console.log("Display - All bookings:", allBookings);
-    console.log("Display - Special bookings:", allBookings.filter(b => b.id?.startsWith('special-') || b.isSpecial));
+    console.log("Display - Special bookings:", allBookings.filter(b => isSpecialBooking(b)));
   }, [allBookings]);
 
   if (!displaySettings?.is_enabled) {
@@ -118,14 +91,12 @@ export default function Display() {
     );
   }
 
-  // Improved type guard to check if booking is special
-  const isSpecialBooking = (booking: any): booking is BookingWithSpecialProps & SpecialBookingProperties => {
-    return (booking.id?.startsWith('special-') || booking.isSpecial === true) && 
-           booking.title !== undefined && 
-           booking.event_type !== undefined;
+  // Type guard to check if booking is special
+  const isSpecialBooking = (booking: Booking): booking is SpecialBooking => {
+    return booking.isSpecial === true && 'title' in booking && 'event_type' in booking;
   };
 
-  // Updated function to check if a slot is booked (includes special bookings)
+  // Function to check if a slot is booked (includes special bookings)
   const isBooked = (courtId: string, timeSlot: string) => {
     return allBookings?.some(
       (booking) =>
@@ -134,7 +105,7 @@ export default function Display() {
     );
   };
 
-  // Updated function to get slot information (includes special bookings)
+  // Function to get slot information (includes special bookings)
   const getSlotInfo = (courtId: string, timeSlot: string) => {
     const booking = allBookings?.find(
       (booking) =>
@@ -143,7 +114,6 @@ export default function Display() {
     );
 
     if (booking) {
-      // Check if it's a special booking using the improved type guard
       const isSpecial = isSpecialBooking(booking);
       
       return {
@@ -252,7 +222,7 @@ export default function Display() {
                                 : 'bg-green-100'
                             }`}
                             title={
-                              slotInfo.type === 'special' && isSpecialBooking(slotInfo.booking!)
+                              slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking)
                                 ? `${slotInfo.booking.title} - ${slotInfo.booking.event_type}`
                                 : booked
                                 ? 'Reservado'
@@ -387,7 +357,7 @@ export default function Display() {
                           <div className="font-bold text-sm mb-1">{slot}</div>
                           {slotInfo.isBooked ? (
                             <div className="space-y-1">
-                              {slotInfo.type === 'special' && isSpecialBooking(slotInfo.booking!) ? (
+                              {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
                                 <>
                                   <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
                                   <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
@@ -431,7 +401,7 @@ export default function Display() {
                           <div className="font-bold text-sm mb-1">{slot}</div>
                           {slotInfo.isBooked ? (
                             <div className="space-y-1">
-                              {slotInfo.type === 'special' && isSpecialBooking(slotInfo.booking!) ? (
+                              {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
                                 <>
                                   <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
                                   <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
@@ -475,7 +445,7 @@ export default function Display() {
                           <div className="font-bold text-sm mb-1">{slot}</div>
                           {slotInfo.isBooked ? (
                             <div className="space-y-1">
-                              {slotInfo.type === 'special' && isSpecialBooking(slotInfo.booking!) ? (
+                              {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
                                 <>
                                   <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
                                   <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>

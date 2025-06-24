@@ -1,5 +1,5 @@
 
-export type Booking = {
+export type RegularBooking = {
   id: string;
   court_id: string;
   user_id: string;
@@ -13,9 +13,28 @@ export type Booking = {
     full_name: string;
     member_id?: string;
   };
-  // Special booking properties
-  isSpecial?: boolean;
-  event_type?: string;
-  title?: string;
+  booking_made_at?: string;
+  created_at?: string;
+  isSpecial?: false;
+};
+
+export type SpecialBooking = {
+  id: string;
+  court_id: string;
+  user_id: string | null;
+  start_time: string;
+  end_time: string;
+  court?: {
+    name: string;
+    court_type: string;
+  };
+  user?: null;
+  booking_made_at?: string;
+  created_at?: string;
+  isSpecial: true;
+  event_type: string;
+  title: string;
   description?: string;
 };
+
+export type Booking = RegularBooking | SpecialBooking;
