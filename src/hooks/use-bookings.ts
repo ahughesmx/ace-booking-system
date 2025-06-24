@@ -77,8 +77,11 @@ export function useSpecialBookings(selectedDate?: Date) {
       const start = startOfDay(selectedDate);
       const end = endOfDay(selectedDate);
 
-      console.log("Fetching special bookings for date:", selectedDate);
-      console.log("Special bookings date range:", { start: start.toISOString(), end: end.toISOString() });
+      console.log("🔍 SPECIAL BOOKINGS QUERY DEBUG:");
+      console.log("- Selected date:", selectedDate.toISOString());
+      console.log("- Query start time:", start.toISOString());
+      console.log("- Query end time:", end.toISOString());
+      console.log("- Timezone offset:", selectedDate.getTimezoneOffset());
 
       const { data, error } = await supabase
         .from("special_bookings")
@@ -95,8 +98,21 @@ export function useSpecialBookings(selectedDate?: Date) {
         throw error;
       }
 
-      console.log("Fetched special bookings from database:", data);
-      console.log("Number of special bookings:", data?.length || 0);
+      console.log("🎯 SPECIAL BOOKINGS RAW DATA:", data);
+      console.log("🎯 Number of special bookings found:", data?.length || 0);
+      
+      // Debug cada reserva especial
+      data?.forEach((booking, index) => {
+        console.log(`🎯 Special booking #${index + 1}:`, {
+          id: booking.id,
+          title: booking.title,
+          event_type: booking.event_type,
+          start_time: booking.start_time,
+          start_time_date: new Date(booking.start_time),
+          court_id: booking.court_id,
+          court: booking.court
+        });
+      });
       
       return data || [];
     },
@@ -109,13 +125,21 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
   const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate);
   const { data: specialBookings = [], isLoading: loadingSpecial } = useSpecialBookings(selectedDate);
 
-  console.log("useAllBookings - Regular bookings:", regularBookings.length);
-  console.log("useAllBookings - Special bookings raw:", specialBookings);
-  console.log("useAllBookings - Special bookings count:", specialBookings.length);
+  console.log("📊 useAllBookings SUMMARY:");
+  console.log("- Regular bookings count:", regularBookings.length);
+  console.log("- Special bookings count:", specialBookings.length);
+  console.log("- Selected date:", selectedDate?.toISOString());
 
   // Transformar reservas especiales al formato común con tipos explícitos
   const transformedSpecialBookings: Booking[] = specialBookings?.map(sb => {
-    console.log("Transforming special booking:", sb);
+    console.log("🔄 Transforming special booking:", {
+      original_id: sb.id,
+      title: sb.title,
+      event_type: sb.event_type,
+      start_time: sb.start_time,
+      court_id: sb.court_id
+    });
+    
     const transformed: Booking = {
       id: `special-${sb.id}`,
       court_id: sb.court_id,
@@ -131,10 +155,16 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
       title: sb.title,
       description: sb.description,
     };
+    
+    console.log("✅ Transformed result:", {
+      id: transformed.id,
+      isSpecial: transformed.isSpecial,
+      title: transformed.title,
+      event_type: transformed.event_type
+    });
+    
     return transformed;
   }) || [];
-
-  console.log("useAllBookings - Transformed special bookings:", transformedSpecialBookings);
 
   // Transformar reservas regulares para incluir isSpecial: false
   const transformedRegularBookings: Booking[] = regularBookings.map(rb => ({
@@ -147,8 +177,11 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
     ...transformedSpecialBookings
   ];
 
-  console.log("useAllBookings - Combined bookings:", allBookings);
-  console.log("useAllBookings - Total bookings count:", allBookings.length);
+  console.log("📈 FINAL COMBINED BOOKINGS:");
+  console.log("- Total bookings:", allBookings.length);
+  console.log("- Regular bookings:", transformedRegularBookings.length);
+  console.log("- Special bookings:", transformedSpecialBookings.length);
+  console.log("- All bookings with isSpecial=true:", allBookings.filter(b => b.isSpecial === true).length);
 
   return {
     data: allBookings,

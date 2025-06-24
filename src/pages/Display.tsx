@@ -19,14 +19,29 @@ export default function Display() {
   const [viewMode, setViewMode] = useState<'all' | 'single'>('all');
   const [selectedCourtId, setSelectedCourtId] = useState<string>('');
 
-  // Use the combined bookings hook that includes both regular and special bookings
-  const { data: allBookings = [] } = useAllBookings(new Date());
+  const currentDate = new Date();
+  console.log("🚀 DISPLAY COMPONENT INIT:");
+  console.log("- Current date for query:", currentDate.toISOString());
+  console.log("- Current date local:", currentDate.toString());
 
-  console.log("Display component - Current date:", new Date());
-  console.log("Display component - All bookings received:", allBookings);
-  console.log("Display component - Bookings count:", allBookings.length);
-  console.log("Display component - Special bookings:", allBookings.filter(b => b.isSpecial === true));
-  console.log("Display component - Regular bookings:", allBookings.filter(b => b.isSpecial === false));
+  // Use the combined bookings hook that includes both regular and special bookings
+  const { data: allBookings = [] } = useAllBookings(currentDate);
+
+  console.log("🖥️ DISPLAY COMPONENT BOOKINGS:");
+  console.log("- Total bookings received:", allBookings.length);
+  console.log("- Special bookings count:", allBookings.filter(b => b.isSpecial === true).length);
+  console.log("- Regular bookings count:", allBookings.filter(b => b.isSpecial === false).length);
+  
+  // Debug each booking
+  allBookings.forEach((booking, index) => {
+    console.log(`📋 Booking #${index + 1}:`, {
+      id: booking.id,
+      isSpecial: booking.isSpecial,
+      start_time: booking.start_time,
+      court_id: booking.court_id,
+      title: booking.isSpecial ? (booking as SpecialBooking).title : 'Regular booking'
+    });
+  });
 
   const { data: displaySettings } = useQuery({
     queryKey: ["display-settings"],
@@ -80,9 +95,26 @@ export default function Display() {
 
   // Debug logging to check if special bookings are being received
   useEffect(() => {
-    console.log("Display useEffect - All bookings:", allBookings);
-    console.log("Display useEffect - Special bookings:", allBookings.filter(b => b.isSpecial === true));
-    console.log("Display useEffect - Regular bookings:", allBookings.filter(b => b.isSpecial === false));
+    console.log("🔄 Display useEffect - Bookings changed:");
+    console.log("- All bookings:", allBookings.length);
+    console.log("- Special bookings:", allBookings.filter(b => b.isSpecial === true).length);
+    console.log("- Regular bookings:", allBookings.filter(b => b.isSpecial === false).length);
+    
+    // Check specific time slots
+    timeSlots.forEach(slot => {
+      const bookingsInSlot = allBookings.filter(booking => {
+        const bookingHour = format(new Date(booking.start_time), "HH:00");
+        return bookingHour === slot;
+      });
+      
+      if (bookingsInSlot.length > 0) {
+        console.log(`⏰ Slot ${slot} has ${bookingsInSlot.length} bookings:`, bookingsInSlot.map(b => ({
+          id: b.id,
+          isSpecial: b.isSpecial,
+          court_id: b.court_id
+        })));
+      }
+    });
   }, [allBookings]);
 
   if (!displaySettings?.is_enabled) {
@@ -100,37 +132,68 @@ export default function Display() {
   // Type guard to check if booking is special
   const isSpecialBooking = (booking: Booking): booking is SpecialBooking => {
     const result = booking.isSpecial === true;
-    console.log("isSpecialBooking check for booking:", booking.id, "result:", result);
+    console.log("🔍 isSpecialBooking check:", {
+      booking_id: booking.id,
+      isSpecial_property: booking.isSpecial,
+      result: result
+    });
     return result;
   };
 
   // Function to check if a slot is booked (includes special bookings)
   const isBooked = (courtId: string, timeSlot: string) => {
-    const booked = allBookings?.some(
-      (booking) => {
-        const bookingHour = format(new Date(booking.start_time), "HH:00");
-        const matches = booking.court_id === courtId && bookingHour === timeSlot;
-        if (matches) {
-          console.log("Found booking for court", courtId, "at", timeSlot, ":", booking);
-        }
-        return matches;
+    const bookingsInSlot = allBookings.filter(booking => {
+      const bookingHour = format(new Date(booking.start_time), "HH:00");
+      const matches = booking.court_id === courtId && bookingHour === timeSlot;
+      
+      if (matches) {
+        console.log("🎯 Found booking match:", {
+          timeSlot,
+          courtId,
+          booking_id: booking.id,
+          isSpecial: booking.isSpecial,
+          start_time: booking.start_time,
+          bookingHour
+        });
       }
-    );
+      
+      return matches;
+    });
+    
+    const booked = bookingsInSlot.length > 0;
+    
+    if (booked) {
+      console.log(`✅ Slot ${timeSlot} court ${courtId} is booked:`, bookingsInSlot);
+    }
+    
     return booked;
   };
 
   // Function to get slot information (includes special bookings)
   const getSlotInfo = (courtId: string, timeSlot: string) => {
-    const booking = allBookings?.find(
-      (booking) => {
-        const bookingHour = format(new Date(booking.start_time), "HH:00");
-        return booking.court_id === courtId && bookingHour === timeSlot;
+    const booking = allBookings.find(booking => {
+      const bookingHour = format(new Date(booking.start_time), "HH:00");
+      const matches = booking.court_id === courtId && bookingHour === timeSlot;
+      
+      if (matches) {
+        console.log("🔍 getSlotInfo found match:", {
+          timeSlot,
+          courtId,
+          booking_id: booking.id,
+          isSpecial: booking.isSpecial
+        });
       }
-    );
+      
+      return matches;
+    });
 
     if (booking) {
       const isSpecial = isSpecialBooking(booking);
-      console.log("getSlotInfo - Found booking:", booking, "isSpecial:", isSpecial);
+      console.log("📋 getSlotInfo result:", {
+        booking_id: booking.id,
+        isSpecial: isSpecial,
+        type: isSpecial ? 'special' : 'regular'
+      });
       
       return {
         type: isSpecial ? 'special' as const : 'regular' as const,
