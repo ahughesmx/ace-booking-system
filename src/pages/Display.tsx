@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
@@ -137,14 +138,14 @@ export default function Display() {
       });
       
       return {
-        type: type as const,
+        type,
         booking: booking,
         isBooked: true
       };
     }
 
     return {
-      type: 'available' as const,
+      type: 'available',
       booking: null,
       isBooked: false
     };

@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { Booking } from "@/types/booking";
@@ -89,8 +88,8 @@ export function useSpecialBookings(selectedDate?: Date) {
       return data || [];
     },
     enabled: !!selectedDate,
-    staleTime: 30000, // Cache por 30 segundos
-    cacheTime: 60000, // Mantener en cache por 1 minuto
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 60000, // Keep in garbage collection for 1 minute
   });
 }
 
