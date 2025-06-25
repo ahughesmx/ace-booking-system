@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, Search } from "lucide-react";
 import { format, addDays, getDay } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -27,9 +27,14 @@ type SpecialBooking = {
   is_recurring: boolean;
   recurrence_pattern: string[];
   created_at: string;
+  reference_user_id: string;
   court: {
     name: string;
     court_type: string;
+  };
+  reference_user?: {
+    full_name: string;
+    member_id: string;
   };
 };
 
@@ -54,7 +59,7 @@ export default function SpecialBookingManagement() {
   const [isCreating, setIsCreating] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Form state
+  // Form state with reference user
   const [formData, setFormData] = useState({
     court_id: '',
     event_type: '',
@@ -67,8 +72,13 @@ export default function SpecialBookingManagement() {
     custom_price: 0,
     is_recurring: false,
     recurrence_pattern: [] as string[],
-    recurrence_weeks: 1 // Reducido por defecto
+    recurrence_weeks: 1,
+    reference_user_id: '',
+    reference_user_search: ''
   });
+
+  const [userSuggestions, setUserSuggestions] = useState<any[]>([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
 
   // Queries
   const { data: courts } = useQuery({
@@ -83,20 +93,47 @@ export default function SpecialBookingManagement() {
     },
   });
 
+  // Updated query to only show non-expired special bookings
   const { data: specialBookings, refetch } = useQuery({
     queryKey: ["special-bookings"],
     queryFn: async () => {
+      const now = new Date().toISOString();
       const { data, error } = await supabase
         .from("special_bookings")
         .select(`
           *,
-          court:courts(name, court_type)
+          court:courts(name, court_type),
+          reference_user:profiles!special_bookings_reference_user_id_fkey(full_name, member_id)
         `)
-        .order("start_time", { ascending: false });
+        .gte("end_time", now) // Only show non-expired bookings
+        .order("start_time", { ascending: true });
       if (error) throw error;
       return data as SpecialBooking[];
     },
   });
+
+  const searchUsers = async (searchTerm: string) => {
+    if (searchTerm.length < 2) {
+      setUserSuggestions([]);
+      return;
+    }
+
+    try {
+      setSearchingUsers(true);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, member_id")
+        .or(`full_name.ilike.%${searchTerm}%,member_id.ilike.%${searchTerm}%`)
+        .limit(10);
+
+      if (error) throw error;
+      setUserSuggestions(data || []);
+    } catch (error) {
+      console.error("Error searching users:", error);
+    } finally {
+      setSearchingUsers(false);
+    }
+  };
 
   // Función corregida para generar fechas recurrentes
   const generateRecurringDates = (startDate: Date, recurrencePattern: string[], weeks: number) => {
@@ -162,10 +199,11 @@ export default function SpecialBookingManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.court_id || !formData.event_type || !formData.title || !formData.selected_date || !formData.start_time || !formData.end_time) {
+    if (!formData.court_id || !formData.event_type || !formData.title || !formData.selected_date || 
+        !formData.start_time || !formData.end_time || !formData.reference_user_id) {
       toast({
         title: "Error",
-        description: "Todos los campos son requeridos",
+        description: "Todos los campos son requeridos, incluyendo el usuario de referencia",
         variant: "destructive",
       });
       return;
@@ -206,7 +244,8 @@ export default function SpecialBookingManagement() {
             price_type: formData.price_type,
             custom_price: formData.price_type === 'custom' ? formData.custom_price : null,
             is_recurring: true,
-            recurrence_pattern: formData.recurrence_pattern
+            recurrence_pattern: formData.recurrence_pattern,
+            reference_user_id: formData.reference_user_id
           });
         }
       } else {
@@ -229,7 +268,8 @@ export default function SpecialBookingManagement() {
           price_type: formData.price_type,
           custom_price: formData.price_type === 'custom' ? formData.custom_price : null,
           is_recurring: false,
-          recurrence_pattern: null
+          recurrence_pattern: null,
+          reference_user_id: formData.reference_user_id
         });
       }
 
@@ -260,8 +300,11 @@ export default function SpecialBookingManagement() {
         custom_price: 0,
         is_recurring: false,
         recurrence_pattern: [],
-        recurrence_weeks: 1
+        recurrence_weeks: 1,
+        reference_user_id: '',
+        reference_user_search: ''
       });
+      setUserSuggestions([]);
       setIsCreating(false);
       refetch();
       
@@ -360,6 +403,42 @@ export default function SpecialBookingManagement() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="reference_user">Usuario de Referencia *</Label>
+                <div className="relative">
+                  <Input
+                    placeholder="Buscar por nombre o clave de socio..."
+                    value={formData.reference_user_search}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({...formData, reference_user_search: value});
+                      searchUsers(value);
+                    }}
+                  />
+                  {userSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-40 overflow-y-auto">
+                      {userSuggestions.map((user) => (
+                        <div
+                          key={user.id}
+                          className="p-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => {
+                            setFormData({
+                              ...formData, 
+                              reference_user_id: user.id,
+                              reference_user_search: `${user.full_name} (${user.member_id})`
+                            });
+                            setUserSuggestions([]);
+                          }}
+                        >
+                          <div className="font-medium">{user.full_name}</div>
+                          <div className="text-sm text-gray-500">Clave: {user.member_id}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -541,12 +620,12 @@ export default function SpecialBookingManagement() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Reservas Especiales Existentes ({specialBookings?.length || 0})</CardTitle>
+          <CardTitle>Reservas Especiales Activas ({specialBookings?.length || 0})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {specialBookings?.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No hay reservas especiales creadas</p>
+              <p className="text-gray-500 text-center py-4">No hay reservas especiales activas</p>
             ) : (
               specialBookings?.map((booking) => (
                 <div key={booking.id} className="border rounded-lg p-4">
@@ -558,6 +637,11 @@ export default function SpecialBookingManagement() {
                         {format(new Date(booking.start_time), "dd/MM/yyyy HH:mm", { locale: es })} - 
                         {format(new Date(booking.end_time), "HH:mm", { locale: es })}
                       </p>
+                      {booking.reference_user && (
+                        <p className="text-sm text-blue-600">
+                          Referencia: {booking.reference_user.full_name} ({booking.reference_user.member_id})
+                        </p>
+                      )}
                       {booking.description && (
                         <p className="text-sm text-gray-600 mt-1">{booking.description}</p>
                       )}

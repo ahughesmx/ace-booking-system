@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { Booking } from "@/types/booking";
@@ -11,7 +12,6 @@ export function useBookings(selectedDate?: Date) {
         return [];
       }
 
-      // Create date range for the entire day in local timezone
       const startOfDay = new Date(selectedDate);
       startOfDay.setHours(0, 0, 0, 0);
       
@@ -56,7 +56,6 @@ export function useSpecialBookings(selectedDate?: Date) {
         return [];
       }
 
-      // Create date range for the entire day in local timezone
       const startOfDay = new Date(selectedDate);
       startOfDay.setHours(0, 0, 0, 0);
       
@@ -73,7 +72,8 @@ export function useSpecialBookings(selectedDate?: Date) {
         .from("special_bookings")
         .select(`
           *,
-          court:courts(id, name, court_type)
+          court:courts(id, name, court_type),
+          reference_user:profiles!special_bookings_reference_user_id_fkey(full_name, member_id)
         `)
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
@@ -88,8 +88,8 @@ export function useSpecialBookings(selectedDate?: Date) {
       return data || [];
     },
     enabled: !!selectedDate,
-    staleTime: 30000, // Cache for 30 seconds
-    gcTime: 60000, // Keep in garbage collection for 1 minute
+    staleTime: 30000,
+    gcTime: 60000,
   });
 }
 
@@ -97,7 +97,6 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
   const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate);
   const { data: specialBookings = [], isLoading: loadingSpecial } = useSpecialBookings(selectedDate);
 
-  // Transform regular bookings to include isSpecial flag
   const transformedRegularBookings: Booking[] = regularBookings.map(booking => ({
     id: booking.id,
     court_id: booking.court_id,
@@ -108,21 +107,23 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
     booking_made_at: booking.booking_made_at,
     user: booking.user,
     court: booking.court,
-    isSpecial: false as const
+    isSpecial: false
   }));
 
-  // Transform special bookings to match Booking interface
   const transformedSpecialBookings: Booking[] = specialBookings.map(booking => ({
     id: `special-${booking.id}`,
     court_id: booking.court_id,
-    user_id: null,
+    user_id: booking.reference_user_id, // Use reference_user_id instead of null
     start_time: booking.start_time,
     end_time: booking.end_time,
     created_at: booking.created_at,
     booking_made_at: booking.created_at,
-    user: null,
+    user: booking.reference_user ? {
+      full_name: booking.reference_user.full_name,
+      member_id: booking.reference_user.member_id
+    } : null,
     court: booking.court,
-    isSpecial: true as const,
+    isSpecial: true,
     event_type: booking.event_type,
     title: booking.title,
     description: booking.description,
@@ -148,15 +149,19 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
   };
 }
 
+// Updated to only count non-expired bookings
 export function useCourtAvailability(courtId: string, startTime: Date, endTime: Date) {
   return useQuery({
     queryKey: ["court-availability", courtId, startTime.toISOString(), endTime.toISOString()],
     queryFn: async () => {
+      const now = new Date().toISOString();
+      
       const { data: maintenanceData, error: maintenanceError } = await supabase
         .from("court_maintenance")
         .select("id, start_time, end_time, reason")
         .eq("court_id", courtId)
         .eq("is_active", true)
+        .gte("end_time", now) // Only active maintenance
         .or(`and(start_time.lte.${startTime.toISOString()},end_time.gt.${startTime.toISOString()}),and(start_time.lt.${endTime.toISOString()},end_time.gte.${endTime.toISOString()}),and(start_time.gte.${startTime.toISOString()},end_time.lte.${endTime.toISOString()})`);
 
       if (maintenanceError) throw maintenanceError;
@@ -165,6 +170,7 @@ export function useCourtAvailability(courtId: string, startTime: Date, endTime: 
         .from("bookings")
         .select("id")
         .eq("court_id", courtId)
+        .gte("end_time", now) // Only non-expired bookings
         .or(`and(start_time.lt.${endTime.toISOString()},end_time.gt.${startTime.toISOString()})`);
 
       if (bookingError) throw bookingError;
@@ -173,6 +179,7 @@ export function useCourtAvailability(courtId: string, startTime: Date, endTime: 
         .from("special_bookings")
         .select("id")
         .eq("court_id", courtId)
+        .gte("end_time", now) // Only non-expired special bookings
         .or(`and(start_time.lt.${endTime.toISOString()},end_time.gt.${startTime.toISOString()})`);
 
       if (specialBookingError) throw specialBookingError;
@@ -186,5 +193,41 @@ export function useCourtAvailability(courtId: string, startTime: Date, endTime: 
       };
     },
     enabled: !!(courtId && startTime && endTime),
+  });
+}
+
+// New hook to get user's active bookings count (non-expired only)
+export function useActiveBookingsCount(userId?: string) {
+  return useQuery({
+    queryKey: ["active-bookings-count", userId],
+    queryFn: async () => {
+      if (!userId) return 0;
+      
+      const now = new Date().toISOString();
+      
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("id")
+        .eq("user_id", userId)
+        .gte("end_time", now); // Only count non-expired bookings
+
+      if (error) {
+        console.error("Error counting active bookings:", error);
+        return 0;
+      }
+
+      const count = data?.length || 0;
+      
+      // Update the profiles table with the current count
+      await supabase
+        .from("profiles")
+        .update({ active_bookings: count })
+        .eq("id", userId);
+
+      return count;
+    },
+    enabled: !!userId,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache
   });
 }

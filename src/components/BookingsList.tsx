@@ -28,7 +28,6 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   const isAdmin = userRole?.role === "admin";
   const queryClient = useQueryClient();
 
-  // Usar el hook combinado para obtener todas las reservas
   const { data: allBookings = [], isLoading } = useAllBookings(selectedDate);
 
   console.log("BookingsList received props:", { 
@@ -43,7 +42,6 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
-      // Verificar si es una reserva especial
       if (bookingId.startsWith('special-')) {
         const realId = bookingId.replace('special-', '');
         const { error } = await supabase
@@ -58,12 +56,24 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
 
         const startTime = new Date(booking.start_time);
         const now = new Date();
-        const hoursDifference = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+        
+        // Fixed: Calculate hours difference more precisely
+        const timeDifference = startTime.getTime() - now.getTime();
+        const hoursDifference = timeDifference / (1000 * 60 * 60);
 
+        console.log('Cancellation time check:', {
+          startTime: startTime.toISOString(),
+          now: now.toISOString(),
+          timeDifference,
+          hoursDifference,
+          isAdmin
+        });
+
+        // Only check 24-hour rule for non-admin users
         if (!isAdmin && hoursDifference < 24) {
           toast({
             title: "No se puede cancelar",
-            description: "Las reservas solo pueden cancelarse con al menos 24 horas de anticipación.",
+            description: `Las reservas solo pueden cancelarse con al menos 24 horas de anticipación. Faltan ${Math.round(hoursDifference * 10) / 10} horas.`,
             variant: "destructive",
           });
           return;
@@ -77,7 +87,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
         if (error) throw error;
       }
 
-      // Invalidar todas las queries relacionadas con reservas para actualizar los contadores
+      // Invalidate all booking-related queries
       await queryClient.invalidateQueries({ 
         queryKey: ["bookings"] 
       });
@@ -86,9 +96,12 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
         queryKey: ["special-bookings"] 
       });
       
-      // Invalidar específicamente la query de reservas activas del usuario
       await queryClient.invalidateQueries({ 
         queryKey: ["userActiveBookings", user?.id] 
+      });
+
+      await queryClient.invalidateQueries({ 
+        queryKey: ["active-bookings-count", user?.id] 
       });
 
       onCancelSuccess();
@@ -102,12 +115,10 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     }
   };
 
-  // Simplificar la validación de fecha - solo verificar que sea una fecha válida
   const isValidDateForDisplay = (date?: Date) => {
     return date && date instanceof Date && !isNaN(date.getTime());
   };
 
-  // Si no hay una fecha seleccionada válida, mostrar mensaje apropiado
   if (!isValidDateForDisplay(selectedDate)) {
     console.log("Invalid selectedDate - not a valid Date object");
     return (
@@ -122,7 +133,6 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
 
   console.log("Valid selectedDate detected, proceeding with bookings display");
 
-  // Si no hay usuario autenticado, mostrar horarios disponibles
   if (!user) {
     const bookedSlots = new Set(
       allBookings.map(booking => format(new Date(booking.start_time), "HH:00"))
@@ -138,7 +148,6 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     );
   }
 
-  // Si hay usuario autenticado pero no hay reservas, mostrar mensaje de día vacío
   if (!allBookings.length) {
     console.log("No bookings found for selected date, showing empty state");
     return (
@@ -151,7 +160,6 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     );
   }
 
-  // Mostrar las reservas del día (combinando normales y especiales)
   console.log("Showing bookings list with", allBookings.length, "bookings");
   return (
     <BookingsListContent
