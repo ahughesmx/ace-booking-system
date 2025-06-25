@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
@@ -21,13 +20,12 @@ export default function Display() {
   const [selectedCourtId, setSelectedCourtId] = useState<string>('');
 
   const currentDate = new Date();
-  console.log("🖥️ Display component initialized:", {
-    currentDate: currentDate.toISOString(),
-    viewMode
-  });
+  console.log("🖥️ Display component - Current date:", currentDate.toISOString());
 
   // Use the combined bookings hook
   const { data: allBookings = [], isLoading } = useAllBookings(currentDate);
+
+  console.log("🖥️ Display component - All bookings received:", allBookings.length, allBookings);
 
   const { data: displaySettings } = useQuery({
     queryKey: ["display-settings"],
@@ -58,6 +56,7 @@ export default function Display() {
         console.error("Error fetching courts:", error);
         return [];
       }
+      console.log("🏟️ Courts fetched:", data?.length || 0, data);
       return data || [];
     },
   });
@@ -98,20 +97,35 @@ export default function Display() {
 
   // Check if a slot is booked
   const isBooked = (courtId: string, timeSlot: string) => {
-    return allBookings.some(booking => {
-      const bookingHour = format(new Date(booking.start_time), "HH:00");
-      return booking.court_id === courtId && bookingHour === timeSlot;
+    const found = allBookings.some(booking => {
+      const bookingDate = new Date(booking.start_time);
+      const bookingHour = format(bookingDate, "HH:00");
+      const isMatch = booking.court_id === courtId && bookingHour === timeSlot;
+      
+      if (isMatch) {
+        console.log(`🎯 Found booking for court ${courtId} at ${timeSlot}:`, booking);
+      }
+      
+      return isMatch;
     });
+    
+    return found;
   };
 
   // Get slot information
   const getSlotInfo = (courtId: string, timeSlot: string) => {
     const booking = allBookings.find(booking => {
-      const bookingHour = format(new Date(booking.start_time), "HH:00");
+      const bookingDate = new Date(booking.start_time);
+      const bookingHour = format(bookingDate, "HH:00");
       return booking.court_id === courtId && bookingHour === timeSlot;
     });
 
     if (booking) {
+      console.log(`📍 Slot info for court ${courtId} at ${timeSlot}:`, {
+        type: isSpecialBooking(booking) ? 'special' : 'regular',
+        booking: booking
+      });
+      
       return {
         type: isSpecialBooking(booking) ? 'special' as const : 'regular' as const,
         booking: booking,
@@ -127,6 +141,28 @@ export default function Display() {
   };
 
   const selectedCourt = courts?.find(court => court.id === selectedCourtId);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="h-screen w-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-lg text-gray-600">Cargando reservas...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Debug info in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log("🔍 Debug info:", {
+      allBookings: allBookings.length,
+      courts: courts?.length || 0,
+      currentDate: currentDate.toISOString(),
+      timeSlots: timeSlots.length
+    });
+  }
 
   // Render All Courts View
   if (viewMode === 'all') {
@@ -170,6 +206,11 @@ export default function Display() {
           </div>
         </div>
 
+        {/* Debug info */}
+        <div className="bg-yellow-100 p-2 text-xs text-center">
+          Reservas cargadas: {allBookings.length} | Canchas: {courts?.length || 0} | Fecha: {format(currentDate, "yyyy-MM-dd")}
+        </div>
+
         {/* Main Grid */}
         <div className="flex-1 p-4 min-h-0">
           <div className="bg-white rounded-lg shadow-xl h-full flex flex-col overflow-hidden">
@@ -209,12 +250,12 @@ export default function Display() {
                         return (
                           <div
                             key={`${court.id}-${slot}`}
-                            className={`rounded transition-all m-1 ${
+                            className={`rounded transition-all m-1 flex items-center justify-center text-xs text-white font-medium ${
                               slotInfo.isBooked
                                 ? slotInfo.type === 'special' 
                                   ? 'bg-purple-500' 
                                   : 'bg-red-500'
-                                : 'bg-green-100'
+                                : 'bg-green-100 text-green-800'
                             }`}
                             title={
                               slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking)
@@ -223,7 +264,13 @@ export default function Display() {
                                 ? 'Reservado'
                                 : 'Disponible'
                             }
-                          />
+                          >
+                            {slotInfo.isBooked ? (
+                              slotInfo.type === 'special' ? '🎉' : '👤'
+                            ) : (
+                              '✓'
+                            )}
+                          </div>
                         );
                       })}
                     </div>

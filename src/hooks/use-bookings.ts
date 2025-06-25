@@ -1,24 +1,27 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import { startOfDay, endOfDay } from "date-fns";
 import { Booking } from "@/types/booking";
 
 export function useBookings(selectedDate?: Date) {
   return useQuery({
-    queryKey: ["bookings", selectedDate?.toISOString()],
+    queryKey: ["bookings", selectedDate?.toDateString()],
     queryFn: async () => {
       if (!selectedDate) {
+        console.log("🚫 No selected date provided");
         return [];
       }
 
-      const start = startOfDay(selectedDate);
-      const end = endOfDay(selectedDate);
+      // Create date range for the entire day in local timezone
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
-      console.log("📅 Regular bookings query:", {
+      console.log("📅 Fetching bookings for:", {
         selectedDate: selectedDate.toISOString(),
-        start: start.toISOString(),
-        end: end.toISOString()
+        startOfDay: startOfDay.toISOString(),
+        endOfDay: endOfDay.toISOString()
       });
 
       const { data, error } = await supabase
@@ -28,16 +31,16 @@ export function useBookings(selectedDate?: Date) {
           court:courts(id, name, court_type),
           user:profiles(full_name, member_id)
         `)
-        .gte("start_time", start.toISOString())
-        .lt("start_time", end.toISOString())
+        .gte("start_time", startOfDay.toISOString())
+        .lte("start_time", endOfDay.toISOString())
         .order("start_time");
 
       if (error) {
-        console.error("❌ Error fetching regular bookings:", error);
+        console.error("❌ Error fetching bookings:", error);
         return [];
       }
 
-      console.log("✅ Regular bookings fetched:", data?.length || 0);
+      console.log("✅ Regular bookings fetched:", data?.length || 0, data);
       return data || [];
     },
     enabled: !!selectedDate,
@@ -46,19 +49,24 @@ export function useBookings(selectedDate?: Date) {
 
 export function useSpecialBookings(selectedDate?: Date) {
   return useQuery({
-    queryKey: ["special-bookings", selectedDate?.toISOString()],
+    queryKey: ["special-bookings", selectedDate?.toDateString()],
     queryFn: async () => {
       if (!selectedDate) {
+        console.log("🚫 No selected date provided for special bookings");
         return [];
       }
 
-      const start = startOfDay(selectedDate);
-      const end = endOfDay(selectedDate);
+      // Create date range for the entire day in local timezone
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
-      console.log("🎯 Special bookings query:", {
+      console.log("🎯 Fetching special bookings for:", {
         selectedDate: selectedDate.toISOString(),
-        start: start.toISOString(),
-        end: end.toISOString()
+        startOfDay: startOfDay.toISOString(),
+        endOfDay: endOfDay.toISOString()
       });
 
       const { data, error } = await supabase
@@ -67,8 +75,8 @@ export function useSpecialBookings(selectedDate?: Date) {
           *,
           court:courts(id, name, court_type)
         `)
-        .gte("start_time", start.toISOString())
-        .lt("start_time", end.toISOString())
+        .gte("start_time", startOfDay.toISOString())
+        .lte("start_time", endOfDay.toISOString())
         .order("start_time");
 
       if (error) {
@@ -76,7 +84,7 @@ export function useSpecialBookings(selectedDate?: Date) {
         return [];
       }
 
-      console.log("✅ Special bookings fetched:", data?.length || 0);
+      console.log("✅ Special bookings fetched:", data?.length || 0, data);
       return data || [];
     },
     enabled: !!selectedDate,
@@ -87,27 +95,27 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
   const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate);
   const { data: specialBookings = [], isLoading: loadingSpecial } = useSpecialBookings(selectedDate);
 
-  // Transform special bookings to match Booking interface
-  const transformedSpecialBookings: Booking[] = specialBookings?.map(sb => ({
-    id: `special-${sb.id}`,
-    court_id: sb.court_id,
-    user_id: null,
-    start_time: sb.start_time,
-    end_time: sb.end_time,
-    created_at: sb.created_at,
-    booking_made_at: sb.created_at,
-    user: null,
-    court: sb.court,
-    isSpecial: true,
-    event_type: sb.event_type,
-    title: sb.title,
-    description: sb.description,
-  })) || [];
+  // Transform regular bookings to include isSpecial flag
+  const transformedRegularBookings: Booking[] = regularBookings.map(booking => ({
+    ...booking,
+    isSpecial: false as const
+  }));
 
-  // Transform regular bookings to include isSpecial: false
-  const transformedRegularBookings: Booking[] = regularBookings.map(rb => ({
-    ...rb,
-    isSpecial: false
+  // Transform special bookings to match Booking interface
+  const transformedSpecialBookings: Booking[] = specialBookings.map(booking => ({
+    id: `special-${booking.id}`,
+    court_id: booking.court_id,
+    user_id: null,
+    start_time: booking.start_time,
+    end_time: booking.end_time,
+    created_at: booking.created_at,
+    booking_made_at: booking.created_at,
+    user: null,
+    court: booking.court,
+    isSpecial: true as const,
+    event_type: booking.event_type,
+    title: booking.title,
+    description: booking.description,
   }));
 
   const allBookings = [
@@ -115,11 +123,12 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
     ...transformedSpecialBookings
   ];
 
-  console.log("📊 Combined bookings summary:", {
+  console.log("📊 Combined bookings:", {
     regular: transformedRegularBookings.length,
     special: transformedSpecialBookings.length,
     total: allBookings.length,
-    date: selectedDate?.toISOString()
+    date: selectedDate?.toDateString(),
+    allBookings: allBookings
   });
 
   return {
