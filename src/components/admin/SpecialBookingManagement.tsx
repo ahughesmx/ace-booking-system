@@ -11,7 +11,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Calendar as CalendarIcon } from "lucide-react";
-import { format, addDays, addWeeks, getDay } from "date-fns";
+import { format, addDays, getDay } from "date-fns";
 import { es } from "date-fns/locale";
 
 type SpecialBooking = {
@@ -67,7 +67,7 @@ export default function SpecialBookingManagement() {
     custom_price: 0,
     is_recurring: false,
     recurrence_pattern: [] as string[],
-    recurrence_weeks: 4 // Número de semanas para generar
+    recurrence_weeks: 1 // Reducido por defecto
   });
 
   // Queries
@@ -98,26 +98,66 @@ export default function SpecialBookingManagement() {
     },
   });
 
-  // Función para generar fechas recurrentes
+  // Función corregida para generar fechas recurrentes
   const generateRecurringDates = (startDate: Date, recurrencePattern: string[], weeks: number) => {
     const dates: Date[] = [];
-    const dayIndices = recurrencePattern.map(day => 
-      DAYS_OF_WEEK.find(d => d.value === day)?.dayIndex ?? 0
-    );
+    const startDayIndex = getDay(startDate); // Día de la semana de la fecha inicial
+    
+    console.log('🔄 Generando fechas recurrentes:', {
+      startDate: startDate.toDateString(),
+      startDayIndex,
+      recurrencePattern,
+      weeks
+    });
 
-    for (let week = 0; week < weeks; week++) {
-      for (const dayIndex of dayIndices) {
-        const date = new Date(startDate);
-        date.setDate(startDate.getDate() + (week * 7) + (dayIndex - getDay(startDate)));
-        
-        // Solo agregar fechas futuras
-        if (date >= startDate) {
+    // Si es recurrencia simple (mismo día de la semana)
+    if (recurrencePattern.length === 1) {
+      const targetDayName = recurrencePattern[0];
+      const targetDayIndex = DAYS_OF_WEEK.find(d => d.value === targetDayName)?.dayIndex ?? 0;
+      
+      // Si la fecha inicial coincide con el día objetivo, empezar desde ahí
+      if (startDayIndex === targetDayIndex) {
+        for (let week = 0; week < weeks; week++) {
+          const date = new Date(startDate);
+          date.setDate(startDate.getDate() + (week * 7));
           dates.push(date);
+        }
+      } else {
+        // Calcular próxima ocurrencia del día objetivo
+        let daysUntilTarget = targetDayIndex - startDayIndex;
+        if (daysUntilTarget <= 0) daysUntilTarget += 7;
+        
+        for (let week = 0; week < weeks; week++) {
+          const date = new Date(startDate);
+          date.setDate(startDate.getDate() + daysUntilTarget + (week * 7));
+          dates.push(date);
+        }
+      }
+    } else {
+      // Para múltiples días, generar para cada semana
+      for (let week = 0; week < weeks; week++) {
+        for (const dayName of recurrencePattern) {
+          const dayIndex = DAYS_OF_WEEK.find(d => d.value === dayName)?.dayIndex ?? 0;
+          const date = new Date(startDate);
+          
+          // Calcular días hasta el día objetivo en la semana actual + semanas adicionales
+          const daysFromStart = (week * 7) + (dayIndex - startDayIndex);
+          if (daysFromStart >= 0) { // Solo fechas futuras o actuales
+            date.setDate(startDate.getDate() + daysFromStart);
+            dates.push(date);
+          }
         }
       }
     }
 
-    return dates.sort((a, b) => a.getTime() - b.getTime());
+    const uniqueDates = dates
+      .filter((date, index, self) => 
+        self.findIndex(d => d.toDateString() === date.toDateString()) === index
+      )
+      .sort((a, b) => a.getTime() - b.getTime());
+
+    console.log('✅ Fechas generadas:', uniqueDates.map(d => d.toDateString()));
+    return uniqueDates;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -133,6 +173,7 @@ export default function SpecialBookingManagement() {
 
     try {
       setLoading(true);
+      console.log('📝 Iniciando creación de reserva especial:', formData);
 
       const bookingsToCreate = [];
 
@@ -143,6 +184,8 @@ export default function SpecialBookingManagement() {
           formData.recurrence_pattern,
           formData.recurrence_weeks
         );
+
+        console.log('🔄 Creando reservas recurrentes para', recurringDates.length, 'fechas');
 
         for (const date of recurringDates) {
           const startDateTime = new Date(date);
@@ -190,6 +233,8 @@ export default function SpecialBookingManagement() {
         });
       }
 
+      console.log('💾 Insertando', bookingsToCreate.length, 'reservas:', bookingsToCreate);
+
       // Insertar todas las reservas
       const { error } = await supabase
         .from("special_bookings")
@@ -215,12 +260,16 @@ export default function SpecialBookingManagement() {
         custom_price: 0,
         is_recurring: false,
         recurrence_pattern: [],
-        recurrence_weeks: 4
+        recurrence_weeks: 1
       });
       setIsCreating(false);
       refetch();
+      
+      // Invalidar queries relacionadas para actualizar Display
+      queryClient.invalidateQueries({ queryKey: ["special-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
     } catch (error) {
-      console.error("Error creating special booking:", error);
+      console.error("❌ Error creating special booking:", error);
       toast({
         title: "Error",
         description: "No se pudo crear la reserva especial",
@@ -245,6 +294,10 @@ export default function SpecialBookingManagement() {
         description: "Reserva especial eliminada correctamente",
       });
       refetch();
+      
+      // Invalidar queries para actualizar Display
+      queryClient.invalidateQueries({ queryKey: ["special-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
     } catch (error) {
       console.error("Error deleting special booking:", error);
       toast({
@@ -456,13 +509,13 @@ export default function SpecialBookingManagement() {
                         id="recurrence_weeks"
                         type="number"
                         min="1"
-                        max="52"
+                        max="12"
                         value={formData.recurrence_weeks}
                         onChange={(e) => setFormData({...formData, recurrence_weeks: Number(e.target.value)})}
-                        placeholder="4"
+                        placeholder="1"
                       />
                       <p className="text-sm text-gray-500 mt-1">
-                        Se crearán reservas para {formData.recurrence_weeks} semanas
+                        Se crearán reservas para {formData.recurrence_weeks} semana(s)
                       </p>
                     </div>
                   </div>
@@ -488,39 +541,43 @@ export default function SpecialBookingManagement() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Reservas Especiales Existentes</CardTitle>
+          <CardTitle>Reservas Especiales Existentes ({specialBookings?.length || 0})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {specialBookings?.map((booking) => (
-              <div key={booking.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold">{booking.title}</h3>
-                    <p className="text-sm text-gray-600">{booking.court.name} - {booking.event_type}</p>
-                    <p className="text-sm text-gray-500">
-                      {format(new Date(booking.start_time), "dd/MM/yyyy HH:mm", { locale: es })} - 
-                      {format(new Date(booking.end_time), "HH:mm", { locale: es })}
-                    </p>
-                    {booking.description && (
-                      <p className="text-sm text-gray-600 mt-1">{booking.description}</p>
-                    )}
-                    {booking.is_recurring && (
-                      <p className="text-sm text-blue-600 mt-1">
-                        Recurrente: {booking.recurrence_pattern?.join(', ')}
+            {specialBookings?.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No hay reservas especiales creadas</p>
+            ) : (
+              specialBookings?.map((booking) => (
+                <div key={booking.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold">{booking.title}</h3>
+                      <p className="text-sm text-gray-600">{booking.court.name} - {booking.event_type}</p>
+                      <p className="text-sm text-gray-500">
+                        {format(new Date(booking.start_time), "dd/MM/yyyy HH:mm", { locale: es })} - 
+                        {format(new Date(booking.end_time), "HH:mm", { locale: es })}
                       </p>
-                    )}
+                      {booking.description && (
+                        <p className="text-sm text-gray-600 mt-1">{booking.description}</p>
+                      )}
+                      {booking.is_recurring && (
+                        <p className="text-sm text-blue-600 mt-1">
+                          Recurrente: {booking.recurrence_pattern?.join(', ')}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteSpecialBooking(booking.id)}
+                    >
+                      Eliminar
+                    </Button>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteSpecialBooking(booking.id)}
-                  >
-                    Eliminar
-                  </Button>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

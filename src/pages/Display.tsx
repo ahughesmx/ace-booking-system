@@ -25,7 +25,12 @@ export default function Display() {
   // Use the combined bookings hook
   const { data: allBookings = [], isLoading } = useAllBookings(currentDate);
 
-  console.log("🖥️ Display component - All bookings received:", allBookings.length, allBookings);
+  console.log("🖥️ Display component - All bookings received:", {
+    total: allBookings.length,
+    regular: allBookings.filter(b => !b.isSpecial).length,
+    special: allBookings.filter(b => b.isSpecial).length,
+    bookings: allBookings
+  });
 
   const { data: displaySettings } = useQuery({
     queryKey: ["display-settings"],
@@ -103,7 +108,10 @@ export default function Display() {
       const isMatch = booking.court_id === courtId && bookingHour === timeSlot;
       
       if (isMatch) {
-        console.log(`🎯 Found booking for court ${courtId} at ${timeSlot}:`, booking);
+        console.log(`🎯 Found booking for court ${courtId} at ${timeSlot}:`, {
+          type: isSpecialBooking(booking) ? 'special' : 'regular',
+          booking
+        });
       }
       
       return isMatch;
@@ -121,13 +129,15 @@ export default function Display() {
     });
 
     if (booking) {
+      const type = isSpecialBooking(booking) ? 'special' : 'regular';
       console.log(`📍 Slot info for court ${courtId} at ${timeSlot}:`, {
-        type: isSpecialBooking(booking) ? 'special' : 'regular',
-        booking: booking
+        type,
+        booking,
+        title: isSpecialBooking(booking) ? booking.title : 'Reserva regular'
       });
       
       return {
-        type: isSpecialBooking(booking) ? 'special' as const : 'regular' as const,
+        type: type as const,
         booking: booking,
         isBooked: true
       };
@@ -158,6 +168,8 @@ export default function Display() {
   if (process.env.NODE_ENV === 'development') {
     console.log("🔍 Debug info:", {
       allBookings: allBookings.length,
+      regularBookings: allBookings.filter(b => !b.isSpecial).length,
+      specialBookings: allBookings.filter(b => b.isSpecial).length,
       courts: courts?.length || 0,
       currentDate: currentDate.toISOString(),
       timeSlots: timeSlots.length
@@ -208,7 +220,9 @@ export default function Display() {
 
         {/* Debug info */}
         <div className="bg-yellow-100 p-2 text-xs text-center">
-          Reservas cargadas: {allBookings.length} | Canchas: {courts?.length || 0} | Fecha: {format(currentDate, "yyyy-MM-dd")}
+          Reservas: {allBookings.filter(b => !b.isSpecial).length} regulares, {allBookings.filter(b => b.isSpecial).length} especiales | 
+          Canchas: {courts?.length || 0} | 
+          Fecha: {format(currentDate, "yyyy-MM-dd")}
         </div>
 
         {/* Main Grid */}
@@ -253,9 +267,9 @@ export default function Display() {
                             className={`rounded transition-all m-1 flex items-center justify-center text-xs text-white font-medium ${
                               slotInfo.isBooked
                                 ? slotInfo.type === 'special' 
-                                  ? 'bg-purple-500' 
-                                  : 'bg-red-500'
-                                : 'bg-green-100 text-green-800'
+                                  ? 'bg-purple-500 hover:bg-purple-600' 
+                                  : 'bg-red-500 hover:bg-red-600'
+                                : 'bg-green-100 text-green-800 hover:bg-green-200'
                             }`}
                             title={
                               slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking)

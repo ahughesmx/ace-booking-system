@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { Booking } from "@/types/booking";
@@ -18,7 +19,7 @@ export function useBookings(selectedDate?: Date) {
       const endOfDay = new Date(selectedDate);
       endOfDay.setHours(23, 59, 59, 999);
 
-      console.log("📅 Fetching bookings for:", {
+      console.log("📅 Fetching regular bookings for:", {
         selectedDate: selectedDate.toISOString(),
         startOfDay: startOfDay.toISOString(),
         endOfDay: endOfDay.toISOString()
@@ -36,7 +37,7 @@ export function useBookings(selectedDate?: Date) {
         .order("start_time");
 
       if (error) {
-        console.error("❌ Error fetching bookings:", error);
+        console.error("❌ Error fetching regular bookings:", error);
         return [];
       }
 
@@ -88,6 +89,8 @@ export function useSpecialBookings(selectedDate?: Date) {
       return data || [];
     },
     enabled: !!selectedDate,
+    staleTime: 30000, // Cache por 30 segundos
+    cacheTime: 60000, // Mantener en cache por 1 minuto
   });
 }
 
@@ -97,7 +100,15 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
 
   // Transform regular bookings to include isSpecial flag
   const transformedRegularBookings: Booking[] = regularBookings.map(booking => ({
-    ...booking,
+    id: booking.id,
+    court_id: booking.court_id,
+    user_id: booking.user_id,
+    start_time: booking.start_time,
+    end_time: booking.end_time,
+    created_at: booking.created_at,
+    booking_made_at: booking.booking_made_at,
+    user: booking.user,
+    court: booking.court,
     isSpecial: false as const
   }));
 
@@ -123,12 +134,13 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
     ...transformedSpecialBookings
   ];
 
-  console.log("📊 Combined bookings:", {
+  console.log("📊 Combined bookings data:", {
     regular: transformedRegularBookings.length,
     special: transformedSpecialBookings.length,
     total: allBookings.length,
     date: selectedDate?.toDateString(),
-    allBookings: allBookings
+    regularBookings: transformedRegularBookings,
+    specialBookings: transformedSpecialBookings
   });
 
   return {
