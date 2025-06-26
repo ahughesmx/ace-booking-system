@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/AuthProvider";
 import { BookingForm } from "@/components/BookingForm";
 import { BookingsList } from "@/components/BookingsList";
-import { useBookings } from "@/hooks/use-bookings";
+import { useAllBookings } from "@/hooks/use-bookings";
 import { startOfToday, addDays } from "date-fns";
 import { useBookingRules } from "@/hooks/use-booking-rules";
 import { CourtTypeSelectionDialog } from "@/components/booking/CourtTypeSelectionDialog";
@@ -24,7 +24,7 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { data: bookings = [], refetch: refetchBookings } = useBookings(selectedDate);
+  const { data: bookings = [], isLoading } = useAllBookings(selectedDate);
 
   // Obtener las reglas de reserva
   const { data: bookingRules } = useBookingRules(selectedCourtType);
@@ -72,6 +72,11 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
     setSelectedCourtType(courtType);
     setShowCourtTypeDialog(false);
     console.log('Court type selected:', courtType);
+  };
+
+  const refetchBookings = () => {
+    // The useAllBookings hook will automatically refetch when its dependencies change
+    // This is mainly for compatibility with the BookingForm's onBookingSuccess callback
   };
 
   // Actualizar cuando cambia el tipo de cancha inicial
