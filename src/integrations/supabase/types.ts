@@ -452,6 +452,7 @@ export type Database = {
           is_recurring: boolean
           price_type: string
           recurrence_pattern: string[] | null
+          reference_user_id: string | null
           start_time: string
           title: string
           updated_at: string
@@ -467,6 +468,7 @@ export type Database = {
           is_recurring?: boolean
           price_type?: string
           recurrence_pattern?: string[] | null
+          reference_user_id?: string | null
           start_time: string
           title: string
           updated_at?: string
@@ -482,6 +484,7 @@ export type Database = {
           is_recurring?: boolean
           price_type?: string
           recurrence_pattern?: string[] | null
+          reference_user_id?: string | null
           start_time?: string
           title?: string
           updated_at?: string
@@ -492,6 +495,13 @@ export type Database = {
             columns: ["court_id"]
             isOneToOne: false
             referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "special_bookings_reference_user_id_fkey"
+            columns: ["reference_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

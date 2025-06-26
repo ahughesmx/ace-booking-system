@@ -135,7 +135,6 @@ export default function SpecialBookingManagement() {
     }
   };
 
-  // Función corregida para generar fechas recurrentes
   const generateRecurringDates = (startDate: Date, recurrencePattern: string[], weeks: number) => {
     const dates: Date[] = [];
     const startDayIndex = getDay(startDate); // Día de la semana de la fecha inicial
