@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import { Booking } from "@/types/booking";
+import { Booking, RegularBooking, SpecialBooking } from "@/types/booking";
 
 export function useBookings(selectedDate?: Date) {
   return useQuery({
@@ -97,7 +97,7 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
   const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate);
   const { data: specialBookings = [], isLoading: loadingSpecial } = useSpecialBookings(selectedDate);
 
-  const transformedRegularBookings: Booking[] = regularBookings.map(booking => ({
+  const transformedRegularBookings: RegularBooking[] = regularBookings.map(booking => ({
     id: booking.id,
     court_id: booking.court_id,
     user_id: booking.user_id,
@@ -110,10 +110,10 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
     isSpecial: false
   }));
 
-  const transformedSpecialBookings: Booking[] = specialBookings.map(booking => ({
+  const transformedSpecialBookings: SpecialBooking[] = specialBookings.map(booking => ({
     id: `special-${booking.id}`,
     court_id: booking.court_id,
-    user_id: booking.reference_user_id, // Use reference_user_id instead of null
+    user_id: booking.reference_user_id,
     start_time: booking.start_time,
     end_time: booking.end_time,
     created_at: booking.created_at,
@@ -127,9 +127,10 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
     event_type: booking.event_type,
     title: booking.title,
     description: booking.description,
+    reference_user_id: booking.reference_user_id,
   }));
 
-  const allBookings = [
+  const allBookings: Booking[] = [
     ...transformedRegularBookings,
     ...transformedSpecialBookings
   ];
