@@ -197,7 +197,7 @@ export function useCourtAvailability(courtId: string, startTime: Date, endTime: 
   });
 }
 
-// New hook to get user's active bookings count (non-expired only)
+// Updated hook to get user's active bookings count (non-expired only)
 export function useActiveBookingsCount(userId?: string) {
   return useQuery({
     queryKey: ["active-bookings-count", userId],
@@ -219,16 +219,27 @@ export function useActiveBookingsCount(userId?: string) {
 
       const count = data?.length || 0;
       
+      console.log("📊 Active bookings count update:", {
+        userId,
+        count,
+        currentTime: now
+      });
+      
       // Update the profiles table with the current count
-      await supabase
+      const { error: updateError } = await supabase
         .from("profiles")
         .update({ active_bookings: count })
         .eq("id", userId);
+
+      if (updateError) {
+        console.error("Error updating active bookings count:", updateError);
+      }
 
       return count;
     },
     enabled: !!userId,
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Don't cache
+    refetchInterval: 60000, // Refetch every minute to keep count updated
   });
 }

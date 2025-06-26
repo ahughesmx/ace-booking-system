@@ -40,6 +40,19 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     allBookings: allBookings.length 
   });
 
+  // Filtrar reservas para mostrar solo las futuras o actuales
+  const now = new Date();
+  const activeBookings = allBookings.filter(booking => {
+    const endTime = new Date(booking.end_time);
+    return endTime > now; // Solo mostrar reservas que no han terminado
+  });
+
+  console.log("Filtered active bookings:", {
+    total: allBookings.length,
+    active: activeBookings.length,
+    currentTime: now.toISOString()
+  });
+
   const handleCancelBooking = async (bookingId: string) => {
     try {
       if (bookingId.startsWith('special-')) {
@@ -135,7 +148,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
 
   if (!user) {
     const bookedSlots = new Set(
-      allBookings.map(booking => format(new Date(booking.start_time), "HH:00"))
+      activeBookings.map(booking => format(new Date(booking.start_time), "HH:00"))
     );
 
     return (
@@ -148,8 +161,8 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     );
   }
 
-  if (!allBookings.length) {
-    console.log("No bookings found for selected date, showing empty state");
+  if (!activeBookings.length) {
+    console.log("No active bookings found for selected date, showing empty state");
     return (
       <EmptyBookingsList
         isAuthenticated={true}
@@ -160,10 +173,10 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     );
   }
 
-  console.log("Showing bookings list with", allBookings.length, "bookings");
+  console.log("Showing bookings list with", activeBookings.length, "active bookings");
   return (
     <BookingsListContent
-      bookings={allBookings}
+      bookings={activeBookings}
       isAdmin={isAdmin}
       userId={user.id}
       onCancel={handleCancelBooking}
