@@ -62,9 +62,19 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   
   // Auto-seleccionar tipo de cancha si solo hay uno disponible
   useEffect(() => {
-    if (!selectedCourtType && availableTypes.length === 1) {
+    console.log('BookingForm - Auto-selection check:', {
+      selectedCourtType,
+      availableTypes: availableTypes.map(t => t.type_name),
+      isSelectedTypeAvailable: availableTypes.some(t => t.type_name === selectedCourtType)
+    });
+    
+    // Si el tipo seleccionado no está disponible O no hay tipo seleccionado pero hay exactamente uno disponible
+    const isSelectedTypeInvalid = selectedCourtType && !availableTypes.some(t => t.type_name === selectedCourtType);
+    const shouldAutoSelect = (!selectedCourtType || isSelectedTypeInvalid) && availableTypes.length === 1;
+    
+    if (shouldAutoSelect) {
       const singleType = availableTypes[0].type_name;
-      console.log('BookingForm - AUTO-SELECTING:', singleType);
+      console.log('BookingForm - AUTO-SELECTING (correcting invalid or missing type):', singleType);
       handleCourtTypeSelect(singleType);
       onCourtTypeChange?.(singleType);
     }
