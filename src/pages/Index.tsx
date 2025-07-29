@@ -94,18 +94,26 @@ export default function Index() {
   );
 
   const renderContent = () => {
+    console.log('🔍 Index.tsx renderContent called with currentTab:', currentTab);
+    
     if (!currentTab) {
+      console.log('📱 Rendering home cards (no currentTab)');
       return renderHomeCards();
     }
 
+    console.log('🔄 Rendering tab content for:', currentTab);
     switch (currentTab) {
       case "bookings":
+        console.log('📅 Rendering BookingCalendar component');
         return <BookingCalendar />;
       case "matches":
+        console.log('🏓 Rendering MatchManagement component');
         return <MatchManagement />;
       case "ranking":
+        console.log('🏆 Rendering RankingTable component');
         return <RankingTable />;
       default:
+        console.log('🏠 Rendering home cards (default case)');
         return renderHomeCards();
     }
   };
