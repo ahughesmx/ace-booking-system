@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase-client";
-import { Loader2, Clock, Settings } from "lucide-react";
+import { Loader2, Clock, Settings, Trash2 } from "lucide-react";
 
 type MatchManagementSettings = {
   id: string;
@@ -110,6 +110,26 @@ export default function MatchManagementSettings() {
       toast({
         title: "Error",
         description: "No se pudo ejecutar la limpieza de partidos",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const runBookingCleanup = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('cleanup-expired-bookings');
+      
+      if (error) throw error;
+
+      toast({
+        title: "Limpieza de reservas ejecutada",
+        description: `${data?.totalDeleted || 0} reservas expiradas eliminadas.`,
+      });
+    } catch (error) {
+      console.error("Error running booking cleanup:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo ejecutar la limpieza de reservas expiradas",
         variant: "destructive",
       });
     }
@@ -233,8 +253,47 @@ export default function MatchManagementSettings() {
               className="flex items-center gap-2"
             >
               <Settings className="h-4 w-4" />
-              Ejecutar Limpieza Ahora
+              Limpiar Partidos
             </Button>
+
+            <Button
+              variant="outline"
+              onClick={runBookingCleanup}
+              className="flex items-center gap-2 text-orange-600 hover:text-orange-700"
+            >
+              <Trash2 className="h-4 w-4" />
+              Limpiar Reservas Expiradas
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-orange-600" />
+            Limpieza Automática de Reservas
+          </CardTitle>
+          <CardDescription>
+            Las reservas con estado "pending_payment" que exceden el tiempo permitido se eliminan automáticamente cada 15 minutos
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-lg bg-orange-50 dark:bg-orange-950 p-4 border border-orange-200 dark:border-orange-800">
+            <div className="flex items-start gap-3">
+              <Trash2 className="h-5 w-5 text-orange-600 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-orange-800 dark:text-orange-200">
+                  Sistema de Limpieza Automática Activo
+                </h4>
+                <div className="text-sm text-orange-700 dark:text-orange-300 mt-1 space-y-1">
+                  <p>• <strong>Frecuencia:</strong> Cada 15 minutos</p>
+                  <p>• <strong>Objetivo:</strong> Eliminar reservas "pending_payment" expiradas</p>
+                  <p>• <strong>Beneficio:</strong> Libera slots automáticamente para nuevas reservas</p>
+                  <p>• <strong>Configuración:</strong> Basado en el campo "expires_at" de cada reserva</p>
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
