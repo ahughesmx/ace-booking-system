@@ -22,9 +22,12 @@ export function useBookings(selectedDate?: Date) {
         selectedDate: selectedDate.toISOString(),
         startOfDay: startOfDay.toISOString(),
         endOfDay: endOfDay.toISOString(),
-        filterStatus: "paid"
+        filterStatus: "paid",
+        filterTime: "future_only"
       });
 
+      const now = new Date().toISOString();
+      
       const { data, error } = await supabase
         .from("bookings")
         .select(`
@@ -35,6 +38,7 @@ export function useBookings(selectedDate?: Date) {
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
         .eq("status", "paid")
+        .gte("end_time", now) // Solo reservas que no hayan pasado
         .order("start_time");
 
       if (error) {
