@@ -78,20 +78,62 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [toast]);
 
+  // Función para limpiar el estado de autenticación
+  const cleanupAuthState = () => {
+    // Limpiar todas las claves de autenticación de localStorage
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // Limpiar sessionStorage si está en uso
+    if (typeof sessionStorage !== 'undefined') {
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    }
+  };
+
   const signOut = async () => {
     try {
       setLoading(true);
       
-      const { error } = await supabase.auth.signOut();
+      // Limpiar el estado primero
+      cleanupAuthState();
       
-      if (error) {
-        console.error("Error during signOut:", error);
-        toast({
-          title: "Error",
-          description: "Hubo un problema al cerrar sesión",
-          variant: "destructive",
-        });
+      // Intentar cerrar sesión global (ignora errores)
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.log("Error en signOut global, continuando con limpieza local:", err);
       }
+      
+      // Limpiar estado local
+      setSession(null);
+      setUser(null);
+      
+      // Forzar recarga completa para un estado limpio
+      window.location.href = '/';
+      
+    } catch (error) {
+      console.error("Error durante signOut:", error);
+      
+      // Aún así limpiar el estado local
+      cleanupAuthState();
+      setSession(null);
+      setUser(null);
+      
+      toast({
+        title: "Sesión cerrada",
+        description: "La sesión se ha cerrado correctamente",
+        variant: "default",
+      });
+      
+      // Forzar recarga incluso si hay error
+      window.location.href = '/';
     } finally {
       setLoading(false);
     }
