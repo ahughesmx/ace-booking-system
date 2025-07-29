@@ -8,12 +8,17 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { CreditCard, Shield, AlertCircle, CheckCircle } from "lucide-react";
+import { usePaymentSettings, useUpdatePaymentSettings } from "@/hooks/use-payment-settings";
+import { CreditCard, Shield, AlertCircle, CheckCircle, Clock } from "lucide-react";
 
 export default function PaymentGatewaySettings() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Payment settings hooks
+  const { data: paymentSettings } = usePaymentSettings();
+  const updatePaymentSettings = useUpdatePaymentSettings();
 
   // Stripe Configuration State
   const [stripeConfig, setStripeConfig] = useState({
@@ -163,14 +168,73 @@ export default function PaymentGatewaySettings() {
     }
   };
 
+  const handleUpdateTimeout = async (newTimeout: number) => {
+    if (!paymentSettings?.id) return;
+    
+    try {
+      await updatePaymentSettings.mutateAsync({
+        id: paymentSettings.id,
+        payment_timeout_minutes: newTimeout
+      });
+    } catch (error) {
+      console.error("Error updating payment timeout:", error);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold">Configuración de Pasarelas de Pago</h2>
+        <h2 className="text-3xl font-bold">Configuración de Pagos</h2>
         <p className="text-muted-foreground mt-2">
-          Configure las pasarelas de pago para procesar transacciones en su aplicación.
+          Configure las pasarelas de pago y opciones generales para procesar transacciones.
         </p>
       </div>
+
+      {/* Payment General Settings */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <Clock className="h-6 w-6 text-orange-600" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">Configuración General</CardTitle>
+              <CardDescription>
+                Configuraciones generales del sistema de pagos
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="payment-timeout">
+              Tiempo de espera para completar el pago (minutos)
+            </Label>
+            <div className="flex items-center space-x-2">
+              <Input
+                id="payment-timeout"
+                type="number"
+                min="1"
+                max="60"
+                value={paymentSettings?.payment_timeout_minutes || 10}
+                onChange={(e) => {
+                  const newValue = parseInt(e.target.value);
+                  if (newValue >= 1 && newValue <= 60) {
+                    handleUpdateTimeout(newValue);
+                  }
+                }}
+                className="w-24"
+              />
+              <span className="text-sm text-muted-foreground">
+                minutos (actualmente: {paymentSettings?.payment_timeout_minutes || 10} min)
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Tiempo máximo que tiene un usuario para completar el pago después de confirmar una reserva.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Stripe Configuration */}
       <Card>
