@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CourtTypeSelector } from "@/components/CourtTypeSelector";
 import { TimeSlotSelector } from "@/components/TimeSlotSelector";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +14,7 @@ import { MaxBookingsAlert } from "./booking/MaxBookingsAlert";
 import { DisabledReasonInfo } from "./booking/DisabledReasonInfo";
 import { BookingSummary } from "./booking/BookingSummary";
 import { useBookingPayment } from "./booking/useBookingPayment";
+import { useAvailableCourtTypes } from "@/hooks/use-available-court-types";
 
 interface BookingFormProps {
   selectedDate?: Date;
@@ -45,6 +46,9 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     handleBackToTypeSelection,
   } = useBookingState(initialCourtType);
 
+  // Verificar tipos disponibles para auto-selección
+  const { data: availableTypes = [] } = useAvailableCourtTypes(true);
+
   const {
     user,
     bookingRules,
@@ -53,9 +57,18 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   } = useBookingLogic(selectedDate, selectedCourtType);
 
   console.log('BookingForm - selectedCourtType:', selectedCourtType);
-  console.log('BookingForm - bookingRules:', bookingRules);
-  console.log('BookingForm - maxActiveBookings:', bookingRules?.max_active_bookings || 4);
-  console.log('BookingForm - userActiveBookings from profiles:', userActiveBookings);
+  console.log('BookingForm - availableTypes:', availableTypes);
+  console.log('BookingForm - availableTypes.length:', availableTypes.length);
+  
+  // Auto-seleccionar tipo de cancha si solo hay uno disponible
+  useEffect(() => {
+    if (!selectedCourtType && availableTypes.length === 1) {
+      const singleType = availableTypes[0].type_name;
+      console.log('BookingForm - AUTO-SELECTING:', singleType);
+      handleCourtTypeSelect(singleType);
+      onCourtTypeChange?.(singleType);
+    }
+  }, [selectedCourtType, availableTypes, handleCourtTypeSelect, onCourtTypeChange]);
 
   const handleLoginRedirect = () => {
     navigate('/login');
