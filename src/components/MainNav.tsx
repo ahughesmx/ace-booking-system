@@ -30,9 +30,9 @@ const MainNav = () => {
     setMobileOpen(false);
     
     if (tab === null) {
-      navigate("/", { state: undefined });
+      navigate("/", { state: { defaultTab: null }, replace: true });
     } else {
-      navigate("/", { state: { defaultTab: tab } });
+      navigate("/", { state: { defaultTab: tab }, replace: true });
     }
   };
 

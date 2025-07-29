@@ -31,7 +31,7 @@ export default function Index() {
   const handleNavigation = (tab: string) => {
     console.log('🔄 NAVIGATION CLICK - tab:', tab);
     console.log('🔄 NAVIGATION CLICK - current location.state:', location.state);
-    navigate("/", { state: { defaultTab: tab } });
+    navigate("/", { state: { defaultTab: tab }, replace: true });
     console.log('🔄 NAVIGATION CLICK - navigate called with:', { defaultTab: tab });
   };
 
