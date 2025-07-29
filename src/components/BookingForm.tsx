@@ -175,6 +175,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   }
   
   if (shouldShowSelector) {
+    console.log('🚨 SHOWING SELECTOR because shouldShowSelector is TRUE');
     return (
       <div className="space-y-4">
         <CourtTypeSelector
@@ -184,6 +185,8 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
       </div>
     );
   }
+
+  console.log('✅ NOT SHOWING SELECTOR - proceeding to main content');
 
   return (
     <div className="space-y-4">
