@@ -4,11 +4,13 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import { useNavigate } from "react-router-dom";
 
 type AuthContextType = {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  isSigningOut: boolean;
   signOut: () => Promise<void>;
 };
 
@@ -16,6 +18,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   loading: true,
+  isSigningOut: false,
   signOut: async () => {},
 });
 
@@ -23,6 +26,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -99,7 +103,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      setLoading(true);
+      setIsSigningOut(true);
+      
+      // Mostrar toast inmediatamente para feedback del usuario
+      toast({
+        title: "Cerrando sesión...",
+        description: "Por favor espera un momento",
+      });
       
       // Limpiar el estado primero
       cleanupAuthState();
@@ -111,12 +121,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Error en signOut global, continuando con limpieza local:", err);
       }
       
-      // Limpiar estado local
+      // Limpiar estado local inmediatamente
       setSession(null);
       setUser(null);
       
-      // Forzar recarga completa para un estado limpio
-      window.location.href = '/';
+      // Delay mínimo para mostrar el toast de feedback
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Navegación suave sin recarga completa
+      window.history.pushState(null, '', '/');
+      window.dispatchEvent(new PopStateEvent('popstate'));
       
     } catch (error) {
       console.error("Error durante signOut:", error);
@@ -132,16 +146,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         variant: "default",
       });
       
-      // Forzar recarga incluso si hay error
-      window.location.href = '/';
+      // Navegación de respaldo
+      window.history.pushState(null, '', '/');
+      window.dispatchEvent(new PopStateEvent('popstate'));
     } finally {
-      setLoading(false);
+      setIsSigningOut(false);
     }
   };
 
   return (
     <>
-      <AuthContext.Provider value={{ session, user, loading, signOut }}>
+      <AuthContext.Provider value={{ session, user, loading, isSigningOut, signOut }}>
         {children}
       </AuthContext.Provider>
       <Toaster />

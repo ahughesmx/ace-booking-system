@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { LogIn, LogOut } from "lucide-react";
+import { LogIn, LogOut, Loader2 } from "lucide-react";
 import { User } from "@supabase/supabase-js";
+import { useAuth } from "@/components/AuthProvider";
 
 interface NavItemsProps {
   navigationItems: Array<{
@@ -14,6 +15,8 @@ interface NavItemsProps {
 }
 
 export const NavItems = ({ navigationItems, user, handleSignOut, handleSignIn }: NavItemsProps) => {
+  const { isSigningOut } = useAuth();
+  
   return (
     <>
       {navigationItems.map((item) => (
@@ -32,9 +35,14 @@ export const NavItems = ({ navigationItems, user, handleSignOut, handleSignIn }:
           variant="ghost"
           className="flex w-full items-center justify-start gap-2 text-red-500 hover:text-red-600"
           onClick={handleSignOut}
+          disabled={isSigningOut}
         >
-          <LogOut className="h-4 w-4" />
-          <span>Cerrar sesión</span>
+          {isSigningOut ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <LogOut className="h-4 w-4" />
+          )}
+          <span>{isSigningOut ? "Cerrando sesión..." : "Cerrar sesión"}</span>
         </Button>
       ) : (
         <Button
