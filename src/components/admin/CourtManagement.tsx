@@ -8,7 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { AddCourtForm } from "./courts/AddCourtForm";
 import { CourtsList } from "./courts/CourtsList";
 import { MaintenanceList } from "./courts/MaintenanceList";
-import { Building, Calendar } from "lucide-react";
+import { AvailableCourtTypes } from "./courts/AvailableCourtTypes";
+import { Building, Calendar, Settings2 } from "lucide-react";
 
 type Court = {
   id: string;
@@ -125,8 +126,12 @@ export default function CourtManagement() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="courts" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs defaultValue="types" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="types" className="flex items-center gap-2">
+              <Settings2 className="w-4 h-4" />
+              Tipos disponibles
+            </TabsTrigger>
             <TabsTrigger value="courts" className="flex items-center gap-2">
               <Building className="w-4 h-4" />
               Canchas
@@ -136,6 +141,10 @@ export default function CourtManagement() {
               Mantenimiento
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="types" className="space-y-6">
+            <AvailableCourtTypes />
+          </TabsContent>
 
           <TabsContent value="courts" className="space-y-6">
             <AddCourtForm onAddCourt={handleAddCourt} loading={loading} />

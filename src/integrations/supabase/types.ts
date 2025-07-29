@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      available_court_types: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          is_enabled: boolean
+          type_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id?: string
+          is_enabled?: boolean
+          type_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_enabled?: boolean
+          type_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       booking_rules: {
         Row: {
           allow_consecutive_bookings: boolean
