@@ -11,6 +11,9 @@ interface CourtTypeSelectorProps {
 export function CourtTypeSelector({ selectedType, onTypeSelect }: CourtTypeSelectorProps) {
   const { data: availableTypes = [] } = useAvailableCourtTypes(true);
 
+  console.log('CourtTypeSelector - availableTypes received:', availableTypes);
+  console.log('CourtTypeSelector - availableTypes.length:', availableTypes.length);
+
   // Íconos por tipo de cancha
   const getIcon = (typeName: string) => {
     switch (typeName) {
