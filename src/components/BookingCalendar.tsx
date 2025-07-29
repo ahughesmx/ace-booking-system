@@ -14,12 +14,12 @@ import { useBookingRules } from "@/hooks/use-booking-rules";
 import { CourtTypeSelectionDialog } from "@/components/booking/CourtTypeSelectionDialog";
 
 interface BookingCalendarProps {
-  selectedCourtType?: 'tennis' | 'padel' | null;
+  selectedCourtType?: string | null;
 }
 
 export function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedCourtType, setSelectedCourtType] = useState<'tennis' | 'padel' | null>(initialCourtType || null);
+  const [selectedCourtType, setSelectedCourtType] = useState<string | null>(initialCourtType || null);
   const [showCourtTypeDialog, setShowCourtTypeDialog] = useState(!initialCourtType);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -27,7 +27,7 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
   const { data: bookings = [], isLoading } = useAllBookings(selectedDate);
 
   // Obtener las reglas de reserva
-  const { data: bookingRules } = useBookingRules(selectedCourtType);
+  const { data: bookingRules } = useBookingRules(selectedCourtType as 'tennis' | 'padel');
 
   const today = startOfToday();
   
@@ -58,7 +58,7 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
 
   const maxDate = getMaxDate();
 
-  const handleCourtTypeChange = (courtType: 'tennis' | 'padel' | null) => {
+  const handleCourtTypeChange = (courtType: string | null) => {
     console.log('BookingCalendar - Court type changed to:', courtType);
     setSelectedCourtType(courtType);
     
@@ -68,7 +68,7 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
     }
   };
 
-  const handleCourtTypeSelect = (courtType: 'tennis' | 'padel') => {
+  const handleCourtTypeSelect = (courtType: string) => {
     setSelectedCourtType(courtType);
     setShowCourtTypeDialog(false);
     console.log('Court type selected:', courtType);
@@ -102,7 +102,11 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
             </CardTitle>
             {selectedCourtType && bookingRules && !Array.isArray(bookingRules) && (
               <p className="text-sm text-muted-foreground">
-                Reservas hasta {bookingRules.max_days_ahead} días adelante • {selectedCourtType === 'tennis' ? 'Tenis' : 'Pádel'}
+                Reservas hasta {bookingRules.max_days_ahead} días adelante • {
+                  selectedCourtType === 'tennis' ? 'Tenis' : 
+                  selectedCourtType === 'padel' ? 'Pádel' : 
+                  selectedCourtType.charAt(0).toUpperCase() + selectedCourtType.slice(1)
+                }
               </p>
             )}
           </CardHeader>
