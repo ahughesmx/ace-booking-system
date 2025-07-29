@@ -18,7 +18,7 @@ interface BookingCalendarProps {
   selectedCourtType?: string | null;
 }
 
-const BookingCalendarComponent = React.memo(function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalendarProps) {
+function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedCourtType, setSelectedCourtType] = useState<string | null>(initialCourtType || null);
   const [showCourtTypeDialog, setShowCourtTypeDialog] = useState(!initialCourtType);
@@ -84,10 +84,8 @@ const BookingCalendarComponent = React.memo(function BookingCalendar({ selectedC
 
   // Actualizar cuando cambia el tipo de cancha inicial
   useEffect(() => {
-    if (initialCourtType !== selectedCourtType) {
-      setSelectedCourtType(initialCourtType || null);
-      setShowCourtTypeDialog(!initialCourtType);
-    }
+    setSelectedCourtType(initialCourtType || null);
+    setShowCourtTypeDialog(!initialCourtType);
   }, [initialCourtType]);
 
   // Mostrar skeleton mientras se cargan los datos iniciales
@@ -197,7 +195,6 @@ const BookingCalendarComponent = React.memo(function BookingCalendar({ selectedC
       </div>
     </>
   );
-});
+}
 
-// Crear el export con lazy loading
-export const BookingCalendar = BookingCalendarComponent;
+export { BookingCalendar };
