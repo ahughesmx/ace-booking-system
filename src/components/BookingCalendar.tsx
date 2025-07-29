@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,36 +12,39 @@ import { useAllBookings } from "@/hooks/use-bookings";
 import { startOfToday, addDays } from "date-fns";
 import { useBookingRules } from "@/hooks/use-booking-rules";
 import { CourtTypeSelectionDialog } from "@/components/booking/CourtTypeSelectionDialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface BookingCalendarProps {
   selectedCourtType?: string | null;
 }
 
-export function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalendarProps) {
+const BookingCalendarComponent = React.memo(function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedCourtType, setSelectedCourtType] = useState<string | null>(initialCourtType || null);
   const [showCourtTypeDialog, setShowCourtTypeDialog] = useState(!initialCourtType);
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  // Solo hacer la consulta si tenemos una fecha seleccionada
   const { data: bookings = [], isLoading } = useAllBookings(selectedDate);
 
-  // Obtener las reglas de reserva
+  // Obtener las reglas de reserva - memoizar para evitar consultas innecesarias  
   const { data: bookingRules } = useBookingRules(selectedCourtType as 'tennis' | 'padel');
 
   const today = startOfToday();
   
-  // Calcular la fecha máxima basada en booking_rules
-  const getMaxDate = () => {
+  // Memoizar el cálculo de la fecha máxima para evitar recálculos innecesarios
+  const getMaxDate = useMemo(() => {
     if (selectedCourtType && bookingRules && !Array.isArray(bookingRules)) {
       return addDays(today, bookingRules.max_days_ahead);
     }
     // Si no hay tipo de cancha seleccionado, usar fecha muy restrictiva (solo hoy)
     return today;
-  };
+  }, [selectedCourtType, bookingRules, today]);
 
-  // Verificar si un día está deshabilitado
-  const isDayDisabled = (date: Date) => {
+  // Memoizar la función isDayDisabled para mejor rendimiento
+  const isDayDisabled = useMemo(() => (date: Date) => {
     // Siempre deshabilitar fechas pasadas
     if (date < today) return true;
     
@@ -51,12 +54,12 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
     }
     
     // Deshabilitar fechas más allá del máximo permitido según booking_rules
-    if (date > getMaxDate()) return true;
+    if (date > getMaxDate) return true;
 
     return false;
-  };
+  }, [today, selectedCourtType, getMaxDate]);
 
-  const maxDate = getMaxDate();
+  const maxDate = getMaxDate;
 
   const handleCourtTypeChange = (courtType: string | null) => {
     console.log('BookingCalendar - Court type changed to:', courtType);
@@ -86,6 +89,34 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
       setShowCourtTypeDialog(!initialCourtType);
     }
   }, [initialCourtType]);
+
+  // Mostrar skeleton mientras se cargan los datos iniciales
+  if (isLoading && !bookings.length) {
+    return (
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-8 w-48" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-64 w-full" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-8 w-32" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -166,4 +197,7 @@ export function BookingCalendar({ selectedCourtType: initialCourtType }: Booking
       </div>
     </>
   );
-}
+});
+
+// Crear el export con lazy loading
+export const BookingCalendar = BookingCalendarComponent;

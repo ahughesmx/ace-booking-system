@@ -50,6 +50,8 @@ export function useBookings(selectedDate?: Date) {
       return data || [];
     },
     enabled: !!selectedDate,
+    staleTime: 1000 * 60 * 2, // 2 minutos de cache
+    gcTime: 1000 * 60 * 10,  // 10 minutos en memoria
   });
 }
 
@@ -94,8 +96,8 @@ export function useSpecialBookings(selectedDate?: Date) {
       return data || [];
     },
     enabled: !!selectedDate,
-    staleTime: 30000,
-    gcTime: 60000,
+    staleTime: 1000 * 60 * 5, // 5 minutos de cache para special bookings
+    gcTime: 1000 * 60 * 15,   // 15 minutos en memoria
   });
 }
 

@@ -1,6 +1,6 @@
 
+import React, { Suspense } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import { BookingCalendar } from "@/components/BookingCalendar";
 import MatchManagement from "@/components/MatchManagement";
 import RankingTable from "@/components/RankingTable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -9,6 +9,12 @@ import MainNav from "@/components/MainNav";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { useUserRole } from "@/hooks/use-user-role";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy load BookingCalendar para mejor rendimiento
+const BookingCalendar = React.lazy(() => 
+  import("@/components/BookingCalendar").then(module => ({ default: module.BookingCalendar }))
+);
 
 export default function Index() {
   const { user, loading } = useAuth();
@@ -92,6 +98,28 @@ export default function Index() {
     </div>
   );
 
+  // Componente de loading para BookingCalendar
+  const BookingLoadingFallback = () => (
+    <div className="grid gap-6 md:grid-cols-2">
+      <Card>
+        <div className="p-6">
+          <Skeleton className="h-8 w-48 mb-4" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </Card>
+      <Card>
+        <div className="p-6">
+          <Skeleton className="h-8 w-32 mb-4" />
+          <div className="space-y-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+
   const renderContent = () => {
     if (!defaultTab) {
       return renderHomeCards();
@@ -99,7 +127,11 @@ export default function Index() {
 
     switch (defaultTab) {
       case "bookings":
-        return <BookingCalendar />;
+        return (
+          <Suspense fallback={<BookingLoadingFallback />}>
+            <BookingCalendar />
+          </Suspense>
+        );
       case "matches":
         return <MatchManagement />;
       case "ranking":
