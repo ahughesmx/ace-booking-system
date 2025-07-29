@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import MatchManagement from "@/components/MatchManagement";
@@ -16,24 +16,13 @@ export default function Index() {
   const location = useLocation();
   const navigate = useNavigate();
   const { data: userRole } = useUserRole(user?.id);
-  
-  // Mantener estado local del tab para evitar remontajes innecesarios
-  const [currentTab, setCurrentTab] = useState<string | null>(location.state?.defaultTab || null);
-  
-  // Sincronizar con el state del location cuando cambie
-  useEffect(() => {
-    const defaultTab = location.state?.defaultTab;
-    if (defaultTab !== currentTab) {
-      setCurrentTab(defaultTab || null);
-    }
-  }, [location.state?.defaultTab, currentTab]);
+  const currentTab = location.state?.defaultTab;
 
   if (loading) {
     return <div>Cargando...</div>;
   }
 
   const handleNavigation = (tab: string) => {
-    setCurrentTab(tab); // Actualizar estado local inmediatamente
     navigate("/", { state: { defaultTab: tab } });
   };
 
