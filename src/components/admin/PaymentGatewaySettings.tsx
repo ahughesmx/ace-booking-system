@@ -43,6 +43,7 @@ export default function PaymentGatewaySettings() {
     clientIdLive: "",
     clientSecretLive: "",
     webhookId: "",
+    webhookUrl: "",
     sandboxAccount: ""
   });
 
@@ -95,6 +96,7 @@ export default function PaymentGatewaySettings() {
               clientIdLive: config?.clientIdLive || "",
               clientSecretLive: config?.clientSecretLive || "",
               webhookId: config?.webhookId || "",
+              webhookUrl: config?.webhookUrl || "",
               sandboxAccount: config?.sandboxAccount || ""
             });
           } else if (gateway.name === 'mercadopago') {
@@ -175,6 +177,7 @@ export default function PaymentGatewaySettings() {
             clientIdLive: paypalConfig.clientIdLive,
             clientSecretLive: paypalConfig.clientSecretLive,
             webhookId: paypalConfig.webhookId,
+            webhookUrl: paypalConfig.webhookUrl,
             sandboxAccount: paypalConfig.sandboxAccount
           }
         })
@@ -609,7 +612,7 @@ export default function PaymentGatewaySettings() {
                   }
                 />
               </div>
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2">
                 <Label htmlFor="paypal-webhook-id">Webhook ID</Label>
                 <Input
                   id="paypal-webhook-id"
@@ -618,6 +621,18 @@ export default function PaymentGatewaySettings() {
                   value={paypalConfig.webhookId}
                   onChange={(e) => 
                     setPaypalConfig(prev => ({ ...prev, webhookId: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="paypal-webhook-url">Webhook URL</Label>
+                <Input
+                  id="paypal-webhook-url"
+                  type="url"
+                  placeholder="https://your-domain.com/webhook/paypal"
+                  value={paypalConfig.webhookUrl}
+                  onChange={(e) => 
+                    setPaypalConfig(prev => ({ ...prev, webhookUrl: e.target.value }))
                   }
                 />
               </div>
