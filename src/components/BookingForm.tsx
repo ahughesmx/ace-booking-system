@@ -152,8 +152,19 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     );
   }
 
-  // Si no hay tipo de cancha seleccionado, mostrar selector de tipo
-  if (!selectedCourtType) {
+  // Si no hay tipo de cancha seleccionado, verificar si necesitamos mostrar selector
+  // Solo mostrar selector si hay datos de tipos disponibles Y hay más de un tipo O no hay tipos
+  const shouldShowSelector = !selectedCourtType && availableTypes.length > 1;
+  const isLoadingTypes = availableTypes.length === 0;
+  
+  console.log('BookingForm - shouldShowSelector:', shouldShowSelector);
+  console.log('BookingForm - isLoadingTypes:', isLoadingTypes);
+  
+  if (isLoadingTypes) {
+    return <div className="text-center py-4">Cargando tipos de cancha...</div>;
+  }
+  
+  if (shouldShowSelector) {
     return (
       <div className="space-y-4">
         <CourtTypeSelector
