@@ -1,6 +1,7 @@
 
-import React, { Suspense } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { BookingCalendar } from "@/components/BookingCalendar";
 import MatchManagement from "@/components/MatchManagement";
 import RankingTable from "@/components/RankingTable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -9,25 +10,30 @@ import MainNav from "@/components/MainNav";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { useUserRole } from "@/hooks/use-user-role";
-import { Skeleton } from "@/components/ui/skeleton";
-
-// Lazy load BookingCalendar para mejor rendimiento
-const BookingCalendar = React.lazy(() => 
-  import("@/components/BookingCalendar").then(module => ({ default: module.BookingCalendar }))
-);
 
 export default function Index() {
   const { user, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { data: userRole } = useUserRole(user?.id);
-  const defaultTab = location.state?.defaultTab;
+  
+  // Mantener estado local del tab para evitar remontajes innecesarios
+  const [currentTab, setCurrentTab] = useState<string | null>(location.state?.defaultTab || null);
+  
+  // Sincronizar con el state del location cuando cambie
+  useEffect(() => {
+    const defaultTab = location.state?.defaultTab;
+    if (defaultTab !== currentTab) {
+      setCurrentTab(defaultTab || null);
+    }
+  }, [location.state?.defaultTab, currentTab]);
 
   if (loading) {
     return <div>Cargando...</div>;
   }
 
   const handleNavigation = (tab: string) => {
+    setCurrentTab(tab); // Actualizar estado local inmediatamente
     navigate("/", { state: { defaultTab: tab } });
   };
 
@@ -98,44 +104,18 @@ export default function Index() {
     </div>
   );
 
-  // Componente de loading para BookingCalendar
-  const BookingLoadingFallback = () => (
-    <div className="grid gap-6 md:grid-cols-2">
-      <Card>
-        <div className="p-6">
-          <Skeleton className="h-8 w-48 mb-4" />
-          <Skeleton className="h-64 w-full" />
-        </div>
-      </Card>
-      <Card>
-        <div className="p-6">
-          <Skeleton className="h-8 w-32 mb-4" />
-          <div className="space-y-4">
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-
   const renderContent = () => {
-    if (!defaultTab) {
+    if (!currentTab) {
       return renderHomeCards();
     }
 
-    switch (defaultTab) {
+    switch (currentTab) {
       case "bookings":
-        return (
-          <Suspense fallback={<BookingLoadingFallback />}>
-            <BookingCalendar />
-          </Suspense>
-        );
+        return <BookingCalendar key="bookings" />;
       case "matches":
-        return <MatchManagement />;
+        return <MatchManagement key="matches" />;
       case "ranking":
-        return <RankingTable />;
+        return <RankingTable key="ranking" />;
       default:
         return renderHomeCards();
     }
