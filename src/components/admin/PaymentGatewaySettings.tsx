@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ import { CreditCard, Shield, AlertCircle, CheckCircle } from "lucide-react";
 export default function PaymentGatewaySettings() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Stripe Configuration State
   const [stripeConfig, setStripeConfig] = useState({
@@ -39,11 +41,77 @@ export default function PaymentGatewaySettings() {
     sandboxAccount: ""
   });
 
+  // Cargar configuraciones existentes
+  useEffect(() => {
+    const loadConfigurations = async () => {
+      try {
+        const { data: gateways, error } = await supabase
+          .from("payment_gateways")
+          .select("*");
+
+        if (error) throw error;
+
+        gateways?.forEach(gateway => {
+          const config = gateway.configuration as any;
+          if (gateway.name === 'stripe') {
+            setStripeConfig({
+              enabled: gateway.enabled,
+              testMode: gateway.test_mode,
+              publishableKeyTest: config?.publishableKeyTest || "",
+              secretKeyTest: config?.secretKeyTest || "",
+              publishableKeyLive: config?.publishableKeyLive || "",
+              secretKeyLive: config?.secretKeyLive || "",
+              webhookEndpointTest: config?.webhookEndpointTest || "",
+              webhookEndpointLive: config?.webhookEndpointLive || "",
+              webhookSecretTest: config?.webhookSecretTest || "",
+              webhookSecretLive: config?.webhookSecretLive || ""
+            });
+          } else if (gateway.name === 'paypal') {
+            setPaypalConfig({
+              enabled: gateway.enabled,
+              testMode: gateway.test_mode,
+              clientIdTest: config?.clientIdTest || "",
+              clientSecretTest: config?.clientSecretTest || "",
+              clientIdLive: config?.clientIdLive || "",
+              clientSecretLive: config?.clientSecretLive || "",
+              webhookId: config?.webhookId || "",
+              sandboxAccount: config?.sandboxAccount || ""
+            });
+          }
+        });
+      } catch (error) {
+        console.error("Error loading payment configurations:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadConfigurations();
+  }, []);
+
   const handleSaveStripe = async () => {
     setIsSaving(true);
     try {
-      // Aquí se guardarían las configuraciones en la base de datos
-      // Por ahora solo mostramos un mensaje de éxito
+      const { error } = await supabase
+        .from("payment_gateways")
+        .update({
+          enabled: stripeConfig.enabled,
+          test_mode: stripeConfig.testMode,
+          configuration: {
+            publishableKeyTest: stripeConfig.publishableKeyTest,
+            secretKeyTest: stripeConfig.secretKeyTest,
+            publishableKeyLive: stripeConfig.publishableKeyLive,
+            secretKeyLive: stripeConfig.secretKeyLive,
+            webhookEndpointTest: stripeConfig.webhookEndpointTest,
+            webhookEndpointLive: stripeConfig.webhookEndpointLive,
+            webhookSecretTest: stripeConfig.webhookSecretTest,
+            webhookSecretLive: stripeConfig.webhookSecretLive
+          }
+        })
+        .eq("name", "stripe");
+
+      if (error) throw error;
+
       toast({
         title: "Configuración de Stripe guardada",
         description: "La configuración de Stripe se ha actualizado correctamente.",
@@ -62,8 +130,24 @@ export default function PaymentGatewaySettings() {
   const handleSavePayPal = async () => {
     setIsSaving(true);
     try {
-      // Aquí se guardarían las configuraciones en la base de datos
-      // Por ahora solo mostramos un mensaje de éxito
+      const { error } = await supabase
+        .from("payment_gateways")
+        .update({
+          enabled: paypalConfig.enabled,
+          test_mode: paypalConfig.testMode,
+          configuration: {
+            clientIdTest: paypalConfig.clientIdTest,
+            clientSecretTest: paypalConfig.clientSecretTest,
+            clientIdLive: paypalConfig.clientIdLive,
+            clientSecretLive: paypalConfig.clientSecretLive,
+            webhookId: paypalConfig.webhookId,
+            sandboxAccount: paypalConfig.sandboxAccount
+          }
+        })
+        .eq("name", "paypal");
+
+      if (error) throw error;
+
       toast({
         title: "Configuración de PayPal guardada",
         description: "La configuración de PayPal se ha actualizado correctamente.",

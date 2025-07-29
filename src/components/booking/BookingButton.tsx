@@ -32,7 +32,7 @@ export function BookingButton({
       disabled={isDisabled || isSubmitting}
       onClick={onClick}
     >
-      {isSubmitting ? "Reservando..." : "Reservar cancha"}
+      {isSubmitting ? "Procesando..." : "Continuar al pago"}
     </Button>
   );
 }

@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { CourtTypeSelector } from "@/components/CourtTypeSelector";
 import { TimeSlotSelector } from "@/components/TimeSlotSelector";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +12,8 @@ import { BookingRulesInfo } from "./booking/BookingRulesInfo";
 import { CourtSelection } from "./booking/CourtSelection";
 import { MaxBookingsAlert } from "./booking/MaxBookingsAlert";
 import { DisabledReasonInfo } from "./booking/DisabledReasonInfo";
+import { BookingSummary } from "./booking/BookingSummary";
+import { useBookingPayment } from "./booking/useBookingPayment";
 
 interface BookingFormProps {
   selectedDate?: Date;
@@ -21,7 +24,15 @@ interface BookingFormProps {
 
 export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, onCourtTypeChange }: BookingFormProps) {
   const navigate = useNavigate();
+  const [showSummary, setShowSummary] = useState(false);
   const { handleBooking, isSubmitting } = useBookingSubmit(onBookingSuccess);
+  const { 
+    createPendingBooking, 
+    processPayment, 
+    cancelPendingBooking, 
+    pendingBooking, 
+    isCreatingBooking 
+  } = useBookingPayment();
   
   const {
     selectedCourtType,
@@ -50,6 +61,39 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     navigate('/login');
   };
 
+  const handleShowSummary = async () => {
+    if (!selectedDate || !selectedTime || !selectedCourtType || !selectedCourt) {
+      return;
+    }
+
+    try {
+      await createPendingBooking({
+        selectedDate,
+        selectedTime,
+        selectedCourt,
+        selectedCourtType
+      });
+      setShowSummary(true);
+    } catch (error) {
+      console.error("Error creating pending booking:", error);
+    }
+  };
+
+  const handleConfirmPayment = async (paymentGateway: string) => {
+    try {
+      await processPayment(paymentGateway);
+      setShowSummary(false);
+      onBookingSuccess();
+    } catch (error) {
+      console.error("Error processing payment:", error);
+    }
+  };
+
+  const handleCancelPayment = async () => {
+    await cancelPendingBooking();
+    setShowSummary(false);
+  };
+
   const handleCourtTypeSelectWithCallback = (type: 'tennis' | 'padel') => {
     handleCourtTypeSelect(type);
     onCourtTypeChange?.(type);
@@ -74,8 +118,26 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   };
 
   const disabledReason = getDisabledReason();
-  const isButtonDisabled = !!disabledReason || isSubmitting;
+  const isButtonDisabled = !!disabledReason || isSubmitting || isCreatingBooking;
   const maxBookings = bookingRules?.max_active_bookings || 4;
+
+  // Si se está mostrando el resumen de pago
+  if (showSummary && pendingBooking) {
+    const court = courts.find(c => c.id === selectedCourt);
+    return (
+      <div className="flex justify-center">
+        <BookingSummary
+          date={selectedDate!}
+          time={selectedTime!}
+          courtType={selectedCourtType!}
+          courtName={court?.name || 'Cancha'}
+          onConfirm={handleConfirmPayment}
+          onCancel={handleCancelPayment}
+          isLoading={isSubmitting}
+        />
+      </div>
+    );
+  }
 
   // Si no hay tipo de cancha seleccionado, mostrar selector de tipo
   if (!selectedCourtType) {
@@ -134,17 +196,9 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
 
       {/* Botón de reserva */}
       <BookingButton 
-        isSubmitting={isSubmitting}
+        isSubmitting={isCreatingBooking}
         isDisabled={isButtonDisabled}
-        onClick={() => {
-          console.log('Attempting booking with:', {
-            selectedDate,
-            selectedTime,
-            selectedCourt,
-            selectedCourtType
-          });
-          handleBooking(selectedDate, selectedTime, selectedCourt, selectedCourtType);
-        }}
+        onClick={handleShowSummary}
         loginRedirect={handleLoginRedirect}
         isAuthenticated={!!user}
       />
