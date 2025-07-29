@@ -4,25 +4,26 @@ import { useCourts } from "@/hooks/use-courts";
 import { useAvailableCourtTypes } from "@/hooks/use-available-court-types";
 
 export function useBookingState(initialCourtType?: string | null) {
+  const { data: availableTypes = [] } = useAvailableCourtTypes(true); // Solo tipos habilitados
   const [selectedCourtType, setSelectedCourtType] = useState<string | null>(initialCourtType || null);
   const [selectedCourt, setSelectedCourt] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   
-  const { data: courts = [] } = useCourts(selectedCourtType as 'tennis' | 'padel' | null);
-  const { data: availableTypes = [] } = useAvailableCourtTypes(true); // Solo tipos habilitados
+  const { data: courts = [] } = useCourts(selectedCourtType);
 
-  // Auto-seleccionar tipo de cancha si solo hay uno habilitado
+  // Auto-seleccionar tipo de cancha cuando solo hay uno habilitado
   useEffect(() => {
-    console.log('useBookingState - checking auto-selection:', {
+    console.log('useBookingState - Auto-selection check:', {
       selectedCourtType,
       initialCourtType,
       availableTypesLength: availableTypes.length,
-      availableTypes
+      availableTypes: availableTypes.map(t => ({ name: t.type_name, enabled: t.is_enabled }))
     });
     
+    // Solo auto-seleccionar si no hay tipo seleccionado ni inicial y hay exactamente un tipo disponible
     if (!selectedCourtType && !initialCourtType && availableTypes.length === 1) {
       const singleType = availableTypes[0].type_name;
-      console.log('Auto-selecting single court type:', singleType);
+      console.log('AUTO-SELECTING single court type:', singleType);
       setSelectedCourtType(singleType);
     }
   }, [availableTypes, selectedCourtType, initialCourtType]);
