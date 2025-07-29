@@ -19,6 +19,8 @@ interface BookingCalendarProps {
 }
 
 function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalendarProps) {
+  console.log('🔴 BookingCalendar RENDER START');
+  
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedCourtType, setSelectedCourtType] = useState<string | null>(initialCourtType || null);
   const [showCourtTypeDialog, setShowCourtTypeDialog] = useState(!initialCourtType);
@@ -97,34 +99,11 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
     };
   }, []);
 
-  // Mostrar skeleton mientras se cargan los datos iniciales
-  if (isLoading && !bookings.length) {
-    return (
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-48" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-64 w-full" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-32" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  console.log('🔴 BookingCalendar - isLoading:', isLoading, 'bookings.length:', bookings.length);
 
+  // Remover el return condicional que causa el problema
+  // Siempre renderizar el contenido principal
+  
   return (
     <>
       <CourtTypeSelectionDialog 
