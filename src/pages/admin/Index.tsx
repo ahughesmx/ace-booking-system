@@ -13,6 +13,7 @@ import WebhookManagement from "@/components/admin/WebhookManagement";
 import SpecialBookingManagement from "@/components/admin/SpecialBookingManagement";
 import UserRegistrationForm from "@/components/admin/UserRegistrationForm";
 import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
+import MatchManagementSettings from "@/components/admin/MatchManagementSettings";
 
 const AdminPage = () => {
   const { isAdmin, isLoading } = useAdminAuth();
@@ -45,6 +46,8 @@ const AdminPage = () => {
         return <SpecialBookingManagement />;
       case "payment-gateways":
         return <PaymentGatewaySettings />;
+      case "matches":
+        return <MatchManagementSettings />;
       default:
         return <UserManagement />;
     }

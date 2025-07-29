@@ -13,6 +13,7 @@ import {
   UserPlus,
   CalendarCheck,
   CreditCard,
+  Trophy,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -29,6 +30,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
     { id: "member-ids", label: "IDs de Miembros", icon: UserPlus },
     { id: "booking-rules", label: "Reglas de Reserva", icon: Calendar },
     { id: "special-bookings", label: "Reservas Especiales", icon: CalendarCheck },
+    { id: "matches", label: "Partidos", icon: Trophy },
     { id: "statistics", label: "Estadísticas", icon: BarChart3 },
     { id: "display", label: "Display", icon: Monitor },
     { id: "webhooks", label: "Webhooks", icon: Webhook },

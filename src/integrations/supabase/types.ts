@@ -344,6 +344,33 @@ export type Database = {
           },
         ]
       }
+      match_management_settings: {
+        Row: {
+          cleanup_enabled: boolean
+          cleanup_frequency_minutes: number
+          cleanup_hours_after_booking: number
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          cleanup_enabled?: boolean
+          cleanup_frequency_minutes?: number
+          cleanup_hours_after_booking?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          cleanup_enabled?: boolean
+          cleanup_frequency_minutes?: number
+          cleanup_hours_after_booking?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           booking_id: string | null
