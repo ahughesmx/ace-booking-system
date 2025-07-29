@@ -13,10 +13,17 @@ export function useBookingState(initialCourtType?: string | null) {
 
   // Auto-seleccionar tipo de cancha si solo hay uno habilitado
   useEffect(() => {
+    console.log('useBookingState - checking auto-selection:', {
+      selectedCourtType,
+      initialCourtType,
+      availableTypesLength: availableTypes.length,
+      availableTypes
+    });
+    
     if (!selectedCourtType && !initialCourtType && availableTypes.length === 1) {
       const singleType = availableTypes[0].type_name;
-      setSelectedCourtType(singleType);
       console.log('Auto-selecting single court type:', singleType);
+      setSelectedCourtType(singleType);
     }
   }, [availableTypes, selectedCourtType, initialCourtType]);
 
