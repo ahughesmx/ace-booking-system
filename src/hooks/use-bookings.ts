@@ -21,7 +21,8 @@ export function useBookings(selectedDate?: Date) {
       console.log("📅 Fetching regular bookings for:", {
         selectedDate: selectedDate.toISOString(),
         startOfDay: startOfDay.toISOString(),
-        endOfDay: endOfDay.toISOString()
+        endOfDay: endOfDay.toISOString(),
+        filterStatus: "paid"
       });
 
       const { data, error } = await supabase
@@ -33,6 +34,7 @@ export function useBookings(selectedDate?: Date) {
         `)
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
+        .eq("status", "paid")
         .order("start_time");
 
       if (error) {
@@ -171,6 +173,7 @@ export function useCourtAvailability(courtId: string, startTime: Date, endTime: 
         .from("bookings")
         .select("id")
         .eq("court_id", courtId)
+        .eq("status", "paid") // Only count paid bookings for availability
         .gte("end_time", now) // Only non-expired bookings
         .or(`and(start_time.lt.${endTime.toISOString()},end_time.gt.${startTime.toISOString()})`);
 
@@ -210,6 +213,7 @@ export function useActiveBookingsCount(userId?: string) {
         .from("bookings")
         .select("id")
         .eq("user_id", userId)
+        .eq("status", "paid") // Only count paid bookings as active
         .gte("end_time", now); // Only count non-expired bookings
 
       if (error) {
