@@ -1,5 +1,5 @@
 
-import React, { useMemo } from "react";
+import React from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import MatchManagement from "@/components/MatchManagement";
@@ -94,19 +94,74 @@ export default function Index() {
     </div>
   );
 
-  const renderContent = useMemo(() => {
-    switch (currentTab) {
-      case "bookings":
-        return <BookingCalendar />;
-      case "matches":
-        return <MatchManagement />;
-      case "ranking":
-        return <RankingTable />;
-      default:
-        return renderHomeCards();
-    }
-  }, [currentTab, user]);
+  // Simple render function without useMemo to avoid hooks order issues
+  if (currentTab === "bookings") {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <MainNav />
+        <div className="container mx-auto px-4 py-6 md:py-8">
+          {userRole?.role === 'admin' && (
+            <Alert className="mb-6 bg-blue-50 border-blue-200">
+              <UserCircle2 className="h-5 w-5 text-blue-600" />
+              <AlertDescription className="text-blue-700">
+                Acceso de administrador activado
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          <div className="mt-6 space-y-6 mx-auto max-w-4xl">
+            <BookingCalendar />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
+  if (currentTab === "matches") {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <MainNav />
+        <div className="container mx-auto px-4 py-6 md:py-8">
+          {userRole?.role === 'admin' && (
+            <Alert className="mb-6 bg-blue-50 border-blue-200">
+              <UserCircle2 className="h-5 w-5 text-blue-600" />
+              <AlertDescription className="text-blue-700">
+                Acceso de administrador activado
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          <div className="mt-6 space-y-6 mx-auto max-w-4xl">
+            <MatchManagement />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentTab === "ranking") {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <MainNav />
+        <div className="container mx-auto px-4 py-6 md:py-8">
+          {userRole?.role === 'admin' && (
+            <Alert className="mb-6 bg-blue-50 border-blue-200">
+              <UserCircle2 className="h-5 w-5 text-blue-600" />
+              <AlertDescription className="text-blue-700">
+                Acceso de administrador activado
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          <div className="mt-6 space-y-6 mx-auto max-w-4xl">
+            <RankingTable />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Default: render home cards
   return (
     <div className="min-h-screen bg-background pb-20">
       <MainNav />
@@ -121,7 +176,7 @@ export default function Index() {
         )}
         
         <div className="mt-6 space-y-6 mx-auto max-w-4xl">
-          {renderContent}
+          {renderHomeCards()}
         </div>
       </div>
     </div>
