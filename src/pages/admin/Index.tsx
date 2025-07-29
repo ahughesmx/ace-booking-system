@@ -12,6 +12,7 @@ import DisplayManagement from "@/components/admin/DisplayManagement";
 import WebhookManagement from "@/components/admin/WebhookManagement";
 import SpecialBookingManagement from "@/components/admin/SpecialBookingManagement";
 import UserRegistrationForm from "@/components/admin/UserRegistrationForm";
+import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
 
 const AdminPage = () => {
   const { isAdmin, isLoading } = useAdminAuth();
@@ -42,6 +43,8 @@ const AdminPage = () => {
         return <DisplayManagement />;
       case "special-bookings":
         return <SpecialBookingManagement />;
+      case "payment-gateways":
+        return <PaymentGatewaySettings />;
       default:
         return <UserManagement />;
     }

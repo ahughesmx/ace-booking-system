@@ -12,6 +12,7 @@ import {
   Webhook,
   UserPlus,
   CalendarCheck,
+  CreditCard,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -31,6 +32,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
     { id: "statistics", label: "Estadísticas", icon: BarChart3 },
     { id: "display", label: "Display", icon: Monitor },
     { id: "webhooks", label: "Webhooks", icon: Webhook },
+    { id: "payment-gateways", label: "Pasarelas de Pago", icon: CreditCard },
   ];
 
   return (
