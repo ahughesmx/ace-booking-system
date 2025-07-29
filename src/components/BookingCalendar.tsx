@@ -19,8 +19,6 @@ interface BookingCalendarProps {
 }
 
 function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalendarProps) {
-  console.log('🏗️ BookingCalendar component mounting/rendering with initialCourtType:', initialCourtType);
-  
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedCourtType, setSelectedCourtType] = useState<string | null>(initialCourtType || null);
   const [showCourtTypeDialog, setShowCourtTypeDialog] = useState(!initialCourtType);

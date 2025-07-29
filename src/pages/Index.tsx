@@ -16,6 +16,8 @@ export default function Index() {
   const location = useLocation();
   const navigate = useNavigate();
   const { data: userRole } = useUserRole(user?.id);
+  
+  // Simplificar: usar directamente el parámetro sin estado local
   const currentTab = location.state?.defaultTab;
 
   if (loading) {
@@ -94,26 +96,14 @@ export default function Index() {
   );
 
   const renderContent = () => {
-    console.log('🔍 Index.tsx renderContent called with currentTab:', currentTab);
-    
-    if (!currentTab) {
-      console.log('📱 Rendering home cards (no currentTab)');
-      return renderHomeCards();
-    }
-
-    console.log('🔄 Rendering tab content for:', currentTab);
     switch (currentTab) {
       case "bookings":
-        console.log('📅 Rendering BookingCalendar component');
-        return <BookingCalendar />;
+        return <BookingCalendar key="booking-calendar" />;
       case "matches":
-        console.log('🏓 Rendering MatchManagement component');
-        return <MatchManagement />;
+        return <MatchManagement key="match-management" />;
       case "ranking":
-        console.log('🏆 Rendering RankingTable component');
-        return <RankingTable />;
+        return <RankingTable key="ranking-table" />;
       default:
-        console.log('🏠 Rendering home cards (default case)');
         return renderHomeCards();
     }
   };
