@@ -18,8 +18,8 @@ import { useBookingPayment } from "./booking/useBookingPayment";
 interface BookingFormProps {
   selectedDate?: Date;
   onBookingSuccess: () => void;
-  initialCourtType?: 'tennis' | 'padel' | null;
-  onCourtTypeChange?: (courtType: 'tennis' | 'padel' | null) => void;
+  initialCourtType?: string | null;
+  onCourtTypeChange?: (courtType: string | null) => void;
 }
 
 export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, onCourtTypeChange }: BookingFormProps) {
@@ -94,7 +94,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     setShowSummary(false);
   };
 
-  const handleCourtTypeSelectWithCallback = (type: 'tennis' | 'padel') => {
+  const handleCourtTypeSelectWithCallback = (type: string) => {
     handleCourtTypeSelect(type);
     onCourtTypeChange?.(type);
   };

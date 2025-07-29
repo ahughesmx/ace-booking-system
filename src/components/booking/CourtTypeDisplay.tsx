@@ -4,13 +4,18 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 interface CourtTypeDisplayProps {
-  selectedCourtType: 'tennis' | 'padel';
+  selectedCourtType: string;
   onBackToTypeSelection: () => void;
 }
 
 export function CourtTypeDisplay({ selectedCourtType, onBackToTypeSelection }: CourtTypeDisplayProps) {
-  const getCourtTypeLabel = (courtType: 'tennis' | 'padel') => {
-    return courtType === 'tennis' ? 'Cancha de tenis' : 'Cancha de pádel';
+  const getCourtTypeLabel = (courtType: string) => {
+    switch (courtType) {
+      case 'tennis': return 'Cancha de tenis';
+      case 'padel': return 'Cancha de pádel';
+      case 'football': return 'Cancha de fútbol';
+      default: return `Cancha de ${courtType}`;
+    }
   };
 
   return (

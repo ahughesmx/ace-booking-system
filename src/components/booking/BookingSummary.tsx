@@ -11,7 +11,7 @@ import { useEnabledPaymentGateways } from "@/hooks/use-payment-settings";
 interface BookingSummaryProps {
   date: Date;
   time: string;
-  courtType: 'tennis' | 'padel';
+  courtType: string;
   courtName: string;
   onConfirm: (paymentGateway: string) => void;
   onCancel: () => void;

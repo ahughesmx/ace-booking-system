@@ -8,7 +8,7 @@ import { useActiveMaintenancePeriods } from "@/hooks/use-court-maintenance";
 
 interface TimeSlotSelectorProps {
   selectedDate?: Date;
-  courtType?: 'tennis' | 'padel' | null;
+  courtType?: string | null;
   bookedSlots: Set<string>;
   selectedTime: string | null;
   onTimeSelect: (time: string) => void;

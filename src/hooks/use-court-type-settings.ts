@@ -22,7 +22,7 @@ type CourtTypeSettings = {
   updated_at: string;
 };
 
-export function useCourtTypeSettings(courtType?: 'tennis' | 'padel') {
+export function useCourtTypeSettings(courtType?: string) {
   return useQuery({
     queryKey: ["court-type-settings", courtType],
     queryFn: async () => {

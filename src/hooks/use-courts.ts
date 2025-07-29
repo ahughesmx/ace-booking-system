@@ -5,7 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 export type Court = Database['public']['Tables']['courts']['Row'];
 
-export function useCourts(courtType?: 'tennis' | 'padel' | null) {
+export function useCourts(courtType?: string | null) {
   return useQuery({
     queryKey: ["courts", courtType],
     queryFn: async () => {

@@ -6,10 +6,10 @@ import { useAllBookings, useActiveBookingsCount } from "@/hooks/use-bookings";
 import { useBookingRules } from "@/hooks/use-booking-rules";
 import { format } from "date-fns";
 
-export function useBookingLogic(selectedDate?: Date, selectedCourtType?: 'tennis' | 'padel' | null) {
+export function useBookingLogic(selectedDate?: Date, selectedCourtType?: string | null) {
   const { user } = useAuth();
   const { data: allBookings = [] } = useAllBookings(selectedDate);
-  const { data: bookingRules } = useBookingRules(selectedCourtType);
+  const { data: bookingRules } = useBookingRules(selectedCourtType as 'tennis' | 'padel');
 
   // Use the new hook that counts only non-expired bookings
   const { data: userActiveBookings = 0 } = useActiveBookingsCount(user?.id);

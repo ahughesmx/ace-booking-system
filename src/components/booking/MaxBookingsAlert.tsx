@@ -4,7 +4,7 @@ import { BookingAlert } from "./BookingAlert";
 interface MaxBookingsAlertProps {
   userActiveBookings: number;
   maxBookings: number;
-  selectedCourtType: 'tennis' | 'padel';
+  selectedCourtType: string;
 }
 
 export function MaxBookingsAlert({ userActiveBookings, maxBookings, selectedCourtType }: MaxBookingsAlertProps) {

@@ -9,7 +9,7 @@ interface BookingData {
   selectedDate: Date;
   selectedTime: string;
   selectedCourt: string;
-  selectedCourtType: 'tennis' | 'padel';
+  selectedCourtType: string;
 }
 
 export function useBookingPayment() {

@@ -1,7 +1,7 @@
 
 interface BookingRulesInfoProps {
   bookingRules: any;
-  selectedCourtType: 'tennis' | 'padel';
+  selectedCourtType: string;
 }
 
 export function BookingRulesInfo({ bookingRules, selectedCourtType }: BookingRulesInfoProps) {
