@@ -46,6 +46,21 @@ export default function PaymentGatewaySettings() {
     sandboxAccount: ""
   });
 
+  // Mercado Pago Configuration State
+  const [mercadoPagoConfig, setMercadoPagoConfig] = useState({
+    enabled: false,
+    testMode: true,
+    publicKeyTest: "",
+    accessTokenTest: "",
+    publicKeyLive: "",
+    accessTokenLive: "",
+    clientIdTest: "",
+    clientSecretTest: "",
+    clientIdLive: "",
+    clientSecretLive: "",
+    webhookUrl: ""
+  });
+
   // Cargar configuraciones existentes
   useEffect(() => {
     const loadConfigurations = async () => {
@@ -81,6 +96,20 @@ export default function PaymentGatewaySettings() {
               clientSecretLive: config?.clientSecretLive || "",
               webhookId: config?.webhookId || "",
               sandboxAccount: config?.sandboxAccount || ""
+            });
+          } else if (gateway.name === 'mercadopago') {
+            setMercadoPagoConfig({
+              enabled: gateway.enabled,
+              testMode: gateway.test_mode,
+              publicKeyTest: config?.publicKeyTest || "",
+              accessTokenTest: config?.accessTokenTest || "",
+              publicKeyLive: config?.publicKeyLive || "",
+              accessTokenLive: config?.accessTokenLive || "",
+              clientIdTest: config?.clientIdTest || "",
+              clientSecretTest: config?.clientSecretTest || "",
+              clientIdLive: config?.clientIdLive || "",
+              clientSecretLive: config?.clientSecretLive || "",
+              webhookUrl: config?.webhookUrl || ""
             });
           }
         });
@@ -161,6 +190,45 @@ export default function PaymentGatewaySettings() {
       toast({
         title: "Error",
         description: "No se pudo guardar la configuración de PayPal.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveMercadoPago = async () => {
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from("payment_gateways")
+        .update({
+          enabled: mercadoPagoConfig.enabled,
+          test_mode: mercadoPagoConfig.testMode,
+          configuration: {
+            publicKeyTest: mercadoPagoConfig.publicKeyTest,
+            accessTokenTest: mercadoPagoConfig.accessTokenTest,
+            publicKeyLive: mercadoPagoConfig.publicKeyLive,
+            accessTokenLive: mercadoPagoConfig.accessTokenLive,
+            clientIdTest: mercadoPagoConfig.clientIdTest,
+            clientSecretTest: mercadoPagoConfig.clientSecretTest,
+            clientIdLive: mercadoPagoConfig.clientIdLive,
+            clientSecretLive: mercadoPagoConfig.clientSecretLive,
+            webhookUrl: mercadoPagoConfig.webhookUrl
+          }
+        })
+        .eq("name", "mercadopago");
+
+      if (error) throw error;
+
+      toast({
+        title: "Configuración de Mercado Pago guardada",
+        description: "La configuración de Mercado Pago se ha actualizado correctamente.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo guardar la configuración de Mercado Pago.",
         variant: "destructive",
       });
     } finally {
@@ -564,8 +632,203 @@ export default function PaymentGatewaySettings() {
         </CardContent>
       </Card>
 
+      {/* Mercado Pago Configuration */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-500 rounded-lg">
+              <div className="h-6 w-6 text-white font-bold flex items-center justify-center text-sm">
+                MP
+              </div>
+            </div>
+            <div>
+              <CardTitle className="text-xl">Mercado Pago</CardTitle>
+              <CardDescription>
+                Configuración de la pasarela de pago Mercado Pago
+              </CardDescription>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={mercadoPagoConfig.enabled}
+              onCheckedChange={(enabled) => 
+                setMercadoPagoConfig(prev => ({ ...prev, enabled }))
+              }
+            />
+            <Label>Habilitado</Label>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Environment Toggle */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Label>Modo de Prueba (Sandbox)</Label>
+              <Badge variant={mercadoPagoConfig.testMode ? "secondary" : "default"}>
+                {mercadoPagoConfig.testMode ? "Test" : "Live"}
+              </Badge>
+            </div>
+            <Switch
+              checked={mercadoPagoConfig.testMode}
+              onCheckedChange={(testMode) => 
+                setMercadoPagoConfig(prev => ({ ...prev, testMode }))
+              }
+            />
+          </div>
+
+          <Separator />
+
+          {/* Test Credentials */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Shield className="h-4 w-4 text-green-600" />
+              <h4 className="font-semibold">Credenciales de Prueba (Test)</h4>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="mp-public-key-test">
+                  Public Key (Test)
+                  <span className="text-xs text-muted-foreground ml-1">TEST-...</span>
+                </Label>
+                <Input
+                  id="mp-public-key-test"
+                  type="text"
+                  placeholder="TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  value={mercadoPagoConfig.publicKeyTest}
+                  onChange={(e) => 
+                    setMercadoPagoConfig(prev => ({ ...prev, publicKeyTest: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mp-access-token-test">
+                  Access Token (Test)
+                  <span className="text-xs text-muted-foreground ml-1">TEST-...</span>
+                </Label>
+                <Input
+                  id="mp-access-token-test"
+                  type="password"
+                  placeholder="TEST-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  value={mercadoPagoConfig.accessTokenTest}
+                  onChange={(e) => 
+                    setMercadoPagoConfig(prev => ({ ...prev, accessTokenTest: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mp-client-id-test">Client ID (Test)</Label>
+                <Input
+                  id="mp-client-id-test"
+                  type="text"
+                  placeholder="1234567890123456"
+                  value={mercadoPagoConfig.clientIdTest}
+                  onChange={(e) => 
+                    setMercadoPagoConfig(prev => ({ ...prev, clientIdTest: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mp-client-secret-test">Client Secret (Test)</Label>
+                <Input
+                  id="mp-client-secret-test"
+                  type="password"
+                  placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  value={mercadoPagoConfig.clientSecretTest}
+                  onChange={(e) => 
+                    setMercadoPagoConfig(prev => ({ ...prev, clientSecretTest: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Live Credentials */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-4 w-4 text-orange-600" />
+              <h4 className="font-semibold">Credenciales de Producción (Live)</h4>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="mp-public-key-live">
+                  Public Key (Live)
+                  <span className="text-xs text-muted-foreground ml-1">APP_USR-...</span>
+                </Label>
+                <Input
+                  id="mp-public-key-live"
+                  type="text"
+                  placeholder="APP_USR-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  value={mercadoPagoConfig.publicKeyLive}
+                  onChange={(e) => 
+                    setMercadoPagoConfig(prev => ({ ...prev, publicKeyLive: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mp-access-token-live">
+                  Access Token (Live)
+                  <span className="text-xs text-muted-foreground ml-1">APP_USR-...</span>
+                </Label>
+                <Input
+                  id="mp-access-token-live"
+                  type="password"
+                  placeholder="APP_USR-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  value={mercadoPagoConfig.accessTokenLive}
+                  onChange={(e) => 
+                    setMercadoPagoConfig(prev => ({ ...prev, accessTokenLive: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mp-client-id-live">Client ID (Live)</Label>
+                <Input
+                  id="mp-client-id-live"
+                  type="text"
+                  placeholder="1234567890123456"
+                  value={mercadoPagoConfig.clientIdLive}
+                  onChange={(e) => 
+                    setMercadoPagoConfig(prev => ({ ...prev, clientIdLive: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mp-client-secret-live">Client Secret (Live)</Label>
+                <Input
+                  id="mp-client-secret-live"
+                  type="password"
+                  placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  value={mercadoPagoConfig.clientSecretLive}
+                  onChange={(e) => 
+                    setMercadoPagoConfig(prev => ({ ...prev, clientSecretLive: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="mp-webhook-url">Webhook URL</Label>
+                <Input
+                  id="mp-webhook-url"
+                  type="url"
+                  placeholder="https://your-domain.com/webhook/mercadopago"
+                  value={mercadoPagoConfig.webhookUrl}
+                  onChange={(e) => 
+                    setMercadoPagoConfig(prev => ({ ...prev, webhookUrl: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Button onClick={handleSaveMercadoPago} disabled={isSaving}>
+              {isSaving ? "Guardando..." : "Guardar Configuración de Mercado Pago"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Information Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -596,6 +859,23 @@ export default function PaymentGatewaySettings() {
             <p><strong>Webhook ID:</strong> ID del webhook para eventos</p>
             <p className="text-muted-foreground">
               Usar sandbox para pruebas y live para producción
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <CheckCircle className="h-5 w-5 text-blue-500" />
+              <span>Información de Mercado Pago</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p><strong>Public Key:</strong> Clave pública para el frontend</p>
+            <p><strong>Access Token:</strong> Clave privada para el backend</p>
+            <p><strong>Client ID/Secret:</strong> Para integraciones OAuth</p>
+            <p className="text-muted-foreground">
+              Test: TEST-... | Live: APP_USR-...
             </p>
           </CardContent>
         </Card>
