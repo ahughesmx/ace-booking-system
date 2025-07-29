@@ -100,11 +100,11 @@ export default function Index() {
 
     switch (currentTab) {
       case "bookings":
-        return <BookingCalendar key="bookings" />;
+        return <BookingCalendar key={`bookings-${Date.now()}`} />;
       case "matches":
-        return <MatchManagement key="matches" />;
+        return <MatchManagement key={`matches-${Date.now()}`} />;
       case "ranking":
-        return <RankingTable key="ranking" />;
+        return <RankingTable key={`ranking-${Date.now()}`} />;
       default:
         return renderHomeCards();
     }
