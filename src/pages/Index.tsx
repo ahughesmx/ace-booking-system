@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import MatchManagement from "@/components/MatchManagement";
@@ -17,22 +17,14 @@ export default function Index() {
   const navigate = useNavigate();
   const { data: userRole } = useUserRole(user?.id);
   
-  // Simplificar: usar directamente el parámetro sin estado local
   const currentTab = location.state?.defaultTab;
-  
-  console.log('🔍 Index.tsx RENDER - location.state:', location.state);
-  console.log('🔍 Index.tsx RENDER - currentTab:', currentTab);
-  console.log('🔍 Index.tsx RENDER - location.pathname:', location.pathname);
 
   if (loading) {
     return <div>Cargando...</div>;
   }
 
   const handleNavigation = (tab: string) => {
-    console.log('🔄 NAVIGATION CLICK - tab:', tab);
-    console.log('🔄 NAVIGATION CLICK - current location.state:', location.state);
     navigate("/", { state: { defaultTab: tab }, replace: true });
-    console.log('🔄 NAVIGATION CLICK - navigate called with:', { defaultTab: tab });
   };
 
   const renderHomeCards = () => (
@@ -102,25 +94,18 @@ export default function Index() {
     </div>
   );
 
-  const renderContent = () => {
-    console.log('🎨 RENDER CONTENT - currentTab:', currentTab);
-    console.log('🎨 RENDER CONTENT - will render component for tab:', currentTab || 'home');
-    
+  const renderContent = useMemo(() => {
     switch (currentTab) {
       case "bookings":
-        console.log('📅 ABOUT TO RENDER BookingCalendar');
-        return <BookingCalendar key="booking-calendar" />;
+        return <BookingCalendar />;
       case "matches":
-        console.log('🏓 ABOUT TO RENDER MatchManagement');
-        return <MatchManagement key="match-management" />;
+        return <MatchManagement />;
       case "ranking":
-        console.log('🏆 ABOUT TO RENDER RankingTable');
-        return <RankingTable key="ranking-table" />;
+        return <RankingTable />;
       default:
-        console.log('🏠 ABOUT TO RENDER home cards');
         return renderHomeCards();
     }
-  };
+  }, [currentTab, user]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -136,7 +121,7 @@ export default function Index() {
         )}
         
         <div className="mt-6 space-y-6 mx-auto max-w-4xl">
-          {renderContent()}
+          {renderContent}
         </div>
       </div>
     </div>
