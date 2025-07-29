@@ -19,13 +19,20 @@ export default function Index() {
   
   // Simplificar: usar directamente el parámetro sin estado local
   const currentTab = location.state?.defaultTab;
+  
+  console.log('🔍 Index.tsx RENDER - location.state:', location.state);
+  console.log('🔍 Index.tsx RENDER - currentTab:', currentTab);
+  console.log('🔍 Index.tsx RENDER - location.pathname:', location.pathname);
 
   if (loading) {
     return <div>Cargando...</div>;
   }
 
   const handleNavigation = (tab: string) => {
+    console.log('🔄 NAVIGATION CLICK - tab:', tab);
+    console.log('🔄 NAVIGATION CLICK - current location.state:', location.state);
     navigate("/", { state: { defaultTab: tab } });
+    console.log('🔄 NAVIGATION CLICK - navigate called with:', { defaultTab: tab });
   };
 
   const renderHomeCards = () => (
@@ -96,14 +103,21 @@ export default function Index() {
   );
 
   const renderContent = () => {
+    console.log('🎨 RENDER CONTENT - currentTab:', currentTab);
+    console.log('🎨 RENDER CONTENT - will render component for tab:', currentTab || 'home');
+    
     switch (currentTab) {
       case "bookings":
+        console.log('📅 ABOUT TO RENDER BookingCalendar');
         return <BookingCalendar key="booking-calendar" />;
       case "matches":
+        console.log('🏓 ABOUT TO RENDER MatchManagement');
         return <MatchManagement key="match-management" />;
       case "ranking":
+        console.log('🏆 ABOUT TO RENDER RankingTable');
         return <RankingTable key="ranking-table" />;
       default:
+        console.log('🏠 ABOUT TO RENDER home cards');
         return renderHomeCards();
     }
   };

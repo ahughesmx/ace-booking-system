@@ -19,6 +19,9 @@ interface BookingCalendarProps {
 }
 
 function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalendarProps) {
+  console.log('🏗️ BookingCalendar CONSTRUCTOR/MOUNT - initialCourtType:', initialCourtType);
+  console.log('🏗️ BookingCalendar CONSTRUCTOR/MOUNT - timestamp:', new Date().toISOString());
+  
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedCourtType, setSelectedCourtType] = useState<string | null>(initialCourtType || null);
   const [showCourtTypeDialog, setShowCourtTypeDialog] = useState(!initialCourtType);
@@ -84,9 +87,18 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
 
   // Actualizar cuando cambia el tipo de cancha inicial
   useEffect(() => {
+    console.log('🔄 BookingCalendar useEffect - initialCourtType changed to:', initialCourtType);
     setSelectedCourtType(initialCourtType || null);
     setShowCourtTypeDialog(!initialCourtType);
   }, [initialCourtType]);
+
+  // Agregar useEffect para logs de montaje/desmontaje
+  useEffect(() => {
+    console.log('🟢 BookingCalendar MOUNTED');
+    return () => {
+      console.log('🔴 BookingCalendar UNMOUNTED');
+    };
+  }, []);
 
   // Mostrar skeleton mientras se cargan los datos iniciales
   if (isLoading && !bookings.length) {
