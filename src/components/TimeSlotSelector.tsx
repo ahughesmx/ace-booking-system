@@ -178,6 +178,8 @@ export function TimeSlotSelector({
           const isAvailable = !timeSlot.isPast && availableSlots > 0;
           const isSelected = selectedTime === timeSlot.start;
           
+          console.log(`🔍 SLOT DEBUG - ${timeSlot.start}: isPast=${timeSlot.isPast}, availableSlots=${availableSlots}, isAvailable=${isAvailable}`);
+          
           return (
             <Button
               key={timeSlot.start}
