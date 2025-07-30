@@ -97,6 +97,12 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
   // Lógica de inicialización y auto-selección controlada con memorización
   useEffect(() => {
     console.log('🔄 BookingCalendar useEffect TRIGGERED - timestamp:', new Date().getTime());
+    console.log('🔄 Current state:', { 
+      selectedCourtType, 
+      initialCourtType, 
+      availableTypesLength: availableTypes.length,
+      showCourtTypeDialog 
+    });
     
     // Si hay un tipo inicial válido y diferente al actual
     if (initialCourtType && initialCourtType !== selectedCourtType) {
@@ -106,20 +112,20 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
       return;
     }
     
-    // Solo auto-seleccionar si no hay tipo seleccionado y hay tipos disponibles
-    if (!selectedCourtType && availableTypes.length > 0) {
-      if (availableTypes.length === 1) {
+    // Solo proceder si no hay tipo seleccionado, hay tipos disponibles y no se está mostrando el diálogo
+    if (!selectedCourtType && availableTypes.length > 0 && !showCourtTypeDialog) {
+      if (availableTypes.length === 1 && availableTypes[0]?.type_name) {
         const singleType = availableTypes[0].type_name;
         console.log('🎯 AUTO-SELECTING single court type:', singleType);
         setSelectedCourtType(singleType);
+        // Explícitamente NO mostrar diálogo para tipo único
         setShowCourtTypeDialog(false);
       } else if (availableTypes.length > 1) {
-        // Solo mostrar diálogo si hay múltiples tipos y no hay tipo seleccionado
-        console.log('🎯 SHOWING dialog for multiple types');
+        console.log('🎯 SHOWING dialog for multiple types:', availableTypes.length);
         setShowCourtTypeDialog(true);
       }
     }
-  }, [initialCourtType, selectedCourtType, availableTypes.length]); // Solo depender de la longitud de availableTypes
+  }, [initialCourtType, selectedCourtType, availableTypes.length, showCourtTypeDialog]);
 
   console.log('🚀 BookingCalendar ABOUT TO RENDER JSX - timestamp:', new Date().getTime());
 
@@ -130,7 +136,7 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
         onCourtTypeSelect={handleCourtTypeSelect}
       />
       
-      <div className={`grid gap-6 md:grid-cols-2 ${showCourtTypeDialog ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className={`grid gap-6 md:grid-cols-2 ${showCourtTypeDialog && availableTypes.length > 1 ? 'opacity-50 pointer-events-none' : ''}`}>
         <Card className="md:sticky md:top-4 h-fit border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
           <CardHeader className="bg-gradient-to-r from-[#6898FE]/10 to-transparent">
             <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
