@@ -60,12 +60,15 @@ export function TimeSlotSelector({
   onTimeSelect, 
   businessHours 
 }: TimeSlotSelectorProps) {
-  const { data: courts = [] } = useCourts(courtType);
-  const { data: settingsData } = useCourtTypeSettings(courtType);
+  const { data: courts = [], isLoading: courtsLoading } = useCourts(courtType);
+  const { data: settingsData, isLoading: settingsLoading } = useCourtTypeSettings(courtType);
   const { data: maintenanceCourts = new Set() } = useActiveMaintenancePeriods();
   
   // Ensure we get the correct type - when courtType is provided, we get a single object
   const settings = courtType && settingsData && !Array.isArray(settingsData) ? settingsData : null;
+  
+  // Si tenemos courtType pero estamos cargando settings, mostrar loading
+  const isLoadingCriticalData = courtType && (courtsLoading || settingsLoading);
   
   // Filtrar canchas que no están en mantenimiento
   const availableCourts = courts.filter(court => !maintenanceCourts.has(court.id));
@@ -85,6 +88,26 @@ export function TimeSlotSelector({
   console.log('TimeSlotSelector - timeSlots generated:', timeSlots.length);
   console.log('TimeSlotSelector - courts in maintenance:', maintenanceCourts.size);
   console.log('TimeSlotSelector - available courts:', totalCourts);
+  console.log('TimeSlotSelector - isLoadingCriticalData:', isLoadingCriticalData);
+
+  // Mostrar loading si estamos esperando datos críticos
+  if (isLoadingCriticalData) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center">
+          <h4 className="text-lg font-semibold text-[#1e3a8a] mb-2">
+            Cargando horarios para {courtType}...
+          </h4>
+          <div className="bg-[#6898FE]/5 border border-[#6898FE]/20 rounded-lg p-4">
+            <div className="animate-pulse">
+              <div className="h-4 bg-[#6898FE]/20 rounded mb-2"></div>
+              <div className="h-4 bg-[#6898FE]/20 rounded w-3/4 mx-auto"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const getAvailableSlots = (slot: string) => {
     if (totalCourts === 0) return 0;
