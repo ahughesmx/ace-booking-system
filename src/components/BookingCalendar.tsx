@@ -55,17 +55,31 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
 
   // Memoizar la función isDayDisabled para mejor rendimiento
   const isDayDisabled = useMemo(() => (date: Date) => {
+    console.log('🗓️ CALENDAR DEBUG:', {
+      date: date.toDateString(),
+      today: today.toDateString(),
+      selectedCourtType,
+      bookingRules: bookingRules ? 'exists' : 'null',
+      maxDaysAhead: bookingRules && !Array.isArray(bookingRules) ? bookingRules.max_days_ahead : 'N/A',
+      getMaxDate: getMaxDate.toDateString()
+    });
+    
     // Siempre deshabilitar fechas pasadas
     if (date < today) return true;
     
     // Si no hay tipo de cancha seleccionado, deshabilitar todo excepto hoy
     if (!selectedCourtType) {
+      console.log('❌ No selectedCourtType - disabling date:', date.toDateString());
       return date > today;
     }
     
     // Deshabilitar fechas más allá del máximo permitido según booking_rules
-    if (date > getMaxDate) return true;
+    if (date > getMaxDate) {
+      console.log('❌ Date beyond max allowed - disabling:', date.toDateString(), 'max:', getMaxDate.toDateString());
+      return true;
+    }
 
+    console.log('✅ Date enabled:', date.toDateString());
     return false;
   }, [today, selectedCourtType, getMaxDate]);
 
