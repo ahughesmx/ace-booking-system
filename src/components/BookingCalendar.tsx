@@ -21,14 +21,14 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
   console.log('🟢 BookingCalendar RENDER START - timestamp:', new Date().getTime());
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedCourtType, setSelectedCourtType] = useState<string | null>('padel'); // FORZAR PADEL
+  const [selectedCourtType, setSelectedCourtType] = useState<string | null>(initialCourtType || null);
   const [showCourtTypeDialog, setShowCourtTypeDialog] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  // Obtener tipos disponibles para auto-selección
-  const { data: availableTypes = [] } = useAvailableCourtTypes();
+  // Obtener tipos disponibles para auto-selección - SOLO LOS HABILITADOS
+  const { data: availableTypes = [] } = useAvailableCourtTypes(true);
   
   console.log('📊 BookingCalendar HOOKS INITIALIZED - timestamp:', new Date().getTime());
   
