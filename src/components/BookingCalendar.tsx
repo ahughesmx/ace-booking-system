@@ -21,7 +21,7 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
   console.log('🟢 BookingCalendar RENDER START - timestamp:', new Date().getTime());
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedCourtType, setSelectedCourtType] = useState<string | null>(initialCourtType || null);
+  const [selectedCourtType, setSelectedCourtType] = useState<string | null>('padel'); // FORZAR PADEL
   const [showCourtTypeDialog, setShowCourtTypeDialog] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
