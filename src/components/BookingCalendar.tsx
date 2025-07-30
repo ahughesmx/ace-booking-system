@@ -67,16 +67,10 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
     // Siempre deshabilitar fechas pasadas
     if (date < today) return true;
     
-    // Si no hay tipo de cancha seleccionado, usar un rango por defecto de 7 días
+    // Si no hay tipo de cancha seleccionado, deshabilitar todo excepto hoy
     if (!selectedCourtType) {
-      const maxDaysDefault = 7; // Permitir 7 días por defecto
-      const maxDateDefault = addDays(today, maxDaysDefault);
-      if (date > maxDateDefault) {
-        console.log('❌ No selectedCourtType - disabling date beyond default range:', date.toDateString());
-        return true;
-      }
-      console.log('✅ No selectedCourtType but within default range:', date.toDateString());
-      return false;
+      console.log('❌ No selectedCourtType - disabling date:', date.toDateString());
+      return date > today;
     }
     
     // Deshabilitar fechas más allá del máximo permitido según booking_rules
@@ -121,6 +115,7 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
       selectedCourtType, 
       initialCourtType, 
       availableTypesLength: availableTypes.length,
+      availableTypes: availableTypes,
       showCourtTypeDialog 
     });
     
