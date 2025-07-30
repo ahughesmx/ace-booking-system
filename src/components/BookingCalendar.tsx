@@ -108,47 +108,21 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
     // This is mainly for compatibility with the BookingForm's onBookingSuccess callback
   };
 
-  // Lógica de inicialización y auto-selección controlada con memorización
+  // Auto-selección simple y directa
   useEffect(() => {
-    console.log('🔄 BookingCalendar useEffect TRIGGERED - timestamp:', new Date().getTime());
-    console.log('🔄 Current state:', { 
+    console.log('🔄 Auto-selection check:', { 
       selectedCourtType, 
-      initialCourtType, 
       availableTypesLength: availableTypes.length,
-      availableTypes: availableTypes,
-      showCourtTypeDialog 
+      firstType: availableTypes[0]?.type_name 
     });
     
-    // Si hay un tipo inicial válido y diferente al actual
-    if (initialCourtType && initialCourtType !== selectedCourtType) {
-      console.log('🎯 SETTING initial court type:', initialCourtType);
-      setSelectedCourtType(initialCourtType);
-      setShowCourtTypeDialog(false);
-      return;
+    // Si no hay tipo seleccionado y hay exactamente un tipo disponible, auto-seleccionarlo
+    if (!selectedCourtType && availableTypes.length === 1) {
+      const autoType = availableTypes[0].type_name;
+      console.log('🎯 AUTO-SELECTING:', autoType);
+      setSelectedCourtType(autoType);
     }
-    
-    // Si ya hay un tipo seleccionado, cerrar el diálogo
-    if (selectedCourtType) {
-      if (showCourtTypeDialog) {
-        console.log('🎯 CLOSING dialog because court type is selected:', selectedCourtType);
-        setShowCourtTypeDialog(false);
-      }
-      return;
-    }
-    
-    // Solo proceder si no hay tipo seleccionado y hay tipos disponibles
-    if (!selectedCourtType && availableTypes.length > 0) {
-      if (availableTypes.length === 1 && availableTypes[0]?.type_name) {
-        const singleType = availableTypes[0].type_name;
-        console.log('🎯 AUTO-SELECTING single court type:', singleType);
-        setSelectedCourtType(singleType);
-        setShowCourtTypeDialog(false);
-      } else if (availableTypes.length > 1 && !showCourtTypeDialog) {
-        console.log('🎯 SHOWING dialog for multiple types:', availableTypes.length);
-        setShowCourtTypeDialog(true);
-      }
-    }
-  }, [initialCourtType, selectedCourtType, availableTypes]);
+  }, [availableTypes, selectedCourtType]);
 
   console.log('🚀 BookingCalendar ABOUT TO RENDER JSX - timestamp:', new Date().getTime());
   console.log('🔍 OVERLAY DEBUG - showCourtTypeDialog:', showCourtTypeDialog, 'availableTypes.length:', availableTypes.length, 'APPLYING OVERLAY:', showCourtTypeDialog && availableTypes.length > 1);
