@@ -141,11 +141,11 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
   const result = (
     <>
       <CourtTypeSelectionDialog 
-        open={showCourtTypeDialog && availableTypes.length > 1}
+        open={false}
         onCourtTypeSelect={handleCourtTypeSelect}
       />
       
-      <div className={`grid gap-6 md:grid-cols-2 ${showCourtTypeDialog && availableTypes.length > 1 ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className={`grid gap-6 md:grid-cols-2 ${showCourtTypeDialog ? 'opacity-50 pointer-events-none' : ''}`}>
         <Card className="md:sticky md:top-4 h-fit border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
           <CardHeader className="bg-gradient-to-r from-[#6898FE]/10 to-transparent">
             <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
