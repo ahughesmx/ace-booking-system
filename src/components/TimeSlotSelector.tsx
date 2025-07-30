@@ -85,14 +85,6 @@ export function TimeSlotSelector({
   console.log('TimeSlotSelector - timeSlots generated:', timeSlots.length);
   console.log('TimeSlotSelector - courts in maintenance:', maintenanceCourts.size);
   console.log('TimeSlotSelector - available courts:', totalCourts);
-  console.log('TimeSlotSelector - bookedSlots:', Array.from(bookedSlots));
-  
-  // Debug: log detailed availability calculation
-  timeSlots.forEach(slot => {
-    const availableSlots = getAvailableSlots(slot.start);
-    const isBooked = bookedSlots.has(slot.start);
-    console.log(`Slot ${slot.start}: available=${availableSlots}, isBooked=${isBooked}, isPast=${slot.isPast}, totalCourts=${totalCourts}`);
-  });
 
   const getAvailableSlots = (slot: string) => {
     if (totalCourts === 0) return 0;
