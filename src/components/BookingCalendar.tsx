@@ -126,7 +126,7 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
   const result = (
     <>
       <CourtTypeSelectionDialog 
-        open={showCourtTypeDialog}
+        open={showCourtTypeDialog && availableTypes.length > 1}
         onCourtTypeSelect={handleCourtTypeSelect}
       />
       
