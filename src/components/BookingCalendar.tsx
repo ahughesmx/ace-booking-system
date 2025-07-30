@@ -94,30 +94,32 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
     // This is mainly for compatibility with the BookingForm's onBookingSuccess callback
   };
 
-  // Lógica de inicialización y auto-selección controlada
+  // Lógica de inicialización y auto-selección controlada con memorización
   useEffect(() => {
     console.log('🔄 BookingCalendar useEffect TRIGGERED - timestamp:', new Date().getTime());
     
-    // Si hay un tipo inicial válido, usarlo
+    // Si hay un tipo inicial válido y diferente al actual
     if (initialCourtType && initialCourtType !== selectedCourtType) {
+      console.log('🎯 SETTING initial court type:', initialCourtType);
       setSelectedCourtType(initialCourtType);
       setShowCourtTypeDialog(false);
       return;
     }
     
-    // Si no hay tipo seleccionado, verificar auto-selección
+    // Solo auto-seleccionar si no hay tipo seleccionado y hay tipos disponibles
     if (!selectedCourtType && availableTypes.length > 0) {
       if (availableTypes.length === 1) {
-        // Auto-seleccionar si solo hay un tipo disponible
-        console.log('🎯 AUTO-SELECTING single court type:', availableTypes[0].type_name);
-        setSelectedCourtType(availableTypes[0].type_name);
+        const singleType = availableTypes[0].type_name;
+        console.log('🎯 AUTO-SELECTING single court type:', singleType);
+        setSelectedCourtType(singleType);
         setShowCourtTypeDialog(false);
-      } else {
-        // Mostrar diálogo si hay múltiples tipos
+      } else if (availableTypes.length > 1) {
+        // Solo mostrar diálogo si hay múltiples tipos y no hay tipo seleccionado
+        console.log('🎯 SHOWING dialog for multiple types');
         setShowCourtTypeDialog(true);
       }
     }
-  }, [initialCourtType, selectedCourtType, availableTypes]);
+  }, [initialCourtType, selectedCourtType, availableTypes.length]); // Solo depender de la longitud de availableTypes
 
   console.log('🚀 BookingCalendar ABOUT TO RENDER JSX - timestamp:', new Date().getTime());
 
