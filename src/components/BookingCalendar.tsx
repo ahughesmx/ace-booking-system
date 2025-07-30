@@ -148,7 +148,7 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
         setShowCourtTypeDialog(true);
       }
     }
-  }, [initialCourtType, selectedCourtType, availableTypes.length, showCourtTypeDialog]);
+  }, [initialCourtType, selectedCourtType, availableTypes]);
 
   console.log('🚀 BookingCalendar ABOUT TO RENDER JSX - timestamp:', new Date().getTime());
   console.log('🔍 OVERLAY DEBUG - showCourtTypeDialog:', showCourtTypeDialog, 'availableTypes.length:', availableTypes.length, 'APPLYING OVERLAY:', showCourtTypeDialog && availableTypes.length > 1);
