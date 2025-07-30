@@ -112,24 +112,26 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
       return;
     }
     
-    // Solo proceder si no hay tipo seleccionado, hay tipos disponibles y no se está mostrando el diálogo
-    if (!selectedCourtType && availableTypes.length > 0 && !showCourtTypeDialog) {
+    // Si ya hay un tipo seleccionado, cerrar el diálogo
+    if (selectedCourtType) {
+      if (showCourtTypeDialog) {
+        console.log('🎯 CLOSING dialog because court type is selected:', selectedCourtType);
+        setShowCourtTypeDialog(false);
+      }
+      return;
+    }
+    
+    // Solo proceder si no hay tipo seleccionado y hay tipos disponibles
+    if (!selectedCourtType && availableTypes.length > 0) {
       if (availableTypes.length === 1 && availableTypes[0]?.type_name) {
         const singleType = availableTypes[0].type_name;
         console.log('🎯 AUTO-SELECTING single court type:', singleType);
         setSelectedCourtType(singleType);
-        // Explícitamente NO mostrar diálogo para tipo único
         setShowCourtTypeDialog(false);
-      } else if (availableTypes.length > 1) {
+      } else if (availableTypes.length > 1 && !showCourtTypeDialog) {
         console.log('🎯 SHOWING dialog for multiple types:', availableTypes.length);
         setShowCourtTypeDialog(true);
       }
-    }
-    
-    // ARREGLO: Si ya hay un tipo seleccionado, asegurar que el diálogo esté cerrado
-    if (selectedCourtType && showCourtTypeDialog) {
-      console.log('🎯 CLOSING dialog because court type is selected:', selectedCourtType);
-      setShowCourtTypeDialog(false);
     }
   }, [initialCourtType, selectedCourtType, availableTypes.length, showCourtTypeDialog]);
 
