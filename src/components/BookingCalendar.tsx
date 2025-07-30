@@ -28,7 +28,14 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
   const navigate = useNavigate();
   
   // Obtener tipos disponibles para auto-selección - SOLO LOS HABILITADOS
-  const { data: availableTypes = [] } = useAvailableCourtTypes(true);
+  const { data: availableTypes = [], isLoading: isLoadingTypes } = useAvailableCourtTypes(true);
+  
+  console.log('🔍 AVAILABLE TYPES DEBUG:', { 
+    availableTypes, 
+    isLoadingTypes, 
+    selectedCourtType,
+    length: availableTypes.length 
+  });
   
   console.log('📊 BookingCalendar HOOKS INITIALIZED - timestamp:', new Date().getTime());
   
