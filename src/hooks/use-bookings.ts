@@ -213,43 +213,59 @@ export function useActiveBookingsCount(userId?: string) {
     queryFn: async () => {
       if (!userId) return 0;
       
-      const now = new Date().toISOString();
-      
-      const { data, error } = await supabase
-        .from("bookings")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("status", "paid") // Only count paid bookings as active
-        .gte("end_time", now); // Only count non-expired bookings
+      try {
+        const now = new Date().toISOString();
+        
+        const { data, error } = await supabase
+          .from("bookings")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("status", "paid") // Only count paid bookings as active
+          .gte("end_time", now); // Only count non-expired bookings
 
-      if (error) {
-        console.error("Error counting active bookings:", error);
-        return 0;
+        if (error) {
+          console.error("Error counting active bookings:", error);
+          return 0;
+        }
+
+        const count = data?.length || 0;
+        
+        console.log("📊 Active bookings count update:", {
+          userId,
+          count,
+          currentTime: now
+        });
+        
+        // Try to update the profiles table with the current count
+        // But don't fail the entire query if this update fails
+        try {
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({ active_bookings: count })
+            .eq("id", userId);
+
+          if (updateError) {
+            console.warn("Warning updating active bookings count (non-critical):", updateError);
+          }
+        } catch (updateErr) {
+          console.warn("Network error updating active bookings count (non-critical):", updateErr);
+        }
+
+        return count;
+      } catch (err) {
+        console.error("Critical error in useActiveBookingsCount:", err);
+        return 0; // Return fallback value instead of throwing
       }
-
-      const count = data?.length || 0;
-      
-      console.log("📊 Active bookings count update:", {
-        userId,
-        count,
-        currentTime: now
-      });
-      
-      // Update the profiles table with the current count
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ active_bookings: count })
-        .eq("id", userId);
-
-      if (updateError) {
-        console.error("Error updating active bookings count:", updateError);
-      }
-
-      return count;
     },
     enabled: !!userId,
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Don't cache
-    refetchInterval: 60000, // Refetch every minute to keep count updated
+    staleTime: 30000, // Cache for 30 seconds to reduce network calls
+    gcTime: 60000, // Cache for 1 minute
+    refetchInterval: 120000, // Refetch every 2 minutes (less aggressive)
+    retry: (failureCount, error) => {
+      // Don't retry network errors more than once
+      if (failureCount > 1) return false;
+      return true;
+    },
+    retryDelay: 2000, // Wait 2 seconds before retry
   });
 }
