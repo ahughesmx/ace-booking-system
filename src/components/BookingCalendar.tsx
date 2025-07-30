@@ -128,6 +128,7 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
   }, [initialCourtType, selectedCourtType, availableTypes.length, showCourtTypeDialog]);
 
   console.log('🚀 BookingCalendar ABOUT TO RENDER JSX - timestamp:', new Date().getTime());
+  console.log('🔍 OVERLAY DEBUG - showCourtTypeDialog:', showCourtTypeDialog, 'availableTypes.length:', availableTypes.length, 'APPLYING OVERLAY:', showCourtTypeDialog && availableTypes.length > 1);
 
   const result = (
     <>
