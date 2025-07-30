@@ -108,23 +108,23 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
     // This is mainly for compatibility with the BookingForm's onBookingSuccess callback
   };
 
-  // Auto-selección forzada e inmediata
+  // Auto-selección basada en configuración real de BD
   useEffect(() => {
-    console.log('🔄 Auto-selection check:', { 
+    console.log('🔄 Real DB Config Check:', { 
       selectedCourtType, 
       availableTypesLength: availableTypes.length,
-      availableTypes: availableTypes.map(t => ({ name: t.type_name, enabled: t.is_enabled }))
+      enabledTypes: availableTypes.filter(t => t.is_enabled).map(t => t.type_name)
     });
     
-    // Forzar auto-selección inmediata si hay tipos disponibles
+    // Auto-seleccionar el primer tipo habilitado según la BD
     if (!selectedCourtType && availableTypes.length > 0) {
-      const firstEnabledType = availableTypes.find(t => t.is_enabled)?.type_name || availableTypes[0]?.type_name;
-      if (firstEnabledType) {
-        console.log('🎯 FORCE AUTO-SELECT:', firstEnabledType);
-        setSelectedCourtType(firstEnabledType);
+      const enabledType = availableTypes.find(t => t.is_enabled);
+      if (enabledType) {
+        console.log('🎯 DB AUTO-SELECT:', enabledType.type_name);
+        setSelectedCourtType(enabledType.type_name);
       }
     }
-  }, [availableTypes.length]); // Simplificar dependencias
+  }, [availableTypes, selectedCourtType]);
 
   console.log('🚀 BookingCalendar ABOUT TO RENDER JSX - timestamp:', new Date().getTime());
   console.log('🔍 OVERLAY DEBUG - showCourtTypeDialog:', showCourtTypeDialog, 'availableTypes.length:', availableTypes.length, 'APPLYING OVERLAY:', showCourtTypeDialog && availableTypes.length > 1);
