@@ -125,6 +125,12 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
         setShowCourtTypeDialog(true);
       }
     }
+    
+    // ARREGLO: Si ya hay un tipo seleccionado, asegurar que el diálogo esté cerrado
+    if (selectedCourtType && showCourtTypeDialog) {
+      console.log('🎯 CLOSING dialog because court type is selected:', selectedCourtType);
+      setShowCourtTypeDialog(false);
+    }
   }, [initialCourtType, selectedCourtType, availableTypes.length, showCourtTypeDialog]);
 
   console.log('🚀 BookingCalendar ABOUT TO RENDER JSX - timestamp:', new Date().getTime());
