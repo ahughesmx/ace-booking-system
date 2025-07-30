@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar } from "@/components/ui/calendar";
@@ -12,14 +11,13 @@ import { useAllBookings } from "@/hooks/use-bookings";
 import { startOfToday, addDays } from "date-fns";
 import { useBookingRules } from "@/hooks/use-booking-rules";
 import { CourtTypeSelectionDialog } from "@/components/booking/CourtTypeSelectionDialog";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface BookingCalendarProps {
   selectedCourtType?: string | null;
 }
 
 function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalendarProps) {
-  console.log('🔴 BookingCalendar RENDER START');
+  console.log('🟢 BookingCalendar RENDER START - timestamp:', new Date().getTime());
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedCourtType, setSelectedCourtType] = useState<string | null>(initialCourtType || null);
@@ -28,11 +26,17 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
   const { user } = useAuth();
   const navigate = useNavigate();
   
+  console.log('📊 BookingCalendar HOOKS INITIALIZED - timestamp:', new Date().getTime());
+  
   // Solo hacer la consulta si tenemos una fecha seleccionada
   const { data: bookings = [], isLoading } = useAllBookings(selectedDate);
 
+  console.log('📈 BookingCalendar BOOKINGS HOOK EXECUTED - isLoading:', isLoading, 'timestamp:', new Date().getTime());
+
   // Obtener las reglas de reserva - memoizar para evitar consultas innecesarias  
   const { data: bookingRules } = useBookingRules(selectedCourtType as 'tennis' | 'padel');
+
+  console.log('📋 BookingCalendar BOOKING RULES HOOK EXECUTED - timestamp:', new Date().getTime());
 
   const today = startOfToday();
   
@@ -61,8 +65,6 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
     return false;
   }, [today, selectedCourtType, getMaxDate]);
 
-  const maxDate = getMaxDate;
-
   const handleCourtTypeChange = (courtType: string | null) => {
     console.log('BookingCalendar - Court type changed to:', courtType);
     setSelectedCourtType(courtType);
@@ -86,25 +88,14 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
 
   // Actualizar cuando cambia el tipo de cancha inicial
   useEffect(() => {
-    console.log('🔄 BookingCalendar useEffect - initialCourtType changed to:', initialCourtType);
+    console.log('🔄 BookingCalendar useEffect TRIGGERED - timestamp:', new Date().getTime());
     setSelectedCourtType(initialCourtType || null);
     setShowCourtTypeDialog(!initialCourtType);
   }, [initialCourtType]);
 
-  // Agregar useEffect para logs de montaje/desmontaje
-  useEffect(() => {
-    console.log('🟢 BookingCalendar MOUNTED');
-    return () => {
-      console.log('🔴 BookingCalendar UNMOUNTED');
-    };
-  }, []);
+  console.log('🚀 BookingCalendar ABOUT TO RENDER JSX - timestamp:', new Date().getTime());
 
-  console.log('🔴 BookingCalendar - isLoading:', isLoading, 'bookings.length:', bookings.length);
-
-  // Remover el return condicional que causa el problema
-  // Siempre renderizar el contenido principal
-  
-  return (
+  const result = (
     <>
       <CourtTypeSelectionDialog 
         open={showCourtTypeDialog}
@@ -183,6 +174,10 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
       </div>
     </>
   );
+  
+  console.log('✅ BookingCalendar RENDER COMPLETED - timestamp:', new Date().getTime());
+  
+  return result;
 }
 
 export { BookingCalendar };
