@@ -21,7 +21,8 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedCourtType, setSelectedCourtType] = useState<string | null>(initialCourtType || null);
-  const [showCourtTypeDialog, setShowCourtTypeDialog] = useState(!initialCourtType);
+  const [showCourtTypeDialog, setShowCourtTypeDialog] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -90,16 +91,22 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
     // This is mainly for compatibility with the BookingForm's onBookingSuccess callback
   };
 
-  // Actualizar cuando cambia el tipo de cancha inicial - CON DEBOUNCE
+  // Inicialización controlada para evitar re-renders innecesarios
   useEffect(() => {
     console.log('🔄 BookingCalendar useEffect TRIGGERED - timestamp:', new Date().getTime());
     
-    // Solo actualizar si realmente cambió
-    if (initialCourtType !== selectedCourtType) {
-      setSelectedCourtType(initialCourtType || null);
+    if (!isInitialized) {
+      // Primera inicialización
+      const courtType = initialCourtType || null;
+      setSelectedCourtType(courtType);
+      setShowCourtTypeDialog(!courtType);
+      setIsInitialized(true);
+    } else if (initialCourtType !== selectedCourtType && initialCourtType !== undefined) {
+      // Solo actualizar si realmente cambió y no es undefined
+      setSelectedCourtType(initialCourtType);
       setShowCourtTypeDialog(!initialCourtType);
     }
-  }, [initialCourtType]); // Remover selectedCourtType de las dependencias
+  }, [initialCourtType, isInitialized, selectedCourtType]);
 
   console.log('🚀 BookingCalendar ABOUT TO RENDER JSX - timestamp:', new Date().getTime());
 
