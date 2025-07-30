@@ -67,11 +67,15 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
 
   const handleCourtTypeChange = (courtType: string | null) => {
     console.log('BookingCalendar - Court type changed to:', courtType);
-    setSelectedCourtType(courtType);
     
-    // Si se deselecciona el tipo de cancha, resetear la fecha a hoy
-    if (!courtType) {
-      setSelectedDate(new Date());
+    // Evitar cambios innecesarios que causen re-renders
+    if (courtType !== selectedCourtType) {
+      setSelectedCourtType(courtType);
+      
+      // Si se deselecciona el tipo de cancha, resetear la fecha a hoy
+      if (!courtType) {
+        setSelectedDate(new Date());
+      }
     }
   };
 
@@ -86,12 +90,16 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
     // This is mainly for compatibility with the BookingForm's onBookingSuccess callback
   };
 
-  // Actualizar cuando cambia el tipo de cancha inicial
+  // Actualizar cuando cambia el tipo de cancha inicial - CON DEBOUNCE
   useEffect(() => {
     console.log('🔄 BookingCalendar useEffect TRIGGERED - timestamp:', new Date().getTime());
-    setSelectedCourtType(initialCourtType || null);
-    setShowCourtTypeDialog(!initialCourtType);
-  }, [initialCourtType]);
+    
+    // Solo actualizar si realmente cambió
+    if (initialCourtType !== selectedCourtType) {
+      setSelectedCourtType(initialCourtType || null);
+      setShowCourtTypeDialog(!initialCourtType);
+    }
+  }, [initialCourtType]); // Remover selectedCourtType de las dependencias
 
   console.log('🚀 BookingCalendar ABOUT TO RENDER JSX - timestamp:', new Date().getTime());
 
