@@ -40,8 +40,10 @@ function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
     const startTime = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour);
     const endTime = addHours(startTime, 1);
     
-    // Solo verificar si está en el pasado cuando es el día actual
-    const isPast = isToday(selectedDate) ? isBefore(startTime, now) : false;
+    // ARREGLO: Solo verificar si está en el pasado cuando es HOY
+    const isPast = isToday(selectedDate) && isBefore(startTime, now);
+    
+    console.log(`⏰ SLOT ${hour}:00 - isToday: ${isToday(selectedDate)}, startTime: ${startTime.toLocaleTimeString()}, now: ${now.toLocaleTimeString()}, isPast: ${isPast}`);
     
     slots.push({
       start: format(startTime, "HH:00"),
