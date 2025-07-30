@@ -12,16 +12,16 @@ interface CourtTypeSelectionDialogProps {
 export function CourtTypeSelectionDialog({ open, onCourtTypeSelect }: CourtTypeSelectionDialogProps) {
   const { data: availableTypes = [] } = useAvailableCourtTypes(true);
   
-  // Auto-seleccionar si solo hay un tipo disponible
-  useEffect(() => {
-    if (open && availableTypes.length === 1) {
-      console.log('Dialog auto-selecting single type:', availableTypes[0].type_name);
-      onCourtTypeSelect(availableTypes[0].type_name);
-    }
-  }, [open, availableTypes, onCourtTypeSelect]);
+  // Remover auto-selección para evitar conflictos con otros sistemas
+  // useEffect(() => {
+  //   if (open && availableTypes.length === 1) {
+  //     console.log('Dialog auto-selecting single type:', availableTypes[0].type_name);
+  //     onCourtTypeSelect(availableTypes[0].type_name);
+  //   }
+  // }, [open, availableTypes, onCourtTypeSelect]);
   
-  // No mostrar el diálogo si solo hay un tipo disponible
-  if (availableTypes.length <= 1) {
+  // No mostrar el diálogo si solo hay un tipo disponible o si está cerrado
+  if (!open || availableTypes.length <= 1) {
     return null;
   }
   

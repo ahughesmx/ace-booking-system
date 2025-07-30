@@ -10,6 +10,7 @@ import { BookingsList } from "@/components/BookingsList";
 import { useAllBookings } from "@/hooks/use-bookings";
 import { startOfToday, addDays } from "date-fns";
 import { useBookingRules } from "@/hooks/use-booking-rules";
+import { useAvailableCourtTypes } from "@/hooks/use-available-court-types";
 import { CourtTypeSelectionDialog } from "@/components/booking/CourtTypeSelectionDialog";
 
 interface BookingCalendarProps {
@@ -22,10 +23,12 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedCourtType, setSelectedCourtType] = useState<string | null>(initialCourtType || null);
   const [showCourtTypeDialog, setShowCourtTypeDialog] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  // Obtener tipos disponibles para auto-selección
+  const { data: availableTypes = [] } = useAvailableCourtTypes();
   
   console.log('📊 BookingCalendar HOOKS INITIALIZED - timestamp:', new Date().getTime());
   
@@ -91,22 +94,30 @@ function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalenda
     // This is mainly for compatibility with the BookingForm's onBookingSuccess callback
   };
 
-  // Inicialización controlada para evitar re-renders innecesarios
+  // Lógica de inicialización y auto-selección controlada
   useEffect(() => {
     console.log('🔄 BookingCalendar useEffect TRIGGERED - timestamp:', new Date().getTime());
     
-    if (!isInitialized) {
-      // Primera inicialización
-      const courtType = initialCourtType || null;
-      setSelectedCourtType(courtType);
-      setShowCourtTypeDialog(!courtType);
-      setIsInitialized(true);
-    } else if (initialCourtType !== selectedCourtType && initialCourtType !== undefined) {
-      // Solo actualizar si realmente cambió y no es undefined
+    // Si hay un tipo inicial válido, usarlo
+    if (initialCourtType && initialCourtType !== selectedCourtType) {
       setSelectedCourtType(initialCourtType);
-      setShowCourtTypeDialog(!initialCourtType);
+      setShowCourtTypeDialog(false);
+      return;
     }
-  }, [initialCourtType, isInitialized, selectedCourtType]);
+    
+    // Si no hay tipo seleccionado, verificar auto-selección
+    if (!selectedCourtType && availableTypes.length > 0) {
+      if (availableTypes.length === 1) {
+        // Auto-seleccionar si solo hay un tipo disponible
+        console.log('🎯 AUTO-SELECTING single court type:', availableTypes[0].type_name);
+        setSelectedCourtType(availableTypes[0].type_name);
+        setShowCourtTypeDialog(false);
+      } else {
+        // Mostrar diálogo si hay múltiples tipos
+        setShowCourtTypeDialog(true);
+      }
+    }
+  }, [initialCourtType, selectedCourtType, availableTypes]);
 
   console.log('🚀 BookingCalendar ABOUT TO RENDER JSX - timestamp:', new Date().getTime());
 
