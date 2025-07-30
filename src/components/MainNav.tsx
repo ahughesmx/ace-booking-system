@@ -28,9 +28,11 @@ const MainNav = () => {
 
   const handleNavigation = (tab: string | null) => {
     setMobileOpen(false);
+    console.log('MainNav - navigating to tab:', tab);
     
+    // Forzar navegación limpia
     if (tab === null) {
-      navigate("/", { state: { defaultTab: null }, replace: true });
+      navigate("/", { replace: true });
     } else {
       navigate("/", { state: { defaultTab: tab }, replace: true });
     }
