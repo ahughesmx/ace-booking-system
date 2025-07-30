@@ -128,6 +128,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   const maxBookings = bookingRules?.max_active_bookings || 4;
 
   // Si se está mostrando el resumen de pago
+  console.log('🔍 BookingSummary check - showSummary:', showSummary, 'pendingBooking:', !!pendingBooking);
   if (showSummary && pendingBooking) {
     const court = courts.find(c => c.id === selectedCourt);
     return (
