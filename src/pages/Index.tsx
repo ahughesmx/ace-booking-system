@@ -9,14 +9,78 @@ import MainNav from "@/components/MainNav";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { useUserRole } from "@/hooks/use-user-role";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Index() {
   const { user, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { data: userRole } = useUserRole(user?.id);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const currentTab = location.state?.defaultTab;
+
+  // Handle payment success/failure
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const paymentStatus = urlParams.get('payment');
+    const sessionId = urlParams.get('session_id');
+
+    if (paymentStatus === 'success' && sessionId) {
+      // Verify payment and update booking
+      const verifyPayment = async () => {
+        try {
+          const { data, error } = await supabase.functions.invoke('verify-payment', {
+            body: { sessionId }
+          });
+
+          if (error) throw error;
+
+          if (data.success) {
+            toast({
+              title: "¡Pago exitoso!",
+              description: "Tu reserva ha sido confirmada correctamente.",
+            });
+            
+            // Invalidate queries to refresh booking data
+            await queryClient.invalidateQueries({ queryKey: ["bookings"] });
+            await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
+            await queryClient.invalidateQueries({ queryKey: ["active-bookings", user?.id] });
+            
+            // Navigate to bookings tab
+            navigate("/", { state: { defaultTab: "bookings" }, replace: true });
+          } else {
+            toast({
+              title: "Error verificando pago",
+              description: data.message || "No se pudo verificar el pago.",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error("Error verifying payment:", error);
+          toast({
+            title: "Error verificando pago",
+            description: "Hubo un problema verificando tu pago. Contacta soporte.",
+            variant: "destructive",
+          });
+        }
+      };
+
+      verifyPayment();
+    } else if (paymentStatus === 'cancelled') {
+      toast({
+        title: "Pago cancelado",
+        description: "El pago fue cancelado. Puedes intentar nuevamente.",
+        variant: "destructive",
+      });
+      // Navigate to bookings tab
+      navigate("/", { state: { defaultTab: "bookings" }, replace: true });
+    }
+  }, [location.search, user?.id, toast, queryClient, navigate]);
 
   if (loading) {
     return <div>Cargando...</div>;
