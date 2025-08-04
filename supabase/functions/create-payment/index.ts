@@ -57,7 +57,7 @@ serve(async (req) => {
       line_items: [
         {
           price_data: {
-            currency: "usd",
+            currency: "mxn",
             product_data: { 
               name: `Reserva de cancha - ${selectedCourtType}`,
               description: `Cancha: ${selectedCourt}, Fecha: ${selectedDate}, Hora: ${selectedTime}`
