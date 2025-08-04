@@ -83,38 +83,66 @@ export function useBookingPayment() {
     }
 
     try {
-      // Aquí se integraría con la pasarela de pago
-      // Por ahora simulamos el pago exitoso
-      console.log(`Procesando pago con ${paymentGateway} para reserva ${pendingBooking.id}`);
-      
-      // Simular delay de procesamiento
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Actualizar estado de la reserva a 'paid'
-      const { error } = await supabase
-        .from("bookings")
-        .update({
-          status: 'paid',
-          payment_gateway: paymentGateway,
-          payment_completed_at: new Date().toISOString(),
-          payment_id: `${paymentGateway}_${Date.now()}`
-        })
-        .eq("id", pendingBooking.id);
+      if (paymentGateway === 'stripe') {
+        // Procesar pago con Stripe
+        const bookingData = {
+          selectedDate: new Date(pendingBooking.start_time),
+          selectedTime: new Date(pendingBooking.start_time).toLocaleTimeString('es-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: false 
+          }),
+          selectedCourt: pendingBooking.court.name,
+          selectedCourtType: pendingBooking.court.court_type,
+          amount: pendingBooking.amount
+        };
 
-      if (error) throw error;
+        const { data, error } = await supabase.functions.invoke('create-payment', {
+          body: { bookingData }
+        });
 
-      // Invalidar queries para actualizar la UI
-      await queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
-      await queryClient.invalidateQueries({ queryKey: ["active-bookings", user?.id] });
+        if (error) throw new Error(`Error al crear sesión de pago: ${error.message}`);
+        if (!data?.url) throw new Error("No se recibió URL de pago");
 
-      toast({
-        title: "¡Pago exitoso!",
-        description: "Tu reserva ha sido confirmada correctamente.",
-      });
+        // Abrir Stripe Checkout en nueva pestaña
+        window.open(data.url, '_blank');
+        
+        toast({
+          title: "Redirigiendo a Stripe",
+          description: "Se abrió una nueva pestaña para completar el pago.",
+        });
+        
+        return true;
+      } else {
+        // Para otros métodos de pago, simular por ahora
+        console.log(`Procesando pago con ${paymentGateway} para reserva ${pendingBooking.id}`);
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const { error } = await supabase
+          .from("bookings")
+          .update({
+            status: 'paid',
+            payment_gateway: paymentGateway,
+            payment_completed_at: new Date().toISOString(),
+            payment_id: `${paymentGateway}_${Date.now()}`
+          })
+          .eq("id", pendingBooking.id);
 
-      setPendingBooking(null);
-      return true;
+        if (error) throw error;
+
+        await queryClient.invalidateQueries({ queryKey: ["bookings"] });
+        await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
+        await queryClient.invalidateQueries({ queryKey: ["active-bookings", user?.id] });
+
+        toast({
+          title: "¡Pago exitoso!",
+          description: "Tu reserva ha sido confirmada correctamente.",
+        });
+
+        setPendingBooking(null);
+        return true;
+      }
     } catch (error) {
       console.error("Error processing payment:", error);
       toast({
