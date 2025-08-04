@@ -34,6 +34,13 @@ serve(async (req) => {
     if (!bookingData) throw new Error("Datos de reserva no proporcionados");
 
     const { selectedDate, selectedTime, selectedCourt, selectedCourtType, amount } = bookingData;
+    
+    // Format date for display (DD-MM-YYYY)
+    const formattedDate = new Date(selectedDate).toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
 
     // Initialize Stripe
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -60,7 +67,7 @@ serve(async (req) => {
             currency: "mxn",
             product_data: { 
               name: `Reserva de cancha - ${selectedCourtType}`,
-              description: `Cancha: ${selectedCourt}, Fecha: ${selectedDate}, Hora: ${selectedTime}`
+              description: `Cancha: ${selectedCourt}, Fecha: ${formattedDate}, Hora: ${selectedTime}`
             },
             unit_amount: Math.round(amount * 100), // Convertir a centavos
           },
