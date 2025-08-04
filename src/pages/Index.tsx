@@ -23,14 +23,19 @@ export default function Index() {
   const queryClient = useQueryClient();
   
   const currentTab = location.state?.defaultTab;
+  
+  // Check if we're processing a payment return
+  const urlParams = new URLSearchParams(location.search);
+  const paymentStatus = urlParams.get('payment');
+  const sessionId = urlParams.get('session_id');
+  const isProcessingPayment = paymentStatus === 'success' && sessionId;
+  const [paymentProcessed, setPaymentProcessed] = React.useState(false);
 
-  // Handle payment success/failure
+  // Handle payment success/failure immediately
   useEffect(() => {
-    const urlParams = new URLSearchParams(location.search);
-    const paymentStatus = urlParams.get('payment');
-    const sessionId = urlParams.get('session_id');
-
-    if (paymentStatus === 'success' && sessionId) {
+    if (paymentStatus === 'success' && sessionId && !paymentProcessed) {
+      setPaymentProcessed(true);
+      
       // Verify payment and update booking
       const verifyPayment = async () => {
         try {
@@ -51,7 +56,7 @@ export default function Index() {
             await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
             await queryClient.invalidateQueries({ queryKey: ["active-bookings", user?.id] });
             
-            // Navigate to bookings tab
+            // Navigate to bookings tab immediately
             navigate("/", { state: { defaultTab: "bookings" }, replace: true });
           } else {
             toast({
@@ -59,6 +64,7 @@ export default function Index() {
               description: data.message || "No se pudo verificar el pago.",
               variant: "destructive",
             });
+            navigate("/", { state: { defaultTab: "bookings" }, replace: true });
           }
         } catch (error) {
           console.error("Error verifying payment:", error);
@@ -67,6 +73,7 @@ export default function Index() {
             description: "Hubo un problema verificando tu pago. Contacta soporte.",
             variant: "destructive",
           });
+          navigate("/", { state: { defaultTab: "bookings" }, replace: true });
         }
       };
 
@@ -80,10 +87,23 @@ export default function Index() {
       // Navigate to bookings tab
       navigate("/", { state: { defaultTab: "bookings" }, replace: true });
     }
-  }, [location.search, user?.id, toast, queryClient, navigate]);
+  }, [paymentStatus, sessionId, paymentProcessed, user?.id, toast, queryClient, navigate]);
 
-  if (loading) {
-    return <div>Cargando...</div>;
+  if (loading || isProcessingPayment) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-xl font-semibold text-[#1e3a8a]">
+            {loading ? "Cargando..." : "Procesando pago..."}
+          </div>
+          {isProcessingPayment && (
+            <div className="text-sm text-[#6898FE]/70">
+              Verificando tu reserva, por favor espera.
+            </div>
+          )}
+        </div>
+      </div>
+    );
   }
 
   const handleNavigation = (tab: string) => {
