@@ -22,7 +22,9 @@ export default function Index() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const currentTab = location.state?.defaultTab;
+  // Type the location state
+  const locationState = location.state as { defaultTab?: string; selectedDate?: string } | null;
+  const currentTab = locationState?.defaultTab;
   
   // Check if we're processing a payment return
   const urlParams = new URLSearchParams(location.search);
@@ -56,8 +58,17 @@ export default function Index() {
             await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
             await queryClient.invalidateQueries({ queryKey: ["active-bookings", user?.id] });
             
-            // Navigate to bookings tab immediately
-            navigate("/", { state: { defaultTab: "bookings" }, replace: true });
+            // Extract the selected date from booking data if available
+            let navigationState: any = { defaultTab: "bookings" };
+            if (data.bookingData && data.bookingData.selectedDate) {
+              navigationState = {
+                ...navigationState,
+                selectedDate: data.bookingData.selectedDate
+              };
+            }
+            
+            // Navigate to bookings tab with the original selected date
+            navigate("/", { state: navigationState, replace: true });
           } else {
             toast({
               title: "Error verificando pago",
@@ -194,7 +205,7 @@ export default function Index() {
         <div className="mt-6 space-y-6 mx-auto max-w-4xl">
           {currentTab === "bookings" && (
             <div key="bookings-wrapper" style={{ minHeight: '500px' }}>
-              <BookingCalendar />
+              <BookingCalendar selectedDate={locationState?.selectedDate} />
             </div>
           )}
           

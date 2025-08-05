@@ -15,12 +15,15 @@ import { CourtTypeSelectionDialog } from "@/components/booking/CourtTypeSelectio
 
 interface BookingCalendarProps {
   selectedCourtType?: string | null;
+  selectedDate?: string;
 }
 
-function BookingCalendar({ selectedCourtType: initialCourtType }: BookingCalendarProps) {
+function BookingCalendar({ selectedCourtType: initialCourtType, selectedDate: initialSelectedDate }: BookingCalendarProps) {
   console.log('🟢 BookingCalendar RENDER START - timestamp:', new Date().getTime());
   
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    initialSelectedDate ? new Date(initialSelectedDate) : new Date()
+  );
   const [selectedCourtType, setSelectedCourtType] = useState<string | null>(initialCourtType || null);
   const [showCourtTypeDialog, setShowCourtTypeDialog] = useState(false);
   const { toast } = useToast();

@@ -67,7 +67,8 @@ serve(async (req) => {
         return new Response(JSON.stringify({ 
           success: true, 
           message: "Pago verificado y reserva confirmada",
-          booking: existingBooking
+          booking: existingBooking,
+          bookingData: bookingData
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
