@@ -158,8 +158,9 @@ export default function Index() {
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
             <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
-              Clases
+              Clases y cursos
             </h3>
+            <p className="text-sm text-[#6898FE]/70">Conoce horarios, días y deportes que puedes aprender</p>
           </CardContent>
         </Card>
 
