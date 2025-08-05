@@ -78,7 +78,13 @@ export function useBookingPayment() {
   };
 
   const processPayment = async (paymentGateway: string) => {
+    console.log(`🔄 processPayment started for ${paymentGateway}`, { 
+      pendingBooking: !!pendingBooking,
+      pendingBookingId: pendingBooking?.id 
+    });
+    
     if (!pendingBooking) {
+      console.error("❌ No pending booking found");
       throw new Error("No hay reserva pendiente");
     }
 

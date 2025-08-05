@@ -86,12 +86,18 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   };
 
   const handleConfirmPayment = async (paymentGateway: string) => {
+    console.log(`🔄 handleConfirmPayment called with ${paymentGateway}`, { 
+      pendingBooking: !!pendingBooking, 
+      isSubmitting 
+    });
+    
     try {
-      await processPayment(paymentGateway);
+      const result = await processPayment(paymentGateway);
+      console.log(`✅ Payment processed successfully for ${paymentGateway}`, result);
       setShowSummary(false);
       onBookingSuccess();
     } catch (error) {
-      console.error("Error processing payment:", error);
+      console.error(`❌ Error processing payment for ${paymentGateway}:`, error);
     }
   };
 

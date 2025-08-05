@@ -114,7 +114,10 @@ export function BookingSummary({
                   variant="outline"
                   className="w-full justify-start"
                   disabled={isLoading}
-                  onClick={() => onConfirm(gateway.name)}
+                  onClick={() => {
+                    console.log(`🔄 Payment button clicked for ${gateway.name}`, { isLoading, gateway });
+                    onConfirm(gateway.name);
+                  }}
                 >
                   <div className="flex items-center gap-2">
                     {gateway.name === 'stripe' && (
