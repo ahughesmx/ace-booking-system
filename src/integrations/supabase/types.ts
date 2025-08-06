@@ -725,6 +725,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      cleanup_incomplete_matches: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       recalculate_active_bookings: {
         Args: Record<PropertyKey, never> | { user_uuid: string }
         Returns: undefined
