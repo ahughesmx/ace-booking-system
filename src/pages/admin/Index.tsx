@@ -48,6 +48,10 @@ const AdminPage = () => {
         return <PaymentGatewaySettings />;
       case "matches":
         return <MatchManagementSettings />;
+      case "courses":
+        return <CourseManagement />;
+      case "instructors":
+        return <InstructorManagement />;
       default:
         return <UserManagement />;
     }
