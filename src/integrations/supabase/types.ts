@@ -143,6 +143,292 @@ export type Database = {
           },
         ]
       }
+      class_attendance: {
+        Row: {
+          attendance_date: string | null
+          attended: boolean
+          class_id: string | null
+          created_at: string
+          enrollment_id: string | null
+          id: string
+          notes: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          attendance_date?: string | null
+          attended?: boolean
+          class_id?: string | null
+          created_at?: string
+          enrollment_id?: string | null
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          attendance_date?: string | null
+          attended?: boolean
+          class_id?: string | null
+          created_at?: string
+          enrollment_id?: string | null
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_attendance_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_attendance_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "course_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          cancellation_reason: string | null
+          class_date: string
+          course_id: string | null
+          court_id: string | null
+          created_at: string
+          current_participants: number
+          description: string | null
+          end_time: string
+          id: string
+          is_cancelled: boolean
+          max_participants: number
+          start_time: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cancellation_reason?: string | null
+          class_date: string
+          course_id?: string | null
+          court_id?: string | null
+          created_at?: string
+          current_participants?: number
+          description?: string | null
+          end_time: string
+          id?: string
+          is_cancelled?: boolean
+          max_participants: number
+          start_time: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cancellation_reason?: string | null
+          class_date?: string
+          course_id?: string | null
+          court_id?: string | null
+          created_at?: string
+          current_participants?: number
+          description?: string | null
+          end_time?: string
+          id?: string
+          is_cancelled?: boolean
+          max_participants?: number
+          start_time?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classes_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_enrollments: {
+        Row: {
+          cancellation_date: string | null
+          cancellation_reason: string | null
+          course_id: string | null
+          created_at: string
+          enrollment_date: string
+          id: string
+          payment_amount: number | null
+          payment_status: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          cancellation_date?: string | null
+          cancellation_reason?: string | null
+          course_id?: string | null
+          created_at?: string
+          enrollment_date?: string
+          id?: string
+          payment_amount?: number | null
+          payment_status?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          cancellation_date?: string | null
+          cancellation_reason?: string | null
+          course_id?: string | null
+          created_at?: string
+          enrollment_date?: string
+          id?: string
+          payment_amount?: number | null
+          payment_status?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_notifications: {
+        Row: {
+          class_id: string | null
+          course_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          notification_type: string
+          sent_at: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          class_id?: string | null
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          notification_type: string
+          sent_at?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          class_id?: string | null
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          notification_type?: string
+          sent_at?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_notifications_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_notifications_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          court_type: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          image_url: string | null
+          instructor_id: string | null
+          is_active: boolean
+          level: string
+          max_participants: number
+          price_per_class: number
+          requires_court: boolean
+          sport_type: string
+          title: string
+          total_classes: number
+          updated_at: string
+        }
+        Insert: {
+          court_type?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          image_url?: string | null
+          instructor_id?: string | null
+          is_active?: boolean
+          level: string
+          max_participants?: number
+          price_per_class?: number
+          requires_court?: boolean
+          sport_type: string
+          title: string
+          total_classes?: number
+          updated_at?: string
+        }
+        Update: {
+          court_type?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          image_url?: string | null
+          instructor_id?: string | null
+          is_active?: boolean
+          level?: string
+          max_participants?: number
+          price_per_class?: number
+          requires_court?: boolean
+          sport_type?: string
+          title?: string
+          total_classes?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       court_maintenance: {
         Row: {
           court_id: string
@@ -289,6 +575,54 @@ export type Database = {
           is_enabled?: boolean | null
           rotation_interval?: number
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      instructors: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          certifications: string[] | null
+          created_at: string
+          email: string | null
+          experience_years: number | null
+          full_name: string
+          id: string
+          is_active: boolean
+          phone: string | null
+          specialties: string[] | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          certifications?: string[] | null
+          created_at?: string
+          email?: string | null
+          experience_years?: number | null
+          full_name: string
+          id?: string
+          is_active?: boolean
+          phone?: string | null
+          specialties?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          certifications?: string[] | null
+          created_at?: string
+          email?: string | null
+          experience_years?: number | null
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          phone?: string | null
+          specialties?: string[] | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
