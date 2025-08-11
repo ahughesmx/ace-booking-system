@@ -163,17 +163,19 @@ export default function Index() {
           </Card>
         </button>
 
-        <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
-          <CardContent className="p-4">
-            <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
-              <GraduationCap className="h-6 w-6 text-white" />
-            </div>
-            <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
-              Clases y cursos
-            </h3>
-            <p className="text-sm text-[#6898FE]/70">Conoce horarios, días y deportes que puedes aprender</p>
-          </CardContent>
-        </Card>
+        <button onClick={() => navigate("/courses")} className="w-full text-left">
+          <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 cursor-pointer">
+            <CardContent className="p-4">
+              <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
+                <GraduationCap className="h-6 w-6 text-white" />
+              </div>
+              <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                Clases y cursos
+              </h3>
+              <p className="text-sm text-[#6898FE]/70">Conoce horarios, días y deportes que puedes aprender</p>
+            </CardContent>
+          </Card>
+        </button>
 
         <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
           <CardContent className="p-4">
