@@ -14,6 +14,8 @@ import SpecialBookingManagement from "@/components/admin/SpecialBookingManagemen
 import UserRegistrationForm from "@/components/admin/UserRegistrationForm";
 import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
 import MatchManagementSettings from "@/components/admin/MatchManagementSettings";
+import CourseManagement from "@/components/admin/CourseManagement";
+import InstructorManagement from "@/components/admin/InstructorManagement";
 
 const AdminPage = () => {
   const { isAdmin, isLoading } = useAdminAuth();
