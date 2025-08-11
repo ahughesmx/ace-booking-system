@@ -110,9 +110,15 @@ export default function InstructorManagement() {
           </p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          console.log("Dialog state changing to:", open);
+          setIsDialogOpen(open);
+        }}>
           <DialogTrigger asChild>
-            <AdminButton icon={<Plus className="h-4 w-4" />}>
+            <AdminButton 
+              icon={<Plus className="h-4 w-4" />}
+              onClick={() => console.log("AdminButton clicked - this should not appear if DialogTrigger works")}
+            >
               Nuevo Instructor
             </AdminButton>
           </DialogTrigger>

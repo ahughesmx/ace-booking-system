@@ -21,6 +21,8 @@ export const AdminButton = forwardRef<HTMLButtonElement, AdminButtonProps>(({
   fullWidth = false,
   ...props
 }, ref) => {
+  console.log("AdminButton rendering with props:", { variant, size, fullWidth, children: typeof children === 'string' ? children : 'complex' });
+  
   return (
     <Button
       ref={ref}
@@ -40,6 +42,10 @@ export const AdminButton = forwardRef<HTMLButtonElement, AdminButtonProps>(({
         // Custom className
         className
       )}
+      onClick={(e) => {
+        console.log("AdminButton onClick triggered", e);
+        props.onClick?.(e);
+      }}
       {...props}
     >
       {icon && <span className="shrink-0">{icon}</span>}
