@@ -47,6 +47,7 @@ const MainNav = () => {
     { label: "Inicio", icon: Home, onClick: () => handleNavigation(null) },
     { label: "Reservas", icon: Calendar, onClick: () => handleNavigation("bookings") },
     { label: "Partidos", icon: Calendar, onClick: () => handleNavigation("matches") },
+    { label: "Cursos", icon: Calendar, onClick: () => navigate("/courses") },
     { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
   ];
 

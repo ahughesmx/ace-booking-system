@@ -15,6 +15,7 @@ import UserRegistrationForm from "@/components/admin/UserRegistrationForm";
 import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
 import MatchManagementSettings from "@/components/admin/MatchManagementSettings";
 import CourseManagement from "@/components/admin/CourseManagement";
+import ClassManagement from "@/components/admin/ClassManagement";
 import InstructorManagement from "@/components/admin/InstructorManagement";
 
 const AdminPage = () => {
@@ -52,6 +53,8 @@ const AdminPage = () => {
         return <MatchManagementSettings />;
       case "courses":
         return <CourseManagement />;
+      case "classes":
+        return <ClassManagement />;
       case "instructors":
         return <InstructorManagement />;
       default:

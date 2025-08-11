@@ -14,6 +14,9 @@ import {
   CalendarCheck,
   CreditCard,
   Trophy,
+  BookOpen,
+  GraduationCap,
+  UserCheck,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -31,6 +34,9 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
     { id: "booking-rules", label: "Reglas de Reserva", icon: Calendar },
     { id: "special-bookings", label: "Reservas Especiales", icon: CalendarCheck },
     { id: "matches", label: "Partidos", icon: Trophy },
+    { id: "courses", label: "Cursos", icon: BookOpen },
+    { id: "classes", label: "Clases", icon: GraduationCap },
+    { id: "instructors", label: "Instructores", icon: UserCheck },
     { id: "statistics", label: "Estadísticas", icon: BarChart3 },
     { id: "display", label: "Display", icon: Monitor },
     { id: "webhooks", label: "Webhooks", icon: Webhook },
