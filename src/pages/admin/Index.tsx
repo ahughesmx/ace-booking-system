@@ -14,9 +14,7 @@ import SpecialBookingManagement from "@/components/admin/SpecialBookingManagemen
 import UserRegistrationForm from "@/components/admin/UserRegistrationForm";
 import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
 import MatchManagementSettings from "@/components/admin/MatchManagementSettings";
-import CourseManagement from "@/components/admin/CourseManagement";
-import ClassManagement from "@/components/admin/ClassManagement";
-import InstructorManagement from "@/components/admin/InstructorManagement";
+import AcademicManagement from "@/components/admin/AcademicManagement";
 
 const AdminPage = () => {
   const { isAdmin, isLoading } = useAdminAuth();
@@ -51,12 +49,8 @@ const AdminPage = () => {
         return <PaymentGatewaySettings />;
       case "matches":
         return <MatchManagementSettings />;
-      case "courses":
-        return <CourseManagement />;
-      case "classes":
-        return <ClassManagement />;
-      case "instructors":
-        return <InstructorManagement />;
+      case "academic":
+        return <AcademicManagement />;
       default:
         return <UserManagement />;
     }
