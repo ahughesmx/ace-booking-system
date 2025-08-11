@@ -14,6 +14,7 @@ import { UserEnrollments } from "@/components/courses/UserEnrollments";
 import { useAuth } from "@/components/AuthProvider";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import MainNav from "@/components/MainNav";
 
 const SPORT_TYPES = [
   { value: "tennis", label: "Tenis" },
@@ -54,24 +55,29 @@ export default function Courses() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <div className="h-48 bg-muted rounded-t-lg"></div>
-              <CardHeader>
-                <div className="h-4 bg-muted rounded w-3/4"></div>
-                <div className="h-3 bg-muted rounded w-1/2"></div>
-              </CardHeader>
-            </Card>
-          ))}
+      <>
+        <MainNav />
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <div className="h-48 bg-muted rounded-t-lg"></div>
+                <CardHeader>
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-3 bg-muted rounded w-1/2"></div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <>
+      <MainNav />
+      <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Clases y Cursos</h1>
         <p className="text-muted-foreground">
@@ -197,6 +203,7 @@ export default function Courses() {
           <UserEnrollments />
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </>
   );
 }
