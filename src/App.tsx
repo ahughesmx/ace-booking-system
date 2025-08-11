@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import Index from "./pages/Index";
 import AdminIndex from "./pages/admin/Index";
 import Login from "./pages/auth/Login";
+import Courses from "./pages/Courses";
 import Display from "./pages/Display";
 
 const queryClient = new QueryClient({
@@ -51,6 +52,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/courses" element={<Courses />} />
         <Route path="/admin" element={<AdminRoute />} />
         <Route path="/display" element={<Display />} />
         <Route path="*" element={<Navigate to="/" replace />} />
