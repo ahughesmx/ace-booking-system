@@ -165,7 +165,13 @@ export default function CourseManagement() {
 
         <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
           <DialogTrigger asChild>
-            <AdminButton icon={<Plus className="h-4 w-4" />}>
+            <AdminButton 
+              icon={<Plus className="h-4 w-4" />}
+              onClick={() => {
+                console.log("Course button clicked!");
+                setIsDialogOpen(true);
+              }}
+            >
               Nuevo Curso
             </AdminButton>
           </DialogTrigger>
