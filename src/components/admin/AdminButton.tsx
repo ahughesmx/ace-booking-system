@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { forwardRef } from "react";
 import type { ButtonHTMLAttributes } from "react";
 import type { VariantProps } from "class-variance-authority";
 
@@ -11,7 +12,7 @@ interface AdminButtonProps
   fullWidth?: boolean;
 }
 
-export function AdminButton({
+export const AdminButton = forwardRef<HTMLButtonElement, AdminButtonProps>(({
   children,
   className,
   variant = "default",
@@ -19,9 +20,10 @@ export function AdminButton({
   icon,
   fullWidth = false,
   ...props
-}: AdminButtonProps) {
+}, ref) => {
   return (
     <Button
+      ref={ref}
       variant={variant}
       size={size}
       className={cn(
@@ -44,4 +46,6 @@ export function AdminButton({
       {children}
     </Button>
   );
-}
+});
+
+AdminButton.displayName = "AdminButton";
