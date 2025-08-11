@@ -61,7 +61,7 @@ export default function ClassManagement() {
       start_time: "",
       end_time: "",
       max_participants: 20,
-      court_id: "",
+      court_id: "no-court",
     },
   });
 
@@ -74,7 +74,7 @@ export default function ClassManagement() {
       start_time: data.start_time,
       end_time: data.end_time,
       max_participants: Number(data.max_participants),
-      court_id: data.court_id || null,
+      court_id: data.court_id === "no-court" ? null : data.court_id || null,
     };
 
     if (editingClass) {
@@ -105,7 +105,7 @@ export default function ClassManagement() {
       start_time: classItem.start_time,
       end_time: classItem.end_time,
       max_participants: classItem.max_participants,
-      court_id: classItem.court_id || "",
+      court_id: classItem.court_id || "no-court",
     });
     setIsDialogOpen(true);
   };
@@ -294,7 +294,7 @@ export default function ClassManagement() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">Sin cancha asignada</SelectItem>
+                            <SelectItem value="no-court">Sin cancha asignada</SelectItem>
                             {courts?.map((court) => (
                               <SelectItem key={court.id} value={court.id}>
                                 {court.name} ({court.court_type})

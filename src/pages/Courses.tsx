@@ -32,15 +32,19 @@ const LEVELS = [
 
 export default function Courses() {
   const [filters, setFilters] = useState({
-    sport_type: "",
-    level: "",
-    instructor_id: "",
+    sport_type: "all-sports",
+    level: "all-levels", 
+    instructor_id: "all-instructors",
   });
   const [activeTab, setActiveTab] = useState("available");
 
   const { user } = useAuth();
   const { data: courses, isLoading } = useCourses(
-    Object.fromEntries(Object.entries(filters).filter(([_, v]) => v))
+    Object.fromEntries(
+      Object.entries(filters).filter(([_, v]) => 
+        v && !v.startsWith("all-")
+      )
+    )
   );
   const { data: instructors } = useInstructors();
   const { data: userEnrollments } = useUserEnrollments();
@@ -104,7 +108,7 @@ export default function Courses() {
                       <SelectValue placeholder="Seleccionar deporte" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos los deportes</SelectItem>
+                      <SelectItem value="all-sports">Todos los deportes</SelectItem>
                       {SPORT_TYPES.map((sport) => (
                         <SelectItem key={sport.value} value={sport.value}>
                           {sport.label}
@@ -126,7 +130,7 @@ export default function Courses() {
                       <SelectValue placeholder="Seleccionar nivel" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos los niveles</SelectItem>
+                      <SelectItem value="all-levels">Todos los niveles</SelectItem>
                       {LEVELS.map((level) => (
                         <SelectItem key={level.value} value={level.value}>
                           {level.label}
@@ -148,7 +152,7 @@ export default function Courses() {
                       <SelectValue placeholder="Seleccionar instructor" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos los instructores</SelectItem>
+                      <SelectItem value="all-instructors">Todos los instructores</SelectItem>
                       {instructors?.map((instructor) => (
                         <SelectItem key={instructor.id} value={instructor.id}>
                           {instructor.full_name}
