@@ -110,15 +110,9 @@ export default function InstructorManagement() {
           </p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <AdminButton 
-              icon={<Plus className="h-4 w-4" />}
-              onClick={() => {
-                console.log("Instructor button clicked!");
-                setIsDialogOpen(true);
-              }}
-            >
+            <AdminButton icon={<Plus className="h-4 w-4" />}>
               Nuevo Instructor
             </AdminButton>
           </DialogTrigger>

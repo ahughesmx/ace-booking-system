@@ -143,15 +143,9 @@ export default function ClassManagement() {
           </p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <AdminButton 
-              icon={<Plus className="h-4 w-4" />}
-              onClick={() => {
-                console.log("Class button clicked!");
-                setIsDialogOpen(true);
-              }}
-            >
+            <AdminButton icon={<Plus className="h-4 w-4" />}>
               Nueva Clase
             </AdminButton>
           </DialogTrigger>
