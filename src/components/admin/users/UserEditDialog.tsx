@@ -18,6 +18,13 @@ interface UserEditDialogProps {
 }
 
 export const UserEditDialog = ({ user, onSubmit }: UserEditDialogProps) => {
+  console.log("📝 UserEditDialog Debug - User data:", {
+    id: user.id,
+    full_name: user.full_name,
+    phone: user.phone,
+    phone_type: typeof user.phone
+  });
+  
   const [formData, setFormData] = useState({
     full_name: user.full_name || "",
     member_id: user.member_id || "",
