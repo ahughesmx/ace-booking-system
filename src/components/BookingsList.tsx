@@ -98,6 +98,78 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
           .eq("id", bookingId);
 
         if (error) throw error;
+
+        // Trigger booking_cancelled webhooks
+        try {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user?.id)
+            .single();
+
+          const { data: court } = await supabase
+            .from("courts")
+            .select("*")
+            .eq("id", booking.court.id)
+            .single();
+
+          const webhookData = {
+            booking_id: bookingId,
+            user_id: user?.id,
+            court_id: booking.court.id,
+            start_time: booking.start_time,
+            end_time: booking.end_time,
+            court_name: booking.court.name,
+            court_type: booking.court.court_type,
+            user_name: profile?.full_name,
+            user_phone: profile?.phone,
+            remotejid: profile?.phone,
+            date: new Date(booking.start_time).toISOString().split('T')[0],
+            time: new Date(booking.start_time).toLocaleTimeString('es-ES', { 
+              hour: '2-digit', 
+              minute: '2-digit', 
+              hour12: false 
+            }),
+            cancellation_reason: 'User cancelled'
+          };
+
+          // Get active webhooks for booking_cancelled
+          const { data: webhooks } = await supabase
+            .from("webhooks")
+            .select("*")
+            .eq("event_type", "booking_cancelled")
+            .eq("is_active", true);
+
+          if (webhooks && webhooks.length > 0) {
+            console.log(`🚀 Disparando ${webhooks.length} webhooks para booking_cancelled`);
+            for (const webhook of webhooks) {
+              try {
+                const customHeaders = webhook.headers as Record<string, string> || {};
+                const headers: Record<string, string> = {
+                  "Content-Type": "application/json",
+                  ...customHeaders,
+                };
+
+                await fetch(webhook.url, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({
+                    event: "booking_cancelled",
+                    timestamp: new Date().toISOString(),
+                    data: webhookData,
+                    webhook_name: webhook.name
+                  }),
+                });
+
+                console.log(`✅ Webhook ${webhook.name} disparado exitosamente para booking_cancelled`);
+              } catch (webhookError) {
+                console.error(`❌ Error disparando webhook ${webhook.name}:`, webhookError);
+              }
+            }
+          }
+        } catch (webhookError) {
+          console.error("❌ Error procesando webhooks de cancelación:", webhookError);
+        }
       }
 
       // Invalidate all booking-related queries
