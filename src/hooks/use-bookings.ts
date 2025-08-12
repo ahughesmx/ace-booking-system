@@ -1,7 +1,8 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { Booking, RegularBooking, SpecialBooking } from "@/types/booking";
+import { useEffect } from "react";
 
 export function useBookings(selectedDate?: Date) {
   return useQuery({
@@ -102,8 +103,58 @@ export function useSpecialBookings(selectedDate?: Date) {
 }
 
 export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoading: boolean } {
+  const queryClient = useQueryClient();
   const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate);
   const { data: specialBookings = [], isLoading: loadingSpecial } = useSpecialBookings(selectedDate);
+
+  // Setup realtime subscriptions
+  useEffect(() => {
+    if (!selectedDate) return;
+
+    console.log("🔄 Setting up realtime subscriptions for Display");
+
+    // Subscribe to bookings changes
+    const bookingsChannel = supabase
+      .channel('bookings-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings'
+        },
+        (payload) => {
+          console.log('📡 Bookings table change detected:', payload);
+          // Invalidate and refetch bookings queries
+          queryClient.invalidateQueries({ queryKey: ["bookings"] });
+        }
+      )
+      .subscribe();
+
+    // Subscribe to special_bookings changes
+    const specialBookingsChannel = supabase
+      .channel('special-bookings-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'special_bookings'
+        },
+        (payload) => {
+          console.log('📡 Special bookings table change detected:', payload);
+          // Invalidate and refetch special bookings queries
+          queryClient.invalidateQueries({ queryKey: ["special-bookings"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log("🧹 Cleaning up realtime subscriptions");
+      supabase.removeChannel(bookingsChannel);
+      supabase.removeChannel(specialBookingsChannel);
+    };
+  }, [selectedDate, queryClient]);
 
   const transformedRegularBookings: RegularBooking[] = regularBookings.map(booking => ({
     id: booking.id,
