@@ -105,20 +105,17 @@ export default function Display() {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-rotation for individual view
+  // Auto-refresh for individual view
   useEffect(() => {
-    if (viewMode === 'single' && allCourts && allCourts.length > 1 && displaySettings?.rotation_interval) {
-      const rotationInterval = setInterval(() => {
-        setSelectedCourtId(prevId => {
-          const currentIndex = allCourts.findIndex(court => court.id === prevId);
-          const nextIndex = (currentIndex + 1) % allCourts.length;
-          return allCourts[nextIndex].id;
-        });
+    if (viewMode === 'single' && displaySettings?.rotation_interval) {
+      const refreshInterval = setInterval(() => {
+        setCurrentTime(new Date());
+        // Force a re-render by updating the key or triggering a state change
       }, displaySettings.rotation_interval);
 
-      return () => clearInterval(rotationInterval);
+      return () => clearInterval(refreshInterval);
     }
-  }, [viewMode, allCourts, displaySettings?.rotation_interval]);
+  }, [viewMode, displaySettings?.rotation_interval]);
 
   if (!displaySettings?.is_enabled) {
     return (
