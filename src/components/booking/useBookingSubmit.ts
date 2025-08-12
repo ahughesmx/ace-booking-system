@@ -129,7 +129,12 @@ export function useBookingSubmit(onBookingSuccess: () => void) {
           userId: user.id,
           remotejid: profile?.phone || "",
           date: selectedDate.toISOString().split('T')[0],
-          time: selectedTime
+          time: startTime.toLocaleTimeString('es-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: false,
+            timeZone: 'America/El_Salvador'
+          })
         };
 
         console.log('📋 Datos del webhook preparados:', webhookData);
