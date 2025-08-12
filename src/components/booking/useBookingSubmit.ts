@@ -104,6 +104,71 @@ export function useBookingSubmit(onBookingSuccess: () => void) {
 
       console.log('🔥 DEBUGGING BOOKING INSERTION - END');
 
+      // Disparar webhooks para booking_created
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, phone")
+          .eq("id", user.id)
+          .single();
+
+        const { data: court } = await supabase
+          .from("courts")
+          .select("name")
+          .eq("id", courtId)
+          .single();
+
+        const webhookData = {
+          id: insertedBooking[0].id,
+          courtName: court?.name || "Cancha desconocida",
+          courtId: courtId,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          userName: profile?.full_name || "Usuario",
+          userId: user.id,
+          remotejid: profile?.phone || "",
+          date: selectedDate.toISOString().split('T')[0],
+          time: selectedTime
+        };
+
+        // Obtener webhooks activos para booking_created
+        const { data: webhooks } = await supabase
+          .from("webhooks")
+          .select("*")
+          .eq("event_type", "booking_created")
+          .eq("is_active", true);
+
+        if (webhooks && webhooks.length > 0) {
+          for (const webhook of webhooks) {
+            try {
+              const customHeaders = webhook.headers as Record<string, string> || {};
+              const headers: Record<string, string> = {
+                "Content-Type": "application/json",
+                ...customHeaders,
+              };
+
+              await fetch(webhook.url, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                  event: "booking_created",
+                  timestamp: new Date().toISOString(),
+                  data: webhookData,
+                  webhook_name: webhook.name
+                }),
+              });
+
+              console.log(`Webhook ${webhook.name} disparado exitosamente`);
+            } catch (webhookError) {
+              console.error(`Error disparando webhook ${webhook.name}:`, webhookError);
+            }
+          }
+        }
+      } catch (webhookError) {
+        console.error("Error procesando webhooks:", webhookError);
+        // No fallar la reserva por errores de webhook
+      }
+
       // Invalidar todas las queries relacionadas con reservas para actualizar los contadores
       await queryClient.invalidateQueries({ 
         queryKey: ["bookings"] 
