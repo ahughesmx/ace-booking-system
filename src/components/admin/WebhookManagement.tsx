@@ -247,14 +247,24 @@ const WebhookManagement = () => {
 
   const testWebhookMutation = useMutation({
     mutationFn: async (webhook: Webhook) => {
+      console.log('Testing webhook:', webhook.url);
+      
       const testPayload = {
         event: webhook.event_type,
         timestamp: new Date().toISOString(),
         test: true,
         data: {
-          message: "Test webhook from CDV Admin Panel"
+          message: "Test webhook from CDV Admin Panel",
+          webhook_name: webhook.name,
+          test_id: `test_${Date.now()}`
         }
       };
+
+      console.log('Sending test payload:', testPayload);
+      console.log('Using headers:', {
+        "Content-Type": "application/json",
+        ...webhook.headers,
+      });
 
       const response = await fetch(webhook.url, {
         method: "POST",
@@ -265,23 +275,49 @@ const WebhookManagement = () => {
         body: JSON.stringify(testPayload),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      let responseText = '';
+      try {
+        responseText = await response.text();
+        console.log('Response body:', responseText);
+      } catch (e) {
+        console.log('Could not read response body:', e);
       }
 
-      return response;
+      if (!response.ok) {
+        const errorDetails = {
+          status: response.status,
+          statusText: response.statusText,
+          body: responseText || 'No response body',
+          headers: Object.fromEntries(response.headers.entries())
+        };
+        
+        throw new Error(`HTTP ${response.status}: ${response.statusText}\nResponse: ${responseText || 'No response body'}`);
+      }
+
+      return { 
+        response, 
+        responseText,
+        status: response.status 
+      };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log('Webhook test successful:', result);
       toast({
-        title: "Webhook probado",
-        description: "El webhook respondió correctamente",
+        title: "Webhook probado exitosamente",
+        description: `Respuesta HTTP ${result.status}: ${result.responseText || 'Sin contenido'}`,
       });
     },
     onError: (error: any) => {
-      console.error("Webhook test error:", error);
+      console.error("Webhook test detailed error:", error);
+      
+      const errorMessage = error.message || 'Error desconocido';
+      
       toast({
-        title: "Error en webhook",
-        description: `El webhook falló: ${error.message}`,
+        title: "Error al probar webhook",
+        description: `${errorMessage}. Verifica que la URL sea correcta y que n8n esté funcionando.`,
         variant: "destructive",
       });
     },
