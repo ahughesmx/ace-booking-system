@@ -129,7 +129,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
               hour: '2-digit', 
               minute: '2-digit', 
               hour12: false,
-              timeZone: 'America/El_Salvador'
+              timeZone: 'America/Mexico_City'
             }),
             cancellation_reason: 'User cancelled'
           };

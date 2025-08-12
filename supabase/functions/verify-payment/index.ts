@@ -98,7 +98,7 @@ serve(async (req) => {
               hour: '2-digit', 
               minute: '2-digit', 
               hour12: false,
-              timeZone: 'America/El_Salvador'
+              timeZone: 'America/Mexico_City'
             })
           };
 
