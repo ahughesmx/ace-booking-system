@@ -4,7 +4,7 @@ import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin, User, Calendar, Trophy, GraduationCap, Star } from "lucide-react";
+import { Clock, MapPin, User, Calendar, Trophy, GraduationCap, Star, Zap } from "lucide-react";
 import type { Booking } from "@/types/booking";
 import { useCancellationRules } from "@/hooks/use-cancellation-rules";
 
@@ -113,9 +113,9 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
           )}
           
           {isOwner && !booking.isSpecial && !isCancellationAllowed && (
-            <Badge variant="secondary" className="text-xs text-gray-500">
-              Cancelación deshabilitada
-            </Badge>
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
+              <Zap className="w-5 h-5 text-gray-400" />
+            </div>
           )}
         </div>
       </CardContent>
