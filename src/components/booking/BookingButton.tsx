@@ -30,7 +30,10 @@ export function BookingButton({
     <Button
       className="w-full"
       disabled={isDisabled || isSubmitting}
-      onClick={onClick}
+      onClick={() => {
+        console.log('🔘 BookingButton clicked!', { isDisabled, isSubmitting });
+        onClick();
+      }}
     >
       {isSubmitting ? "Procesando..." : "Continuar al pago"}
     </Button>

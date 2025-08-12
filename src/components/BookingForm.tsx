@@ -186,6 +186,21 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   const isButtonDisabled = !!disabledReason || isSubmitting || isCreatingBooking;
   const maxBookings = bookingRules?.max_active_bookings || 4;
 
+  console.log('🔍 Button state check:', {
+    disabledReason,
+    isButtonDisabled,
+    isSubmitting,
+    isCreatingBooking,
+    selectedDate: !!selectedDate,
+    selectedTime: !!selectedTime,
+    selectedCourtType: !!selectedCourtType,
+    selectedCourt: !!selectedCourt,
+    courtsLength: courts.length,
+    user: !!user,
+    userActiveBookings,
+    maxBookings
+  });
+
   // Si se está mostrando el resumen de pago
   console.log('🔍 BookingSummary check - showSummary:', showSummary, 'pendingBooking:', !!pendingBooking);
   if (showSummary && pendingBooking) {
