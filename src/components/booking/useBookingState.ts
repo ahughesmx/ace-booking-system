@@ -67,7 +67,10 @@ export function useBookingState(initialCourtType?: string | null) {
     selectedTime,
     courts,
     setSelectedCourt,
-    setSelectedTime,
+    setSelectedTime: (time: string | null) => {
+      console.log('🎯 useBookingState.setSelectedTime called with:', time);
+      setSelectedTime(time);
+    },
     handleCourtTypeSelect,
     handleBackToTypeSelection,
   };

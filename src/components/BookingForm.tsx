@@ -68,20 +68,35 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   };
 
   const handleShowSummary = async () => {
+    console.log('🎯 handleShowSummary called with:', {
+      selectedDate: selectedDate?.toISOString(),
+      selectedTime,
+      selectedCourtType,
+      selectedCourt
+    });
+
     if (!selectedDate || !selectedTime || !selectedCourtType || !selectedCourt) {
+      console.log('❌ Missing required fields for booking:', {
+        hasDate: !!selectedDate,
+        hasTime: !!selectedTime,
+        hasCourtType: !!selectedCourtType,
+        hasCourt: !!selectedCourt
+      });
       return;
     }
 
     try {
+      console.log('💰 Creating pending booking...');
       await createPendingBooking({
         selectedDate,
         selectedTime,
         selectedCourt,
         selectedCourtType
       });
+      console.log('✅ Pending booking created, showing summary');
       setShowSummary(true);
     } catch (error) {
-      console.error("Error creating pending booking:", error);
+      console.error("❌ Error creating pending booking:", error);
     }
   };
 

@@ -95,6 +95,8 @@ export function TimeSlotSelector({
     const bookingsCount = bookedSlots.has(slot) ? 1 : 0;
     const available = Math.max(0, totalCourts - bookingsCount);
     
+    console.log(`🔍 DISPONIBILIDAD SLOT ${slot}: totalCourts=${totalCourts}, bookingsCount=${bookingsCount}, available=${available}, bookedSlots.has=${bookedSlots.has(slot)}`);
+    
     return available;
   };
 
@@ -195,8 +197,12 @@ export function TimeSlotSelector({
               )}
               disabled={!isAvailable}
               onClick={() => {
+                console.log(`🎯 CLICK EN SLOT ${timeSlot.start} - isAvailable: ${isAvailable}, disabled: ${!isAvailable}`);
                 if (isAvailable) {
+                  console.log(`✅ SELECCIONANDO HORARIO: ${timeSlot.start}`);
                   onTimeSelect(timeSlot.start);
+                } else {
+                  console.log(`❌ SLOT NO DISPONIBLE: ${timeSlot.start}`);
                 }
               }}
             >
