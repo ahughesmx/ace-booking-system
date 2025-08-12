@@ -141,15 +141,54 @@ const WebhookManagement = () => {
   "timestamp": "2025-08-15T18:30:00Z",
   "data": {
     "match_id": "match-uuid",
-    "sender_name": "Juan Pérez",
+    "invitation_id": null,
     "sender_id": "sender-uuid",
-    "recipient_name": "María García",
     "recipient_id": "recipient-uuid",
-    "court_name": "Cancha 1",
-    "match_time": "2025-08-15T20:00:00Z",
+    "recipient_name": "María García",
+    "recipient_phone": "52123456789",
+    "remotejid": "52123456789",
+    "position": "player2",
     "is_doubles": false,
-    "position": "player2"
-  }
+    "court_name": "Cancha 1",
+    "court_type": "tennis",
+    "start_time": "2025-08-15T20:00:00Z",
+    "end_time": "2025-08-15T21:30:00Z",
+    "date": "2025-08-15",
+    "time": "20:00",
+    "player1_name": "Juan Pérez",
+    "player2_name": null,
+    "player1_partner_name": null,
+    "player2_partner_name": null
+  },
+  "webhook_name": "Mi Webhook WhatsApp"
+}
+
+// Para partidos DOBLES el payload incluye:
+{
+  "event": "match_invitation_sent",
+  "timestamp": "2025-08-15T18:30:00Z",
+  "data": {
+    "match_id": "match-uuid",
+    "invitation_id": null,
+    "sender_id": "sender-uuid",
+    "recipient_id": "recipient-uuid",
+    "recipient_name": "Ana López",
+    "recipient_phone": "52987654321",
+    "remotejid": "52987654321",
+    "position": "player1_partner",
+    "is_doubles": true,
+    "court_name": "Pádel",
+    "court_type": "padel",
+    "start_time": "2025-08-15T20:00:00Z",
+    "end_time": "2025-08-15T21:30:00Z",
+    "date": "2025-08-15",
+    "time": "20:00",
+    "player1_name": "Juan Pérez",
+    "player2_name": "Carlos Ruiz",
+    "player1_partner_name": null,
+    "player2_partner_name": "María García"
+  },
+  "webhook_name": "Mi Webhook WhatsApp"
 }`
       },
       match_invitation_responded: {
@@ -161,15 +200,28 @@ const WebhookManagement = () => {
   "timestamp": "2025-08-15T18:30:00Z",
   "data": {
     "match_id": "match-uuid",
-    "sender_name": "Juan Pérez",
+    "invitation_id": "invitation-uuid",
     "sender_id": "sender-uuid",
-    "recipient_name": "María García",
+    "sender_name": "Juan Pérez",
+    "sender_phone": "52123456789",
     "recipient_id": "recipient-uuid",
+    "recipient_name": "María García",
+    "recipient_phone": "52987654321",
+    "remotejid": "52987654321",
     "court_name": "Cancha 1",
-    "match_time": "2025-08-15T20:00:00Z",
+    "court_type": "tennis",
+    "start_time": "2025-08-15T20:00:00Z",
+    "end_time": "2025-08-15T21:30:00Z",
+    "date": "2025-08-15",
+    "time": "20:00",
     "response": "accepted",
-    "is_doubles": false
-  }
+    "is_doubles": false,
+    "player1_name": "Juan Pérez",
+    "player2_name": "María García",
+    "player1_partner_name": null,
+    "player2_partner_name": null
+  },
+  "webhook_name": "Mi Webhook WhatsApp"
 }`
       },
       user_registered: {
