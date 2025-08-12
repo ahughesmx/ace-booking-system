@@ -406,18 +406,18 @@ export default function Display() {
             </div>
 
             <div className="flex-1 p-2 min-h-0">
-              <div className="grid grid-cols-3 gap-2 h-full">
-                {/* Morning, Afternoon, Evening columns */}
+              <div className="grid grid-rows-3 gap-3 h-full">
+                {/* Morning, Afternoon, Evening rows */}
                 {[
                   { title: "Mañana (7:00 - 12:00)", slots: timeSlots.slice(0, 6) },
                   { title: "Tarde (13:00 - 18:00)", slots: timeSlots.slice(6, 12) },
                   { title: "Noche (19:00 - 23:00)", slots: timeSlots.slice(12) }
                 ].map((period, periodIndex) => (
-                  <div key={periodIndex} className="flex flex-col">
-                    <h3 className="text-xs font-bold text-gray-800 mb-1 text-center border-b border-gray-200 pb-1 flex-shrink-0">
+                  <div key={periodIndex} className="flex flex-col flex-1">
+                    <h3 className="text-sm font-bold text-gray-800 mb-2 text-center border-b border-gray-200 pb-1 flex-shrink-0">
                       {period.title}
                     </h3>
-                    <div className={`flex-1 grid gap-1 min-h-0`} style={{ gridTemplateRows: `repeat(${period.slots.length}, 1fr)` }}>
+                    <div className="flex-1 grid gap-2 min-h-0" style={{ gridTemplateColumns: `repeat(${period.slots.length}, 1fr)` }}>
                       {period.slots.map((slot) => {
                         const slotInfo = getSlotInfo(selectedCourt.id, slot);
                         const isCurrent = format(currentTime, "HH:00") === slot;
@@ -425,7 +425,7 @@ export default function Display() {
                         return (
                           <div
                             key={slot}
-                            className={`border rounded p-1 text-center text-xs flex flex-col justify-center ${
+                            className={`border rounded p-2 text-center text-xs flex flex-col justify-center min-h-[80px] ${
                               slotInfo.isBooked
                                 ? slotInfo.type === 'special'
                                   ? 'bg-purple-100 border-purple-300 text-purple-800'
