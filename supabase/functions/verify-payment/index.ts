@@ -64,6 +64,101 @@ serve(async (req) => {
 
         if (error) throw error;
 
+        console.log('🎯 STRIPE VERIFY-PAYMENT: Pago confirmado, ejecutando webhooks...');
+        
+        // Ejecutar webhooks para booking_created después de confirmación de Stripe
+        try {
+          const { data: profile } = await supabaseService
+            .from("profiles")
+            .select("*")
+            .eq("id", session.metadata?.user_id)
+            .single();
+
+          const { data: court } = await supabaseService
+            .from("courts")
+            .select("*")
+            .eq("id", existingBooking.court_id)
+            .single();
+
+          const webhookData = {
+            booking_id: existingBooking.id,
+            user_id: session.metadata?.user_id,
+            court_id: existingBooking.court_id,
+            start_time: existingBooking.start_time,
+            end_time: existingBooking.end_time,
+            status: 'paid',
+            amount: existingBooking.amount,
+            court_name: court?.name,
+            court_type: court?.court_type,
+            user_name: profile?.full_name,
+            user_phone: profile?.phone,
+            remotejid: profile?.phone,
+            date: new Date(existingBooking.start_time).toISOString().split('T')[0],
+            time: new Date(existingBooking.start_time).toLocaleTimeString('es-ES', { 
+              hour: '2-digit', 
+              minute: '2-digit', 
+              hour12: false 
+            })
+          };
+
+          console.log('📋 STRIPE VERIFY-PAYMENT: Datos del webhook preparados:', webhookData);
+
+          // Obtener webhooks activos para booking_created
+          const { data: webhooks, error: webhooksError } = await supabaseService
+            .from("webhooks")
+            .select("*")
+            .eq("event_type", "booking_created")
+            .eq("is_active", true);
+
+          console.log('🔍 STRIPE VERIFY-PAYMENT: Webhooks encontrados:', webhooks, 'Error:', webhooksError);
+
+          if (webhooks && webhooks.length > 0) {
+            console.log(`🚀 STRIPE VERIFY-PAYMENT: Disparando ${webhooks.length} webhooks`);
+            for (const webhook of webhooks) {
+              console.log(`📡 STRIPE VERIFY-PAYMENT: Procesando webhook: ${webhook.name} -> ${webhook.url}`);
+              try {
+                const customHeaders = webhook.headers as Record<string, string> || {};
+                const headers: Record<string, string> = {
+                  "Content-Type": "application/json",
+                  ...customHeaders,
+                };
+
+                console.log('📤 STRIPE VERIFY-PAYMENT: Enviando webhook:', {
+                  url: webhook.url,
+                  headers,
+                  payload: {
+                    event: "booking_created",
+                    timestamp: new Date().toISOString(),
+                    data: webhookData,
+                    webhook_name: webhook.name
+                  }
+                });
+
+                const response = await fetch(webhook.url, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({
+                    event: "booking_created",
+                    timestamp: new Date().toISOString(),
+                    data: webhookData,
+                    webhook_name: webhook.name
+                  }),
+                });
+
+                console.log(`✅ STRIPE VERIFY-PAYMENT: Webhook ${webhook.name} response status:`, response.status);
+                console.log(`✅ STRIPE VERIFY-PAYMENT: Webhook ${webhook.name} disparado exitosamente`);
+              } catch (webhookError) {
+                console.error(`❌ STRIPE VERIFY-PAYMENT: Error disparando webhook ${webhook.name}:`, webhookError);
+              }
+            }
+          } else {
+            console.log('⚠️ STRIPE VERIFY-PAYMENT: No se encontraron webhooks activos para booking_created');
+          }
+        } catch (webhookError) {
+          console.error("❌ STRIPE VERIFY-PAYMENT: Error procesando webhooks:", webhookError);
+          // No fallar la verificación por errores de webhook
+        }
+
         return new Response(JSON.stringify({ 
           success: true, 
           message: "Pago verificado y reserva confirmada",
