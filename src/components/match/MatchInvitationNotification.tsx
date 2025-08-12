@@ -111,6 +111,123 @@ export const MatchInvitationNotification = () => {
 
       if (error) throw error;
 
+      // Trigger match_invitation_responded webhook
+      if (accept) {
+        try {
+          // Get match details with booking and players information
+          const { data: matchDetails } = await supabase
+            .from("matches")
+            .select(`
+              *,
+              booking:bookings (
+                id,
+                start_time,
+                end_time,
+                court:courts (
+                  id,
+                  name,
+                  court_type
+                )
+              ),
+              player1:profiles!player1_id (
+                id,
+                full_name,
+                phone
+              ),
+              player2:profiles!player2_id (
+                id,
+                full_name,
+                phone
+              ),
+              player1_partner:profiles!player1_partner_id (
+                id,
+                full_name,
+                phone
+              ),
+              player2_partner:profiles!player2_partner_id (
+                id,
+                full_name,
+                phone
+              )
+            `)
+            .eq("id", selectedInvitation.match.id)
+            .single();
+
+          // Get user profile
+          const { data: userProfile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user?.id)
+            .single();
+
+          if (matchDetails && userProfile) {
+            const webhookData = {
+              match_id: selectedInvitation.match.id,
+              invitation_id: selectedInvitation.id,
+              recipient_id: user?.id,
+              recipient_name: userProfile.full_name,
+              recipient_phone: userProfile.phone,
+              remotejid: userProfile.phone,
+              response: "accepted",
+              is_doubles: matchDetails.is_doubles,
+              court_name: matchDetails.booking?.court?.name,
+              court_type: matchDetails.booking?.court?.court_type,
+              start_time: matchDetails.booking?.start_time,
+              end_time: matchDetails.booking?.end_time,
+              date: matchDetails.booking?.start_time ? 
+                new Date(matchDetails.booking.start_time).toISOString().split('T')[0] : null,
+              time: matchDetails.booking?.start_time ? 
+                new Date(matchDetails.booking.start_time).toLocaleTimeString('es-ES', { 
+                  hour: '2-digit', 
+                  minute: '2-digit', 
+                  hour12: false 
+                }) : null,
+              player1_name: matchDetails.player1?.full_name,
+              player2_name: matchDetails.player2?.full_name,
+              player1_partner_name: matchDetails.player1_partner?.full_name,
+              player2_partner_name: matchDetails.player2_partner?.full_name
+            };
+
+            // Get active webhooks for match_invitation_responded
+            const { data: webhooks } = await supabase
+              .from("webhooks")
+              .select("*")
+              .eq("event_type", "match_invitation_responded")
+              .eq("is_active", true);
+
+            if (webhooks && webhooks.length > 0) {
+              console.log(`🚀 Disparando ${webhooks.length} webhooks para match_invitation_responded`);
+              for (const webhook of webhooks) {
+                try {
+                  const customHeaders = webhook.headers as Record<string, string> || {};
+                  const headers: Record<string, string> = {
+                    "Content-Type": "application/json",
+                    ...customHeaders,
+                  };
+
+                  await fetch(webhook.url, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({
+                      event: "match_invitation_responded",
+                      timestamp: new Date().toISOString(),
+                      data: webhookData,
+                      webhook_name: webhook.name
+                    }),
+                  });
+
+                  console.log(`✅ Webhook ${webhook.name} disparado exitosamente para match_invitation_responded`);
+                } catch (webhookError) {
+                  console.error(`❌ Error disparando webhook ${webhook.name}:`, webhookError);
+                }
+              }
+            }
+          }
+        } catch (webhookError) {
+          console.error("❌ Error procesando webhooks de respuesta de invitación:", webhookError);
+        }
+      }
+
       toast({
         title: accept ? "Invitación aceptada" : "Invitación rechazada",
         description: accept
