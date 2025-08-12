@@ -253,12 +253,17 @@ const WebhookManagement = () => {
       const testPayload = {
         event: webhook.event_type,
         timestamp: new Date().toISOString(),
-        test: true,
         data: {
-          message: "Test webhook from CDV Admin Panel",
-          messageType: "test_webhook",
-          webhook_name: webhook.name,
-          test_id: `test_${Date.now()}`
+          id: `test_${Date.now()}`,
+          courtName: "Cancha de Prueba",
+          courtId: "test-court-id",
+          startTime: new Date().toISOString(),
+          endTime: new Date(Date.now() + 90 * 60 * 1000).toISOString(),
+          userName: "Usuario de Prueba",
+          userId: "test-user-id",
+          remotejid: "52123456789",
+          date: new Date().toISOString().split('T')[0],
+          time: "18:00"
         }
       };
 
