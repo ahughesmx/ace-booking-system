@@ -7,6 +7,7 @@ import { es } from "date-fns/locale";
 import { Monitor, Building2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAllBookings } from "@/hooks/use-bookings";
+import { useAvailableCourtTypes } from "@/hooks/use-available-court-types";
 import { Booking, SpecialBooking } from "@/types/booking";
 
 // Generate time slots from 7:00 to 23:00
@@ -25,6 +26,9 @@ export default function Display() {
 
   // Use the combined bookings hook
   const { data: allBookings = [], isLoading } = useAllBookings(currentDate);
+  
+  // Get active court types
+  const { data: availableCourtTypes = [] } = useAvailableCourtTypes(true);
 
   console.log("🖥️ Display component - All bookings received:", {
     total: allBookings.length,
@@ -50,7 +54,7 @@ export default function Display() {
     },
   });
 
-  const { data: courts } = useQuery({
+  const { data: allCourts } = useQuery({
     queryKey: ["courts"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -66,6 +70,23 @@ export default function Display() {
       return data || [];
     },
   });
+
+  // Filter courts by active sport types for "All" view
+  const courts = viewMode === 'all' 
+    ? allCourts?.filter(court => 
+        availableCourtTypes.some(type => type.type_name === court.court_type)
+      ) || []
+    : allCourts || [];
+
+  // Set default court to Pádel in individual view
+  useEffect(() => {
+    if (viewMode === 'single' && !selectedCourtId && allCourts?.length) {
+      const padelCourt = allCourts.find(court => court.court_type === 'padel');
+      if (padelCourt) {
+        setSelectedCourtId(padelCourt.id);
+      }
+    }
+  }, [viewMode, selectedCourtId, allCourts]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -366,7 +387,7 @@ export default function Display() {
             className="px-3 py-1 border-2 border-blue-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[200px]"
           >
             <option value="">Seleccionar Cancha</option>
-            {courts?.map((court) => (
+            {allCourts?.map((court) => (
               <option key={court.id} value={court.id}>
                 {court.name}
               </option>
