@@ -262,6 +262,7 @@ const WebhookManagement = () => {
       };
 
       console.log('Sending test payload:', testPayload);
+      console.log('Full test payload structure:', JSON.stringify(testPayload, null, 2));
       console.log('Using headers:', {
         "Content-Type": "application/json",
         ...webhook.headers,
