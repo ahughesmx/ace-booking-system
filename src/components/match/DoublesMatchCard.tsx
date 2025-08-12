@@ -72,7 +72,7 @@ export function DoublesMatchCard({
   );
 
   const renderInviteButtons = () => {
-    if (isMatchConfirmed) return null;
+    if (isMatchConfirmed || !userId) return null;
 
     const buttons = [];
     const isPlayer1 = userId === match.player1_id;
@@ -84,7 +84,7 @@ export function DoublesMatchCard({
         <NewMatchInvite
           key="player2"
           matchId={match.id}
-          currentUserId={userId || ''}
+          currentUserId={userId}
           isDoubles={true}
           position="player2"
         />
@@ -97,7 +97,7 @@ export function DoublesMatchCard({
         <NewMatchInvite
           key="player1_partner"
           matchId={match.id}
-          currentUserId={userId || ''}
+          currentUserId={userId}
           isDoubles={true}
           position="player1_partner"
         />
@@ -110,7 +110,7 @@ export function DoublesMatchCard({
         <NewMatchInvite
           key="player2_partner"
           matchId={match.id}
-          currentUserId={userId || ''}
+          currentUserId={userId}
           isDoubles={true}
           position="player2_partner"
         />

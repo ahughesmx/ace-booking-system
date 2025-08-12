@@ -82,11 +82,11 @@ export function SinglesMatchCard({
           <MatchLocation courtName={match.booking?.court?.name} />
         </div>
 
-        {isMatchOwner && !isMatchConfirmed && !match.player2_id && (
+        {isMatchOwner && !isMatchConfirmed && !match.player2_id && userId && (
           <div className="flex flex-wrap gap-2 mt-4">
             <NewMatchInvite
               matchId={match.id}
-              currentUserId={userId || ''}
+              currentUserId={userId}
               isDoubles={false}
               position="player2"
             />

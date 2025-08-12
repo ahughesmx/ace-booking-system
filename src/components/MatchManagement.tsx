@@ -22,6 +22,18 @@ export function MatchManagement() {
     handleCreateMatch(user?.id, isDoubles, bookingId);
   };
 
+  // Mostrar mensaje de autenticación requerida si no hay usuario
+  if (!user) {
+    return (
+      <div className="text-center py-8">
+        <h3 className="text-lg font-medium mb-2">Autenticación requerida</h3>
+        <p className="text-muted-foreground">
+          Debes iniciar sesión para gestionar partidos y enviar invitaciones.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <MatchHeader

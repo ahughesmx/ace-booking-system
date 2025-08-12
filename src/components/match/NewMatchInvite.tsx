@@ -30,6 +30,16 @@ export function NewMatchInvite({
   const { toast } = useToast();
 
   const handleInvite = async (recipientId: string) => {
+    // Validar que el usuario esté autenticado
+    if (!currentUserId) {
+      toast({
+        title: "Error",
+        description: "Debes iniciar sesión para enviar invitaciones",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       // Verificar si el usuario ya tiene un partido confirmado en esta fecha y hora
       if (bookingStartTime) {
