@@ -2,6 +2,7 @@
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";
+import { useCancellationRules } from "@/hooks/use-cancellation-rules";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { format } from "date-fns";
@@ -26,6 +27,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   const { toast } = useToast();
   const { data: userRole } = useUserRole(user?.id);
   const isAdmin = userRole?.role === "admin";
+  const { getCancellationAllowed } = useCancellationRules();
   const queryClient = useQueryClient();
 
   const { data: allBookings = [], isLoading } = useAllBookings(selectedDate);
@@ -66,6 +68,17 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
       } else {
         const booking = bookings.find(b => b.id === bookingId);
         if (!booking) return;
+
+        // Verificar si la cancelación está permitida para este tipo de cancha
+        const isCancellationAllowed = getCancellationAllowed(booking.court?.court_type);
+        if (!isAdmin && !isCancellationAllowed) {
+          toast({
+            title: "Cancelación no permitida",
+            description: `Las cancelaciones están deshabilitadas para canchas de ${booking.court?.court_type === 'tennis' ? 'tenis' : 'pádel'}.`,
+            variant: "destructive",
+          });
+          return;
+        }
 
         const startTime = new Date(booking.start_time);
         const now = new Date();

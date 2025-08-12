@@ -30,6 +30,7 @@ function BookingRulesForm({ courtType, courtTypeLabel }: BookingRulesFormProps) 
     const maxBookings = parseInt(formData.get("maxBookings") as string);
     const minCancellationHours = parseInt(formData.get("minCancellationHours") as string);
     const allowConsecutive = formData.get("allowConsecutive") === "true";
+    const allowCancellation = formData.get("allowCancellation") === "true";
     const timeBetweenHours = parseInt(formData.get("timeBetweenHours") as string);
     const maxDaysAhead = parseInt(formData.get("maxDaysAhead") as string);
 
@@ -40,6 +41,7 @@ function BookingRulesForm({ courtType, courtTypeLabel }: BookingRulesFormProps) 
           max_active_bookings: maxBookings,
           min_cancellation_time: `${minCancellationHours}:00:00`,
           allow_consecutive_bookings: allowConsecutive,
+          allow_cancellation: allowCancellation,
           time_between_bookings: `${timeBetweenHours}:00:00`,
           max_days_ahead: maxDaysAhead,
         })
@@ -133,6 +135,15 @@ function BookingRulesForm({ courtType, courtTypeLabel }: BookingRulesFormProps) 
               defaultChecked={rules.allow_consecutive_bookings}
             />
             <Label htmlFor={`allowConsecutive-${courtType}`}>Permitir reservas consecutivas</Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id={`allowCancellation-${courtType}`}
+              name="allowCancellation"
+              defaultChecked={rules.allow_cancellation}
+            />
+            <Label htmlFor={`allowCancellation-${courtType}`}>Permitir cancelación de reservas</Label>
           </div>
 
           <div className="space-y-2">

@@ -43,6 +43,7 @@ export type Database = {
       }
       booking_rules: {
         Row: {
+          allow_cancellation: boolean
           allow_consecutive_bookings: boolean
           court_type: string
           created_at: string | null
@@ -54,6 +55,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          allow_cancellation?: boolean
           allow_consecutive_bookings?: boolean
           court_type: string
           created_at?: string | null
@@ -65,6 +67,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          allow_cancellation?: boolean
           allow_consecutive_bookings?: boolean
           court_type?: string
           created_at?: string | null

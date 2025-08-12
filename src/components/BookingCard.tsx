@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin, User, Calendar, Trophy, GraduationCap, Star } from "lucide-react";
 import type { Booking } from "@/types/booking";
+import { useCancellationRules } from "@/hooks/use-cancellation-rules";
 
 interface BookingCardProps {
   booking: Booking & { isSpecial?: boolean; event_type?: string; title?: string; description?: string };
@@ -16,6 +17,9 @@ interface BookingCardProps {
 export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
   const startTime = new Date(booking.start_time);
   const endTime = new Date(booking.end_time);
+  const { getCancellationAllowed } = useCancellationRules();
+
+  const isCancellationAllowed = getCancellationAllowed(booking.court?.court_type);
 
   const getEventIcon = (eventType?: string) => {
     switch (eventType) {
@@ -97,7 +101,7 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
             </div>
           </div>
           
-          {isOwner && !booking.isSpecial && (
+          {isOwner && !booking.isSpecial && isCancellationAllowed && (
             <Button
               variant="outline"
               size="sm"
@@ -106,6 +110,12 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
             >
               Cancelar
             </Button>
+          )}
+          
+          {isOwner && !booking.isSpecial && !isCancellationAllowed && (
+            <Badge variant="secondary" className="text-xs text-gray-500">
+              Cancelación deshabilitada
+            </Badge>
           )}
         </div>
       </CardContent>
