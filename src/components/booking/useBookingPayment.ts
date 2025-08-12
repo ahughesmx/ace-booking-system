@@ -103,12 +103,22 @@ export function useBookingPayment() {
           amount: pendingBooking.amount
         };
 
+        console.log('💳 STRIPE: Invocando edge function create-payment con datos:', { bookingData });
+        
         const { data, error } = await supabase.functions.invoke('create-payment', {
           body: { bookingData }
         });
 
-        if (error) throw new Error(`Error al crear sesión de pago: ${error.message}`);
-        if (!data?.url) throw new Error("No se recibió URL de pago");
+        console.log('💳 STRIPE: Respuesta del edge function:', { data, error });
+
+        if (error) {
+          console.error('💳 STRIPE: Error del edge function:', error);
+          throw new Error(`Error al crear sesión de pago: ${error.message}`);
+        }
+        if (!data?.url) {
+          console.error('💳 STRIPE: No se recibió URL en la respuesta:', data);
+          throw new Error("No se recibió URL de pago");
+        }
 
         console.log('💳 STRIPE: Abriendo sesión de pago, el webhook se ejecutará cuando Stripe confirme el pago');
         
