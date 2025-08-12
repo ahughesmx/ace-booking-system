@@ -20,11 +20,16 @@ export function useBookingPayment() {
   const { user } = useAuth();
 
   const createPendingBooking = async (bookingData: BookingData) => {
+    console.log('📋 createPendingBooking called with:', bookingData);
+    console.log('👤 Current user:', { userId: user?.id, email: user?.email });
+    
     if (!user?.id) {
+      console.error('❌ User not authenticated');
       throw new Error("Usuario no autenticado");
     }
 
     setIsCreatingBooking(true);
+    console.log('🔄 Setting isCreatingBooking to true');
 
     try {
       const { selectedDate, selectedTime, selectedCourt, selectedCourtType } = bookingData;
@@ -56,6 +61,8 @@ export function useBookingPayment() {
         currency: 'USD'
       };
 
+      console.log('💰 Booking payload to insert:', bookingPayload);
+
       const { data: booking, error } = await supabase
         .from("bookings")
         .insert(bookingPayload)
@@ -65,14 +72,22 @@ export function useBookingPayment() {
         `)
         .single();
 
-      if (error) throw error;
+      console.log('📊 Booking insertion result:', { booking, error });
 
+      if (error) {
+        console.error('❌ Error inserting booking:', error);
+        throw error;
+      }
+
+      console.log('✅ Booking created successfully:', booking);
       setPendingBooking(booking);
+      console.log('✅ Pending booking state set');
       return booking;
     } catch (error) {
-      console.error("Error creating pending booking:", error);
+      console.error("❌ Error creating pending booking:", error);
       throw error;
     } finally {
+      console.log('🔄 Setting isCreatingBooking to false');
       setIsCreatingBooking(false);
     }
   };

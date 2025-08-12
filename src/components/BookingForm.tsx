@@ -81,6 +81,13 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
       } : 'no rules'
     });
 
+    console.log('🔍 Validation check - missing fields:', {
+      hasDate: !!selectedDate,
+      hasTime: !!selectedTime,
+      hasCourtType: !!selectedCourtType,
+      hasCourt: !!selectedCourt
+    });
+
     if (!selectedDate || !selectedTime || !selectedCourtType || !selectedCourt) {
       console.log('❌ Missing required fields for booking:', {
         hasDate: !!selectedDate,
