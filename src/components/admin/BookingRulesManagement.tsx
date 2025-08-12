@@ -20,6 +20,8 @@ function BookingRulesForm({ courtType, courtTypeLabel }: BookingRulesFormProps) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: rules, isLoading, refetch } = useBookingRules(courtType);
 
+  console.log(`BookingRulesForm for ${courtType}:`, { rules, isLoading });
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
