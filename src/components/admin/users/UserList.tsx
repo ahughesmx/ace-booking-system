@@ -1,7 +1,7 @@
 import { User, Shield, IdCard, Phone, Edit2, UserPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import type { Database } from "@/integrations/supabase/types";
 import { UserEditDialog } from "./UserEditDialog";
 
@@ -74,6 +74,9 @@ export const UserList = ({
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Editar Usuario</DialogTitle>
+                  <DialogDescription>
+                    Modifica la información del usuario seleccionado.
+                  </DialogDescription>
                 </DialogHeader>
                 <UserEditDialog user={user} onSubmit={onEditUser} />
               </DialogContent>
