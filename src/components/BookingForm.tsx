@@ -15,6 +15,7 @@ import { DisabledReasonInfo } from "./booking/DisabledReasonInfo";
 import { BookingSummary } from "./booking/BookingSummary";
 import { useBookingPayment } from "./booking/useBookingPayment";
 import { useAvailableCourtTypes } from "@/hooks/use-available-court-types";
+import { useToast } from "@/hooks/use-toast";
 
 interface BookingFormProps {
   selectedDate?: Date;
@@ -26,6 +27,7 @@ interface BookingFormProps {
 export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, onCourtTypeChange }: BookingFormProps) {
   const navigate = useNavigate();
   const [showSummary, setShowSummary] = useState(false);
+  const { toast } = useToast();
   const { handleBooking, isSubmitting } = useBookingSubmit(onBookingSuccess);
   const { 
     createPendingBooking, 
@@ -72,7 +74,11 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
       selectedDate: selectedDate?.toISOString(),
       selectedTime,
       selectedCourtType,
-      selectedCourt
+      selectedCourt,
+      bookingRules: bookingRules ? {
+        maxDaysAhead: bookingRules.max_days_ahead,
+        courtType: bookingRules.court_type
+      } : 'no rules'
     });
 
     if (!selectedDate || !selectedTime || !selectedCourtType || !selectedCourt) {
@@ -83,6 +89,31 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
         hasCourt: !!selectedCourt
       });
       return;
+    }
+
+    // Verificar reglas de reserva antes de crear
+    if (bookingRules) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const daysDiff = Math.ceil((selectedDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      console.log('📅 VALIDATION CHECK:', {
+        today: today.toDateString(),
+        selectedDate: selectedDate.toDateString(),
+        daysDiff,
+        maxDaysAhead: bookingRules.max_days_ahead,
+        isValid: daysDiff <= bookingRules.max_days_ahead
+      });
+      
+      if (daysDiff > bookingRules.max_days_ahead) {
+        console.error('❌ Cannot book more than', bookingRules.max_days_ahead, 'days ahead');
+        toast({
+          title: "Reserva no permitida",
+          description: `No puedes reservar más de ${bookingRules.max_days_ahead} días por adelantado para ${selectedCourtType}`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     try {
