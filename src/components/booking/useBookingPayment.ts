@@ -137,6 +137,100 @@ export function useBookingPayment() {
 
         if (error) throw error;
 
+        // Disparar webhooks para booking_created
+        console.log('🎯 INICIANDO PROCESO DE WEBHOOKS DESPUÉS DEL PAGO');
+        try {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user?.id)
+            .single();
+
+          const { data: court } = await supabase
+            .from("courts")
+            .select("*")
+            .eq("id", pendingBooking.court_id)
+            .single();
+
+          const webhookData = {
+            booking_id: pendingBooking.id,
+            user_id: user?.id,
+            court_id: pendingBooking.court_id,
+            start_time: pendingBooking.start_time,
+            end_time: pendingBooking.end_time,
+            status: 'paid',
+            amount: pendingBooking.amount,
+            court_name: court?.name,
+            court_type: court?.court_type,
+            user_name: profile?.full_name,
+            user_phone: profile?.phone,
+            remotejid: profile?.phone,
+            date: new Date(pendingBooking.start_time).toISOString().split('T')[0],
+            time: new Date(pendingBooking.start_time).toLocaleTimeString('es-ES', { 
+              hour: '2-digit', 
+              minute: '2-digit', 
+              hour12: false 
+            })
+          };
+
+          console.log('📋 Datos del webhook preparados:', webhookData);
+
+          // Obtener webhooks activos para booking_created
+          const { data: webhooks, error: webhooksError } = await supabase
+            .from("webhooks")
+            .select("*")
+            .eq("event_type", "booking_created")
+            .eq("is_active", true);
+
+          console.log('🔍 Webhooks encontrados:', webhooks, 'Error:', webhooksError);
+
+          if (webhooks && webhooks.length > 0) {
+            console.log(`🚀 Disparando ${webhooks.length} webhooks`);
+            for (const webhook of webhooks) {
+              console.log(`📡 Procesando webhook: ${webhook.name} -> ${webhook.url}`);
+              try {
+                const customHeaders = webhook.headers as Record<string, string> || {};
+                const headers: Record<string, string> = {
+                  "Content-Type": "application/json",
+                  ...customHeaders,
+                };
+
+                console.log('📤 Enviando webhook:', {
+                  url: webhook.url,
+                  headers,
+                  payload: {
+                    event: "booking_created",
+                    timestamp: new Date().toISOString(),
+                    data: webhookData,
+                    webhook_name: webhook.name
+                  }
+                });
+
+                const response = await fetch(webhook.url, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({
+                    event: "booking_created",
+                    timestamp: new Date().toISOString(),
+                    data: webhookData,
+                    webhook_name: webhook.name
+                  }),
+                });
+
+                console.log(`✅ Webhook ${webhook.name} response status:`, response.status);
+                console.log(`✅ Webhook ${webhook.name} disparado exitosamente`);
+              } catch (webhookError) {
+                console.error(`❌ Error disparando webhook ${webhook.name}:`, webhookError);
+              }
+            }
+          } else {
+            console.log('⚠️ No se encontraron webhooks activos para booking_created');
+          }
+        } catch (webhookError) {
+          console.error("❌ Error procesando webhooks:", webhookError);
+          // No fallar la reserva por errores de webhook
+        }
+
         await queryClient.invalidateQueries({ queryKey: ["bookings"] });
         await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
         await queryClient.invalidateQueries({ queryKey: ["active-bookings", user?.id] });
