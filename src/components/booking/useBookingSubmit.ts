@@ -105,6 +105,7 @@ export function useBookingSubmit(onBookingSuccess: () => void) {
       console.log('🔥 DEBUGGING BOOKING INSERTION - END');
 
       // Disparar webhooks para booking_created
+      console.log('🎯 INICIANDO PROCESO DE WEBHOOKS');
       try {
         const { data: profile } = await supabase
           .from("profiles")
@@ -131,15 +132,21 @@ export function useBookingSubmit(onBookingSuccess: () => void) {
           time: selectedTime
         };
 
+        console.log('📋 Datos del webhook preparados:', webhookData);
+
         // Obtener webhooks activos para booking_created
-        const { data: webhooks } = await supabase
+        const { data: webhooks, error: webhooksError } = await supabase
           .from("webhooks")
           .select("*")
           .eq("event_type", "booking_created")
           .eq("is_active", true);
 
+        console.log('🔍 Webhooks encontrados:', webhooks, 'Error:', webhooksError);
+
         if (webhooks && webhooks.length > 0) {
+          console.log(`🚀 Disparando ${webhooks.length} webhooks`);
           for (const webhook of webhooks) {
+            console.log(`📡 Procesando webhook: ${webhook.name} -> ${webhook.url}`);
             try {
               const customHeaders = webhook.headers as Record<string, string> || {};
               const headers: Record<string, string> = {
@@ -147,7 +154,18 @@ export function useBookingSubmit(onBookingSuccess: () => void) {
                 ...customHeaders,
               };
 
-              await fetch(webhook.url, {
+              console.log('📤 Enviando webhook:', {
+                url: webhook.url,
+                headers,
+                payload: {
+                  event: "booking_created",
+                  timestamp: new Date().toISOString(),
+                  data: webhookData,
+                  webhook_name: webhook.name
+                }
+              });
+
+              const response = await fetch(webhook.url, {
                 method: "POST",
                 headers,
                 body: JSON.stringify({
@@ -158,14 +176,17 @@ export function useBookingSubmit(onBookingSuccess: () => void) {
                 }),
               });
 
-              console.log(`Webhook ${webhook.name} disparado exitosamente`);
+              console.log(`✅ Webhook ${webhook.name} response status:`, response.status);
+              console.log(`✅ Webhook ${webhook.name} disparado exitosamente`);
             } catch (webhookError) {
-              console.error(`Error disparando webhook ${webhook.name}:`, webhookError);
+              console.error(`❌ Error disparando webhook ${webhook.name}:`, webhookError);
             }
           }
+        } else {
+          console.log('⚠️ No se encontraron webhooks activos para booking_created');
         }
       } catch (webhookError) {
-        console.error("Error procesando webhooks:", webhookError);
+        console.error("❌ Error procesando webhooks:", webhookError);
         // No fallar la reserva por errores de webhook
       }
 
