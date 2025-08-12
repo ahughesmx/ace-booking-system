@@ -30,6 +30,13 @@ export const UserCard = ({
   setIsDialogOpen,
   setEditingUser,
 }: UserCardProps) => {
+  console.log("🔍 UserCard Debug - User data:", { 
+    id: user.id, 
+    full_name: user.full_name, 
+    phone: user.phone,
+    phone_type: typeof user.phone 
+  });
+  
   return (
     <div className="group relative overflow-hidden rounded-lg border bg-card p-6 transition-all hover:shadow-md">
       <div className="mb-4 flex items-center justify-between">
