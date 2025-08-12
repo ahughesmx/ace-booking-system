@@ -121,10 +121,12 @@ export function useBookingPayment() {
         return true;
       } else {
         // Para otros métodos de pago, simular por ahora
-        console.log(`Procesando pago con ${paymentGateway} para reserva ${pendingBooking.id}`);
+        console.log(`🔄 INICIANDO PAGO SIMULADO con ${paymentGateway} para reserva ${pendingBooking.id}`);
+        console.log('📋 Datos de la reserva pendiente:', pendingBooking);
         
         await new Promise(resolve => setTimeout(resolve, 2000));
         
+        console.log('💳 ACTUALIZANDO STATUS DE RESERVA A PAID');
         const { error } = await supabase
           .from("bookings")
           .update({
@@ -134,6 +136,8 @@ export function useBookingPayment() {
             payment_id: `${paymentGateway}_${Date.now()}`
           })
           .eq("id", pendingBooking.id);
+
+        console.log('💳 RESULTADO DE ACTUALIZACIÓN:', error ? 'ERROR: ' + error.message : 'ÉXITO');
 
         if (error) throw error;
 
