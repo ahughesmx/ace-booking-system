@@ -132,6 +132,46 @@ const WebhookManagement = () => {
   }
 }`
       },
+      match_invitation_sent: {
+        description: "Se dispara cuando se envía una invitación de partido",
+        headerExample: '{"Content-Type": "application/json"}',
+        headerPlaceholder: 'Opcional: Headers para autenticación con tu sistema de mensajería',
+        payloadExample: `{
+  "event": "match_invitation_sent",
+  "timestamp": "2025-08-15T18:30:00Z",
+  "data": {
+    "match_id": "match-uuid",
+    "sender_name": "Juan Pérez",
+    "sender_id": "sender-uuid",
+    "recipient_name": "María García",
+    "recipient_id": "recipient-uuid",
+    "court_name": "Cancha 1",
+    "match_time": "2025-08-15T20:00:00Z",
+    "is_doubles": false,
+    "position": "player2"
+  }
+}`
+      },
+      match_invitation_responded: {
+        description: "Se dispara cuando un jugador responde a una invitación de partido",
+        headerExample: '{"Content-Type": "application/json"}',
+        headerPlaceholder: 'Opcional: Headers para autenticación con tu sistema de mensajería',
+        payloadExample: `{
+  "event": "match_invitation_responded",
+  "timestamp": "2025-08-15T18:30:00Z",
+  "data": {
+    "match_id": "match-uuid",
+    "sender_name": "Juan Pérez",
+    "sender_id": "sender-uuid",
+    "recipient_name": "María García",
+    "recipient_id": "recipient-uuid",
+    "court_name": "Cancha 1",
+    "match_time": "2025-08-15T20:00:00Z",
+    "response": "accepted",
+    "is_doubles": false
+  }
+}`
+      },
       user_registered: {
         description: "Se dispara cuando se registra un nuevo usuario",
         headerExample: '{"Content-Type": "application/json"}',
@@ -406,6 +446,8 @@ const WebhookManagement = () => {
     { value: "booking_cancelled", label: "Reserva cancelada" },
     { value: "match_created", label: "Partido creado" },
     { value: "match_completed", label: "Partido completado" },
+    { value: "match_invitation_sent", label: "Invitación de partido enviada" },
+    { value: "match_invitation_responded", label: "Invitación de partido respondida" },
     { value: "user_registered", label: "Usuario registrado" },
   ];
 
