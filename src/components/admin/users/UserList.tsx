@@ -17,18 +17,12 @@ interface UserListProps {
   }[];
   onEditUser: (userId: string, data: any) => Promise<void>;
   onUpdateRole: (userId: string, newRole: UserRole) => Promise<void>;
-  isDialogOpen: boolean;
-  setIsDialogOpen: (open: boolean) => void;
-  setEditingUser: (user: any) => void;
 }
 
 export const UserList = ({
   users,
   onEditUser,
   onUpdateRole,
-  isDialogOpen,
-  setIsDialogOpen,
-  setEditingUser,
 }: UserListProps) => {
   return (
     <div className="space-y-4">
@@ -67,12 +61,11 @@ export const UserList = ({
               ) : null}
               {user.role}
             </Badge>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog>
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setEditingUser(user)}
                 >
                   <Edit2 className="mr-2 h-4 w-4" />
                   Editar

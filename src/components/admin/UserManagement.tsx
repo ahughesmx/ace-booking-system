@@ -24,8 +24,6 @@ export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
@@ -129,7 +127,7 @@ export default function UserManagement() {
         description: "La información del usuario ha sido actualizada correctamente.",
       });
 
-      setIsDialogOpen(false);
+      
       fetchUsers();
     } catch (error) {
       console.error("Error updating user:", error);
@@ -212,9 +210,6 @@ export default function UserManagement() {
                 user={user}
                 onEditUser={handleEditUser}
                 onUpdateRole={updateUserRole}
-                isDialogOpen={isDialogOpen}
-                setIsDialogOpen={setIsDialogOpen}
-                setEditingUser={setEditingUser}
               />
             ))}
           </div>
@@ -223,9 +218,6 @@ export default function UserManagement() {
             users={filteredUsers}
             onEditUser={handleEditUser}
             onUpdateRole={updateUserRole}
-            isDialogOpen={isDialogOpen}
-            setIsDialogOpen={setIsDialogOpen}
-            setEditingUser={setEditingUser}
           />
         )}
       </CardContent>

@@ -17,26 +17,13 @@ interface UserCardProps {
   };
   onEditUser: (userId: string, data: any) => Promise<void>;
   onUpdateRole: (userId: string, newRole: UserRole) => Promise<void>;
-  isDialogOpen: boolean;
-  setIsDialogOpen: (open: boolean) => void;
-  setEditingUser: (user: any) => void;
 }
 
 export const UserCard = ({
   user,
   onEditUser,
   onUpdateRole,
-  isDialogOpen,
-  setIsDialogOpen,
-  setEditingUser,
 }: UserCardProps) => {
-  console.log("🔍 UserCard Debug - User data:", { 
-    id: user.id, 
-    full_name: user.full_name, 
-    phone: user.phone,
-    phone_type: typeof user.phone 
-  });
-  
   return (
     <div className="group relative overflow-hidden rounded-lg border bg-card p-6 transition-all hover:shadow-md">
       <div className="mb-4 flex items-center justify-between">
@@ -81,13 +68,12 @@ export const UserCard = ({
       </div>
 
       <div className="mt-4 flex gap-2">
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog>
           <DialogTrigger asChild>
             <Button
               variant="outline"
               size="sm"
               className="w-full"
-              onClick={() => setEditingUser(user)}
             >
               <Edit2 className="mr-2 h-4 w-4" />
               Editar
