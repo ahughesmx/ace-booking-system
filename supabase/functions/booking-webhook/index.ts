@@ -190,7 +190,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Check if user exists
     const { data: user, error: userError } = await supabase
       .from("profiles")
-      .select("id, full_name, active_bookings")
+      .select("id, full_name, active_bookings, phone")
       .eq("id", requestData.userId)
       .single();
 
@@ -331,6 +331,7 @@ const handler = async (req: Request): Promise<Response> => {
       endTime: times.endTime.toISOString(),
       userName: user.full_name,
       userId: requestData.userId,
+      remotejid: user.phone || "",
       date: requestData.date,
       time: requestData.time
     };
