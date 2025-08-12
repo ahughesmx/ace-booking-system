@@ -415,14 +415,14 @@ const WebhookManagement = () => {
               Nuevo Webhook
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="max-w-[95vw] sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Crear Nuevo Webhook</DialogTitle>
               <DialogDescription>
                 Configura un webhook para recibir notificaciones de eventos
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-3 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="name">Nombre del Webhook</Label>
                 <Input
