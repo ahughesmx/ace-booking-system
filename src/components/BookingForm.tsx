@@ -34,7 +34,10 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
       <p>Tipo de cancha: {initialCourtType}</p>
       <button 
         className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
-        onClick={() => console.log('🔘 Botón simple funcionando!')}
+        onClick={() => {
+          alert('🔘 Botón funcionando!');
+          console.log('🔘 Botón simple funcionando!');
+        }}
       >
         Botón de prueba
       </button>
