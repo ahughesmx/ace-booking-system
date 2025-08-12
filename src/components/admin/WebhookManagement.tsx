@@ -255,6 +255,7 @@ const WebhookManagement = () => {
         test: true,
         data: {
           message: "Test webhook from CDV Admin Panel",
+          messageType: "test_webhook",
           webhook_name: webhook.name,
           test_id: `test_${Date.now()}`
         }
