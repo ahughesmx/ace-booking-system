@@ -129,6 +129,9 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
     enabled: !!user?.id,
   });
 
+  const selectedBookingData = bookings?.find(booking => booking.id === selectedBooking);
+  const isSelectedCourtPadel = selectedBookingData?.court?.court_type === 'padel';
+
   const handleCreateMatch = (isDoubles: boolean) => {
     if (selectedBooking) {
       console.log("🎾 Creating match for booking:", selectedBooking);
@@ -136,6 +139,10 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
       setIsDialogOpen(false);
       setSelectedBooking("");
     }
+  };
+
+  const handleCreatePadelMatch = () => {
+    handleCreateMatch(true); // Pádel siempre es dobles
   };
 
   const formatCourtType = (courtType: string) => {
@@ -223,26 +230,38 @@ export function MatchHeader({ matchCount, isLoading, onCreateMatch }: MatchHeade
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {isSelectedCourtPadel ? (
                 <Button
-                  onClick={() => handleCreateMatch(false)}
-                  disabled={!selectedBooking}
-                  variant="outline"
-                  className="w-full hover:bg-[#6898FE]/10 border-[#6898FE]/20"
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  Singles
-                </Button>
-                <Button
-                  onClick={() => handleCreateMatch(true)}
+                  onClick={handleCreatePadelMatch}
                   disabled={!selectedBooking}
                   variant="outline"
                   className="w-full hover:bg-[#6898FE]/10 border-[#6898FE]/20"
                 >
                   <Users className="h-4 w-4 mr-2" />
-                  Dobles
+                  Crear Partido de Pádel
                 </Button>
-              </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <Button
+                    onClick={() => handleCreateMatch(false)}
+                    disabled={!selectedBooking}
+                    variant="outline"
+                    className="w-full hover:bg-[#6898FE]/10 border-[#6898FE]/20"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Singles
+                  </Button>
+                  <Button
+                    onClick={() => handleCreateMatch(true)}
+                    disabled={!selectedBooking}
+                    variant="outline"
+                    className="w-full hover:bg-[#6898FE]/10 border-[#6898FE]/20"
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Dobles
+                  </Button>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
