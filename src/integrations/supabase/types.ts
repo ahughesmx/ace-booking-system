@@ -50,6 +50,7 @@ export type Database = {
           id: string
           max_active_bookings: number
           max_days_ahead: number
+          min_advance_booking_time: unknown
           min_cancellation_time: unknown
           time_between_bookings: unknown
           updated_at: string | null
@@ -62,6 +63,7 @@ export type Database = {
           id?: string
           max_active_bookings?: number
           max_days_ahead?: number
+          min_advance_booking_time?: unknown
           min_cancellation_time?: unknown
           time_between_bookings?: unknown
           updated_at?: string | null
@@ -74,6 +76,7 @@ export type Database = {
           id?: string
           max_active_bookings?: number
           max_days_ahead?: number
+          min_advance_booking_time?: unknown
           min_cancellation_time?: unknown
           time_between_bookings?: unknown
           updated_at?: string | null

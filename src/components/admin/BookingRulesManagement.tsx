@@ -32,6 +32,7 @@ function BookingRulesForm({ courtType, courtTypeLabel }: BookingRulesFormProps) 
     const allowConsecutive = formData.get("allowConsecutive") === "true";
     const allowCancellation = formData.get("allowCancellation") === "true";
     const timeBetweenHours = parseInt(formData.get("timeBetweenHours") as string);
+    const minAdvanceBookingMinutes = parseInt(formData.get("minAdvanceBookingMinutes") as string);
     const maxDaysAhead = parseInt(formData.get("maxDaysAhead") as string);
 
     try {
@@ -43,6 +44,7 @@ function BookingRulesForm({ courtType, courtTypeLabel }: BookingRulesFormProps) 
           allow_consecutive_bookings: allowConsecutive,
           allow_cancellation: allowCancellation,
           time_between_bookings: `${timeBetweenHours}:00:00`,
+          min_advance_booking_time: `00:${minAdvanceBookingMinutes.toString().padStart(2, '0')}:00`,
           max_days_ahead: maxDaysAhead,
         })
         .eq("court_type", courtType);
@@ -80,6 +82,7 @@ function BookingRulesForm({ courtType, courtTypeLabel }: BookingRulesFormProps) 
 
   const minCancellationHours = parseInt(rules.min_cancellation_time.split(":")[0]);
   const timeBetweenHours = parseInt(rules.time_between_bookings.split(":")[0]);
+  const minAdvanceBookingMinutes = parseInt(rules.min_advance_booking_time.split(":")[1]);
 
   return (
     <Card>
@@ -125,6 +128,20 @@ function BookingRulesForm({ courtType, courtTypeLabel }: BookingRulesFormProps) 
               min="1"
               max="72"
               defaultValue={minCancellationHours}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor={`minAdvanceBookingMinutes-${courtType}`}>
+              Tiempo mínimo para reservar (minutos)
+            </Label>
+            <Input
+              id={`minAdvanceBookingMinutes-${courtType}`}
+              name="minAdvanceBookingMinutes"
+              type="number"
+              min="1"
+              max="1440"
+              defaultValue={minAdvanceBookingMinutes}
             />
           </div>
 

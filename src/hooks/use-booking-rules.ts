@@ -10,6 +10,7 @@ type BookingRules = {
   allow_consecutive_bookings: boolean;
   allow_cancellation: boolean;
   time_between_bookings: string;
+  min_advance_booking_time: string;
   max_days_ahead: number;
   created_at: string;
   updated_at: string;
