@@ -30,8 +30,15 @@ export function NewMatchInvite({
   const { toast } = useToast();
 
   const handleInvite = async (recipientId: string) => {
+    console.log("=== DEBUG: handleInvite called ===");
+    console.log("currentUserId:", currentUserId);
+    console.log("recipientId:", recipientId);
+    console.log("matchId:", matchId);
+    console.log("position:", position);
+    
     // Validar que el usuario esté autenticado
     if (!currentUserId) {
+      console.log("ERROR: currentUserId is falsy");
       toast({
         title: "Error",
         description: "Debes iniciar sesión para enviar invitaciones",
@@ -66,30 +73,38 @@ export function NewMatchInvite({
       }
       
       // Crear la invitación
+      console.log("=== Inserting invitation ===");
+      const invitationData = {
+        match_id: matchId,
+        sender_id: currentUserId,
+        recipient_id: recipientId,
+        status: 'pending'
+      };
+      console.log("invitationData:", invitationData);
+      
       const { error: invitationError } = await supabase
         .from('match_invitations')
-        .insert([
-          {
-            match_id: matchId,
-            sender_id: currentUserId,
-            recipient_id: recipientId,
-            status: 'pending'
-          }
-        ]);
+        .insert([invitationData]);
 
+      console.log("invitationError:", invitationError);
       if (invitationError) {
         throw invitationError;
       }
 
       // Actualizar el match con el jugador invitado
+      console.log("=== Updating match ===");
       const updateData: Record<string, any> = {};
       updateData[position + '_id'] = recipientId;
+      
+      console.log("updateData:", updateData);
+      console.log("matchId:", matchId);
 
       const { error: matchError } = await supabase
         .from('matches')
         .update(updateData)
         .eq('id', matchId);
 
+      console.log("matchError:", matchError);
       if (matchError) {
         throw matchError;
       }
@@ -217,7 +232,10 @@ export function NewMatchInvite({
 
       setOpen(false);
     } catch (error) {
-      console.error("Error sending invitation:", error);
+      console.error("=== ERROR in handleInvite ===");
+      console.error("Error details:", error);
+      console.error("Error type:", typeof error);
+      console.error("Error message:", error instanceof Error ? error.message : "Unknown error");
       toast({
         variant: "destructive",
         title: "Error",
