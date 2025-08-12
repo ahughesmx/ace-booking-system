@@ -105,6 +105,21 @@ export default function Display() {
     return () => clearInterval(interval);
   }, []);
 
+  // Auto-rotation for individual view
+  useEffect(() => {
+    if (viewMode === 'single' && allCourts && allCourts.length > 1 && displaySettings?.rotation_interval) {
+      const rotationInterval = setInterval(() => {
+        setSelectedCourtId(prevId => {
+          const currentIndex = allCourts.findIndex(court => court.id === prevId);
+          const nextIndex = (currentIndex + 1) % allCourts.length;
+          return allCourts[nextIndex].id;
+        });
+      }, displaySettings.rotation_interval);
+
+      return () => clearInterval(rotationInterval);
+    }
+  }, [viewMode, allCourts, displaySettings?.rotation_interval]);
+
   if (!displaySettings?.is_enabled) {
     return (
       <div className="h-screen w-screen bg-white flex items-center justify-center">
