@@ -145,6 +145,16 @@ export function useBookingSubmit(onBookingSuccess: () => void) {
 
         if (webhooks && webhooks.length > 0) {
           console.log(`🚀 Disparando ${webhooks.length} webhooks`);
+          // Log detallado de webhooks encontrados
+          webhooks.forEach((wh, index) => {
+            console.log(`📋 Webhook ${index + 1}:`, {
+              name: wh.name,
+              url: wh.url,
+              event_type: wh.event_type,
+              is_active: wh.is_active,
+              headers: wh.headers
+            });
+          });
           for (const webhook of webhooks) {
             console.log(`📡 Procesando webhook: ${webhook.name} -> ${webhook.url}`);
             try {
