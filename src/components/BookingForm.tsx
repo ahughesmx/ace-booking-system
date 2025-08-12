@@ -25,6 +25,7 @@ interface BookingFormProps {
 }
 
 export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, onCourtTypeChange }: BookingFormProps) {
+  console.log('🟢 BookingForm RENDER - selectedDate:', selectedDate, 'initialCourtType:', initialCourtType);
   const navigate = useNavigate();
   const [showSummary, setShowSummary] = useState(false);
   const { toast } = useToast();
