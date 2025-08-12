@@ -63,6 +63,85 @@ const WebhookManagement = () => {
     event_type: "booking_created",
     headers: "{}"
   });
+
+  const getEventInfo = (eventType: string) => {
+    const eventConfigs = {
+      booking_created: {
+        description: "Se dispara cuando se crea una nueva reserva",
+        headerExample: '{"Content-Type": "application/json"}',
+        headerPlaceholder: 'Opcional: Headers HTTP como autenticación',
+        payloadExample: `{
+  "event": "booking_created",
+  "data": {
+    "booking_id": "123",
+    "user_name": "Juan Pérez",
+    "court_name": "Cancha 1",
+    "start_time": "2025-08-15T18:30:00Z",
+    "end_time": "2025-08-15T20:00:00Z"
+  }
+}`
+      },
+      match_created: {
+        description: "Se dispara cuando se crea un nuevo partido",
+        headerExample: '{"Content-Type": "application/json", "Authorization": "Bearer token"}',
+        headerPlaceholder: 'Opcional: Headers para autenticación con tu sistema',
+        payloadExample: `{
+  "event": "match_created",
+  "data": {
+    "match_id": "456",
+    "player1_name": "Carlos Martínez",
+    "player2_name": "Ana López",
+    "court_name": "Cancha 3",
+    "match_time": "2025-08-15T18:30:00Z",
+    "is_doubles": false
+  }
+}`
+      },
+      booking_cancelled: {
+        description: "Se dispara cuando se cancela una reserva",
+        headerExample: '{"Content-Type": "application/json"}',
+        headerPlaceholder: 'Opcional: Headers HTTP adicionales',
+        payloadExample: `{
+  "event": "booking_cancelled",
+  "data": {
+    "booking_id": "123",
+    "user_name": "Juan Pérez",
+    "court_name": "Cancha 1",
+    "cancelled_at": "2025-08-15T16:00:00Z"
+  }
+}`
+      },
+      match_completed: {
+        description: "Se dispara cuando se completa un partido",
+        headerExample: '{"Content-Type": "application/json"}',
+        headerPlaceholder: 'Opcional: Headers HTTP adicionales',
+        payloadExample: `{
+  "event": "match_completed",
+  "data": {
+    "match_id": "456",
+    "winner": "Carlos Martínez",
+    "score": "6-4, 6-2",
+    "completed_at": "2025-08-15T20:30:00Z"
+  }
+}`
+      },
+      user_registered: {
+        description: "Se dispara cuando se registra un nuevo usuario",
+        headerExample: '{"Content-Type": "application/json"}',
+        headerPlaceholder: 'Opcional: Headers HTTP adicionales',
+        payloadExample: `{
+  "event": "user_registered",
+  "data": {
+    "user_id": "789",
+    "user_name": "María García",
+    "email": "maria@email.com",
+    "registered_at": "2025-08-15T10:00:00Z"
+  }
+}`
+      }
+    };
+    return eventConfigs[eventType] || eventConfigs.booking_created;
+  };
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -307,25 +386,16 @@ const WebhookManagement = () => {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">Nombre</Label>
+                <Label htmlFor="name">Nombre del Webhook</Label>
                 <Input
                   id="name"
                   value={newWebhook.name}
                   onChange={(e) => setNewWebhook({ ...newWebhook, name: e.target.value })}
-                  placeholder="Mi Sistema Externo (ej: n8n Integration)"
+                  placeholder="ej: Notificaciones n8n, WhatsApp Bot, etc."
                   maxLength={100}
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="url">URL del Webhook (HTTPS únicamente)</Label>
-                <Input
-                  id="url"
-                  value={newWebhook.url}
-                  onChange={(e) => setNewWebhook({ ...newWebhook, url: e.target.value })}
-                  placeholder="https://mi-sistema.com/webhook"
-                  maxLength={500}
-                />
-              </div>
+              
               <div className="grid gap-2">
                 <Label htmlFor="event_type">Tipo de Evento</Label>
                 <Select
@@ -343,17 +413,47 @@ const WebhookManagement = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-sm text-gray-600 mt-1">
+                  {getEventInfo(newWebhook.event_type).description}
+                </p>
               </div>
+
               <div className="grid gap-2">
-                <Label htmlFor="headers">Headers (JSON)</Label>
+                <Label htmlFor="url">URL del Webhook (HTTPS únicamente)</Label>
+                <Input
+                  id="url"
+                  value={newWebhook.url}
+                  onChange={(e) => setNewWebhook({ ...newWebhook, url: e.target.value })}
+                  placeholder="https://hooks.zapier.com/hooks/... o https://n8n.com/webhook/..."
+                  maxLength={500}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="headers">{getEventInfo(newWebhook.event_type).headerPlaceholder}</Label>
                 <Textarea
                   id="headers"
                   value={newWebhook.headers}
                   onChange={(e) => setNewWebhook({ ...newWebhook, headers: e.target.value })}
-                  placeholder='{"Authorization": "Bearer token", "X-API-Key": "key"}'
-                  rows={3}
+                  placeholder={getEventInfo(newWebhook.event_type).headerExample}
+                  rows={2}
                   maxLength={2000}
                 />
+                <p className="text-xs text-gray-500">
+                  Solo para headers HTTP como autenticación. Deja vacío si no necesitas headers especiales.
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Datos que se enviarán automáticamente</Label>
+                <div className="p-3 bg-gray-50 rounded-md">
+                  <p className="text-sm text-gray-600 mb-2">
+                    El sistema enviará automáticamente estos datos al webhook:
+                  </p>
+                  <pre className="text-xs text-gray-700 overflow-auto">
+                    {getEventInfo(newWebhook.event_type).payloadExample}
+                  </pre>
+                </div>
               </div>
             </div>
             <DialogFooter>
