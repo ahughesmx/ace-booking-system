@@ -175,8 +175,16 @@ function BookingCalendar({ selectedCourtType: initialCourtType, selectedDate: in
             </div>
             
             {user ? (
-              <>
-                <div>🟢 DEBUG: User exists, rendering BookingForm</div>
+              <div className="space-y-4">
+                <div className="p-2 bg-green-100 text-green-800 rounded">
+                  🟢 DEBUG: User exists, rendering BookingForm
+                  <br />
+                  User ID: {user?.id}
+                  <br />
+                  Selected Date: {selectedDate?.toDateString()}
+                  <br />
+                  Selected Court Type: {selectedCourtType}
+                </div>
                 <BookingForm 
                   selectedDate={selectedDate}
                   initialCourtType={selectedCourtType}
@@ -189,7 +197,7 @@ function BookingCalendar({ selectedCourtType: initialCourtType, selectedDate: in
                     });
                   }}
                 />
-              </>
+              </div>
             ) : (
               <>
                 <div>🔴 DEBUG: No user, showing login prompt</div>
