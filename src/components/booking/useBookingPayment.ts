@@ -127,6 +127,12 @@ export function useBookingPayment() {
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         console.log('💳 ACTUALIZANDO STATUS DE RESERVA A PAID');
+        console.log('💳 DATOS DE ACTUALIZACIÓN:', {
+          bookingId: pendingBooking.id,
+          gateway: paymentGateway,
+          timestamp: new Date().toISOString()
+        });
+        
         const { error } = await supabase
           .from("bookings")
           .update({
@@ -139,8 +145,13 @@ export function useBookingPayment() {
 
         console.log('💳 RESULTADO DE ACTUALIZACIÓN:', error ? 'ERROR: ' + error.message : 'ÉXITO');
 
-        if (error) throw error;
+        if (error) {
+          console.error('💳 ERROR DETALLADO EN UPDATE:', error);
+          throw error;
+        }
 
+        console.log('💳 ✅ RESERVA ACTUALIZADA CORRECTAMENTE, PROCEDEMOA WEBHOOKS...');
+        
         // Disparar webhooks para booking_created
         console.log('🎯 INICIANDO PROCESO DE WEBHOOKS DESPUÉS DEL PAGO');
         try {
