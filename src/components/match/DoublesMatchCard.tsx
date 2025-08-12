@@ -72,12 +72,14 @@ export function DoublesMatchCard({
   );
 
   const renderInviteButtons = () => {
-    if (!isMatchOwner || isMatchConfirmed) return null;
+    if (isMatchConfirmed) return null;
 
     const buttons = [];
+    const isPlayer1 = userId === match.player1_id;
+    const isPlayer2 = userId === match.player2_id;
 
-    // Invitar oponente principal
-    if (!match.player2_id) {
+    // Solo el creador del partido (player1) puede invitar al oponente principal
+    if (isPlayer1 && !match.player2_id) {
       buttons.push(
         <NewMatchInvite
           key="player2"
@@ -89,8 +91,8 @@ export function DoublesMatchCard({
       );
     }
 
-    // Invitar compañero del jugador 1
-    if (!match.player1_partner_id) {
+    // Solo player1 puede invitar a su propio compañero
+    if (isPlayer1 && !match.player1_partner_id) {
       buttons.push(
         <NewMatchInvite
           key="player1_partner"
@@ -102,8 +104,8 @@ export function DoublesMatchCard({
       );
     }
 
-    // Invitar compañero del jugador 2 (solo si ya hay oponente principal)
-    if (match.player2_id && !match.player2_partner_id) {
+    // Solo player2 puede invitar a su propio compañero
+    if (isPlayer2 && !match.player2_partner_id) {
       buttons.push(
         <NewMatchInvite
           key="player2_partner"
