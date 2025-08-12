@@ -151,7 +151,7 @@ export function BookingSummary({
             onClick={onCancel}
             disabled={isLoading}
           >
-            Cancelar
+            Salir
           </Button>
           {paymentGateways.length === 0 && (
             <Button
