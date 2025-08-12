@@ -77,7 +77,8 @@ const WebhookManagement = () => {
     "user_name": "Juan Pérez",
     "court_name": "Cancha 1",
     "start_time": "2025-08-15T18:30:00Z",
-    "end_time": "2025-08-15T20:00:00Z"
+    "end_time": "2025-08-15T20:00:00Z",
+    "remotejid": "52123456789"
   }
 }`
       },
