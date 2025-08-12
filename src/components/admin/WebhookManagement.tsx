@@ -72,14 +72,20 @@ const WebhookManagement = () => {
         headerPlaceholder: 'Opcional: Headers HTTP como autenticación',
         payloadExample: `{
   "event": "booking_created",
+  "timestamp": "2025-08-15T18:30:00Z",
   "data": {
-    "booking_id": "123",
-    "user_name": "Juan Pérez",
-    "court_name": "Cancha 1",
-    "start_time": "2025-08-15T18:30:00Z",
-    "end_time": "2025-08-15T20:00:00Z",
-    "remotejid": "52123456789"
-  }
+    "id": "booking-uuid",
+    "courtName": "Cancha 1",
+    "courtId": "court-uuid",
+    "startTime": "2025-08-15T18:30:00Z",
+    "endTime": "2025-08-15T20:00:00Z",
+    "userName": "Juan Pérez",
+    "userId": "user-uuid",
+    "remotejid": "52123456789",
+    "date": "2025-08-15",
+    "time": "18:30"
+  },
+  "webhook_name": "Mi Webhook"
 }`
       },
       match_created: {
