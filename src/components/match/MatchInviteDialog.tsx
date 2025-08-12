@@ -111,18 +111,37 @@ export function MatchInviteDialog({ matchId, currentUserId, isDoubles, position 
           .eq("id", matchId)
           .single();
 
-        // Get recipient profile
+        // Get recipient and sender profiles
         const { data: recipientProfile } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", selectedUserId)
           .single();
 
-        if (matchDetails && recipientProfile) {
+        const { data: senderProfile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", currentUserId)
+          .single();
+
+        if (matchDetails && recipientProfile && senderProfile) {
+          console.log('🔍 Match details for webhook:', {
+            matchId,
+            player1: matchDetails.player1,
+            player2: matchDetails.player2,
+            player1_partner: matchDetails.player1_partner,
+            player2_partner: matchDetails.player2_partner,
+            booking: matchDetails.booking,
+            recipient: recipientProfile,
+            sender: senderProfile
+          });
+
           const webhookData = {
             match_id: matchId,
             invitation_id: null, // Will be set by the database
             sender_id: currentUserId,
+            sender_name: senderProfile.full_name,
+            sender_phone: senderProfile.phone,
             recipient_id: selectedUserId,
             recipient_name: recipientProfile.full_name,
             recipient_phone: recipientProfile.phone,
@@ -142,10 +161,16 @@ export function MatchInviteDialog({ matchId, currentUserId, isDoubles, position 
                 hour12: false 
               }) : null,
             player1_name: matchDetails.player1?.full_name,
+            player1_phone: matchDetails.player1?.phone,
             player2_name: matchDetails.player2?.full_name,
+            player2_phone: matchDetails.player2?.phone,
             player1_partner_name: matchDetails.player1_partner?.full_name,
-            player2_partner_name: matchDetails.player2_partner?.full_name
+            player1_partner_phone: matchDetails.player1_partner?.phone,
+            player2_partner_name: matchDetails.player2_partner?.full_name,
+            player2_partner_phone: matchDetails.player2_partner?.phone
           };
+
+          console.log('📤 Webhook payload:', JSON.stringify(webhookData, null, 2));
 
           // Get active webhooks for match_invitation_sent
           const { data: webhooks } = await supabase
