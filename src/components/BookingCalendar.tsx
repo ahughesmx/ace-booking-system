@@ -175,45 +175,31 @@ function BookingCalendar({ selectedCourtType: initialCourtType, selectedDate: in
             </div>
             
             {user ? (
-              <div className="space-y-4">
-                <div className="p-2 bg-green-100 text-green-800 rounded">
-                  🟢 DEBUG: User exists, rendering BookingForm
-                  <br />
-                  User ID: {user?.id}
-                  <br />
-                  Selected Date: {selectedDate?.toDateString()}
-                  <br />
-                  Selected Court Type: {selectedCourtType}
-                </div>
-                <BookingForm 
-                  selectedDate={selectedDate}
-                  initialCourtType={selectedCourtType}
-                  onCourtTypeChange={handleCourtTypeChange}
-                  onBookingSuccess={() => {
-                    refetchBookings();
-                    toast({
-                      title: "Reserva exitosa",
-                      description: "Tu cancha ha sido reservada correctamente.",
-                    });
-                  }}
-                />
-              </div>
+              <BookingForm 
+                selectedDate={selectedDate}
+                initialCourtType={selectedCourtType}
+                onCourtTypeChange={handleCourtTypeChange}
+                onBookingSuccess={() => {
+                  refetchBookings();
+                  toast({
+                    title: "Reserva exitosa",
+                    description: "Tu cancha ha sido reservada correctamente.",
+                  });
+                }}
+              />
             ) : (
-              <>
-                <div>🔴 DEBUG: No user, showing login prompt</div>
-                <div className="text-center p-4 bg-[#6898FE]/5 rounded-lg border border-[#6898FE]/20">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Inicia sesión para reservar una cancha
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigate('/login')}
-                    className="hover:bg-[#6898FE]/10 border-[#6898FE]/20"
-                  >
-                    Iniciar Sesión
-                  </Button>
-                </div>
-              </>
+              <div className="text-center p-4 bg-[#6898FE]/5 rounded-lg border border-[#6898FE]/20">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Inicia sesión para reservar una cancha
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/login')}
+                  className="hover:bg-[#6898FE]/10 border-[#6898FE]/20"
+                >
+                  Iniciar Sesión
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
