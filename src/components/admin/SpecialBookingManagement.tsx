@@ -74,7 +74,10 @@ export default function SpecialBookingManagement() {
     recurrence_pattern: [] as string[],
     recurrence_weeks: 1,
     reference_user_id: '',
-    reference_user_search: ''
+    reference_user_search: '',
+    // Nuevas propiedades para rango de días
+    is_date_range: false,
+    end_date: null as Date | null
   });
 
   const [userSuggestions, setUserSuggestions] = useState<any[]>([]);
@@ -196,6 +199,24 @@ export default function SpecialBookingManagement() {
     return uniqueDates;
   };
 
+  const generateDateRange = (startDate: Date, endDate: Date) => {
+    const dates: Date[] = [];
+    const currentDate = new Date(startDate);
+    
+    while (currentDate <= endDate) {
+      dates.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    console.log('📅 Generando rango de fechas:', {
+      inicio: startDate.toDateString(),
+      fin: endDate.toDateString(),
+      totalDias: dates.length
+    });
+    
+    return dates;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.court_id || !formData.event_type || !formData.title || !formData.selected_date || 
@@ -208,52 +229,57 @@ export default function SpecialBookingManagement() {
       return;
     }
 
+    // Validaciones adicionales para rango de fechas
+    if (formData.is_date_range && !formData.end_date) {
+      toast({
+        title: "Error",
+        description: "Selecciona una fecha de fin para el rango de días",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.is_date_range && formData.end_date && formData.selected_date && formData.end_date < formData.selected_date) {
+      toast({
+        title: "Error", 
+        description: "La fecha de fin debe ser posterior a la fecha de inicio",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setLoading(true);
       console.log('📝 Iniciando creación de reserva especial:', formData);
 
       const bookingsToCreate = [];
+      let datesToProcess: Date[] = [];
 
-      if (formData.is_recurring && formData.recurrence_pattern.length > 0) {
-        // Generar múltiples reservas para los días recurrentes
-        const recurringDates = generateRecurringDates(
+      // Determinar qué fechas procesar
+      if (formData.is_date_range && formData.end_date) {
+        // Rango de días consecutivos
+        datesToProcess = generateDateRange(formData.selected_date, formData.end_date);
+        console.log('📅 Creando reservas para rango de días:', datesToProcess.length, 'días');
+      } else if (formData.is_recurring && formData.recurrence_pattern.length > 0) {
+        // Días recurrentes por semanas
+        datesToProcess = generateRecurringDates(
           formData.selected_date,
           formData.recurrence_pattern,
           formData.recurrence_weeks
         );
-
-        console.log('🔄 Creando reservas recurrentes para', recurringDates.length, 'fechas');
-
-        for (const date of recurringDates) {
-          const startDateTime = new Date(date);
-          const [startHour, startMinute] = formData.start_time.split(':').map(Number);
-          startDateTime.setHours(startHour, startMinute, 0, 0);
-
-          const endDateTime = new Date(date);
-          const [endHour, endMinute] = formData.end_time.split(':').map(Number);
-          endDateTime.setHours(endHour, endMinute, 0, 0);
-
-          bookingsToCreate.push({
-            court_id: formData.court_id,
-            event_type: formData.event_type,
-            title: formData.title,
-            description: formData.description,
-            start_time: startDateTime.toISOString(),
-            end_time: endDateTime.toISOString(),
-            price_type: formData.price_type,
-            custom_price: formData.price_type === 'custom' ? formData.custom_price : null,
-            is_recurring: true,
-            recurrence_pattern: formData.recurrence_pattern,
-            reference_user_id: formData.reference_user_id
-          });
-        }
+        console.log('🔄 Creando reservas recurrentes para', datesToProcess.length, 'fechas');
       } else {
-        // Crear una sola reserva
-        const startDateTime = new Date(formData.selected_date);
+        // Una sola fecha
+        datesToProcess = [formData.selected_date];
+      }
+
+      // Crear reservas para todas las fechas determinadas
+      for (const date of datesToProcess) {
+        const startDateTime = new Date(date);
         const [startHour, startMinute] = formData.start_time.split(':').map(Number);
         startDateTime.setHours(startHour, startMinute, 0, 0);
 
-        const endDateTime = new Date(formData.selected_date);
+        const endDateTime = new Date(date);
         const [endHour, endMinute] = formData.end_time.split(':').map(Number);
         endDateTime.setHours(endHour, endMinute, 0, 0);
 
@@ -266,8 +292,8 @@ export default function SpecialBookingManagement() {
           end_time: endDateTime.toISOString(),
           price_type: formData.price_type,
           custom_price: formData.price_type === 'custom' ? formData.custom_price : null,
-          is_recurring: false,
-          recurrence_pattern: null,
+          is_recurring: formData.is_recurring || formData.is_date_range,
+          recurrence_pattern: formData.is_recurring ? formData.recurrence_pattern : null,
           reference_user_id: formData.reference_user_id
         });
       }
@@ -301,7 +327,9 @@ export default function SpecialBookingManagement() {
         recurrence_pattern: [],
         recurrence_weeks: 1,
         reference_user_id: '',
-        reference_user_search: ''
+        reference_user_search: '',
+        is_date_range: false,
+        end_date: null
       });
       setUserSuggestions([]);
       setIsCreating(false);
@@ -461,9 +489,9 @@ export default function SpecialBookingManagement() {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className={`grid gap-4 ${formData.is_date_range ? 'grid-cols-4' : 'grid-cols-3'}`}>
                 <div>
-                  <Label>Fecha</Label>
+                  <Label>Fecha {formData.is_date_range ? 'Inicio' : ''}</Label>
                   <Calendar
                     mode="single"
                     selected={formData.selected_date}
@@ -472,6 +500,22 @@ export default function SpecialBookingManagement() {
                     className="rounded-md border"
                   />
                 </div>
+
+                {formData.is_date_range && (
+                  <div>
+                    <Label>Fecha Fin</Label>
+                    <Calendar
+                      mode="single"
+                      selected={formData.end_date}
+                      onSelect={(date) => setFormData({...formData, end_date: date})}
+                      locale={es}
+                      className="rounded-md border"
+                      disabled={(date) => 
+                        formData.selected_date ? date < formData.selected_date : false
+                      }
+                    />
+                  </div>
+                )}
 
                 <div>
                   <Label htmlFor="start_time">Hora Inicio</Label>
@@ -512,6 +556,17 @@ export default function SpecialBookingManagement() {
                 </div>
               </div>
 
+              {/* Información visual para rango de días */}
+              {formData.is_date_range && formData.selected_date && formData.end_date && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <span className="font-medium">Rango seleccionado:</span> 
+                    {` ${format(formData.selected_date, "dd/MM/yyyy", { locale: es })} - ${format(formData.end_date, "dd/MM/yyyy", { locale: es })}`}
+                    {` (${generateDateRange(formData.selected_date, formData.end_date).length} días)`}
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label>Opciones de Precio</Label>
                 <Select 
@@ -542,13 +597,37 @@ export default function SpecialBookingManagement() {
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="is_recurring"
-                    checked={formData.is_recurring}
-                    onCheckedChange={(checked) => setFormData({...formData, is_recurring: !!checked})}
-                  />
-                  <Label htmlFor="is_recurring">Evento Recurrente</Label>
+                {/* Opciones de fecha */}
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="is_date_range"
+                      checked={formData.is_date_range}
+                      onCheckedChange={(checked) => {
+                        setFormData({
+                          ...formData, 
+                          is_date_range: !!checked,
+                          is_recurring: checked ? false : formData.is_recurring
+                        });
+                      }}
+                    />
+                    <Label htmlFor="is_date_range">Rango de Días (Torneo/Evento Multi-día)</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="is_recurring"
+                      checked={formData.is_recurring}
+                      onCheckedChange={(checked) => {
+                        setFormData({
+                          ...formData, 
+                          is_recurring: !!checked,
+                          is_date_range: checked ? false : formData.is_date_range
+                        });
+                      }}
+                    />
+                    <Label htmlFor="is_recurring">Evento Recurrente (Días específicos por semanas)</Label>
+                  </div>
                 </div>
 
                 {formData.is_recurring && (
