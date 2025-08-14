@@ -319,7 +319,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   }
 
   // Si se está mostrando el resumen de pago
-  console.log('🔍 BookingSummary check - showSummary:', showSummary, 'pendingBooking:', !!pendingBooking);
+  console.log('🔍 BookingSummary check - showSummary:', showSummary, 'pendingBooking:', !!pendingBooking, 'pendingBookingId:', pendingBooking?.id);
   if (showSummary && pendingBooking) {
     const court = courts.find(c => c.id === selectedCourt);
     return (

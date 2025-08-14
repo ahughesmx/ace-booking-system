@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +19,33 @@ export function useBookingPayment() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
+
+  // Recuperar reserva pendiente automáticamente al cargar
+  useEffect(() => {
+    if (user?.id && !pendingBooking) {
+      const loadPendingBooking = async () => {
+        const { data, error } = await supabase
+          .from("bookings")
+          .select(`
+            *,
+            court:courts(name, court_type)
+          `)
+          .eq("user_id", user.id)
+          .eq("status", "pending_payment")
+          .gt("expires_at", new Date().toISOString())
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (data && !error) {
+          console.log("📋 Recuperando reserva pendiente existente:", data);
+          setPendingBooking(data);
+        }
+      };
+
+      loadPendingBooking();
+    }
+  }, [user?.id, pendingBooking]);
 
   const createPendingBooking = async (bookingData: BookingData) => {
     console.log('📋 createPendingBooking called with:', bookingData);
