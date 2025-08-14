@@ -7,7 +7,7 @@ import RegistrationRequests from "@/components/admin/RegistrationRequests";
 import CourtManagement from "@/components/admin/CourtManagement";
 import CourtTypeSettings from "@/components/admin/CourtTypeSettings";
 import Statistics from "@/components/admin/Statistics";
-import ValidMemberIdManagement from "@/components/admin/ValidMemberIdManagement";
+import MemberIdTabs from "@/components/admin/MemberIdTabs";
 import BookingRulesManagement from "@/components/admin/BookingRulesManagement";
 import DisplayManagement from "@/components/admin/DisplayManagement";
 import WebhookManagement from "@/components/admin/WebhookManagement";
@@ -36,12 +36,7 @@ const AdminPage = () => {
       case "statistics":
         return <Statistics />;
       case "member-ids":
-        return (
-          <div className="space-y-6">
-            <ValidMemberIdManagement />
-            <UserRegistrationForm />
-          </div>
-        );
+        return <MemberIdTabs />;
       case "booking-rules":
         return <BookingRulesManagement />;
       case "webhooks":

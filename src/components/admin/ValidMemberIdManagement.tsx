@@ -123,12 +123,6 @@ export default function ValidMemberIdManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Configuración de formato */}
-      <MemberIdFormatSettings />
-      
-      {/* Carga masiva */}
-      <BulkMemberIdUpload onSuccess={refetch} />
-      
       {/* Agregar individual */}
       <div className="flex gap-4">
         <Input
@@ -146,109 +140,103 @@ export default function ValidMemberIdManagement() {
         </Button>
       </div>
 
-      {/* Listado con búsqueda y paginación */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Listado de Claves de Socio</CardTitle>
-          <div className="flex items-center gap-2 max-w-md">
-            <Search className="w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar clave de socio..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1); // Reset to first page when searching
-              }}
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Clave de socio</TableHead>
-                <TableHead>Fecha de creación</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {validMemberIds?.data?.map((memberId) => (
-                <TableRow key={memberId.id}>
-                  <TableCell>{memberId.member_id}</TableCell>
-                  <TableCell>
-                    {new Date(memberId.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteMemberId(memberId.id)}
-                      disabled={loading}
-                    >
-                      Eliminar
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {validMemberIds?.data?.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    {searchTerm ? "No se encontraron claves que coincidan con la búsqueda" : "No hay claves de socio registradas"}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-
-          {/* Paginación */}
-          {validMemberIds && validMemberIds.totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-muted-foreground">
-                Mostrando {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, validMemberIds.totalCount)} de {validMemberIds.totalCount} registros
-              </p>
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious 
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                  
-                  {Array.from({ length: validMemberIds.totalPages }, (_, i) => i + 1)
-                    .filter(page => {
-                      const showPage = page === 1 || 
-                                     page === validMemberIds.totalPages || 
-                                     Math.abs(page - currentPage) <= 1;
-                      return showPage;
-                    })
-                    .map((page, index, arr) => (
-                      <PaginationItem key={page}>
-                        {index > 0 && arr[index - 1] < page - 1 && (
-                          <PaginationEllipsis />
-                        )}
-                        <PaginationLink
-                          onClick={() => setCurrentPage(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
-                  
-                  <PaginationItem>
-                    <PaginationNext 
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, validMemberIds.totalPages))}
-                      className={currentPage === validMemberIds.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
+      {/* Búsqueda */}
+      <div className="flex items-center gap-2 max-w-md">
+        <Search className="w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar clave de socio..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1); // Reset to first page when searching
+          }}
+        />
+      </div>
+      {/* Tabla */}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Clave de socio</TableHead>
+            <TableHead>Fecha de creación</TableHead>
+            <TableHead>Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {validMemberIds?.data?.map((memberId) => (
+            <TableRow key={memberId.id}>
+              <TableCell>{memberId.member_id}</TableCell>
+              <TableCell>
+                {new Date(memberId.created_at).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDeleteMemberId(memberId.id)}
+                  disabled={loading}
+                >
+                  Eliminar
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+          {validMemberIds?.data?.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center text-muted-foreground">
+                {searchTerm ? "No se encontraron claves que coincidan con la búsqueda" : "No hay claves de socio registradas"}
+              </TableCell>
+            </TableRow>
           )}
-        </CardContent>
-      </Card>
+        </TableBody>
+      </Table>
+
+      {/* Paginación */}
+      {validMemberIds && validMemberIds.totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Mostrando {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, validMemberIds.totalCount)} de {validMemberIds.totalCount} registros
+          </p>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              
+              {Array.from({ length: validMemberIds.totalPages }, (_, i) => i + 1)
+                .filter(page => {
+                  const showPage = page === 1 || 
+                                 page === validMemberIds.totalPages || 
+                                 Math.abs(page - currentPage) <= 1;
+                  return showPage;
+                })
+                .map((page, index, arr) => (
+                  <PaginationItem key={page}>
+                    {index > 0 && arr[index - 1] < page - 1 && (
+                      <PaginationEllipsis />
+                    )}
+                    <PaginationLink
+                      onClick={() => setCurrentPage(page)}
+                      isActive={currentPage === page}
+                      className="cursor-pointer"
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+              
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, validMemberIds.totalPages))}
+                  className={currentPage === validMemberIds.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }
