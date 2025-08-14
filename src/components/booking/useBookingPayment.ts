@@ -178,17 +178,18 @@ export function useBookingPayment() {
         
         return true;
       } else {
-        // Para otros métodos de pago, simular por ahora
-        console.log(`🔄 INICIANDO PAGO SIMULADO con ${paymentGateway} para reserva ${pendingBooking.id}`);
+        // Para otros métodos de pago (incluyendo efectivo)
+        console.log(`🔄 INICIANDO PAGO ${paymentGateway.toUpperCase()} para reserva ${pendingBooking.id}`);
         console.log('📋 Datos de la reserva pendiente:', pendingBooking);
         
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simular procesamiento
         
         console.log('💳 ACTUALIZANDO STATUS DE RESERVA A PAID');
         console.log('💳 DATOS DE ACTUALIZACIÓN:', {
           bookingId: pendingBooking.id,
           gateway: paymentGateway,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          amount: pendingBooking.amount
         });
         
         const updateResult = await supabase

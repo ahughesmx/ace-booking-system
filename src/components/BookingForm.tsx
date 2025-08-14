@@ -40,7 +40,8 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: userRole } = useGlobalRole(user?.id);
-  const { handleBooking, isSubmitting } = useBookingSubmit(onBookingSuccess);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { handleBooking } = useBookingSubmit(onBookingSuccess);
   const { 
     createPendingBooking, 
     processPayment, 
@@ -203,10 +204,15 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   const handleConfirmPayment = async (paymentGateway: string) => {
     console.log(`🔄 handleConfirmPayment called with ${paymentGateway}`, { 
       pendingBooking: !!pendingBooking, 
-      isSubmitting 
+      pendingBookingId: pendingBooking?.id,
+      isSubmitting,
+      isOperator,
+      selectedUserName
     });
     
     try {
+      setIsSubmitting(true);
+      console.log(`💳 Iniciando processPayment para ${paymentGateway}...`);
       const result = await processPayment(paymentGateway);
       console.log(`✅ Payment processed successfully for ${paymentGateway}`, result);
       
@@ -248,9 +254,20 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
       }
       
       setShowSummary(false);
-      onBookingSuccess();
+      
+      // Solo resetear el estado si no es pago en efectivo con ticket
+      if (!(paymentGateway === 'efectivo' && isOperator)) {
+        onBookingSuccess(); // Llamar el callback de éxito
+      }
     } catch (error) {
-      console.error(`❌ Error processing payment for ${paymentGateway}:`, error);
+      console.error(`❌ Error in handleConfirmPayment for ${paymentGateway}:`, error);
+      toast({
+        title: "Error en el pago",
+        description: "No se pudo procesar el pago. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
