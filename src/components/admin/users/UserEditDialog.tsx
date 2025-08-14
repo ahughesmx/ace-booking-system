@@ -46,114 +46,116 @@ export const UserEditDialog = ({ user, onSubmit }: UserEditDialogProps) => {
   };
 
   return (
-    <div className="max-h-[70vh] overflow-y-auto pr-4 mr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Información básica */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">
-              Información del perfil
-            </Badge>
-          </div>
+    <div className="max-h-[70vh] overflow-y-auto">
+      <div className="pr-6 mr-2">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Información básica */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                Información del perfil
+              </Badge>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="full_name">Nombre completo</Label>
-              <Input
-                id="full_name"
-                value={formData.full_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, full_name: e.target.value })
-                }
-                placeholder="Juan Pérez"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="full_name">Nombre completo</Label>
+                <Input
+                  id="full_name"
+                  value={formData.full_name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, full_name: e.target.value })
+                  }
+                  placeholder="Juan Pérez"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="member_id">Clave de socio</Label>
+                <Input
+                  id="member_id"
+                  value={formData.member_id}
+                  onChange={(e) =>
+                    setFormData({ ...formData, member_id: e.target.value })
+                  }
+                  placeholder="Ingresa la clave de socio"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="member_id">Clave de socio</Label>
+              <Label htmlFor="phone">Teléfono</Label>
               <Input
-                id="member_id"
-                value={formData.member_id}
+                id="phone"
+                value={formData.phone}
                 onChange={(e) =>
-                  setFormData({ ...formData, member_id: e.target.value })
+                  setFormData({ ...formData, phone: e.target.value })
                 }
-                placeholder="Ingresa la clave de socio"
+                placeholder="Ingresa el teléfono"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone">Teléfono</Label>
-            <Input
-              id="phone"
-              value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-              placeholder="Ingresa el teléfono"
-            />
-          </div>
-        </div>
+          <Separator />
 
-        <Separator />
-
-        {/* Información de autenticación */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">
-              Credenciales de acceso
-            </Badge>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email" className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Email de usuario
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-              placeholder="usuario@ejemplo.com"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="new_password" className="flex items-center gap-2">
-              <Lock className="h-4 w-4" />
-              Nueva contraseña (opcional)
-            </Label>
-            <div className="relative">
-              <Input
-                id="new_password"
-                type={showPassword ? "text" : "password"}
-                value={formData.new_password}
-                onChange={(e) =>
-                  setFormData({ ...formData, new_password: e.target.value })
-                }
-                placeholder="Dejar vacío para no cambiar"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+          {/* Información de autenticación */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                Credenciales de acceso
+              </Badge>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Mínimo 6 caracteres. Dejar vacío para mantener la contraseña actual.
-            </p>
-          </div>
-        </div>
 
-        <div className="flex justify-end space-x-2 pt-3 border-t">
-          <Button type="submit">Guardar cambios</Button>
-        </div>
-      </form>
+            <div className="space-y-2">
+              <Label htmlFor="email" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email de usuario
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                placeholder="usuario@ejemplo.com"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="new_password" className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                Nueva contraseña (opcional)
+              </Label>
+              <div className="relative">
+                <Input
+                  id="new_password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.new_password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, new_password: e.target.value })
+                  }
+                  placeholder="Dejar vacío para no cambiar"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Mínimo 6 caracteres. Dejar vacío para mantener la contraseña actual.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-3 border-t">
+            <Button type="submit">Guardar cambios</Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
