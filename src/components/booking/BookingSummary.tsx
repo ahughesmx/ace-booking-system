@@ -153,7 +153,13 @@ export function BookingSummary({
                   className="w-full justify-start"
                   disabled={isLoading}
                   onClick={() => {
-                    console.log(`🔄 Payment button clicked for ${gateway.name}`, { isLoading, gateway });
+                    console.log(`🎯 CLICKED: Payment button for ${gateway.name}`, { 
+                      isLoading, 
+                      gateway,
+                      onConfirm: typeof onConfirm,
+                      gatewayId: gateway.id,
+                      gatewayName: gateway.name
+                    });
                     onConfirm(gateway.name);
                   }}
                 >
