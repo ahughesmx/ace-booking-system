@@ -39,7 +39,7 @@ export function useBookings(selectedDate?: Date) {
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
         .eq("status", "paid")
-        .gte("end_time", now) // Solo reservas que no hayan pasado
+        .gte("end_time", now) // Solo reservas que no hayan terminado completamente
         .order("start_time");
 
       if (error) {

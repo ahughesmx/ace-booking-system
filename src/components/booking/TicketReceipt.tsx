@@ -153,86 +153,91 @@ export function TicketReceipt({ bookingData, onClose, onPrint }: TicketReceiptPr
 
   return (
     <Card className="w-full max-w-md mx-auto print:shadow-none">
-      <div id="ticket-content" className="ticket-container">
+      <div id="ticket-content">
         <CardHeader className="text-center pb-3">
-          <div className="header">
-            <h1>🧾 Ticket de Cobro</h1>
-            <div className="receipt-number">#{receiptNumber}</div>
-            <div className="date">
-              {format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}
-            </div>
+          <div className="flex items-center justify-center gap-2 text-lg font-semibold">
+            <Receipt className="h-5 w-5" />
+            Ticket de Cobro
+          </div>
+          <div className="text-sm text-muted-foreground">
+            #{receiptNumber}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}
           </div>
         </CardHeader>
       
-        <CardContent className="content">
+        <CardContent className="space-y-3 text-sm">
           {/* Cliente */}
-          <div className="row">
-            <User className="icon" />
-            <span style={{fontWeight: '500'}}>Cliente:</span>
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-blue-600" />
+            <span className="font-medium">Cliente:</span>
             <span>{userName}</span>
           </div>
 
           {/* Atendido por */}
-          <div style={{color: '#6b7280', marginLeft: '24px'}}>
+          <div className="text-gray-600">
             <span>Atendido por: {operatorName}</span>
           </div>
 
           {/* Ubicación */}
-          <div className="row">
-            <MapPin className="icon" />
-            <span style={{fontWeight: '500'}}>{courtName}</span>
-            <span className="badge">{courtType}</span>
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-gray-600" />
+            <span className="font-medium">{courtName}</span>
+            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium capitalize">
+              {courtType}
+            </span>
           </div>
 
           {/* Fecha */}
-          <div className="row">
-            <Clock className="icon" />
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-gray-600" />
             <span>{format(date, "EEEE, d 'de' MMMM", { locale: es })}</span>
           </div>
 
           {/* Horario */}
-          <div className="row">
-            <Timer className="icon" />
+          <div className="flex items-center gap-2">
+            <Timer className="h-4 w-4 text-gray-600" />
             <span>
               {format(startTime, "HH:mm")} - {format(endTime, "HH:mm")}
             </span>
-            <span style={{background: '#f3f4f6', color: '#374151', padding: '2px 8px', borderRadius: '4px', fontSize: '12px'}}>
+            <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
               {duration} hora{duration > 1 ? 's' : ''}
             </span>
           </div>
 
           {/* Separador visual */}
-          <div className="separator"></div>
+          <div className="border-t border-gray-200 my-3"></div>
 
           {/* Precio por hora */}
-          <div className="price-row">
+          <div className="flex justify-between">
             <span>Precio por hora:</span>
-            <span style={{fontWeight: '500'}}>${pricePerHour.toFixed(2)}</span>
+            <span className="font-medium">${pricePerHour.toFixed(2)}</span>
           </div>
 
           {/* Duración */}
-          <div className="price-row">
+          <div className="flex justify-between">
             <span>Duración:</span>
-            <span style={{fontWeight: '500'}}>{duration} hora{duration > 1 ? 's' : ''}</span>
+            <span className="font-medium">{duration} hora{duration > 1 ? 's' : ''}</span>
           </div>
 
           {/* Total pagado */}
-          <div className="price-row total">
+          <div className="flex justify-between text-lg font-semibold pt-2">
             <span>Total Pagado:</span>
             <span>${amount.toFixed(2)}</span>
           </div>
 
           {/* Método de pago */}
-          <div className="row" style={{paddingTop: '8px'}}>
-            <CreditCard className="icon" />
+          <div className="flex items-center gap-2 pt-2">
+            <CreditCard className="h-4 w-4 text-gray-600" />
             <span>Método de pago:</span>
-            <span className="badge payment-method">
+            <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium capitalize">
               {paymentMethod}
             </span>
           </div>
 
           {/* Mensaje de agradecimiento */}
-          <div className="thanks">
+          <div className="text-center text-gray-500 text-xs pt-4">
             Gracias por su preferencia
           </div>
         </CardContent>
