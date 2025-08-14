@@ -380,6 +380,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
             selectedTime={selectedTime}
             onTimeSelect={setSelectedTime}
             businessHours={{ start: 8, end: 22 }}
+            isOperator={isOperator}
           />
         )}
       </div>

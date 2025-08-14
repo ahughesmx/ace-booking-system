@@ -16,6 +16,7 @@ interface TimeSlotSelectorProps {
     start: number;
     end: number;
   };
+  isOperator?: boolean; // Nuevo prop para identificar operadores
 }
 
 function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
@@ -60,7 +61,8 @@ export function TimeSlotSelector({
   bookedSlots, 
   selectedTime, 
   onTimeSelect, 
-  businessHours 
+  businessHours,
+  isOperator = false 
 }: TimeSlotSelectorProps) {
   const { data: courts = [] } = useCourts(courtType);
   const { data: settingsData } = useCourtTypeSettings(courtType);
@@ -171,7 +173,13 @@ export function TimeSlotSelector({
         {settings && (
           <p className="text-xs text-muted-foreground mt-1">
             Horarios: {settings.operating_hours_start.slice(0, 5)} - {settings.operating_hours_end.slice(0, 5)} 
-            {settings.price_per_hour && ` | $${settings.price_per_hour}/hora`}
+            {(() => {
+              const displayPrice = isOperator && settings.operador_price_per_hour 
+                ? settings.operador_price_per_hour 
+                : settings.price_per_hour;
+              const priceLabel = isOperator && settings.operador_price_per_hour ? ' (Operador)' : '';
+              return displayPrice ? ` | $${displayPrice}/hora${priceLabel}` : '';
+            })()}
           </p>
         )}
       </div>
@@ -229,11 +237,17 @@ export function TimeSlotSelector({
         <div className="bg-[#6898FE]/10 border border-[#6898FE]/20 rounded-lg p-3 text-center">
           <p className="text-sm text-[#1e3a8a]">
             ✓ Horario seleccionado: <span className="font-semibold">{selectedTime}</span>
-            {settings?.price_per_hour && (
-              <span className="ml-2 text-xs">
-                (${settings.price_per_hour}/hora)
-              </span>
-            )}
+            {settings && (() => {
+              const displayPrice = isOperator && settings.operador_price_per_hour 
+                ? settings.operador_price_per_hour 
+                : settings.price_per_hour;
+              const priceLabel = isOperator && settings.operador_price_per_hour ? ' (Operador)' : '';
+              return displayPrice ? (
+                <span className="ml-2 text-xs">
+                  (${displayPrice}/hora{priceLabel})
+                </span>
+              ) : null;
+            })()}
           </p>
         </div>
       )}
