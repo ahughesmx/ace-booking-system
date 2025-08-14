@@ -56,6 +56,25 @@ export function useBookingPayment() {
       throw new Error("Usuario no autenticado");
     }
 
+    // Limpiar reservas expiradas primero
+    console.log('🧹 Limpiando reservas expiradas antes de crear nueva...');
+    try {
+      const { error: cleanupError } = await supabase
+        .from("bookings")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("status", "pending_payment")
+        .lt("expires_at", new Date().toISOString());
+        
+      if (cleanupError) {
+        console.warn('⚠️ Error en limpieza de reservas expiradas:', cleanupError);
+      } else {
+        console.log('✅ Reservas expiradas limpiadas');
+      }
+    } catch (error) {
+      console.warn('⚠️ Error durante limpieza:', error);
+    }
+
     setIsCreatingBooking(true);
     console.log('🔄 Setting isCreatingBooking to true');
 
