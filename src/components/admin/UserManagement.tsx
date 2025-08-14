@@ -130,6 +130,18 @@ export default function UserManagement() {
 
       if (profileError) throw profileError;
 
+      // Update role if provided
+      if (data.role) {
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .upsert({
+            user_id: userId,
+            role: data.role,
+          });
+
+        if (roleError) throw roleError;
+      }
+
       // Update auth information if provided
       const authUpdates: any = {};
       
