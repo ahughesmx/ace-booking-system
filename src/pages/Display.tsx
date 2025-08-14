@@ -48,7 +48,7 @@ function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
 
 export default function Display() {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [viewMode, setViewMode] = useState<'all' | 'single'>('all');
+  const [viewMode, setViewMode] = useState<'all' | 'single'>('single'); // Default to single
   const [selectedCourtId, setSelectedCourtId] = useState<string>('');
 
   const currentDate = new Date();
@@ -81,12 +81,19 @@ export default function Display() {
 
       if (error) {
         console.error("Error fetching display settings:", error);
-        return { is_enabled: true, rotation_interval: 10000 };
+        return { is_enabled: true, rotation_interval: 10000, enable_all_view: true, enable_single_view: true, default_view: 'single' };
       }
 
-      return data || { is_enabled: true, rotation_interval: 10000 };
+      return data || { is_enabled: true, rotation_interval: 10000, enable_all_view: true, enable_single_view: true, default_view: 'single' };
     },
   });
+
+  // Set initial view mode based on display settings
+  useEffect(() => {
+    if (displaySettings?.default_view && displaySettings.default_view !== viewMode) {
+      setViewMode(displaySettings.default_view as 'all' | 'single');
+    }
+  }, [displaySettings?.default_view, viewMode]);
 
   const { data: allCourts } = useQuery({
     queryKey: ["courts"],
@@ -104,6 +111,16 @@ export default function Display() {
       return data || [];
     },
   });
+
+  // Set default court to Pádel in individual view
+  useEffect(() => {
+    if (viewMode === 'single' && !selectedCourtId && allCourts?.length) {
+      const padelCourt = allCourts.find(court => court.court_type === 'padel');
+      if (padelCourt) {
+        setSelectedCourtId(padelCourt.id);
+      }
+    }
+  }, [viewMode, selectedCourtId, allCourts]);
 
   // Filter courts by active sport types for "All" view
   const courts = viewMode === 'all' 
@@ -141,16 +158,6 @@ export default function Display() {
     return slots.map(slot => slot.start);
   })();
 
-  // Set default court to Pádel in individual view
-  useEffect(() => {
-    if (viewMode === 'single' && !selectedCourtId && allCourts?.length) {
-      const padelCourt = allCourts.find(court => court.court_type === 'padel');
-      if (padelCourt) {
-        setSelectedCourtId(padelCourt.id);
-      }
-    }
-  }, [viewMode, selectedCourtId, allCourts]);
-
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -173,7 +180,6 @@ export default function Display() {
     if (viewMode === 'single' && displaySettings?.rotation_interval) {
       const refreshInterval = setInterval(() => {
         setCurrentTime(new Date());
-        // Force a re-render by updating the key or triggering a state change
       }, displaySettings.rotation_interval);
 
       return () => clearInterval(refreshInterval);
@@ -188,6 +194,22 @@ export default function Display() {
           alt="CDV Logo"
           className="max-w-[200px]"
         />
+      </div>
+    );
+  }
+
+  // Check if both views are disabled
+  if (!displaySettings?.enable_all_view && !displaySettings?.enable_single_view) {
+    return (
+      <div className="h-screen w-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <img
+            src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
+            alt="CDV Logo"
+            className="max-w-[200px] mb-4"
+          />
+          <p className="text-gray-600">No hay vistas habilitadas</p>
+        </div>
       </div>
     );
   }
@@ -295,22 +317,26 @@ export default function Display() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button
-                variant="default"
-                onClick={() => setViewMode('all')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm"
-              >
-                <Building2 className="w-4 h-4 mr-1" />
-                Todas
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setViewMode('single')}
-                className="border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-2 text-sm"
-              >
-                <Monitor className="w-4 h-4 mr-1" />
-                Individual
-              </Button>
+              {displaySettings?.enable_all_view && (
+                <Button
+                  variant={viewMode === 'all' ? 'default' : 'outline'}
+                  onClick={() => setViewMode('all')}
+                  className="px-4 py-2 text-sm"
+                >
+                  <Building2 className="w-4 h-4 mr-1" />
+                  Todas
+                </Button>
+              )}
+              {displaySettings?.enable_single_view && (
+                <Button
+                  variant={viewMode === 'single' ? 'default' : 'outline'}
+                  onClick={() => setViewMode('single')}
+                  className="px-4 py-2 text-sm"
+                >
+                  <Monitor className="w-4 h-4 mr-1" />
+                  Individual
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -434,21 +460,26 @@ export default function Display() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setViewMode('all')}
-              className="border-blue-600 text-blue-600 hover:bg-blue-50 px-3 py-1 text-xs"
-            >
-              <Building2 className="w-3 h-3 mr-1" />
-              Todas
-            </Button>
-            <Button
-              variant="default"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs"
-            >
-              <Monitor className="w-3 h-3 mr-1" />
-              Individual
-            </Button>
+            {displaySettings?.enable_all_view && (
+              <Button
+                variant={viewMode === 'all' ? 'default' : 'outline'}
+                onClick={() => setViewMode('all')}
+                className="px-3 py-1 text-xs"
+              >
+                <Building2 className="w-3 h-3 mr-1" />
+                Todas
+              </Button>
+            )}
+            {displaySettings?.enable_single_view && (
+              <Button
+                variant={viewMode === 'single' ? 'default' : 'outline'}
+                onClick={() => setViewMode('single')}
+                className="px-3 py-1 text-xs"
+              >
+                <Monitor className="w-3 h-3 mr-1" />
+                Individual
+              </Button>
+            )}
           </div>
         </div>
       </div>
