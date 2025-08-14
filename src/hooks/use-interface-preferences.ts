@@ -10,30 +10,6 @@ interface InterfacePreference {
   is_enabled: boolean;
 }
 
-export const useInterfacePreferences = () => {
-  return useQuery({
-    queryKey: ["interface-preferences"],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from("interface_preferences")
-          .select("*");
-
-        if (error) {
-          console.warn("No preferences found, using defaults");
-          // Return default preferences if table doesn't exist or user isn't authenticated
-          return getDefaultPreferences();
-        }
-        return data as InterfacePreference[];
-      } catch (error) {
-        console.warn("Error fetching preferences, using defaults:", error);
-        return getDefaultPreferences();
-      }
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutos
-  });
-};
-
 // Default preferences for when user is not authenticated or preferences don't exist
 const getDefaultPreferences = (): InterfacePreference[] => [
   {
@@ -86,15 +62,44 @@ const getDefaultPreferences = (): InterfacePreference[] => [
   },
 ];
 
+export const useInterfacePreferences = () => {
+  return useQuery({
+    queryKey: ["interface-preferences"],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from("interface_preferences")
+          .select("*");
+
+        // If there's an error or no data, return defaults
+        if (error || !data || data.length === 0) {
+          console.log("Using default preferences:", error?.message || "No preferences found");
+          return getDefaultPreferences();
+        }
+        
+        return data as InterfacePreference[];
+      } catch (error) {
+        console.warn("Error fetching preferences, using defaults:", error);
+        return getDefaultPreferences();
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    refetchOnWindowFocus: false,
+    retry: false, // Don't retry on auth errors
+  });
+};
+
 export const useMenuPreferences = () => {
-  const { data: preferences, ...rest } = useInterfacePreferences();
+  const { data: preferences, isLoading, error } = useInterfacePreferences();
   
   const menuPreferences = preferences?.filter(p => p.category === 'menu') || [];
   
   return {
-    ...rest,
+    isLoading,
+    error,
     preferences: menuPreferences,
     isMenuItemEnabled: (featureKey: string) => {
+      if (isLoading) return true; // Show items while loading
       const preference = menuPreferences.find(p => p.feature_key === featureKey);
       return preference?.is_enabled ?? true; // Por defecto habilitado si no existe
     }
@@ -102,14 +107,16 @@ export const useMenuPreferences = () => {
 };
 
 export const useHomeCardPreferences = () => {
-  const { data: preferences, ...rest } = useInterfacePreferences();
+  const { data: preferences, isLoading, error } = useInterfacePreferences();
   
   const homeCardPreferences = preferences?.filter(p => p.category === 'home_cards') || [];
   
   return {
-    ...rest,
+    isLoading,
+    error,
     preferences: homeCardPreferences,
     isCardEnabled: (featureKey: string) => {
+      if (isLoading) return true; // Show cards while loading
       const preference = homeCardPreferences.find(p => p.feature_key === featureKey);
       return preference?.is_enabled ?? true; // Por defecto habilitado si no existe
     }
