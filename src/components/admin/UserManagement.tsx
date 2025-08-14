@@ -49,46 +49,39 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, full_name, member_id, phone");
-
-      if (profilesError) throw profilesError;
-
-      const { data: roles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id, role");
-
-      if (rolesError) throw rolesError;
-
-      // Get auth users to obtain emails (simplified approach)
-      let authUsers: any[] = [];
-      try {
-        const { data } = await supabase.auth.admin.listUsers();
-        authUsers = data?.users || [];
-      } catch (authError) {
-        console.warn("No se pudo obtener información de autenticación:", authError);
+      
+      // Get session for authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No session found');
       }
 
-      const usersWithRoles = profiles.map((profile) => {
-        const authUser = authUsers.find((u: any) => u.id === profile.id);
-        return {
-          id: profile.id,
-          full_name: profile.full_name,
-          member_id: profile.member_id,
-          phone: profile.phone,
-          role: roles.find((r) => r.user_id === profile.id)?.role || "user",
-          email: authUser?.email || null,
-        };
+      // Call edge function to get users with auth data
+      const { data, error } = await supabase.functions.invoke('get-users-with-auth', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
-      setUsers(usersWithRoles);
-      setFilteredUsers(usersWithRoles);
+      if (error) {
+        console.error('Error from edge function:', error);
+        throw error;
+      }
+
+      if (!data || !data.users) {
+        throw new Error('Invalid response from server');
+      }
+
+      console.log('✅ Users fetched from edge function:', data.users);
+      
+      setUsers(data.users);
+      setFilteredUsers(data.users);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast({
         title: "Error",
-        description: "No se pudieron cargar los usuarios.",
+        description: "No se pudieron cargar los usuarios. Verifica que tengas permisos de administrador.",
         variant: "destructive",
       });
     } finally {
@@ -150,18 +143,31 @@ export default function UserManagement() {
 
       // Only make auth update if there are auth changes
       if (Object.keys(authUpdates).length > 0) {
-        const { error: authError } = await supabase.auth.admin.updateUserById(
-          userId,
-          authUpdates
-        );
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          throw new Error('No session found');
+        }
+
+        const { data: authResult, error: authError } = await supabase.functions.invoke('update-user-auth', {
+          body: {
+            userId,
+            ...authUpdates
+          },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
 
         if (authError) {
           console.error("Error updating auth information:", authError);
           toast({
             title: "Advertencia",
-            description: "Perfil actualizado pero hubo un problema con email/contraseña. Verifica los permisos de administrador.",
+            description: "Perfil actualizado pero hubo un problema con email/contraseña.",
             variant: "destructive",
           });
+        } else {
+          console.log('✅ Auth updated successfully:', authResult);
         }
       }
 
