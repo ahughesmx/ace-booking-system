@@ -46,7 +46,7 @@ export const UserEditDialog = ({ user, onSubmit }: UserEditDialogProps) => {
   };
 
   return (
-    <div className="max-h-[70vh] overflow-y-auto pr-2">
+    <div className="max-h-[70vh] overflow-y-auto pr-4 mr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Información básica */}
         <div className="space-y-3">
