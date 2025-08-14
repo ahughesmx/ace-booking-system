@@ -49,8 +49,7 @@ export function BookingSummary({
   // Filtrar métodos de pago según el rol
   const paymentGateways = isOperator 
     ? [
-        ...allPaymentGateways,
-        // Agregar efectivo solo para operadores
+        // Solo efectivo para operadores
         {
           id: 'efectivo',
           name: 'efectivo',
@@ -61,7 +60,7 @@ export function BookingSummary({
           updated_at: ''
         }
       ]
-    : allPaymentGateways; // Para usuarios normales, NO incluir efectivo
+    : allPaymentGateways; // Para usuarios normales, métodos online sin efectivo
 
   const startTime = new Date(date);
   const [hours, minutes] = time.split(':').map(Number);
