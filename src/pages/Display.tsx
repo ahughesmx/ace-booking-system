@@ -2,19 +2,49 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import { format } from "date-fns";
+import { format, addHours, isToday, isBefore } from "date-fns";
 import { es } from "date-fns/locale";
 import { Monitor, Building2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAllBookings } from "@/hooks/use-bookings";
 import { useAvailableCourtTypes } from "@/hooks/use-available-court-types";
+import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { Booking, SpecialBooking } from "@/types/booking";
 
-// Generate time slots from 7:00 to 23:00
-const timeSlots = Array.from({ length: 17 }, (_, i) => {
-  const hour = i + 7;
-  return `${hour.toString().padStart(2, "0")}:00`;
-});
+// Generate time slots based on court type settings
+function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
+  const slots = [];
+  const now = new Date();
+  
+  if (!settings) return [];
+
+  // Convert configuration hours to numbers
+  const startHour = parseInt(settings.operating_hours_start.split(':')[0]);
+  const endHour = parseInt(settings.operating_hours_end.split(':')[0]);
+  
+  // Check operating days
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const dayOfWeek = dayNames[selectedDate.getDay()];
+  
+  if (!settings.operating_days.includes(dayOfWeek)) {
+    return []; // No slots if not operating this day
+  }
+  
+  for (let hour = startHour; hour < endHour; hour++) {
+    const startTime = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour);
+    const endTime = addHours(startTime, 1);
+    
+    // Only check if it's in the past when it's TODAY
+    const isPast = isToday(selectedDate) && isBefore(startTime, now);
+    
+    slots.push({
+      start: format(startTime, "HH:00"),
+      end: format(endTime, "HH:00"),
+      isPast
+    });
+  }
+  return slots;
+}
 
 export default function Display() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -29,6 +59,10 @@ export default function Display() {
   
   // Get active court types
   const { data: availableCourtTypes = [] } = useAvailableCourtTypes(true);
+  
+  // Get court type settings for generating time slots
+  const { data: allCourtTypeSettingsData } = useCourtTypeSettings();
+  const allCourtTypeSettings = Array.isArray(allCourtTypeSettingsData) ? allCourtTypeSettingsData : [];
 
   console.log("🖥️ Display component - All bookings received:", {
     total: allBookings.length,
@@ -77,6 +111,35 @@ export default function Display() {
         availableCourtTypes.some(type => type.type_name === court.court_type)
       ) || []
     : allCourts || [];
+
+  // Generate unified time slots based on all court type settings
+  const timeSlots = (() => {
+    if (!allCourtTypeSettings.length) return [];
+    
+    // Get the most inclusive operating hours from all court types
+    let earliestStart = 24;
+    let latestEnd = 0;
+    let allOperatingDays = new Set<string>();
+    
+    allCourtTypeSettings.forEach(settings => {
+      const startHour = parseInt(settings.operating_hours_start.split(':')[0]);
+      const endHour = parseInt(settings.operating_hours_end.split(':')[0]);
+      earliestStart = Math.min(earliestStart, startHour);
+      latestEnd = Math.max(latestEnd, endHour);
+      settings.operating_days.forEach(day => allOperatingDays.add(day));
+    });
+    
+    // Create a unified settings object
+    const unifiedSettings = {
+      operating_hours_start: `${earliestStart.toString().padStart(2, '0')}:00`,
+      operating_hours_end: `${latestEnd.toString().padStart(2, '0')}:00`,
+      operating_days: Array.from(allOperatingDays)
+    };
+    
+    const slots = generateTimeSlots(unifiedSettings, currentDate);
+    console.log("🖥️ Generated time slots:", slots);
+    return slots.map(slot => slot.start);
+  })();
 
   // Set default court to Pádel in individual view
   useEffect(() => {
@@ -420,11 +483,24 @@ export default function Display() {
             <div className="flex-1 p-2 min-h-0">
               <div className="grid grid-rows-3 gap-3 h-full">
                 {/* Morning, Afternoon, Evening rows */}
-                {[
-                  { title: "Mañana (7:00 - 12:00)", slots: timeSlots.slice(0, 6) },
-                  { title: "Tarde (13:00 - 18:00)", slots: timeSlots.slice(6, 12) },
-                  { title: "Noche (19:00 - 23:00)", slots: timeSlots.slice(12) }
-                ].map((period, periodIndex) => (
+                 {(() => {
+                   const totalSlots = timeSlots.length;
+                   const slotsPerPeriod = Math.ceil(totalSlots / 3);
+                   return [
+                     { 
+                       title: `Mañana (${timeSlots[0] || '08:00'} - ${timeSlots[slotsPerPeriod - 1] || '12:00'})`, 
+                       slots: timeSlots.slice(0, slotsPerPeriod) 
+                     },
+                     { 
+                       title: `Tarde (${timeSlots[slotsPerPeriod] || '13:00'} - ${timeSlots[slotsPerPeriod * 2 - 1] || '18:00'})`, 
+                       slots: timeSlots.slice(slotsPerPeriod, slotsPerPeriod * 2) 
+                     },
+                     { 
+                       title: `Noche (${timeSlots[slotsPerPeriod * 2] || '19:00'} - ${timeSlots[totalSlots - 1] || '23:00'})`, 
+                       slots: timeSlots.slice(slotsPerPeriod * 2) 
+                     }
+                   ];
+                 })().map((period, periodIndex) => (
                   <div key={periodIndex} className="flex flex-col flex-1">
                     <h3 className="text-sm font-bold text-gray-800 mb-2 text-center border-b border-gray-200 pb-1 flex-shrink-0">
                       {period.title}
