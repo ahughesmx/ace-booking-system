@@ -38,11 +38,14 @@ export function useBookingPayment() {
       // Obtener configuración de precios
       const { data: courtSettings } = await supabase
         .from("court_type_settings")
-        .select("price_per_hour")
+        .select("price_per_hour, operador_price_per_hour")
         .eq("court_type", selectedCourtType)
         .single();
 
-      const pricePerHour = courtSettings?.price_per_hour || 0;
+      // Usar precio de operador si forUserId está definido (reserva hecha por operador)
+      const pricePerHour = forUserId && courtSettings?.operador_price_per_hour 
+        ? courtSettings.operador_price_per_hour 
+        : courtSettings?.price_per_hour || 0;
       const duration = 1; // 1 hora por defecto
       const amount = pricePerHour * duration;
 

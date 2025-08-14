@@ -34,6 +34,18 @@ export function BookingSummary({
   const { data: courtSettings } = useCourtTypeSettings(courtType);
   const { data: allPaymentGateways = [] } = useEnabledPaymentGateways();
   
+  // Usar precio de operador si es una reserva hecha por operador
+  const normalPrice = Array.isArray(courtSettings) 
+    ? courtSettings[0]?.price_per_hour || 0 
+    : courtSettings?.price_per_hour || 0;
+  const operatorPrice = Array.isArray(courtSettings)
+    ? courtSettings[0]?.operador_price_per_hour || 0
+    : courtSettings?.operador_price_per_hour || 0;
+  
+  const pricePerHour = isOperator && operatorPrice > 0 ? operatorPrice : normalPrice;
+  const duration = 1; // 1 hora por defecto
+  const total = pricePerHour * duration;
+
   // Filtrar métodos de pago según el rol
   const paymentGateways = isOperator 
     ? [
@@ -50,12 +62,6 @@ export function BookingSummary({
         }
       ]
     : allPaymentGateways.filter(gateway => gateway.name !== 'efectivo');
-
-  const pricePerHour = Array.isArray(courtSettings) 
-    ? courtSettings[0]?.price_per_hour || 0 
-    : courtSettings?.price_per_hour || 0;
-  const duration = 1; // 1 hora por defecto
-  const total = pricePerHour * duration;
 
   const startTime = new Date(date);
   const [hours, minutes] = time.split(':').map(Number);
@@ -112,7 +118,7 @@ export function BookingSummary({
         {/* Detalles del precio */}
         <div className="space-y-2">
           <div className="flex justify-between">
-            <span>Precio por hora:</span>
+            <span>Precio por hora{isOperator ? ' (Operador)' : ''}:</span>
             <span>${pricePerHour}</span>
           </div>
           <div className="flex justify-between">
