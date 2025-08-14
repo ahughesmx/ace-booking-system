@@ -40,7 +40,32 @@ function useAllBookingsIncludingPending(selectedDate?: Date) {
         return [];
       }
 
-      return data || [];
+      const now = new Date();
+      const validBookings = (data || []).filter(booking => {
+        // Keep paid bookings
+        if (booking.status === 'paid') return true;
+        
+        // For pending payments, only keep if not expired
+        if (booking.status === 'pending_payment') {
+          if (!booking.expires_at) return false;
+          const expiresAt = new Date(booking.expires_at);
+          const isExpired = expiresAt <= now;
+          
+          // If expired, delete it
+          if (isExpired) {
+            console.log(`🗑️ Eliminando reserva expirada: ${booking.id}`);
+            supabase.from("bookings").delete().eq("id", booking.id).then(({ error }) => {
+              if (error) console.error("Error deleting expired booking:", error);
+            });
+            return false;
+          }
+          return true;
+        }
+        
+        return false;
+      });
+
+      return validBookings;
     },
     enabled: !!selectedDate,
   });
@@ -65,12 +90,29 @@ export function useBookingLogic(selectedDate?: Date, selectedCourtType?: string 
       const isPendingNotExpired = booking.status === 'pending_payment' && 
         booking.expires_at && new Date(booking.expires_at) > new Date();
       
+      console.log(`🔍 EVALUANDO BOOKING ${booking.id}:`, {
+        status: booking.status,
+        expires_at: booking.expires_at,
+        isPaidBooking,
+        isPendingNotExpired,
+        courtType: booking.court?.court_type,
+        selectedCourtType,
+        startTime: booking.start_time,
+        hour: new Date(booking.start_time).getHours()
+      });
+      
       if ((isPaidBooking || isPendingNotExpired) && booking.court && booking.court.court_type === selectedCourtType) {
         const hour = new Date(booking.start_time).getHours();
-        bookedSlots.add(`${hour.toString().padStart(2, '0')}:00`);
+        const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+        console.log(`✅ AGREGANDO SLOT OCUPADO: ${timeSlot}`);
+        bookedSlots.add(timeSlot);
+      } else {
+        console.log(`❌ BOOKING NO INCLUIDO EN SLOTS OCUPADOS`);
       }
     });
   }
+
+  console.log(`📊 SLOTS OCUPADOS FINALES para ${selectedCourtType}:`, Array.from(bookedSlots));
 
   return {
     user,
