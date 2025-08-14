@@ -64,13 +64,21 @@ export default function UserManagement() {
         },
       });
 
+      console.log('🔍 Edge function response:', { data, error });
+
       if (error) {
         console.error('Error from edge function:', error);
         throw error;
       }
 
-      if (!data || !data.users) {
-        throw new Error('Invalid response from server');
+      if (!data) {
+        console.error('❌ No data received from edge function');
+        throw new Error('No data received from server');
+      }
+
+      if (!data.users) {
+        console.error('❌ Invalid response structure:', data);
+        throw new Error('Invalid response from server - missing users array');
       }
 
       console.log('✅ Users fetched from edge function:', data.users);
