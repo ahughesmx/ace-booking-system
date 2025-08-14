@@ -294,7 +294,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
             setShowTicket(false);
             setTicketData(null);
           }}
-          onPrint={() => window.print()}
+          onPrint={undefined} // La función de impresión ahora está integrada en el componente
         />
       </div>
     );
