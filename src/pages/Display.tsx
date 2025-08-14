@@ -54,7 +54,7 @@ export default function Display() {
   const currentDate = new Date();
   console.log("🖥️ Display component - Current date:", currentDate.toISOString());
 
-  // Use the combined bookings hook
+  // Use the combined bookings hook with real-time updates already built-in
   const { data: allBookings = [], isLoading } = useAllBookings(currentDate);
   
   // Get active court types
@@ -70,6 +70,7 @@ export default function Display() {
     special: allBookings.filter(b => b.isSpecial).length,
     bookings: allBookings
   });
+
 
   const { data: displaySettings } = useQuery({
     queryKey: ["display-settings"],
