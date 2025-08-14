@@ -27,7 +27,9 @@ export function LoginForm({
   return (
     <Card className="w-full border shadow-md">
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-bold">Club de Tenis</CardTitle>
+        <CardTitle className="text-xl md:text-2xl font-bold leading-tight">
+          Centro Deportivo Veracruzano
+        </CardTitle>
         <p className="text-sm text-muted-foreground">
           Inicia sesión para acceder al sistema
         </p>
