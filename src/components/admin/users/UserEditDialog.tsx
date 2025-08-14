@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Shield } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
@@ -36,6 +37,7 @@ export const UserEditDialog = ({ user, onSubmit }: UserEditDialogProps) => {
     phone: user.phone || "",
     email: user.email || "",
     new_password: "",
+    role: user.role || "user",
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -147,6 +149,29 @@ export const UserEditDialog = ({ user, onSubmit }: UserEditDialogProps) => {
               </div>
               <p className="text-xs text-muted-foreground">
                 Mínimo 6 caracteres. Dejar vacío para mantener la contraseña actual.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Rol del usuario
+              </Label>
+              <Select
+                value={formData.role}
+                onValueChange={(value) => setFormData({ ...formData, role: value as UserRole })}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Seleccionar rol" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border border-border shadow-md z-50">
+                  <SelectItem value="user">Usuario</SelectItem>
+                  <SelectItem value="operador">Operador</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Define los permisos de acceso del usuario en el sistema.
               </p>
             </div>
           </div>
