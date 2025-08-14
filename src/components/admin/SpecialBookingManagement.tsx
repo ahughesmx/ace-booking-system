@@ -10,9 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Plus, Calendar as CalendarIcon, Search } from "lucide-react";
 import { format, addDays, getDay } from "date-fns";
 import { es } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 type SpecialBooking = {
   id: string;
@@ -489,33 +492,60 @@ export default function SpecialBookingManagement() {
                 />
               </div>
 
-              <div className={`grid gap-4 ${formData.is_date_range ? 'grid-cols-4' : 'grid-cols-3'}`}>
-                <div>
-                  <Label>Fecha {formData.is_date_range ? 'Inicio' : ''}</Label>
-                  <Calendar
-                    mode="single"
-                    selected={formData.selected_date}
-                    onSelect={(date) => setFormData({...formData, selected_date: date})}
-                    locale={es}
-                    className="rounded-md border"
-                  />
-                </div>
-
-                {formData.is_date_range && (
-                  <div>
-                    <Label>Fecha Fin</Label>
-                    <Calendar
-                      mode="single"
-                      selected={formData.end_date}
-                      onSelect={(date) => setFormData({...formData, end_date: date})}
-                      locale={es}
-                      className="rounded-md border"
-                      disabled={(date) => 
-                        formData.selected_date ? date < formData.selected_date : false
+              <div className="grid gap-4 grid-cols-3">
+                <div className="col-span-1">
+                  <Label>
+                    {formData.is_date_range ? 'Rango de Fechas' : 'Fecha del Evento'}
+                  </Label>
+                  {formData.is_date_range ? (
+                    <DateRangePicker
+                      value={
+                        formData.selected_date && formData.end_date
+                          ? { from: formData.selected_date, to: formData.end_date }
+                          : formData.selected_date
+                          ? { from: formData.selected_date, to: undefined }
+                          : undefined
                       }
+                      onChange={(range) => {
+                        setFormData({
+                          ...formData,
+                          selected_date: range?.from || null,
+                          end_date: range?.to || null
+                        })
+                      }}
+                      placeholder="Seleccionar rango para el evento"
                     />
-                  </div>
-                )}
+                  ) : (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !formData.selected_date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {formData.selected_date ? (
+                            format(formData.selected_date, "PPP", { locale: es })
+                          ) : (
+                            <span>Seleccionar fecha</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={formData.selected_date}
+                          onSelect={(date) => setFormData({...formData, selected_date: date})}
+                          locale={es}
+                          className="pointer-events-auto"
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
 
                 <div>
                   <Label htmlFor="start_time">Hora Inicio</Label>
