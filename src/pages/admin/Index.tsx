@@ -16,6 +16,7 @@ import UserRegistrationForm from "@/components/admin/UserRegistrationForm";
 import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
 import MatchManagementSettings from "@/components/admin/MatchManagementSettings";
 import AcademicManagement from "@/components/admin/AcademicManagement";
+import { ExpiredBookingsManager } from "@/components/admin/ExpiredBookingsManager";
 
 const AdminPage = () => {
   const { isAdmin, isLoading } = useAdminAuth();
@@ -54,6 +55,8 @@ const AdminPage = () => {
         return <MatchManagementSettings />;
       case "academic":
         return <AcademicManagement />;
+      case "expired-bookings":
+        return <ExpiredBookingsManager />;
       default:
         return <UserManagement />;
     }

@@ -15,6 +15,7 @@ import {
   CreditCard,
   Trophy,
   GraduationCap,
+  Clock,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -38,6 +39,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
     { id: "display", label: "Display", icon: Monitor },
     { id: "webhooks", label: "Webhooks", icon: Webhook },
     { id: "payment-gateways", label: "Pasarelas de Pago", icon: CreditCard },
+    { id: "expired-bookings", label: "Reservas Expiradas", icon: Clock },
   ];
 
   return (
