@@ -164,7 +164,7 @@ export function useBookingPayment() {
           timestamp: new Date().toISOString()
         });
         
-        const { error } = await supabase
+        const updateResult = await supabase
           .from("bookings")
           .update({
             status: 'paid',
@@ -172,15 +172,32 @@ export function useBookingPayment() {
             payment_method: paymentGateway === 'efectivo' ? 'cash' : paymentGateway,
             payment_completed_at: new Date().toISOString(),
             payment_id: `${paymentGateway}_${Date.now()}`,
-            actual_amount_charged: pendingBooking.amount
+            actual_amount_charged: pendingBooking.amount,
+            expires_at: null // Limpiar fecha de expiración al marcar como pagado
           })
           .eq("id", pendingBooking.id);
 
-        console.log('💳 RESULTADO DE ACTUALIZACIÓN:', error ? 'ERROR: ' + error.message : 'ÉXITO');
+        console.log('💳 RESULTADO DE ACTUALIZACIÓN:', updateResult.error ? 'ERROR: ' + updateResult.error.message : 'ÉXITO');
+        console.log('💳 UPDATE RESPONSE COMPLETA:', updateResult);
 
-        if (error) {
-          console.error('💳 ERROR DETALLADO EN UPDATE:', error);
-          throw error;
+        if (updateResult.error) {
+          console.error('💳 ERROR DETALLADO EN UPDATE:', updateResult.error);
+          throw updateResult.error;
+        }
+
+        // Verificar que la reserva se actualizó correctamente
+        const { data: verifyBooking, error: verifyError } = await supabase
+          .from("bookings")
+          .select("*")
+          .eq("id", pendingBooking.id)
+          .single();
+          
+        console.log('🔍 VERIFICACIÓN POST-UPDATE:', { verifyBooking, verifyError });
+        
+        if (verifyError) {
+          console.error('❌ Error verificando reserva:', verifyError);
+        } else {
+          console.log('✅ Reserva verificada - Status:', verifyBooking.status);
         }
 
         console.log('💳 ✅ RESERVA ACTUALIZADA CORRECTAMENTE, PROCEDEMOA WEBHOOKS...');

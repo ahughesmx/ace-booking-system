@@ -210,9 +210,27 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
       const result = await processPayment(paymentGateway);
       console.log(`✅ Payment processed successfully for ${paymentGateway}`, result);
       
-      // Si es pago en efectivo (operador), generar ticket
+      // Si es pago en efectivo (operador), generar ticket con folio real
       if (paymentGateway === 'efectivo' && isOperator && pendingBooking && typeof result === 'object') {
         const court = courts.find(c => c.id === selectedCourt);
+        
+        // Crear folio real en la base de datos
+        let finalReceiptNumber = `COB-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`;
+        
+        try {
+          const { data: receiptNumber, error: receiptError } = await supabase
+            .rpc('create_receipt_number', { p_booking_id: pendingBooking.id });
+          
+          if (!receiptError && receiptNumber) {
+            finalReceiptNumber = receiptNumber;
+            console.log("✅ Receipt number created:", finalReceiptNumber);
+          } else {
+            console.error("❌ Error creating receipt number:", receiptError);
+          }
+        } catch (error) {
+          console.error("❌ Error in receipt creation:", error);
+        }
+        
         const ticketData = {
           courtName: court?.name || 'Cancha',
           courtType: selectedCourtType!,
@@ -223,7 +241,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
           paymentMethod: 'Efectivo',
           userName: selectedUserName,
           operatorName: user?.user_metadata?.full_name || user?.email || 'Operador',
-          receiptNumber: `R-${Date.now()}`
+          receiptNumber: finalReceiptNumber
         };
         setTicketData(ticketData);
         setShowTicket(true);
