@@ -126,7 +126,9 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
       hasTime: !!selectedTime,
       hasCourtType: !!selectedCourtType,
       hasCourt: !!selectedCourt,
-      hasSelectedUser: isOperator ? !!selectedUserId : true
+      hasSelectedUser: isOperator ? !!selectedUserId : true,
+      isOperatorCheck: isOperator,
+      selectedUserIdValue: selectedUserId
     });
 
     if (!selectedDate || !selectedTime || !selectedCourtType || !selectedCourt) {
@@ -136,11 +138,17 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
         hasCourtType: !!selectedCourtType,
         hasCourt: !!selectedCourt
       });
+      toast({
+        title: "Campos requeridos",
+        description: "Por favor completa todos los campos requeridos",
+        variant: "destructive",
+      });
       return;
     }
 
     // Si es operador, debe seleccionar un usuario
     if (isOperator && !selectedUserId) {
+      console.log('❌ Operador sin usuario seleccionado');
       toast({
         title: "Usuario requerido",
         description: "Debes seleccionar un usuario para realizar la reserva",
@@ -173,6 +181,8 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
         return;
       }
     }
+
+    console.log('✅ All validations passed, proceeding to create pending booking...');
 
     try {
       console.log('💰 Creating pending booking...');
