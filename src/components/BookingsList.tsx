@@ -3,6 +3,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useCancellationRules } from "@/hooks/use-cancellation-rules";
+import { useBookingRules } from "@/hooks/use-booking-rules";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { format } from "date-fns";
@@ -28,6 +29,8 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   const { data: userRole } = useUserRole(user?.id);
   const isAdmin = userRole?.role === "admin";
   const { getCancellationAllowed } = useCancellationRules();
+  const { data: tennisRules } = useBookingRules('tennis');
+  const { data: padelRules } = useBookingRules('padel');
   const queryClient = useQueryClient();
 
   const { data: allBookings = [], isLoading } = useAllBookings(selectedDate);
@@ -69,6 +72,9 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
         const booking = bookings.find(b => b.id === bookingId);
         if (!booking) return;
 
+        // Get the appropriate booking rules for this court type
+        const currentRules = booking.court?.court_type === 'tennis' ? tennisRules : padelRules;
+
         // Verificar si la cancelación está permitida para este tipo de cancha
         const isCancellationAllowed = getCancellationAllowed(booking.court?.court_type);
         if (!isAdmin && !isCancellationAllowed) {
@@ -80,30 +86,40 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
           return;
         }
 
-        const startTime = new Date(booking.start_time);
-        const now = new Date();
-        
-        // Fixed: Calculate hours difference more precisely
-        const timeDifference = startTime.getTime() - now.getTime();
-        const hoursDifference = timeDifference / (1000 * 60 * 60);
+      const startTime = new Date(booking.start_time);
+      const now = new Date();
+      
+      // Calculate hours difference more precisely
+      const timeDifference = startTime.getTime() - now.getTime();
+      const hoursDifference = timeDifference / (1000 * 60 * 60);
 
-        console.log('Cancellation time check:', {
-          startTime: startTime.toISOString(),
-          now: now.toISOString(),
-          timeDifference,
-          hoursDifference,
-          isAdmin
+      // Get minimum cancellation time from rules (convert from interval string to hours)
+      let minCancellationHours = 24; // Default fallback
+      if (currentRules?.min_cancellation_time) {
+        const timeParts = currentRules.min_cancellation_time.split(':');
+        minCancellationHours = parseInt(timeParts[0]) + (parseInt(timeParts[1]) / 60);
+      }
+
+      console.log('🕒 Cancellation time check:', {
+        startTime: startTime.toISOString(),
+        now: now.toISOString(),
+        timeDifference,
+        hoursDifference,
+        minCancellationHours,
+        currentRules: currentRules?.min_cancellation_time,
+        courtType: booking.court?.court_type,
+        isAdmin
+      });
+
+      // Check minimum cancellation time for non-admin users
+      if (!isAdmin && hoursDifference < minCancellationHours) {
+        toast({
+          title: "No se puede cancelar",
+          description: `Las reservas solo pueden cancelarse con al menos ${minCancellationHours} horas de anticipación. Faltan ${Math.round(hoursDifference * 10) / 10} horas.`,
+          variant: "destructive",
         });
-
-        // Only check 24-hour rule for non-admin users
-        if (!isAdmin && hoursDifference < 24) {
-          toast({
-            title: "No se puede cancelar",
-            description: `Las reservas solo pueden cancelarse con al menos 24 horas de anticipación. Faltan ${Math.round(hoursDifference * 10) / 10} horas.`,
-            variant: "destructive",
-          });
-          return;
-        }
+        return;
+      }
 
         const { error } = await supabase
           .from("bookings")
