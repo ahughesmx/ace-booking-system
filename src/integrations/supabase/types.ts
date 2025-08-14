@@ -920,6 +920,41 @@ export type Database = {
           },
         ]
       }
+      receipt_numbers: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          id: string
+          receipt_number: string
+          sequential_number: number
+          year: number
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          receipt_number: string
+          sequential_number: number
+          year: number
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          receipt_number?: string
+          sequential_number?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_numbers_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       special_bookings: {
         Row: {
           court_id: string
@@ -1122,6 +1157,14 @@ export type Database = {
       cleanup_incomplete_matches: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      create_receipt_number: {
+        Args: { p_booking_id: string }
+        Returns: string
+      }
+      generate_receipt_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       is_admin: {
         Args: Record<PropertyKey, never>
