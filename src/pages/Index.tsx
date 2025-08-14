@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useHomeCardPreferences } from "@/hooks/use-interface-preferences";
 
 export default function Index() {
   const { user, loading } = useAuth();
@@ -21,6 +22,7 @@ export default function Index() {
   const { data: userRole } = useUserRole(user?.id);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isCardEnabled } = useHomeCardPreferences();
   
   // Type the location state
   const locationState = location.state as { defaultTab?: string; selectedDate?: string } | null;
@@ -149,44 +151,50 @@ export default function Index() {
           </Card>
         </button>
 
-        <button onClick={() => handleNavigation("matches")} className="w-full text-left">
+        {isCardEnabled("home_card_matches") && (
+          <button onClick={() => handleNavigation("matches")} className="w-full text-left">
+            <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
+              <CardContent className="p-4">
+                <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
+                  <CircleDot className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                  Registra un partido
+                </h3>
+                <p className="text-sm text-[#6898FE]/70">Si quieres rankear tu posición</p>
+              </CardContent>
+            </Card>
+          </button>
+        )}
+
+        {isCardEnabled("home_card_courses") && (
+          <button onClick={() => navigate("/courses")} className="w-full text-left">
+            <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 cursor-pointer">
+              <CardContent className="p-4">
+                <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
+                  <GraduationCap className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                  Clases y cursos
+                </h3>
+                <p className="text-sm text-[#6898FE]/70">Conoce horarios, días y deportes que puedes aprender</p>
+              </CardContent>
+            </Card>
+          </button>
+        )}
+
+        {isCardEnabled("home_card_competitions") && (
           <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
             <CardContent className="p-4">
               <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
-                <CircleDot className="h-6 w-6 text-white" />
+                <Shield className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
-                Registra un partido
+                Competencias
               </h3>
-              <p className="text-sm text-[#6898FE]/70">Si quieres rankear tu posición</p>
             </CardContent>
           </Card>
-        </button>
-
-        <button onClick={() => navigate("/courses")} className="w-full text-left">
-          <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 cursor-pointer">
-            <CardContent className="p-4">
-              <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
-                <GraduationCap className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
-                Clases y cursos
-              </h3>
-              <p className="text-sm text-[#6898FE]/70">Conoce horarios, días y deportes que puedes aprender</p>
-            </CardContent>
-          </Card>
-        </button>
-
-        <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
-          <CardContent className="p-4">
-            <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
-              <Shield className="h-6 w-6 text-white" />
-            </div>
-            <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
-              Competencias
-            </h3>
-          </CardContent>
-        </Card>
+        )}
       </div>
     </div>
   );

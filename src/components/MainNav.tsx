@@ -7,11 +7,13 @@ import { MatchInvitationNotification } from "./match/MatchInvitationNotification
 import { NavItems } from "./nav/NavItems";
 import { MobileNav } from "./nav/MobileNav";
 import { useGlobalRole } from "@/hooks/use-global-role";
+import { useMenuPreferences } from "@/hooks/use-interface-preferences";
 
 const MainNav = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { data: userRole, isLoading: roleLoading } = useGlobalRole(user?.id);
+  const { isMenuItemEnabled } = useMenuPreferences();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -46,9 +48,9 @@ const MainNav = () => {
   const navigationItems = [
     { label: "Inicio", icon: Home, onClick: () => handleNavigation(null) },
     { label: "Reservas", icon: Calendar, onClick: () => handleNavigation("bookings") },
-    { label: "Partidos", icon: Calendar, onClick: () => handleNavigation("matches") },
-    { label: "Cursos", icon: Calendar, onClick: () => navigate("/courses") },
-    { label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") },
+    ...(isMenuItemEnabled("menu_matches") ? [{ label: "Partidos", icon: Calendar, onClick: () => handleNavigation("matches") }] : []),
+    ...(isMenuItemEnabled("menu_courses") ? [{ label: "Cursos", icon: Calendar, onClick: () => navigate("/courses") }] : []),
+    ...(isMenuItemEnabled("menu_ranking") ? [{ label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") }] : []),
   ];
 
   // Solo añadir Panel de Control si el usuario está autenticado y no estamos cargando el rol

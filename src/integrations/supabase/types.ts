@@ -650,6 +650,39 @@ export type Database = {
         }
         Relationships: []
       }
+      interface_preferences: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          display_name: string
+          feature_key: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          display_name: string
+          feature_key: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          feature_key?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       match_invitations: {
         Row: {
           created_at: string | null
