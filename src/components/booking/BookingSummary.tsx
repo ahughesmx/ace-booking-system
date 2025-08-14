@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Clock, MapPin, CreditCard, Timer } from "lucide-react";
+import { Clock, MapPin, CreditCard, Timer, Loader2 } from "lucide-react";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { useEnabledPaymentGateways } from "@/hooks/use-payment-settings";
 
@@ -18,6 +18,7 @@ interface BookingSummaryProps {
   isLoading?: boolean;
   isOperator?: boolean;
   selectedUserName?: string;
+  processingPayment?: string | null; // Gateway que se está procesando
 }
 
 export function BookingSummary({
@@ -29,7 +30,8 @@ export function BookingSummary({
   onCancel,
   isLoading = false,
   isOperator = false,
-  selectedUserName
+  selectedUserName,
+  processingPayment = null
 }: BookingSummaryProps) {
   const { data: courtSettings } = useCourtTypeSettings(courtType);
   const { data: allPaymentGateways = [] } = useEnabledPaymentGateways();
@@ -146,48 +148,66 @@ export function BookingSummary({
             </p>
           ) : (
             <div className="space-y-2">
-              {paymentGateways.map((gateway) => (
-                <Button
-                  key={gateway.id}
-                  variant="outline"
-                  className="w-full justify-start"
-                  disabled={isLoading}
-                  onClick={() => {
-                    console.log(`🎯 CLICKED: Payment button for ${gateway.name}`, { 
-                      isLoading, 
-                      gateway,
-                      onConfirm: typeof onConfirm,
-                      gatewayId: gateway.id,
-                      gatewayName: gateway.name
-                    });
-                    onConfirm(gateway.name);
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    {gateway.name === 'stripe' && (
-                      <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">
-                        S
-                      </div>
-                    )}
-                    {gateway.name === 'paypal' && (
-                      <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-white text-xs font-bold">
-                        PP
-                      </div>
-                    )}
-                    {gateway.name === 'efectivo' && (
-                      <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-white text-xs font-bold">
-                        💵
-                      </div>
-                    )}
-                    <span className="capitalize">{gateway.name}</span>
-                    {gateway.test_mode && (
-                      <Badge variant="secondary" className="text-xs">
-                        Test
-                      </Badge>
-                    )}
-                  </div>
-                </Button>
-              ))}
+              {paymentGateways.map((gateway) => {
+                const isProcessing = processingPayment === gateway.name;
+                const isDisabled = isLoading || !!processingPayment;
+                
+                return (
+                  <Button
+                    key={gateway.id}
+                    variant="outline"
+                    className="w-full justify-start"
+                    disabled={isDisabled}
+                    onClick={() => {
+                      console.log(`🎯 CLICKED: Payment button for ${gateway.name}`, { 
+                        isLoading, 
+                        gateway,
+                        onConfirm: typeof onConfirm,
+                        gatewayId: gateway.id,
+                        gatewayName: gateway.name,
+                        processingPayment
+                      });
+                      onConfirm(gateway.name);
+                    }}
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      {isProcessing ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          {gateway.name === 'stripe' && (
+                            <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                              S
+                            </div>
+                          )}
+                          {gateway.name === 'paypal' && (
+                            <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-white text-xs font-bold">
+                              PP
+                            </div>
+                          )}
+                          {gateway.name === 'efectivo' && (
+                            <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                              💵
+                            </div>
+                          )}
+                        </>
+                      )}
+                      <span className="capitalize flex-1 text-left">
+                        {isProcessing ? (
+                          gateway.name === 'efectivo' ? 'Procesando pago en efectivo...' : 'Procesando...'
+                        ) : (
+                          gateway.name
+                        )}
+                      </span>
+                      {gateway.test_mode && !isProcessing && (
+                        <Badge variant="secondary" className="text-xs">
+                          Test
+                        </Badge>
+                      )}
+                    </div>
+                  </Button>
+                );
+              })}
             </div>
           )}
         </div>

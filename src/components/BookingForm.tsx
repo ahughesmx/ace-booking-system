@@ -41,6 +41,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   const { user } = useAuth();
   const { data: userRole } = useGlobalRole(user?.id);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState<string | null>(null);
   const { handleBooking } = useBookingSubmit(onBookingSuccess);
   const { 
     createPendingBooking, 
@@ -212,6 +213,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     
     try {
       setIsSubmitting(true);
+      setProcessingPayment(paymentGateway);
       console.log(`💳 Iniciando processPayment para ${paymentGateway}...`);
       const result = await processPayment(paymentGateway);
       console.log(`✅ Payment processed successfully for ${paymentGateway}`, result);
@@ -268,6 +270,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
       });
     } finally {
       setIsSubmitting(false);
+      setProcessingPayment(null);
     }
   };
 
@@ -351,6 +354,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
           isLoading={isSubmitting}
           isOperator={isOperator}
           selectedUserName={selectedUserName}
+          processingPayment={processingPayment}
         />
       </div>
     );
