@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
+import { BulkMemberIdUpload } from "./BulkMemberIdUpload";
+import { MemberIdFormatSettings } from "./MemberIdFormatSettings";
 
 type ValidMemberId = {
   id: string;
@@ -94,6 +96,13 @@ export default function ValidMemberIdManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Configuración de formato */}
+      <MemberIdFormatSettings />
+      
+      {/* Carga masiva */}
+      <BulkMemberIdUpload onSuccess={refetch} />
+      
+      {/* Agregar individual */}
       <div className="flex gap-4">
         <Input
           placeholder="Nueva clave de socio"
