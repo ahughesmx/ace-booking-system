@@ -16,6 +16,8 @@ interface BookingSummaryProps {
   onConfirm: (paymentGateway: string) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  isOperator?: boolean;
+  selectedUserName?: string;
 }
 
 export function BookingSummary({
@@ -25,10 +27,29 @@ export function BookingSummary({
   courtName,
   onConfirm,
   onCancel,
-  isLoading = false
+  isLoading = false,
+  isOperator = false,
+  selectedUserName
 }: BookingSummaryProps) {
   const { data: courtSettings } = useCourtTypeSettings(courtType);
-  const { data: paymentGateways = [] } = useEnabledPaymentGateways();
+  const { data: allPaymentGateways = [] } = useEnabledPaymentGateways();
+  
+  // Filtrar métodos de pago según el rol
+  const paymentGateways = isOperator 
+    ? [
+        ...allPaymentGateways,
+        // Agregar efectivo solo para operadores
+        {
+          id: 'efectivo',
+          name: 'efectivo',
+          enabled: true,
+          test_mode: false,
+          configuration: {},
+          created_at: '',
+          updated_at: ''
+        }
+      ]
+    : allPaymentGateways.filter(gateway => gateway.name !== 'efectivo');
 
   const pricePerHour = Array.isArray(courtSettings) 
     ? courtSettings[0]?.price_per_hour || 0 
@@ -50,6 +71,18 @@ export function BookingSummary({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Usuario seleccionado (solo para operadores) */}
+        {isOperator && selectedUserName && (
+          <>
+            <div className="flex items-center gap-2">
+              <Badge variant="default" className="gap-1">
+                👤 Reserva para: {selectedUserName}
+              </Badge>
+            </div>
+            <Separator />
+          </>
+        )}
+
         {/* Detalles de la reserva */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
@@ -128,6 +161,11 @@ export function BookingSummary({
                     {gateway.name === 'paypal' && (
                       <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-white text-xs font-bold">
                         PP
+                      </div>
+                    )}
+                    {gateway.name === 'efectivo' && (
+                      <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                        💵
                       </div>
                     )}
                     <span className="capitalize">{gateway.name}</span>

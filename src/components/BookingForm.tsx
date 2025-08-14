@@ -15,6 +15,12 @@ import { BookingSummary } from "./booking/BookingSummary";
 import { useBookingPayment } from "./booking/useBookingPayment";
 import { useAvailableCourtTypes } from "@/hooks/use-available-court-types";
 import { useToast } from "@/hooks/use-toast";
+import { UserSelector } from "./booking/UserSelector";
+import { TicketReceipt } from "./booking/TicketReceipt";
+import { useAuth } from "@/components/AuthProvider";
+import { useGlobalRole } from "@/hooks/use-global-role";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase-client";
 
 interface BookingFormProps {
   selectedDate?: Date;
@@ -27,7 +33,13 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   console.log('🟢 BookingForm RENDER - selectedDate:', selectedDate, 'initialCourtType:', initialCourtType);
   const navigate = useNavigate();
   const [showSummary, setShowSummary] = useState(false);
+  const [showTicket, setShowTicket] = useState(false);
+  const [ticketData, setTicketData] = useState<any>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | undefined>();
+  const [selectedUserName, setSelectedUserName] = useState<string>("");
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { data: userRole } = useGlobalRole(user?.id);
   const { handleBooking, isSubmitting } = useBookingSubmit(onBookingSuccess);
   const { 
     createPendingBooking, 
@@ -36,6 +48,32 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     pendingBooking, 
     isCreatingBooking 
   } = useBookingPayment();
+
+  // Verificar si el usuario es operador
+  const isOperator = userRole?.role === 'operador';
+
+  // Hook para obtener información del usuario seleccionado
+  const { data: selectedUserData } = useQuery({
+    queryKey: ["selectedUser", selectedUserId],
+    queryFn: async () => {
+      if (!selectedUserId) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", selectedUserId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedUserId,
+  });
+
+  // Actualizar el nombre del usuario seleccionado
+  useEffect(() => {
+    if (selectedUserData) {
+      setSelectedUserName(selectedUserData.full_name || "Usuario sin nombre");
+    }
+  }, [selectedUserData]);
   
   const {
     selectedCourtType,
@@ -52,7 +90,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   const { data: availableTypes = [] } = useAvailableCourtTypes(true);
 
   const {
-    user,
+    user: bookingUser,
     bookingRules,
     userActiveBookings,
     bookedSlots,
@@ -75,6 +113,8 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
       selectedTime,
       selectedCourtType,
       selectedCourt,
+      selectedUserId,
+      isOperator,
       bookingRules: bookingRules ? {
         maxDaysAhead: bookingRules.max_days_ahead,
         courtType: bookingRules.court_type
@@ -85,7 +125,8 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
       hasDate: !!selectedDate,
       hasTime: !!selectedTime,
       hasCourtType: !!selectedCourtType,
-      hasCourt: !!selectedCourt
+      hasCourt: !!selectedCourt,
+      hasSelectedUser: isOperator ? !!selectedUserId : true
     });
 
     if (!selectedDate || !selectedTime || !selectedCourtType || !selectedCourt) {
@@ -94,6 +135,16 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
         hasTime: !!selectedTime,
         hasCourtType: !!selectedCourtType,
         hasCourt: !!selectedCourt
+      });
+      return;
+    }
+
+    // Si es operador, debe seleccionar un usuario
+    if (isOperator && !selectedUserId) {
+      toast({
+        title: "Usuario requerido",
+        description: "Debes seleccionar un usuario para realizar la reserva",
+        variant: "destructive",
       });
       return;
     }
@@ -129,7 +180,8 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
         selectedDate,
         selectedTime,
         selectedCourt,
-        selectedCourtType
+        selectedCourtType,
+        forUserId: isOperator ? selectedUserId : undefined
       });
       console.log('✅ Pending booking created, showing summary');
       setShowSummary(true);
@@ -147,6 +199,26 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     try {
       const result = await processPayment(paymentGateway);
       console.log(`✅ Payment processed successfully for ${paymentGateway}`, result);
+      
+      // Si es pago en efectivo (operador), generar ticket
+      if (paymentGateway === 'efectivo' && isOperator && pendingBooking && typeof result === 'object') {
+        const court = courts.find(c => c.id === selectedCourt);
+        const ticketData = {
+          courtName: court?.name || 'Cancha',
+          courtType: selectedCourtType!,
+          date: selectedDate!,
+          time: selectedTime!,
+          duration: 1,
+          amount: result.amount || 0,
+          paymentMethod: 'Efectivo',
+          userName: selectedUserName,
+          operatorName: user?.user_metadata?.full_name || user?.email || 'Operador',
+          receiptNumber: `R-${Date.now()}`
+        };
+        setTicketData(ticketData);
+        setShowTicket(true);
+      }
+      
       setShowSummary(false);
       onBookingSuccess();
     } catch (error) {
@@ -179,6 +251,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     // Solo mostrar el mensaje de seleccionar cancha si hay más de una cancha disponible
     if (courts.length > 1 && !selectedCourt) return "Selecciona una cancha específica";
     if (!selectedTime) return "Selecciona un horario";
+    if (isOperator && !selectedUserId) return "Selecciona el usuario para la reserva";
     return null;
   };
 
@@ -201,6 +274,22 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     maxBookings
   });
 
+  // Si se está mostrando el ticket
+  if (showTicket && ticketData) {
+    return (
+      <div className="flex justify-center">
+        <TicketReceipt
+          bookingData={ticketData}
+          onClose={() => {
+            setShowTicket(false);
+            setTicketData(null);
+          }}
+          onPrint={() => window.print()}
+        />
+      </div>
+    );
+  }
+
   // Si se está mostrando el resumen de pago
   console.log('🔍 BookingSummary check - showSummary:', showSummary, 'pendingBooking:', !!pendingBooking);
   if (showSummary && pendingBooking) {
@@ -215,6 +304,8 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
           onConfirm={handleConfirmPayment}
           onCancel={handleCancelPayment}
           isLoading={isSubmitting}
+          isOperator={isOperator}
+          selectedUserName={selectedUserName}
         />
       </div>
     );
@@ -264,6 +355,15 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
           bookingRules={bookingRules}
           selectedCourtType={selectedCourtType}
         />
+
+        {/* Selector de usuario para operadores */}
+        {isOperator && (
+          <UserSelector
+            onUserSelect={setSelectedUserId}
+            selectedUserId={selectedUserId}
+            selectedUserName={selectedUserName}
+          />
+        )}
 
         <CourtSelection 
           courts={courts}

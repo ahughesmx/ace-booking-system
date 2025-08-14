@@ -10,6 +10,7 @@ interface BookingData {
   selectedTime: string;
   selectedCourt: string;
   selectedCourtType: string;
+  forUserId?: string; // Para reservas de operadores
 }
 
 export function useBookingPayment() {
@@ -32,7 +33,7 @@ export function useBookingPayment() {
     console.log('🔄 Setting isCreatingBooking to true');
 
     try {
-      const { selectedDate, selectedTime, selectedCourt, selectedCourtType } = bookingData;
+      const { selectedDate, selectedTime, selectedCourt, selectedCourtType, forUserId } = bookingData;
       
       // Obtener configuración de precios
       const { data: courtSettings } = await supabase
@@ -53,7 +54,7 @@ export function useBookingPayment() {
 
       const bookingPayload = {
         court_id: selectedCourt,
-        user_id: user.id,
+        user_id: forUserId || user.id, // Usar forUserId si es una reserva de operador
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
         status: 'pending_payment',
@@ -165,8 +166,10 @@ export function useBookingPayment() {
           .update({
             status: 'paid',
             payment_gateway: paymentGateway,
+            payment_method: paymentGateway === 'efectivo' ? 'cash' : paymentGateway,
             payment_completed_at: new Date().toISOString(),
-            payment_id: `${paymentGateway}_${Date.now()}`
+            payment_id: `${paymentGateway}_${Date.now()}`,
+            actual_amount_charged: pendingBooking.amount
           })
           .eq("id", pendingBooking.id);
 
@@ -279,11 +282,15 @@ export function useBookingPayment() {
 
         toast({
           title: "¡Pago exitoso!",
-          description: "Tu reserva ha sido confirmada correctamente.",
+          description: paymentGateway === 'efectivo' ? "Reserva confirmada - Pago en efectivo recibido" : "Tu reserva ha sido confirmada correctamente.",
         });
 
         setPendingBooking(null);
-        return true;
+        return { 
+          success: true, 
+          amount: pendingBooking.amount,
+          paymentMethod: paymentGateway 
+        };
       }
     } catch (error) {
       console.error("Error processing payment:", error);
