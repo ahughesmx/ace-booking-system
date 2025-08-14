@@ -319,7 +319,7 @@ export default function Display() {
             <div className="flex gap-2">
               {displaySettings?.enable_all_view && (
                 <Button
-                  variant={viewMode === 'all' ? 'default' : 'outline'}
+                  variant={(viewMode as string) === 'all' ? 'default' : 'outline'}
                   onClick={() => setViewMode('all')}
                   className="px-4 py-2 text-sm"
                 >
@@ -329,7 +329,7 @@ export default function Display() {
               )}
               {displaySettings?.enable_single_view && (
                 <Button
-                  variant={viewMode === 'single' ? 'default' : 'outline'}
+                  variant={(viewMode as string) === 'single' ? 'default' : 'outline'}
                   onClick={() => setViewMode('single')}
                   className="px-4 py-2 text-sm"
                 >
@@ -462,7 +462,7 @@ export default function Display() {
           <div className="flex gap-2">
             {displaySettings?.enable_all_view && (
               <Button
-                variant={viewMode === 'all' ? 'default' : 'outline'}
+                variant={(viewMode as string) === 'all' ? 'default' : 'outline'}
                 onClick={() => setViewMode('all')}
                 className="px-3 py-1 text-xs"
               >
@@ -472,7 +472,7 @@ export default function Display() {
             )}
             {displaySettings?.enable_single_view && (
               <Button
-                variant={viewMode === 'single' ? 'default' : 'outline'}
+                variant={(viewMode as string) === 'single' ? 'default' : 'outline'}
                 onClick={() => setViewMode('single')}
                 className="px-3 py-1 text-xs"
               >
