@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useBookingRules } from "@/hooks/use-booking-rules";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,9 +18,19 @@ interface BookingRulesFormProps {
 function BookingRulesForm({ courtType, courtTypeLabel }: BookingRulesFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [allowConsecutive, setAllowConsecutive] = useState(false);
+  const [allowCancellation, setAllowCancellation] = useState(false);
   const { data: rules, isLoading, refetch } = useBookingRules(courtType);
 
-  console.log(`BookingRulesForm for ${courtType}:`, { rules, isLoading });
+  console.log(`BookingRulesForm for ${courtType}:`, { rules, isLoading, allowConsecutive, allowCancellation });
+
+  // Update local state when rules are loaded
+  useEffect(() => {
+    if (rules) {
+      setAllowConsecutive(rules.allow_consecutive_bookings);
+      setAllowCancellation(rules.allow_cancellation);
+    }
+  }, [rules]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -29,11 +39,20 @@ function BookingRulesForm({ courtType, courtTypeLabel }: BookingRulesFormProps) 
     const formData = new FormData(e.currentTarget);
     const maxBookings = parseInt(formData.get("maxBookings") as string);
     const minCancellationHours = parseInt(formData.get("minCancellationHours") as string);
-    const allowConsecutive = formData.get("allowConsecutive") === "true";
-    const allowCancellation = formData.get("allowCancellation") === "true";
     const timeBetweenHours = parseInt(formData.get("timeBetweenHours") as string);
     const minAdvanceBookingMinutes = parseInt(formData.get("minAdvanceBookingMinutes") as string);
     const maxDaysAhead = parseInt(formData.get("maxDaysAhead") as string);
+
+    console.log('🔧 Submitting booking rules:', {
+      courtType,
+      maxBookings,
+      minCancellationHours,
+      allowConsecutive,
+      allowCancellation,
+      timeBetweenHours,
+      minAdvanceBookingMinutes,
+      maxDaysAhead
+    });
 
     try {
       const { error } = await supabase
@@ -148,8 +167,8 @@ function BookingRulesForm({ courtType, courtTypeLabel }: BookingRulesFormProps) 
           <div className="flex items-center space-x-2">
             <Switch
               id={`allowConsecutive-${courtType}`}
-              name="allowConsecutive"
-              defaultChecked={rules.allow_consecutive_bookings}
+              checked={allowConsecutive}
+              onCheckedChange={setAllowConsecutive}
             />
             <Label htmlFor={`allowConsecutive-${courtType}`}>Permitir reservas consecutivas</Label>
           </div>
@@ -157,8 +176,8 @@ function BookingRulesForm({ courtType, courtTypeLabel }: BookingRulesFormProps) 
           <div className="flex items-center space-x-2">
             <Switch
               id={`allowCancellation-${courtType}`}
-              name="allowCancellation"
-              defaultChecked={rules.allow_cancellation}
+              checked={allowCancellation}
+              onCheckedChange={setAllowCancellation}
             />
             <Label htmlFor={`allowCancellation-${courtType}`}>Permitir cancelación de reservas</Label>
           </div>
