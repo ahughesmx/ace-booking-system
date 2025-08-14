@@ -449,16 +449,12 @@ export default function Display() {
           <img
             src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
             alt="CDV Logo"
-            className="h-8"
+            className="h-10"
           />
           <div className="text-center">
-            <h1 className="text-lg font-bold text-gray-800">
-              {format(currentTime, "EEEE d 'de' MMMM", { locale: es })}
+            <h1 className="text-3xl font-bold text-gray-800">
+              {format(currentTime, "EEEE d 'de' MMMM", { locale: es })} - {format(currentTime, "h:mm a")}
             </h1>
-            <p className="text-sm text-blue-600 font-semibold flex items-center justify-center gap-1">
-              <Clock className="w-3 h-3" />
-              {format(currentTime, "h:mm a")}
-            </p>
           </div>
           <div className="flex gap-2">
             {displaySettings?.enable_all_view && (
