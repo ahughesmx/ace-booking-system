@@ -147,42 +147,58 @@ export function BookingSummary({
             </p>
           ) : (
             <div className="space-y-2">
-              {paymentGateways.map((gateway) => (
-                <Button
-                  key={gateway.id}
-                  variant="outline"
-                  className="w-full justify-start"
-                  disabled={isLoading}
-                  onClick={() => {
-                    console.log(`🔄 Payment button clicked for ${gateway.name}`, { isLoading, gateway });
-                    onConfirm(gateway.name);
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    {gateway.name === 'stripe' && (
-                      <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">
-                        S
-                      </div>
-                    )}
-                    {gateway.name === 'paypal' && (
-                      <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-white text-xs font-bold">
-                        PP
-                      </div>
-                    )}
-                    {gateway.name === 'efectivo' && (
-                      <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-white text-xs font-bold">
-                        💵
-                      </div>
-                    )}
-                    <span className="capitalize">{gateway.name}</span>
-                    {gateway.test_mode && (
-                      <Badge variant="secondary" className="text-xs">
-                        Test
-                      </Badge>
-                    )}
-                  </div>
-                </Button>
-              ))}
+              {paymentGateways.map((gateway) => {
+                // Solo efectivo está habilitado para operadores
+                const isDisabledForOperator = isOperator && gateway.name !== 'efectivo';
+                
+                return (
+                  <Button
+                    key={gateway.id}
+                    variant="outline"
+                    className={`w-full justify-start ${
+                      isDisabledForOperator 
+                        ? 'opacity-50 cursor-not-allowed bg-gray-100' 
+                        : ''
+                    }`}
+                    disabled={isLoading || isDisabledForOperator}
+                    onClick={() => {
+                      if (!isDisabledForOperator) {
+                        console.log(`🔄 Payment button clicked for ${gateway.name}`, { isLoading, gateway });
+                        onConfirm(gateway.name);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      {gateway.name === 'stripe' && (
+                        <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                          S
+                        </div>
+                      )}
+                      {gateway.name === 'paypal' && (
+                        <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-white text-xs font-bold">
+                          PP
+                        </div>
+                      )}
+                      {gateway.name === 'efectivo' && (
+                        <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                          💵
+                        </div>
+                      )}
+                      <span className="capitalize">{gateway.name}</span>
+                      {gateway.test_mode && (
+                        <Badge variant="secondary" className="text-xs">
+                          Test
+                        </Badge>
+                      )}
+                      {isDisabledForOperator && (
+                        <Badge variant="destructive" className="text-xs ml-auto">
+                          No disponible para operadores
+                        </Badge>
+                      )}
+                    </div>
+                  </Button>
+                );
+              })}
             </div>
           )}
         </div>
