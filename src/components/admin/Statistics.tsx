@@ -292,6 +292,63 @@ export default function Statistics() {
     },
   });
 
+  // Métodos de pago
+  const { data: paymentMethods } = useQuery({
+    queryKey: ["payment-methods"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("payment_method")
+        .eq("status", "paid")
+        .gte("start_time", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+
+      if (error) throw error;
+
+      const methodCounts = data.reduce((acc: any, booking: any) => {
+        const method = booking.payment_method || 'online';
+        const methodName = method === 'online' ? 'En línea' : 
+                          method === 'operador' ? 'Operador' : 
+                          method === 'admin' ? 'Administrativo' : method;
+        acc[methodName] = (acc[methodName] || 0) + 1;
+        return acc;
+      }, {});
+
+      return Object.entries(methodCounts).map(([name, value]) => ({
+        name,
+        value,
+      }));
+    },
+  });
+
+  // Ingresos por método de pago
+  const { data: paymentRevenue } = useQuery({
+    queryKey: ["payment-revenue"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("payment_method, actual_amount_charged, amount")
+        .eq("status", "paid")
+        .gte("start_time", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+
+      if (error) throw error;
+
+      const revenueByMethod = data.reduce((acc: any, booking: any) => {
+        const method = booking.payment_method || 'online';
+        const methodName = method === 'online' ? 'En línea' : 
+                          method === 'operador' ? 'Operador' : 
+                          method === 'admin' ? 'Administrativo' : method;
+        const amount = booking.actual_amount_charged || booking.amount || 0;
+        acc[methodName] = (acc[methodName] || 0) + Number(amount);
+        return acc;
+      }, {});
+
+      return Object.entries(revenueByMethod).map(([method, revenue]) => ({
+        method,
+        revenue,
+      }));
+    },
+  });
+
   return (
     <div className="grid gap-6 md:grid-cols-2">
       {/* Top 10 Usuarios */}
@@ -524,6 +581,58 @@ export default function Statistics() {
                 <YAxis />
                 <Tooltip />
                 <Bar dataKey="reservas" fill="#10b981" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Métodos de Pago */}
+      <Card className="col-span-1">
+        <CardHeader>
+          <CardTitle>Métodos de Pago</CardTitle>
+          <CardDescription>Últimos 30 días</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={paymentMethods}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {paymentMethods?.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Ingresos por Método de Pago */}
+      <Card className="col-span-1">
+        <CardHeader>
+          <CardTitle>Ingresos por Método</CardTitle>
+          <CardDescription>Últimos 30 días</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={paymentRevenue}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="method" />
+                <YAxis />
+                <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Ingresos']} />
+                <Bar dataKey="revenue" fill="#f59e0b" />
               </BarChart>
             </ResponsiveContainer>
           </div>

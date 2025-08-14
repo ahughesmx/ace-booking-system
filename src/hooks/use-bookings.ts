@@ -165,6 +165,8 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
     end_time: booking.end_time,
     created_at: booking.created_at,
     booking_made_at: booking.booking_made_at,
+    payment_method: booking.payment_method || 'online',
+    actual_amount_charged: booking.actual_amount_charged,
     user: booking.user,
     court: booking.court,
     isSpecial: false
@@ -178,6 +180,8 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
     end_time: booking.end_time,
     created_at: booking.created_at,
     booking_made_at: booking.created_at,
+    payment_method: 'admin',
+    actual_amount_charged: booking.custom_price,
     user: booking.reference_user ? {
       full_name: booking.reference_user.full_name,
       member_id: booking.reference_user.member_id

@@ -16,6 +16,7 @@ type CourtTypeSettings = {
   max_booking_duration: number;
   default_booking_duration: number;
   price_per_hour: number;
+  operador_price_per_hour: number;
   peak_hours_start: string;
   peak_hours_end: string;
   peak_hours_multiplier: number;

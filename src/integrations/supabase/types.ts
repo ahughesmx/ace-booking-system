@@ -85,6 +85,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          actual_amount_charged: number | null
           amount: number | null
           booking_made_at: string | null
           court_id: string | null
@@ -96,11 +97,13 @@ export type Database = {
           payment_completed_at: string | null
           payment_gateway: string | null
           payment_id: string | null
+          payment_method: string | null
           start_time: string
           status: string
           user_id: string | null
         }
         Insert: {
+          actual_amount_charged?: number | null
           amount?: number | null
           booking_made_at?: string | null
           court_id?: string | null
@@ -112,11 +115,13 @@ export type Database = {
           payment_completed_at?: string | null
           payment_gateway?: string | null
           payment_id?: string | null
+          payment_method?: string | null
           start_time: string
           status?: string
           user_id?: string | null
         }
         Update: {
+          actual_amount_charged?: number | null
           amount?: number | null
           booking_made_at?: string | null
           court_id?: string | null
@@ -128,6 +133,7 @@ export type Database = {
           payment_completed_at?: string | null
           payment_gateway?: string | null
           payment_id?: string | null
+          payment_method?: string | null
           start_time?: string
           status?: string
           user_id?: string | null
@@ -489,6 +495,7 @@ export type Database = {
           max_booking_duration: number
           max_capacity: number
           min_booking_duration: number
+          operador_price_per_hour: number | null
           operating_days: string[] | null
           operating_hours_end: string
           operating_hours_start: string
@@ -508,6 +515,7 @@ export type Database = {
           max_booking_duration?: number
           max_capacity?: number
           min_booking_duration?: number
+          operador_price_per_hour?: number | null
           operating_days?: string[] | null
           operating_hours_end?: string
           operating_hours_start?: string
@@ -527,6 +535,7 @@ export type Database = {
           max_booking_duration?: number
           max_capacity?: number
           min_booking_duration?: number
+          operador_price_per_hour?: number | null
           operating_days?: string[] | null
           operating_hours_end?: string
           operating_hours_start?: string

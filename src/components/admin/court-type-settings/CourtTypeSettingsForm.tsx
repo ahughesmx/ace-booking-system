@@ -15,6 +15,7 @@ type CourtTypeSettings = {
   max_booking_duration: number;
   default_booking_duration: number;
   price_per_hour: number;
+  operador_price_per_hour: number;
   peak_hours_start: string;
   peak_hours_end: string;
   peak_hours_multiplier: number;
@@ -173,6 +174,19 @@ export function CourtTypeSettingsForm({
                   value={formData.price_per_hour}
                   onChange={(e) => setFormData({ ...formData, price_per_hour: parseFloat(e.target.value) })}
                 />
+              </div>
+              <div>
+                <Label htmlFor="operador_price_per_hour">Precio Operador por Hora ($)</Label>
+                <Input
+                  id="operador_price_per_hour"
+                  type="number"
+                  step="0.01"
+                  value={formData.operador_price_per_hour}
+                  onChange={(e) => setFormData({ ...formData, operador_price_per_hour: parseFloat(e.target.value) })}
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Precio especial para cobros realizados por operadores
+                </p>
               </div>
               <div>
                 <Label htmlFor="weekend_price_multiplier">Multiplicador Fin de Semana</Label>

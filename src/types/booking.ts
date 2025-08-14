@@ -7,6 +7,8 @@ export interface BaseBooking {
   end_time: string;
   created_at: string;
   booking_made_at: string;
+  payment_method: string;
+  actual_amount_charged: number | null;
   user: {
     full_name: string;
     member_id: string;
