@@ -99,14 +99,26 @@ export default function UserManagement() {
 
   const updateUserRole = async (userId: string, newRole: UserRole) => {
     try {
-      const { error } = await supabase
-        .from("user_roles")
-        .upsert({
-          user_id: userId,
-          role: newRole,
-        });
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No session found');
+      }
 
-      if (error) throw error;
+      const { error } = await supabase.functions.invoke('manage-user-role', {
+        body: {
+          userId,
+          role: newRole,
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        console.error("Error updating user role:", error);
+        throw new Error("No se pudo actualizar el rol del usuario");
+      }
 
       toast({
         title: "Rol actualizado",
@@ -138,16 +150,28 @@ export default function UserManagement() {
 
       if (profileError) throw profileError;
 
-      // Update role if provided
+      // Update role if provided using edge function
       if (data.role) {
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .upsert({
-            user_id: userId,
-            role: data.role,
-          });
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          throw new Error('No session found');
+        }
 
-        if (roleError) throw roleError;
+        const { error: roleError } = await supabase.functions.invoke('manage-user-role', {
+          body: {
+            userId,
+            role: data.role,
+          },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (roleError) {
+          console.error("Error updating user role:", roleError);
+          throw new Error("No se pudo actualizar el rol del usuario");
+        }
       }
 
       // Update auth information if provided
