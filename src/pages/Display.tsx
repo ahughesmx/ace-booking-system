@@ -299,88 +299,114 @@ export default function Display() {
   // Render All Courts View
   if (viewMode === 'all') {
     return (
-      <div className="h-screen w-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col overflow-hidden">
+      <div className="h-screen w-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="bg-white shadow-lg border-b-4 border-blue-500 flex-shrink-0">
-          <div className="flex items-center justify-between px-6 py-3">
-            <img
-              src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
-              alt="CDV Logo"
-              className="h-12"
-            />
+        <div className="bg-white/95 backdrop-blur-sm shadow-2xl border-b border-blue-200 flex-shrink-0">
+          <div className="flex items-center justify-between px-8 py-4">
+            <div className="flex items-center gap-4">
+              <img
+                src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
+                alt="CDV Logo"
+                className="h-14 drop-shadow-lg"
+              />
+              <div className="hidden md:block h-12 w-px bg-gradient-to-b from-transparent via-blue-300 to-transparent"></div>
+            </div>
+            
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-800 mb-1">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent mb-2">
                 {format(currentTime, "EEEE d 'de' MMMM", { locale: es })}
               </h1>
-              <p className="text-lg text-blue-600 font-semibold flex items-center justify-center gap-2">
-                <Clock className="w-4 h-4" />
-                {format(currentTime, "h:mm a")}
-              </p>
+              <div className="flex items-center justify-center gap-3 bg-blue-50 px-4 py-2 rounded-full border border-blue-200">
+                <Clock className="w-5 h-5 text-blue-600" />
+                <span className="text-xl font-semibold text-blue-700">
+                  {format(currentTime, "h:mm a")}
+                </span>
+              </div>
             </div>
-            <div className="flex gap-2">
+            
+            <div className="flex gap-3">
               {displaySettings?.enable_all_view && (
                 <Button
                   variant={(viewMode as string) === 'all' ? 'default' : 'outline'}
                   onClick={() => setViewMode('all')}
-                  className="px-4 py-2 text-sm"
+                  className="px-6 py-3 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  <Building2 className="w-4 h-4 mr-1" />
-                  Todas
+                  <Building2 className="w-4 h-4 mr-2" />
+                  Todas las Canchas
                 </Button>
               )}
               {displaySettings?.enable_single_view && (
                 <Button
                   variant={(viewMode as string) === 'single' ? 'default' : 'outline'}
                   onClick={() => setViewMode('single')}
-                  className="px-4 py-2 text-sm"
+                  className="px-6 py-3 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  <Monitor className="w-4 h-4 mr-1" />
-                  Individual
+                  <Monitor className="w-4 h-4 mr-2" />
+                  Vista Individual
                 </Button>
               )}
             </div>
           </div>
         </div>
 
-        {/* Debug info */}
-        <div className="bg-yellow-100 p-2 text-xs text-center">
-          Reservas: {allBookings.filter(b => !b.isSpecial).length} regulares, {allBookings.filter(b => b.isSpecial).length} especiales | 
-          Canchas: {courts?.length || 0} | 
-          Fecha: {format(currentDate, "yyyy-MM-dd")}
+        {/* Stats Bar */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 flex justify-center gap-8 text-sm font-medium">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+            <span>{timeSlots.length * (courts?.length || 0) - allBookings.length} Disponibles</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+            <span>{allBookings.filter(b => !b.isSpecial).length} Reservadas</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
+            <span>{allBookings.filter(b => b.isSpecial).length} Eventos</span>
+          </div>
         </div>
 
         {/* Main Grid */}
-        <div className="flex-1 p-4 min-h-0">
-          <div className="bg-white rounded-lg shadow-xl h-full flex flex-col overflow-hidden">
+        <div className="flex-1 p-6 min-h-0">
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl h-full flex flex-col overflow-hidden border border-blue-100">
             {/* Courts Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 flex-shrink-0">
-              <div className="grid gap-2" style={{ gridTemplateColumns: `100px repeat(${courts?.length || 0}, 1fr)` }}>
-                <div className="font-bold text-sm text-center">Hora</div>
+            <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white p-4 flex-shrink-0 rounded-t-xl">
+              <div className="grid gap-3" style={{ gridTemplateColumns: `120px repeat(${courts?.length || 0}, 1fr)` }}>
+                <div className="font-bold text-base text-center flex items-center justify-center">
+                  <Clock className="w-4 h-4 mr-2" />
+                  Horario
+                </div>
                 {courts?.map((court) => (
-                  <div key={court.id} className="text-center font-bold text-sm truncate">
-                    {court.name}
+                  <div key={court.id} className="text-center font-bold text-sm bg-white/10 rounded-lg p-2 backdrop-blur-sm">
+                    <div className="truncate">{court.name}</div>
+                    <div className="text-xs opacity-80 capitalize">{court.court_type}</div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Time Slots Grid */}
-            <div className="flex-1 overflow-hidden">
-              <div className="h-full flex flex-col">
+            <div className="flex-1 overflow-hidden p-2">
+              <div className="h-full flex flex-col gap-1">
                 {timeSlots.map((slot) => {
                   const isCurrent = format(currentTime, "HH:00") === slot;
                   return (
                     <div
                       key={slot}
-                      className={`grid gap-2 px-3 border-b border-gray-100 transition-colors flex-1 min-h-0 ${
-                        isCurrent ? 'bg-blue-50 border-l-4 border-blue-500' : 'hover:bg-gray-50'
+                      className={`grid gap-3 px-4 py-3 rounded-lg transition-all duration-300 flex-1 min-h-0 ${
+                        isCurrent 
+                          ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500 shadow-lg transform scale-[1.02]' 
+                          : 'hover:bg-gray-50/80 hover:shadow-md'
                       }`}
                       style={{ 
-                        gridTemplateColumns: `100px repeat(${courts?.length || 0}, 1fr)`,
-                        height: `${100 / timeSlots.length}%`
+                        gridTemplateColumns: `120px repeat(${courts?.length || 0}, 1fr)`,
+                        minHeight: '60px'
                       }}
                     >
-                      <div className={`text-center font-semibold text-sm flex items-center justify-center ${isCurrent ? 'text-blue-700' : 'text-gray-700'}`}>
+                      <div className={`text-center font-bold text-base flex items-center justify-center rounded-lg ${
+                        isCurrent 
+                          ? 'bg-blue-500 text-white shadow-lg' 
+                          : 'bg-gray-100 text-gray-700'
+                      }`}>
                         {slot}
                       </div>
                       {courts?.map((court) => {
@@ -388,12 +414,12 @@ export default function Display() {
                         return (
                           <div
                             key={`${court.id}-${slot}`}
-                            className={`rounded transition-all m-1 flex items-center justify-center text-xs text-white font-medium ${
+                            className={`rounded-lg transition-all duration-300 m-1 flex flex-col items-center justify-center text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 ${
                               slotInfo.isBooked
                                 ? slotInfo.type === 'special' 
-                                  ? 'bg-purple-500 hover:bg-purple-600' 
-                                  : 'bg-red-500 hover:bg-red-600'
-                                : 'bg-green-100 text-green-800 hover:bg-green-200'
+                                  ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white border-2 border-purple-300' 
+                                  : 'bg-gradient-to-br from-red-500 to-red-600 text-white border-2 border-red-300'
+                                : 'bg-gradient-to-br from-green-100 to-green-200 text-green-800 border-2 border-green-300'
                             }`}
                             title={
                               slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking)
@@ -403,11 +429,19 @@ export default function Display() {
                                 : 'Disponible'
                             }
                           >
-                            {slotInfo.isBooked ? (
-                              slotInfo.type === 'special' ? '🎉' : '👤'
-                            ) : (
-                              '✓'
-                            )}
+                            <div className="text-lg mb-1">
+                              {slotInfo.isBooked ? (
+                                slotInfo.type === 'special' ? '🎉' : '👤'
+                              ) : (
+                                '✅'
+                              )}
+                            </div>
+                            <div className="text-[10px] text-center leading-tight">
+                              {slotInfo.isBooked 
+                                ? (slotInfo.type === 'special' ? 'Evento' : 'Reservado')
+                                : 'Libre'
+                              }
+                            </div>
                           </div>
                         );
                       })}
@@ -420,19 +454,25 @@ export default function Display() {
         </div>
 
         {/* Legend */}
-        <div className="bg-white border-t p-2 flex-shrink-0">
-          <div className="flex justify-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-100 rounded"></div>
-              <span className="text-gray-700 text-sm font-medium">Disponible</span>
+        <div className="bg-white/95 backdrop-blur-sm border-t border-blue-100 p-4 flex-shrink-0">
+          <div className="flex justify-center gap-8">
+            <div className="flex items-center gap-3 bg-green-50 px-4 py-2 rounded-full border border-green-200">
+              <div className="w-5 h-5 bg-gradient-to-br from-green-100 to-green-200 rounded-full border-2 border-green-300 flex items-center justify-center">
+                <span className="text-xs">✅</span>
+              </div>
+              <span className="text-gray-700 text-sm font-semibold">Disponible</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-500 rounded"></div>
-              <span className="text-gray-700 text-sm font-medium">Reservado</span>
+            <div className="flex items-center gap-3 bg-red-50 px-4 py-2 rounded-full border border-red-200">
+              <div className="w-5 h-5 bg-gradient-to-br from-red-500 to-red-600 rounded-full border-2 border-red-300 flex items-center justify-center">
+                <span className="text-xs text-white">👤</span>
+              </div>
+              <span className="text-gray-700 text-sm font-semibold">Reservado</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-purple-500 rounded"></div>
-              <span className="text-gray-700 text-sm font-medium">Evento Especial</span>
+            <div className="flex items-center gap-3 bg-purple-50 px-4 py-2 rounded-full border border-purple-200">
+              <div className="w-5 h-5 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full border-2 border-purple-300 flex items-center justify-center">
+                <span className="text-xs text-white">🎉</span>
+              </div>
+              <span className="text-gray-700 text-sm font-semibold">Evento Especial</span>
             </div>
           </div>
         </div>
@@ -442,32 +482,39 @@ export default function Display() {
 
   // Render Single Court View
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col overflow-hidden">
+    <div className="h-screen w-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="bg-white shadow-lg border-b-4 border-blue-500 flex-shrink-0">
-        <div className="flex items-center justify-between px-4 py-2">
-          <img
-            src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
-            alt="CDV Logo"
-            className="h-8"
-          />
+      <div className="bg-white/95 backdrop-blur-sm shadow-2xl border-b border-blue-200 flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-4">
+            <img
+              src="/lovable-uploads/93253d4c-3038-48af-a0cc-7e041b9226fc.png"
+              alt="CDV Logo"
+              className="h-12 drop-shadow-lg"
+            />
+            <div className="hidden md:block h-10 w-px bg-gradient-to-b from-transparent via-blue-300 to-transparent"></div>
+          </div>
+          
           <div className="text-center">
-            <h1 className="text-lg font-bold text-gray-800">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent mb-2">
               {format(currentTime, "EEEE d 'de' MMMM", { locale: es })}
             </h1>
-            <p className="text-sm text-blue-600 font-semibold flex items-center justify-center gap-1">
-              <Clock className="w-3 h-3" />
-              {format(currentTime, "h:mm a")}
-            </p>
+            <div className="flex items-center justify-center gap-2 bg-blue-50 px-4 py-2 rounded-full border border-blue-200">
+              <Clock className="w-4 h-4 text-blue-600" />
+              <span className="text-lg font-semibold text-blue-700">
+                {format(currentTime, "h:mm a")}
+              </span>
+            </div>
           </div>
-          <div className="flex gap-2">
+          
+          <div className="flex gap-3">
             {displaySettings?.enable_all_view && (
               <Button
                 variant={(viewMode as string) === 'all' ? 'default' : 'outline'}
                 onClick={() => setViewMode('all')}
-                className="px-3 py-1 text-xs"
+                className="px-4 py-2 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-200"
               >
-                <Building2 className="w-3 h-3 mr-1" />
+                <Building2 className="w-4 h-4 mr-2" />
                 Todas
               </Button>
             )}
@@ -475,9 +522,9 @@ export default function Display() {
               <Button
                 variant={(viewMode as string) === 'single' ? 'default' : 'outline'}
                 onClick={() => setViewMode('single')}
-                className="px-3 py-1 text-xs"
+                className="px-4 py-2 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-200"
               >
-                <Monitor className="w-3 h-3 mr-1" />
+                <Monitor className="w-4 h-4 mr-2" />
                 Individual
               </Button>
             )}
@@ -486,58 +533,76 @@ export default function Display() {
       </div>
 
       {/* Court Selector */}
-      <div className="bg-white border-b p-2 flex-shrink-0">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 border-b p-4 flex-shrink-0">
         <div className="flex justify-center">
-          <select
-            value={selectedCourtId}
-            onChange={(e) => setSelectedCourtId(e.target.value)}
-            className="px-3 py-1 border-2 border-blue-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[200px]"
-          >
-            <option value="">Seleccionar Cancha</option>
-            {allCourts?.map((court) => (
-              <option key={court.id} value={court.id}>
-                {court.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={selectedCourtId}
+              onChange={(e) => setSelectedCourtId(e.target.value)}
+              className="px-6 py-3 pr-12 border-0 rounded-xl text-lg font-semibold focus:outline-none focus:ring-4 focus:ring-blue-300 bg-white/95 backdrop-blur-sm shadow-lg min-w-[300px] appearance-none cursor-pointer"
+              style={{ 
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                backgroundPosition: 'right 12px center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '16px'
+              }}
+            >
+              <option value="">📋 Seleccionar Cancha</option>
+              {allCourts?.map((court) => (
+                <option key={court.id} value={court.id}>
+                  🏟️ {court.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Single Court Content */}
       {selectedCourt ? (
-        <div className="flex-1 p-2 min-h-0">
-          <div className="h-full bg-white rounded-lg shadow-xl flex flex-col overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-2 text-center flex-shrink-0">
-              <h2 className="text-lg font-bold">{selectedCourt.name}</h2>
-              <p className="text-xs opacity-90">Horarios del Día</p>
+        <div className="flex-1 p-6 min-h-0">
+          <div className="h-full bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl flex flex-col overflow-hidden border border-blue-100">
+            <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white p-6 text-center flex-shrink-0 rounded-t-xl">
+              <h2 className="text-3xl font-bold mb-2 drop-shadow-lg">{selectedCourt.name}</h2>
+              <div className="flex items-center justify-center gap-2 text-blue-100">
+                <Clock className="w-5 h-5" />
+                <p className="text-lg font-medium">Horarios del Día</p>
+              </div>
             </div>
 
-            <div className="flex-1 p-2 min-h-0">
-              <div className="grid grid-rows-3 gap-3 h-full">
+            <div className="flex-1 p-4 min-h-0">
+              <div className="grid grid-rows-3 gap-4 h-full">
                 {/* Morning, Afternoon, Evening rows */}
                  {(() => {
                    const totalSlots = timeSlots.length;
                    const slotsPerPeriod = Math.ceil(totalSlots / 3);
                    return [
                      { 
-                       title: `Mañana (${timeSlots[0] || '08:00'} - ${timeSlots[slotsPerPeriod - 1] || '12:00'})`, 
-                       slots: timeSlots.slice(0, slotsPerPeriod) 
+                       title: "🌅 Mañana", 
+                       subtitle: `${timeSlots[0] || '08:00'} - ${timeSlots[slotsPerPeriod - 1] || '12:00'}`,
+                       slots: timeSlots.slice(0, slotsPerPeriod),
+                       color: 'from-yellow-400 to-orange-500'
                      },
                      { 
-                       title: `Tarde (${timeSlots[slotsPerPeriod] || '13:00'} - ${timeSlots[slotsPerPeriod * 2 - 1] || '18:00'})`, 
-                       slots: timeSlots.slice(slotsPerPeriod, slotsPerPeriod * 2) 
+                       title: "☀️ Tarde", 
+                       subtitle: `${timeSlots[slotsPerPeriod] || '13:00'} - ${timeSlots[slotsPerPeriod * 2 - 1] || '18:00'}`,
+                       slots: timeSlots.slice(slotsPerPeriod, slotsPerPeriod * 2),
+                       color: 'from-orange-500 to-red-500'
                      },
                      { 
-                       title: `Noche (${timeSlots[slotsPerPeriod * 2] || '19:00'} - ${timeSlots[totalSlots - 1] || '23:00'})`, 
-                       slots: timeSlots.slice(slotsPerPeriod * 2) 
+                       title: "🌙 Noche", 
+                       subtitle: `${timeSlots[slotsPerPeriod * 2] || '19:00'} - ${timeSlots[totalSlots - 1] || '23:00'}`,
+                       slots: timeSlots.slice(slotsPerPeriod * 2),
+                       color: 'from-blue-600 to-purple-600'
                      }
                    ];
                  })().map((period, periodIndex) => (
-                  <div key={periodIndex} className="flex flex-col flex-1">
-                    <h3 className="text-sm font-bold text-gray-800 mb-2 text-center border-b border-gray-200 pb-1 flex-shrink-0">
-                      {period.title}
-                    </h3>
-                    <div className="flex-1 grid gap-2 min-h-0" style={{ gridTemplateColumns: `repeat(${period.slots.length}, 1fr)` }}>
+                  <div key={periodIndex} className="flex flex-col flex-1 bg-gray-50/50 rounded-xl p-4">
+                    <div className={`bg-gradient-to-r ${period.color} text-white p-3 rounded-lg mb-3 text-center shadow-lg`}>
+                      <h3 className="text-lg font-bold mb-1">{period.title}</h3>
+                      <p className="text-sm opacity-90">{period.subtitle}</p>
+                    </div>
+                    <div className="flex-1 grid gap-3 min-h-0" style={{ gridTemplateColumns: `repeat(${Math.min(period.slots.length, 6)}, 1fr)` }}>
                       {period.slots.map((slot) => {
                         const slotInfo = getSlotInfo(selectedCourt.id, slot);
                         const isCurrent = format(currentTime, "HH:00") === slot;
@@ -545,30 +610,37 @@ export default function Display() {
                         return (
                           <div
                             key={slot}
-                            className={`border rounded p-2 text-center text-xs flex flex-col justify-center min-h-[80px] ${
-                              slotInfo.isBooked
+                            className={`border-2 rounded-xl p-3 text-center text-sm flex flex-col justify-center min-h-[100px] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                              isCurrent
+                                ? 'bg-gradient-to-br from-blue-400 to-blue-600 border-blue-300 text-white ring-4 ring-blue-200 scale-110'
+                                : slotInfo.isBooked
                                 ? slotInfo.type === 'special'
-                                  ? 'bg-purple-100 border-purple-300 text-purple-800'
-                                  : 'bg-red-100 border-red-300 text-red-800'
-                                : isCurrent
-                                ? 'bg-blue-100 border-blue-300 text-blue-800'
-                                : 'bg-green-50 border-green-200 text-green-800'
+                                  ? 'bg-gradient-to-br from-purple-400 to-purple-600 border-purple-300 text-white'
+                                  : 'bg-gradient-to-br from-red-400 to-red-600 border-red-300 text-white'
+                                : 'bg-gradient-to-br from-green-100 to-green-200 border-green-300 text-green-800'
                             }`}
                           >
-                            <div className="font-bold text-sm mb-1">{slot}</div>
+                            <div className="font-bold text-lg mb-2">{slot}</div>
+                            <div className="text-2xl mb-2">
+                              {isCurrent ? '⏰' : slotInfo.isBooked ? (
+                                slotInfo.type === 'special' ? '🎉' : '👤'
+                              ) : '✅'}
+                            </div>
                             {slotInfo.isBooked ? (
                               <div className="space-y-1">
                                 {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
                                   <>
-                                    <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
-                                    <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
+                                    <div className="font-semibold text-xs leading-tight">{slotInfo.booking.title}</div>
+                                    <div className="text-xs capitalize opacity-90">{slotInfo.booking.event_type}</div>
                                   </>
                                 ) : (
-                                  <div className="text-xs">Reservado</div>
+                                  <div className="text-xs font-medium">Reservado</div>
                                 )}
                               </div>
+                            ) : isCurrent ? (
+                              <div className="text-xs font-bold">Hora Actual</div>
                             ) : (
-                              <div className="text-xs font-medium">Disponible</div>
+                              <div className="text-xs font-semibold">Disponible</div>
                             )}
                           </div>
                         );
@@ -580,33 +652,44 @@ export default function Display() {
             </div>
 
             {/* Legend */}
-            <div className="bg-gray-50 p-2 border-t flex-shrink-0">
-              <div className="flex justify-center gap-3 text-xs">
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 bg-green-50 border border-green-200 rounded"></div>
-                  <span className="text-gray-700 font-medium">Disponible</span>
+            <div className="bg-white/80 backdrop-blur-sm p-4 border-t border-blue-100 flex-shrink-0 rounded-b-xl">
+              <div className="flex justify-center gap-6 text-sm">
+                <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-full border border-green-200">
+                  <div className="w-4 h-4 bg-gradient-to-br from-green-100 to-green-200 rounded-full border border-green-300 flex items-center justify-center">
+                    <span className="text-xs">✅</span>
+                  </div>
+                  <span className="text-gray-700 font-semibold">Disponible</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 bg-red-100 border border-red-300 rounded"></div>
-                  <span className="text-gray-700 font-medium">Reservado</span>
+                <div className="flex items-center gap-2 bg-red-50 px-3 py-2 rounded-full border border-red-200">
+                  <div className="w-4 h-4 bg-gradient-to-br from-red-400 to-red-600 rounded-full border border-red-300 flex items-center justify-center">
+                    <span className="text-xs text-white">👤</span>
+                  </div>
+                  <span className="text-gray-700 font-semibold">Reservado</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 bg-purple-100 border border-purple-300 rounded"></div>
-                  <span className="text-gray-700 font-medium">Evento Especial</span>
+                <div className="flex items-center gap-2 bg-purple-50 px-3 py-2 rounded-full border border-purple-200">
+                  <div className="w-4 h-4 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full border border-purple-300 flex items-center justify-center">
+                    <span className="text-xs text-white">🎉</span>
+                  </div>
+                  <span className="text-gray-700 font-semibold">Evento Especial</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
-                  <span className="text-gray-700 font-medium">Hora Actual</span>
+                <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-full border border-blue-200">
+                  <div className="w-4 h-4 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full border border-blue-300 flex items-center justify-center">
+                    <span className="text-xs text-white">⏰</span>
+                  </div>
+                  <span className="text-gray-700 font-semibold">Hora Actual</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center text-gray-500">
-            <Monitor className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p className="text-lg">Selecciona una cancha para ver sus horarios</p>
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center text-gray-500 bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-2xl border border-blue-100">
+            <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <Monitor className="w-12 h-12 text-blue-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-700 mb-3">Selecciona una Cancha</h3>
+            <p className="text-lg text-gray-500">Elige una cancha del menú superior para ver sus horarios disponibles</p>
           </div>
         </div>
       )}
