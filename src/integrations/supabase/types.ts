@@ -1123,6 +1123,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       recalculate_active_bookings: {
         Args: Record<PropertyKey, never> | { user_uuid: string }
         Returns: undefined
