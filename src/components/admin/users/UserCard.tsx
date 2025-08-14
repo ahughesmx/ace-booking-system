@@ -1,4 +1,4 @@
-import { User, Shield, IdCard, Phone, Edit2, UserPlus } from "lucide-react";
+import { User, Shield, IdCard, Phone, Edit2, UserPlus, Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -14,6 +14,7 @@ interface UserCardProps {
     member_id: string | null;
     phone: string | null;
     role: UserRole;
+    email?: string | null;
   };
   onEditUser: (userId: string, data: any) => Promise<void>;
   onUpdateRole: (userId: string, newRole: UserRole) => Promise<void>;
@@ -49,6 +50,14 @@ export const UserCard = ({
       </div>
 
       <div className="space-y-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Mail className="h-4 w-4" />
+          {user.email ? (
+            <span className="truncate">{user.email}</span>
+          ) : (
+            <span className="italic">Sin email</span>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <IdCard className="h-4 w-4" />
           {user.member_id ? (

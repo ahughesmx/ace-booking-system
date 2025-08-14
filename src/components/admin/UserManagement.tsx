@@ -18,6 +18,7 @@ type User = {
   member_id: string | null;
   phone: string | null;
   role: UserRole;
+  email?: string | null;
 };
 
 export default function UserManagement() {
@@ -60,13 +61,26 @@ export default function UserManagement() {
 
       if (rolesError) throw rolesError;
 
-      const usersWithRoles = profiles.map((profile) => ({
-        id: profile.id,
-        full_name: profile.full_name,
-        member_id: profile.member_id,
-        phone: profile.phone,
-        role: roles.find((r) => r.user_id === profile.id)?.role || "user",
-      }));
+      // Get auth users to obtain emails (simplified approach)
+      let authUsers: any[] = [];
+      try {
+        const { data } = await supabase.auth.admin.listUsers();
+        authUsers = data?.users || [];
+      } catch (authError) {
+        console.warn("No se pudo obtener información de autenticación:", authError);
+      }
+
+      const usersWithRoles = profiles.map((profile) => {
+        const authUser = authUsers.find((u: any) => u.id === profile.id);
+        return {
+          id: profile.id,
+          full_name: profile.full_name,
+          member_id: profile.member_id,
+          phone: profile.phone,
+          role: roles.find((r) => r.user_id === profile.id)?.role || "user",
+          email: authUser?.email || null,
+        };
+      });
 
       setUsers(usersWithRoles);
       setFilteredUsers(usersWithRoles);
@@ -109,9 +123,10 @@ export default function UserManagement() {
     }
   };
 
-  const handleEditUser = async (userId: string, data: Partial<User>) => {
+  const handleEditUser = async (userId: string, data: Partial<User & { new_password?: string }>) => {
     try {
-      const { error } = await supabase
+      // Update profile information
+      const { error: profileError } = await supabase
         .from("profiles")
         .update({
           full_name: data.full_name,
@@ -120,14 +135,41 @@ export default function UserManagement() {
         })
         .eq("id", userId);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update auth information if provided
+      const authUpdates: any = {};
+      
+      if (data.email && data.email.trim() !== '') {
+        authUpdates.email = data.email;
+      }
+      
+      if (data.new_password && data.new_password.length >= 6) {
+        authUpdates.password = data.new_password;
+      }
+
+      // Only make auth update if there are auth changes
+      if (Object.keys(authUpdates).length > 0) {
+        const { error: authError } = await supabase.auth.admin.updateUserById(
+          userId,
+          authUpdates
+        );
+
+        if (authError) {
+          console.error("Error updating auth information:", authError);
+          toast({
+            title: "Advertencia",
+            description: "Perfil actualizado pero hubo un problema con email/contraseña. Verifica los permisos de administrador.",
+            variant: "destructive",
+          });
+        }
+      }
 
       toast({
         title: "Usuario actualizado",
         description: "La información del usuario ha sido actualizada correctamente.",
       });
 
-      
       fetchUsers();
     } catch (error) {
       console.error("Error updating user:", error);
