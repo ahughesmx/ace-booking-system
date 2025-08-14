@@ -72,12 +72,32 @@ serve(async (req) => {
     }
 
     // Update user role using service role client
-    const { error: roleError } = await supabaseAdmin
+    // First try to update existing role
+    const { data: existingRole, error: selectError } = await supabaseAdmin
       .from('user_roles')
-      .upsert({
-        user_id: userId,
-        role: role,
-      })
+      .select('id')
+      .eq('user_id', userId)
+      .single()
+
+    let roleError = null
+    
+    if (existingRole) {
+      // Update existing role
+      const { error } = await supabaseAdmin
+        .from('user_roles')
+        .update({ role: role })
+        .eq('user_id', userId)
+      roleError = error
+    } else {
+      // Insert new role
+      const { error } = await supabaseAdmin
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: role,
+        })
+      roleError = error
+    }
 
     if (roleError) {
       console.error('Error updating user role:', roleError)
