@@ -17,6 +17,8 @@ export default function Login() {
 
   // Estado para el registro
   const [memberId, setMemberId] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -49,6 +51,12 @@ export default function Login() {
     e.preventDefault();
     setError("");
 
+    // Validación de teléfono
+    if (phone.length !== 10) {
+      setError("El celular debe tener exactamente 10 dígitos");
+      return;
+    }
+
     try {
       const { data: validMember } = await supabase
         .from('valid_member_ids')
@@ -61,23 +69,35 @@ export default function Login() {
         return;
       }
 
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            member_id: memberId,
-          },
-        },
-      });
+      // Crear solicitud de registro en lugar de usuario directamente
+      const { error } = await supabase
+        .from('user_registration_requests')
+        .insert({
+          member_id: memberId,
+          full_name: fullName,
+          phone: phone,
+          email: email,
+          password_hash: password, // En producción esto debería estar hasheado
+          status: 'pending'
+        });
 
       if (error) {
-        setError("Error al registrar usuario");
+        console.error("Error creating registration request:", error);
+        setError("Error al enviar solicitud de registro");
       } else {
+        setError(""); // Limpiar errores
+        alert("Solicitud de registro enviada. Un administrador revisará tu solicitud y te notificarán por WhatsApp.");
         setShowRegister(false);
+        // Limpiar campos
+        setMemberId("");
+        setFullName("");
+        setPhone("");
+        setEmail("");
+        setPassword("");
       }
     } catch (err) {
-      setError("Error al registrar usuario");
+      console.error("Registration error:", err);
+      setError("Error al enviar solicitud de registro");
     }
   };
 
@@ -88,6 +108,10 @@ export default function Login() {
           <RegisterForm
             memberId={memberId}
             setMemberId={setMemberId}
+            fullName={fullName}
+            setFullName={setFullName}
+            phone={phone}
+            setPhone={setPhone}
             email={email}
             setEmail={setEmail}
             password={password}

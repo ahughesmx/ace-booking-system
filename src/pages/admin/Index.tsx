@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
 import AdminLayout from "@/components/admin/AdminLayout";
 import UserManagement from "@/components/admin/UserManagement";
+import RegistrationRequests from "@/components/admin/RegistrationRequests";
 import CourtManagement from "@/components/admin/CourtManagement";
 import CourtTypeSettings from "@/components/admin/CourtTypeSettings";
 import Statistics from "@/components/admin/Statistics";
@@ -24,6 +25,8 @@ const AdminPage = () => {
     switch (activeTab) {
       case "users":
         return <UserManagement />;
+      case "registration-requests":
+        return <RegistrationRequests />;
       case "courts":
         return <CourtManagement />;
       case "court-settings":

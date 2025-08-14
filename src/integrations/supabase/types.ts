@@ -977,6 +977,51 @@ export type Database = {
           },
         ]
       }
+      user_registration_requests: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          member_id: string
+          password_hash: string
+          phone: string
+          processed_at: string | null
+          processed_by: string | null
+          rejection_reason: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          member_id: string
+          password_hash: string
+          phone: string
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          member_id?: string
+          password_hash?: string
+          phone?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null

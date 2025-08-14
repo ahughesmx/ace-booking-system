@@ -1,4 +1,4 @@
-import { Mail, Lock, UserPlus } from "lucide-react";
+import { Mail, Lock, UserPlus, User, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button";
 interface RegisterFormProps {
   memberId: string;
   setMemberId: (value: string) => void;
+  fullName: string;
+  setFullName: (value: string) => void;
+  phone: string;
+  setPhone: (value: string) => void;
   email: string;
   setEmail: (value: string) => void;
   password: string;
@@ -17,6 +21,10 @@ interface RegisterFormProps {
 export function RegisterForm({
   memberId,
   setMemberId,
+  fullName,
+  setFullName,
+  phone,
+  setPhone,
   email,
   setEmail,
   password,
@@ -36,6 +44,45 @@ export function RegisterForm({
           placeholder="Tu clave de socio"
           required
         />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="full_name">Nombre Completo</Label>
+        <div className="relative">
+          <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+          <Input
+            id="full_name"
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="Tu nombre completo"
+            className="pl-10"
+            required
+          />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="phone">Celular</Label>
+        <div className="relative">
+          <Phone className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+          <Input
+            id="phone"
+            type="tel"
+            value={phone}
+            onChange={(e) => {
+              const value = e.target.value.replace(/[^0-9]/g, '');
+              if (value.length <= 10) {
+                setPhone(value);
+              }
+            }}
+            placeholder="1234567890"
+            className="pl-10"
+            maxLength={10}
+            required
+          />
+        </div>
+        {phone && phone.length !== 10 && (
+          <p className="text-sm text-destructive">El celular debe tener exactamente 10 dígitos</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
