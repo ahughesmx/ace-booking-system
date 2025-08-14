@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import Index from "./pages/Index";
 import AdminIndex from "./pages/admin/Index";
+import OperatorIndex from "./pages/operator/Index";
 import Login from "./pages/auth/Login";
 import Courses from "./pages/Courses";
 import Display from "./pages/Display";
@@ -54,6 +55,7 @@ const AppContent = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/courses" element={<Courses />} />
         <Route path="/admin" element={<AdminRoute />} />
+        <Route path="/operator" element={<OperatorIndex />} />
         <Route path="/display" element={<Display />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

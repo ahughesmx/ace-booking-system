@@ -53,12 +53,24 @@ const MainNav = () => {
     ...(isMenuItemEnabled("menu_ranking") ? [{ label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") }] : []),
   ];
 
-  // Solo añadir Panel de Control si el usuario está autenticado y no estamos cargando el rol
+  // Panel de Control solo para admins
   if (user && !roleLoading && userRole?.role === "admin") {
     navigationItems.push({
       label: "Panel de Control",
       icon: Settings,
       onClick: handleAdminNavigation,
+    });
+  }
+
+  // Panel de Operador para operadores
+  if (user && !roleLoading && userRole?.role === "operador") {
+    navigationItems.push({
+      label: "Gestionar Solicitudes",
+      icon: Settings,
+      onClick: () => {
+        setMobileOpen(false);
+        navigate("/operator");
+      },
     });
   }
 
