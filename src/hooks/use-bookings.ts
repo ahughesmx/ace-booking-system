@@ -109,9 +109,10 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
 
   // Setup realtime subscriptions
   useEffect(() => {
-    if (!selectedDate) return;
-
-    console.log("🔄 Setting up realtime subscriptions for Display");
+    console.log("🔄 Setting up realtime subscriptions for Display", {
+      hasSelectedDate: !!selectedDate,
+      date: selectedDate?.toISOString()
+    });
 
     // Subscribe to bookings changes
     const bookingsChannel = supabase
