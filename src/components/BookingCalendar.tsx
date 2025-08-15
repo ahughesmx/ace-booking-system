@@ -169,7 +169,7 @@ function BookingCalendar({ selectedCourtType: initialCourtType, selectedDate: in
                 selected={selectedDate}
                 onSelect={setSelectedDate}
                 disabled={isDayDisabled}
-                className="mx-auto"
+                className="w-full"
                 initialFocus
               />
             </div>
