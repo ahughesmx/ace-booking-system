@@ -436,6 +436,13 @@ export type Database = {
             foreignKeyName: "courses_instructor_id_fkey"
             columns: ["instructor_id"]
             isOneToOne: false
+            referencedRelation: "instructor_public_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courses_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
             referencedRelation: "instructors"
             referencedColumns: ["id"]
           },
@@ -1070,7 +1077,7 @@ export type Database = {
           full_name: string
           id: string
           member_id: string
-          password_hash: string
+          password_provided: boolean | null
           phone: string
           processed_at: string | null
           processed_by: string | null
@@ -1084,7 +1091,7 @@ export type Database = {
           full_name: string
           id?: string
           member_id: string
-          password_hash: string
+          password_provided?: boolean | null
           phone: string
           processed_at?: string | null
           processed_by?: string | null
@@ -1098,7 +1105,7 @@ export type Database = {
           full_name?: string
           id?: string
           member_id?: string
-          password_hash?: string
+          password_provided?: boolean | null
           phone?: string
           processed_at?: string | null
           processed_by?: string | null
@@ -1185,7 +1192,45 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      instructor_public_info: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          certifications: string[] | null
+          created_at: string | null
+          experience_years: number | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          specialties: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          certifications?: string[] | null
+          created_at?: string | null
+          experience_years?: number | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          specialties?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          certifications?: string[] | null
+          created_at?: string | null
+          experience_years?: number | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          specialties?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_booking_expiration: {
@@ -1209,6 +1254,10 @@ export type Database = {
         Returns: string
       }
       is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_admin_or_operator: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
