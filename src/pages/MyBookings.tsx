@@ -103,14 +103,62 @@ export default function MyBookings() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {paginatedUpcomingBookings.map((booking) => (
-                      <BookingCard
-                        key={booking.id}
-                        booking={booking}
-                        isOwner={true}
-                        onCancel={cancelBooking}
-                      />
-                    ))}
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Fecha</TableHead>
+                          <TableHead>Hora</TableHead>
+                          <TableHead>Cancha</TableHead>
+                          <TableHead>Usuario</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Acciones</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedUpcomingBookings.map((booking) => (
+                          <TableRow key={booking.id}>
+                            <TableCell className="font-medium">
+                              {format(new Date(booking.start_time), "dd/MM/yyyy", { locale: es })}
+                            </TableCell>
+                            <TableCell>
+                              {format(new Date(booking.start_time), "HH:mm", { locale: es })} - {format(new Date(booking.end_time), "HH:mm", { locale: es })}
+                            </TableCell>
+                            <TableCell>
+                              {booking.court?.name} ({booking.court?.court_type})
+                            </TableCell>
+                            <TableCell>
+                              {booking.isSpecial ? 
+                                (booking.title || "Evento especial") : 
+                                (booking.user?.full_name || "Usuario no disponible")
+                              }
+                            </TableCell>
+                            <TableCell>
+                              {booking.isSpecial ? (
+                                <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                  {booking.event_type || "Evento"}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700/10">
+                                  Reservación
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {!booking.isSpecial && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => cancelBooking(booking.id)}
+                                  className="text-destructive hover:text-destructive-foreground hover:bg-destructive"
+                                >
+                                  Cancelar
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                     
                     {upcomingTotalPages > 1 && (
                       <div className="mt-6">
