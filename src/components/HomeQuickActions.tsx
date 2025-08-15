@@ -35,14 +35,14 @@ export function HomeQuickActions({ onNavigateToBookings }: HomeQuickActionsProps
   ];
 
   return (
-    <div className="flex justify-center items-center gap-8 py-6 mt-8">
+    <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 py-6 mt-8">
       {actions.map((action, index) => {
         const Icon = action.icon;
         return (
           <button
             key={index}
             onClick={action.onClick}
-            className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-[#6898FE]/5 transition-all duration-200 hover-scale group"
+            className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-[#6898FE]/5 transition-all duration-200 hover-scale group w-full sm:w-auto max-w-xs"
           >
             <div className="w-12 h-12 bg-[#6898FE]/10 rounded-full flex items-center justify-center group-hover:bg-[#6898FE]/20 transition-colors">
               <Icon className="h-6 w-6 text-[#6898FE]" />

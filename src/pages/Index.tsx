@@ -143,32 +143,32 @@ export default function Index() {
     // Dynamic grid classes based on number of enabled cards
     const getGridClass = () => {
       if (enabledCount === 1) return "grid-cols-1 max-w-sm mx-auto";
-      if (enabledCount === 2) return "grid-cols-1 sm:grid-cols-2";
-      if (enabledCount === 3) return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
-      return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4";
+      if (enabledCount === 2) return "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto";
+      if (enabledCount === 3) return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto";
+      return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 max-w-6xl mx-auto";
     };
 
     return (
-      <div className="space-y-4 animate-fade-in">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#1e3a8a]">
+      <div className="space-y-6 animate-fade-in">
+        <div className="text-center sm:text-left">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#1e3a8a]">
             Hola {user?.email?.split('@')[0] || 'Usuario'}
             <span className="ml-2 text-[#1e3a8a]" role="img" aria-label="wave">👋</span>
           </h1>
         </div>
 
-        <h2 className="text-2xl font-bold text-[#1e3a8a]">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#1e3a8a] text-center sm:text-left">
           Juega tu partido perfecto
         </h2>
 
         <div className={`grid ${getGridClass()} gap-4`}>
           <button onClick={() => handleNavigation("bookings")} className="w-full text-left hover-scale">
-            <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 h-full">
-              <CardContent className="p-4">
-                <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
+            <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 h-full min-h-[120px]">
+              <CardContent className="p-4 sm:p-6">
+                <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
                   <Search className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                <h3 className="text-base sm:text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE] mb-1">
                   Reserva cancha
                 </h3>
                 <p className="text-sm text-[#6898FE]/70">Canchas disponibles</p>
@@ -178,12 +178,12 @@ export default function Index() {
 
           {isCardEnabled("home_card_matches") && (
             <button onClick={() => handleNavigation("matches")} className="w-full text-left hover-scale">
-              <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 h-full">
-                <CardContent className="p-4">
-                  <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
+              <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 h-full min-h-[120px]">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
                     <CircleDot className="h-6 w-6 text-white" />
                   </div>
-                  <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                  <h3 className="text-base sm:text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE] mb-1">
                     Registra un partido
                   </h3>
                   <p className="text-sm text-[#6898FE]/70">Si quieres rankear tu posición</p>
@@ -194,12 +194,12 @@ export default function Index() {
 
           {isCardEnabled("home_card_courses") && (
             <button onClick={() => navigate("/courses")} className="w-full text-left hover-scale">
-              <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 cursor-pointer h-full">
-                <CardContent className="p-4">
-                  <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
+              <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 cursor-pointer h-full min-h-[120px]">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
                     <GraduationCap className="h-6 w-6 text-white" />
                   </div>
-                  <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                  <h3 className="text-base sm:text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE] mb-1">
                     Clases y cursos
                   </h3>
                   <p className="text-sm text-[#6898FE]/70">Conoce horarios, días y deportes que puedes aprender</p>
@@ -210,12 +210,12 @@ export default function Index() {
 
           {isCardEnabled("home_card_competitions") && (
             <div className="hover-scale">
-              <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 h-full">
-                <CardContent className="p-4">
-                  <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
+              <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 h-full min-h-[120px]">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-3">
                     <Shield className="h-6 w-6 text-white" />
                   </div>
-                  <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                  <h3 className="text-base sm:text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
                     Competencias
                   </h3>
                 </CardContent>
@@ -233,7 +233,7 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <MainNav />
-      <div className="container mx-auto px-4 py-6 md:py-8">
+      <div className="container mx-auto px-4 py-4 sm:py-6 md:py-8">
         {userRole?.role === 'admin' && (
           <Alert className="mb-6 bg-blue-50 border-blue-200">
             <UserCircle2 className="h-5 w-5 text-blue-600" />
@@ -243,7 +243,7 @@ export default function Index() {
           </Alert>
         )}
         
-        <div className="mt-6 space-y-6 mx-auto max-w-4xl">
+        <div className="mt-4 sm:mt-6 space-y-6 mx-auto max-w-4xl">
           {currentTab === "bookings" && (
             <div key="bookings-wrapper" style={{ minHeight: '500px' }}>
               <BookingCalendar selectedDate={locationState?.selectedDate} />
