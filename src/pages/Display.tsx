@@ -565,7 +565,7 @@ export default function Display() {
                                    <>
                                      <div className="text-xs font-medium">Reservado</div>
                                      {slotInfo.booking && slotInfo.booking.user && (
-                                       <div className="text-[10px] text-gray-600 truncate">{slotInfo.booking.user.full_name}</div>
+                                       <div className="text-xs text-gray-600 truncate">{slotInfo.booking.user.full_name}</div>
                                      )}
                                    </>
                                  )}
