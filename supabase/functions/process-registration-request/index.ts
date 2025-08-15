@@ -63,9 +63,8 @@ serve(async (req) => {
     console.log("✅ User has sufficient permissions:", userRole.role);
 
     const body: ProcessRequestBody = await req.json();
+    console.log("📝 Parsed request body:", JSON.stringify(body, null, 2));
     const { requestId, action, rejectionReason } = body;
-
-    console.log("📝 Request body:", { requestId, action, rejectionReason: rejectionReason ? "PROVIDED" : "NONE" });
 
     if (action === 'approve') {
       console.log("🟢 Processing approval for request:", requestId);
