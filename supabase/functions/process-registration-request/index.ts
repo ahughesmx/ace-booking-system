@@ -118,12 +118,12 @@ serve(async (req) => {
       // Verificar si ya existe un perfil para este usuario
       const { data: existingProfile } = await supabase
         .from("profiles")
-        .select("id")
+        .select("id, full_name, member_id, phone")
         .eq("id", authData.user.id)
         .single();
 
       if (!existingProfile) {
-        // Crear el perfil del usuario solo si no existe
+        // Crear el perfil del usuario si no existe
         const { error: profileError } = await supabase
           .from("profiles")
           .insert({
@@ -142,7 +142,31 @@ serve(async (req) => {
           throw new Error("Failed to create user profile");
         }
       } else {
-        console.log(`Profile already exists for user ${authData.user.id}, skipping profile creation`);
+        // El perfil existe, pero verificar si necesita actualización
+        const needsUpdate = !existingProfile.full_name || 
+                           !existingProfile.member_id || 
+                           !existingProfile.phone;
+        
+        if (needsUpdate) {
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({
+              member_id: request.member_id,
+              full_name: request.full_name,
+              phone: request.phone,
+              updated_at: new Date().toISOString()
+            })
+            .eq("id", authData.user.id);
+
+          if (updateError) {
+            console.error("Error updating profile:", updateError);
+            throw new Error("Failed to update user profile");
+          }
+          
+          console.log(`Profile updated for user ${authData.user.id} with complete information`);
+        } else {
+          console.log(`Profile already exists for user ${authData.user.id} with complete information`);
+        }
       }
 
       // Actualizar la solicitud como aprobada
