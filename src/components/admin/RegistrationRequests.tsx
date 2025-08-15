@@ -82,12 +82,16 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
 
   const processRequest = async (requestId: string, action: 'approve' | 'reject', rejectionReason?: string) => {
     try {
+      console.log(`Processing request ${requestId} with action: ${action}`);
+      
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        throw new Error('No session found');
+        throw new Error('No hay sesión activa. Por favor inicia sesión nuevamente.');
       }
 
+      console.log("Calling process-registration-request function...");
+      
       const { data, error } = await supabase.functions.invoke('process-registration-request', {
         body: {
           requestId,
@@ -96,24 +100,32 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Function invocation error:", error);
+        throw error;
+      }
+
+      console.log("Function response:", data);
 
       toast({
         title: action === 'approve' ? "Usuario Aprobado" : "Solicitud Rechazada",
         description: action === 'approve' 
-          ? "El usuario ha sido creado y notificado por WhatsApp." 
-          : "La solicitud ha sido rechazada y el usuario notificado.",
+          ? "El usuario ha sido creado y aprobado exitosamente." 
+          : "La solicitud ha sido rechazada.",
       });
 
-      fetchRequests();
-    } catch (error) {
+      // Refresh the requests list
+      await fetchRequests();
+      
+    } catch (error: any) {
       console.error(`Error ${action}ing request:`, error);
       toast({
         title: "Error",
-        description: `No se pudo ${action === 'approve' ? 'aprobar' : 'rechazar'} la solicitud.`,
+        description: error.message || `No se pudo ${action === 'approve' ? 'aprobar' : 'rechazar'} la solicitud.`,
         variant: "destructive",
       });
     }

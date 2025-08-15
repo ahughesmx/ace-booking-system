@@ -111,6 +111,18 @@ export default function ManualUserRegistration({ onSuccess }: ManualUserRegistra
         return;
       }
 
+      // Get current session for authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "No tienes sesión activa. Por favor inicia sesión nuevamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Create registration request with password
       const { data: requestData, error: registrationError } = await supabase
         .from("user_registration_requests")
@@ -126,27 +138,37 @@ export default function ManualUserRegistration({ onSuccess }: ManualUserRegistra
         .select()
         .single();
 
-      if (registrationError) throw registrationError;
+      if (registrationError) {
+        console.error("Registration request error:", registrationError);
+        throw registrationError;
+      }
+
+      console.log("Registration request created:", requestData);
 
       // Automatically approve the request since it's manual registration by operator
-      const { error: approvalError } = await supabase.functions.invoke('process-registration-request', {
+      const { data: approvalData, error: approvalError } = await supabase.functions.invoke('process-registration-request', {
         body: {
           requestId: requestData.id,
           action: 'approve'
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
         }
       });
 
       if (approvalError) {
-        console.error("Error auto-approving request:", approvalError);
+        console.error("Auto-approval error:", approvalError);
         toast({
-          title: "Advertencia",
-          description: "Usuario registrado pero requiere aprobación manual.",
+          title: "Usuario creado, requiere aprobación",
+          description: `La solicitud fue creada exitosamente pero requiere aprobación manual. Error: ${approvalError.message}`,
           variant: "default",
         });
       } else {
+        console.log("Auto-approval successful:", approvalData);
         toast({
           title: "¡Éxito!",
-          description: "Usuario registrado y aprobado correctamente.",
+          description: "Usuario registrado y aprobado automáticamente.",
         });
       }
 
