@@ -157,7 +157,7 @@ export default function Index() {
           </h1>
         </div>
 
-        <h2 className="text-xl sm:text-2xl font-bold text-[#1e3a8a] text-left mb-1">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#1e3a8a] text-left mb-3">
           Juega tu partido perfecto
         </h2>
 
