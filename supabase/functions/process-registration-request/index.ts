@@ -93,14 +93,16 @@ serve(async (req) => {
         // Don't fail the registration for this, but log it
       }
 
-      // Crear el perfil del usuario
+      // Crear el perfil del usuario (usar upsert para evitar errores de duplicados)
       const { error: profileError } = await supabase
         .from("profiles")
-        .insert({
+        .upsert({
           id: authData.user.id,
           member_id: request.member_id,
           full_name: request.full_name,
           phone: request.phone
+        }, {
+          onConflict: 'id'
         });
 
       if (profileError) {

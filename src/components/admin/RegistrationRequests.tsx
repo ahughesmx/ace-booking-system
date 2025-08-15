@@ -226,40 +226,70 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   // Show only tabs when requested
   if (showOnlyTabs) {
     return (
-      <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="pending">
-            Solicitudes Pendientes ({filteredPendingRequests.length})
-          </TabsTrigger>
-          <TabsTrigger value="processed">
-            Solicitudes Procesadas ({filteredProcessedRequests.length})
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="pending" className="space-y-4">
-          <PendingRequests
-            requests={paginatedPendingRequests}
-            onApprove={handleApprove}
-            onReject={handleReject}
-            currentPage={pendingCurrentPage}
-            totalPages={pendingTotalPages}
-            onPageChange={setPendingCurrentPage}
-            searchTerm={pendingSearchTerm}
-            onSearchChange={setPendingSearchTerm}
-          />
-        </TabsContent>
-        
-        <TabsContent value="processed" className="space-y-4">
-          <ProcessedRequests
-            requests={paginatedProcessedRequests}
-            currentPage={processedCurrentPage}
-            totalPages={processedTotalPages}
-            onPageChange={setProcessedCurrentPage}
-            searchTerm={processedSearchTerm}
-            onSearchChange={setProcessedSearchTerm}
-          />
-        </TabsContent>
-      </Tabs>
+      <>
+        <Tabs defaultValue="pending" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="pending">
+              Solicitudes Pendientes ({filteredPendingRequests.length})
+            </TabsTrigger>
+            <TabsTrigger value="processed">
+              Solicitudes Procesadas ({filteredProcessedRequests.length})
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="pending" className="space-y-4">
+            <PendingRequests
+              requests={paginatedPendingRequests}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              currentPage={pendingCurrentPage}
+              totalPages={pendingTotalPages}
+              onPageChange={setPendingCurrentPage}
+              searchTerm={pendingSearchTerm}
+              onSearchChange={setPendingSearchTerm}
+            />
+          </TabsContent>
+          
+          <TabsContent value="processed" className="space-y-4">
+            <ProcessedRequests
+              requests={paginatedProcessedRequests}
+              currentPage={processedCurrentPage}
+              totalPages={processedTotalPages}
+              onPageChange={setProcessedCurrentPage}
+              searchTerm={processedSearchTerm}
+              onSearchChange={setProcessedSearchTerm}
+            />
+          </TabsContent>
+        </Tabs>
+
+        <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Rechazar Solicitud de Registro</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="rejection-reason">Motivo del Rechazo</Label>
+                <Textarea
+                  id="rejection-reason"
+                  placeholder="Explica el motivo del rechazo..."
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={confirmReject}>
+                Rechazar Solicitud
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 
