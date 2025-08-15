@@ -77,11 +77,14 @@ serve(async (req) => {
         console.log(`User with email ${request.email} already exists, using existing user`);
       } else {
         // Crear nuevo usuario
-        const tempPassword = crypto.randomUUID() + "!Temp123";
+        // Si la solicitud tiene contraseña, usarla; si no, generar una temporal
+        const userPassword = request.password_provided && request.password 
+          ? request.password 
+          : crypto.randomUUID() + "!Temp123";
         
         const { data: newAuthData, error: createUserError } = await supabase.auth.admin.createUser({
           email: request.email,
-          password: tempPassword,
+          password: userPassword,
           email_confirm: true,
           user_metadata: {
             member_id: request.member_id,
@@ -96,17 +99,19 @@ serve(async (req) => {
 
         authData = newAuthData;
 
-        // Send password reset email for new users
-        const { error: resetError } = await supabase.auth.admin.generateLink({
-          type: 'recovery',
-          email: request.email,
-          options: {
-            redirectTo: `${Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '')}/auth/callback`
-          }
-        });
+        // Solo enviar email de reset si no se proporcionó contraseña
+        if (!request.password_provided || !request.password) {
+          const { error: resetError } = await supabase.auth.admin.generateLink({
+            type: 'recovery',
+            email: request.email,
+            options: {
+              redirectTo: `${Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '')}/auth/callback`
+            }
+          });
 
-        if (resetError) {
-          console.error("Error sending password reset email:", resetError);
+          if (resetError) {
+            console.error("Error sending password reset email:", resetError);
+          }
         }
       }
 
