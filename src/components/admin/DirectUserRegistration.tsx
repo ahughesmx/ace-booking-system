@@ -152,6 +152,41 @@ export default function DirectUserRegistration({ onSuccess }: DirectUserRegistra
     };
   };
 
+  // Función específica para crear Rodrigo
+  const createRodrigoUser = async () => {
+    setIsLoading(true);
+    try {
+      const { data: result, error } = await supabase.functions.invoke('create-rodrigo-user');
+
+      if (error) {
+        console.error('Function invocation error:', error);
+        throw new Error(`Error creating Rodrigo: ${error.message}`);
+      }
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create Rodrigo');
+      }
+
+      toast({
+        title: "Usuario Rodrigo creado exitosamente",
+        description: "Rodrigo Baldomar ha sido registrado correctamente.",
+      });
+
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error: any) {
+      console.error('Error creating Rodrigo:', error);
+      toast({
+        title: "Error al crear Rodrigo",
+        description: error.message || "No se pudo crear el usuario Rodrigo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const onSubmit = async (data: UserRegistrationData) => {
     if (!memberValidated) {
       toast({
@@ -216,10 +251,22 @@ export default function DirectUserRegistration({ onSuccess }: DirectUserRegistra
 
   return (
     <>
-      <Button onClick={handleOpenDialog} className="bg-primary hover:bg-primary/90">
-        <UserPlus className="h-4 w-4 mr-2" />
-        Registro Directo de Usuario
-      </Button>
+      <div className="flex gap-2">
+        <Button onClick={handleOpenDialog} className="bg-primary hover:bg-primary/90">
+          <UserPlus className="h-4 w-4 mr-2" />
+          Registro Directo de Usuario
+        </Button>
+        
+        <Button 
+          onClick={createRodrigoUser}
+          disabled={isLoading}
+          variant="default"
+          className="flex items-center gap-2"
+        >
+          <UserPlus className="h-4 w-4" />
+          {isLoading ? 'Creando...' : 'Crear Rodrigo'}
+        </Button>
+      </div>
 
       <Dialog open={showDialog} onOpenChange={(open) => !open && handleCloseDialog()}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
