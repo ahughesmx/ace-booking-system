@@ -398,6 +398,8 @@ export default function Display() {
                             title={
                               slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking)
                                 ? `${slotInfo.booking.title} - ${slotInfo.booking.event_type}`
+                                : slotInfo.isBooked && slotInfo.booking && slotInfo.booking.user
+                                ? `Reservado - ${slotInfo.booking.user.full_name}`
                                 : slotInfo.isBooked
                                 ? 'Reservado'
                                 : 'Disponible'
@@ -552,18 +554,23 @@ export default function Display() {
                             }`}
                           >
                             <div className="font-bold text-sm mb-1">{slot}</div>
-                            {slotInfo.isBooked ? (
-                              <div className="space-y-1">
-                                {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
-                                  <>
-                                    <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
-                                    <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
-                                  </>
-                                ) : (
-                                  <div className="text-xs">Reservado</div>
-                                )}
-                              </div>
-                            ) : (
+                             {slotInfo.isBooked ? (
+                               <div className="space-y-1">
+                                 {slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking) ? (
+                                   <>
+                                     <div className="font-medium text-xs truncate">{slotInfo.booking.title}</div>
+                                     <div className="text-xs capitalize truncate">{slotInfo.booking.event_type}</div>
+                                   </>
+                                 ) : (
+                                   <>
+                                     <div className="text-xs font-medium">Reservado</div>
+                                     {slotInfo.booking && slotInfo.booking.user && (
+                                       <div className="text-[10px] text-gray-600 truncate">{slotInfo.booking.user.full_name}</div>
+                                     )}
+                                   </>
+                                 )}
+                               </div>
+                             ) : (
                               <div className="text-xs font-medium">Disponible</div>
                             )}
                           </div>
