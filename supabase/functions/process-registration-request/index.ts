@@ -124,6 +124,26 @@ serve(async (req) => {
         member_id: request.member_id 
       });
 
+      // Validar member_id usando la función de negocio
+      const { data: canUseId, error: memberIdError } = await supabase
+        .rpc('can_use_member_id', {
+          p_member_id: request.member_id,
+          p_email: request.email,
+          p_full_name: request.full_name
+        });
+
+      if (memberIdError) {
+        console.error("❌ Error validating member_id:", memberIdError);
+        throw new Error("Error validando clave de socio");
+      }
+
+      if (!canUseId) {
+        console.error("❌ Member ID not available:", request.member_id);
+        throw new Error("Esta clave de socio no está disponible o no pertenece a su familia");
+      }
+
+      console.log("✅ Member ID validation passed for:", request.member_id);
+
       // Verificar si ya existe un usuario con este email usando listUsers
       const { data: existingUsers, error: userCheckError } = await supabase.auth.admin.listUsers();
       
