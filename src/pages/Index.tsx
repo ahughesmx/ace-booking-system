@@ -150,14 +150,14 @@ export default function Index() {
 
     return (
       <div className="space-y-6 animate-fade-in">
-        <div className="text-center sm:text-left">
+        <div className="text-left">
           <h1 className="text-xl sm:text-2xl font-bold text-[#1e3a8a]">
             Hola {user?.email?.split('@')[0] || 'Usuario'}
             <span className="ml-2 text-[#1e3a8a]" role="img" aria-label="wave">👋</span>
           </h1>
         </div>
 
-        <h2 className="text-xl sm:text-2xl font-bold text-[#1e3a8a] text-center sm:text-left">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#1e3a8a] text-left">
           Juega tu partido perfecto
         </h2>
 
