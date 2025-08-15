@@ -8,6 +8,7 @@ import { UserCog, Search, LayoutGrid, List } from "lucide-react";
 import { UserCard } from "./users/UserCard";
 import { UserList } from "./users/UserList";
 import { EmptyUserState } from "./users/EmptyUserState";
+import DirectUserRegistration from "./DirectUserRegistration";
 import type { Database } from "@/integrations/supabase/types";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
@@ -256,10 +257,21 @@ export default function UserManagement() {
     <Card>
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <CardTitle className="flex items-center gap-2">
-            <UserCog className="h-6 w-6" />
-            Gestión de Usuarios
-          </CardTitle>
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <UserCog className="h-6 w-6" />
+              Gestión de Usuarios
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Administra usuarios, roles y permisos del sistema
+            </p>
+          </div>
+          <DirectUserRegistration onSuccess={fetchUsers} />
+        </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-4">
+          <div className="hidden">
+            {/* Spacer */}
+          </div>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
