@@ -44,130 +44,200 @@ export function TicketReceipt({ bookingData, onClose, onPrint }: TicketReceiptPr
   const handlePrint = () => {
     console.log('🖨️ handlePrint called - Starting print process');
     
-    // Obtener el contenido ANTES de abrir la ventana
-    const ticketContent = document.getElementById('ticket-content');
-    if (!ticketContent) {
-      console.error('❌ Could not find ticket-content element');
-      return;
-    }
+    // Crear estilos de impresión dinámicamente
+    const printStyles = `
+      <style>
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .print-content, .print-content * {
+            visibility: visible;
+          }
+          .print-content {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          .ticket-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: black !important;
+            background: white !important;
+          }
+          .print-header {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          .print-header h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: black !important;
+          }
+          .print-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+            color: black !important;
+          }
+          .print-badge {
+            background: #f3f4f6 !important;
+            color: black !important;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+          }
+          .print-separator {
+            border-top: 1px solid #e5e7eb;
+            margin: 12px 0;
+          }
+          .print-total {
+            font-size: 18px;
+            font-weight: 600;
+            padding-top: 8px;
+            color: black !important;
+          }
+          .print-thanks {
+            text-align: center;
+            font-size: 12px;
+            margin-top: 20px;
+            color: black !important;
+          }
+        }
+        @media screen {
+          .print-content {
+            display: none;
+          }
+        }
+      </style>
+    `;
 
-    console.log('✅ Content found, opening print window');
-    
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      console.error('❌ Could not open print window');
-      return;
-    }
-
-    console.log('✅ Print window opened, writing content');
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Ticket de Cobro</title>
-          <meta charset="utf-8">
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-              margin: 0;
-              padding: 20px;
-              background: white;
-              color: black;
-            }
-            .ticket-container {
-              max-width: 400px;
-              margin: 0 auto;
-              border: 1px solid #e5e7eb;
-              border-radius: 8px;
-              padding: 20px;
-            }
-            .header {
-              text-align: center;
-              margin-bottom: 20px;
-            }
-            .header h1 {
-              margin: 0;
-              font-size: 18px;
-              font-weight: 600;
-            }
-            .receipt-number {
-              color: #6b7280;
-              font-size: 14px;
-              margin: 5px 0;
-            }
-            .date {
-              color: #6b7280;
-              font-size: 12px;
-            }
-            .content {
-              font-size: 14px;
-              line-height: 1.5;
-            }
-            .row {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              margin: 8px 0;
-            }
-            .icon {
-              width: 16px;
-              height: 16px;
-              color: #6b7280;
-            }
-            .badge {
-              background: #dbeafe;
-              color: #1e40af;
-              padding: 2px 8px;
-              border-radius: 4px;
-              font-size: 12px;
-              font-weight: 500;
-            }
-            .separator {
-              border-top: 1px solid #e5e7eb;
-              margin: 12px 0;
-            }
-            .price-row {
-              display: flex;
-              justify-content: space-between;
-              margin: 6px 0;
-            }
-            .total {
-              font-size: 18px;
-              font-weight: 600;
-              padding-top: 8px;
-            }
-            .payment-method {
-              background: #dcfce7;
-              color: #166534;
-            }
-            .thanks {
-              text-align: center;
-              color: #6b7280;
-              font-size: 12px;
-              margin-top: 20px;
-            }
-            @media print {
-              body { margin: 0; padding: 10px; }
-              .ticket-container { border: none; box-shadow: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="ticket-container">
-            ${ticketContent.innerHTML}
+    // Crear el contenido para imprimir
+    const printContent = `
+      <div class="print-content">
+        <div class="ticket-container">
+          <div class="print-header">
+            <h1>🧾 Ticket de Cobro</h1>
+            <div style="color: #6b7280; font-size: 14px; margin: 5px 0;">
+              #${receiptNumber}
+            </div>
+            <div style="color: #6b7280; font-size: 12px;">
+              ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}
+            </div>
           </div>
-        </body>
-      </html>
-    `);
+          
+          <div style="font-size: 14px; line-height: 1.5;">
+            <div class="print-row">
+              <span>👤</span>
+              <span style="font-weight: 500;">Cliente:</span>
+              <span>${userName}</span>
+            </div>
 
-    printWindow.document.close();
-    
-    // Esperar un momento para que se cargue el contenido antes de imprimir
+            <div style="margin: 8px 0; color: #6b7280;">
+              <span>Atendido por: ${operatorName}</span>
+            </div>
+
+            <div class="print-row">
+              <span>📍</span>
+              <span style="font-weight: 500;">${courtName}</span>
+              <span class="print-badge">${courtType}</span>
+            </div>
+
+            <div class="print-row">
+              <span>🕐</span>
+              <span>${format(date, "EEEE, d 'de' MMMM", { locale: es })}</span>
+            </div>
+
+            <div class="print-row">
+              <span>⏰</span>
+              <span>
+                ${format(startTime, "HH:mm")} - ${format(endTime, "HH:mm")}
+              </span>
+              <span class="print-badge">
+                ${duration} hora${duration > 1 ? 's' : ''}
+              </span>
+            </div>
+
+            <div class="print-separator"></div>
+
+            <div style="display: flex; justify-content: space-between; margin: 6px 0;">
+              <span>Precio por hora:</span>
+              <span style="font-weight: 500;">$${pricePerHour.toFixed(2)}</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin: 6px 0;">
+              <span>Duración:</span>
+              <span style="font-weight: 500;">${duration} hora${duration > 1 ? 's' : ''}</span>
+            </div>
+
+            <div class="print-total" style="display: flex; justify-content: space-between; padding-top: 8px;">
+              <span>Total Pagado:</span>
+              <span>$${amount.toFixed(2)}</span>
+            </div>
+
+            <div class="print-row" style="padding-top: 8px;">
+              <span>💳</span>
+              <span>Método de pago:</span>
+              <span class="print-badge">${paymentMethod}</span>
+            </div>
+
+            <div class="print-thanks">
+              Gracias por su preferencia
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Agregar el contenido al DOM temporalmente
+    const existingPrintContent = document.querySelector('.print-content');
+    if (existingPrintContent) {
+      existingPrintContent.remove();
+    }
+
+    const existingPrintStyles = document.querySelector('#print-styles');
+    if (existingPrintStyles) {
+      existingPrintStyles.remove();
+    }
+
+    // Agregar estilos
+    const styleElement = document.createElement('div');
+    styleElement.id = 'print-styles';
+    styleElement.innerHTML = printStyles;
+    document.head.appendChild(styleElement);
+
+    // Agregar contenido
+    const contentElement = document.createElement('div');
+    contentElement.innerHTML = printContent;
+    document.body.appendChild(contentElement);
+
+    console.log('✅ Print content added to DOM, calling window.print()');
+
+    // Llamar a imprimir
+    window.print();
+
+    console.log('✅ Print dialog should be showing');
+
+    // Limpiar después de un momento
     setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 500);
+      if (document.querySelector('.print-content')) {
+        document.querySelector('.print-content')?.remove();
+      }
+      if (document.querySelector('#print-styles')) {
+        document.querySelector('#print-styles')?.remove();
+      }
+    }, 1000);
+
+    // Llamar al callback si existe
+    if (onPrint) {
+      onPrint();
+    }
   };
 
   return (
