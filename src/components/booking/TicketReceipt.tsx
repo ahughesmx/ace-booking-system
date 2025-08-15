@@ -44,19 +44,22 @@ export function TicketReceipt({ bookingData, onClose, onPrint }: TicketReceiptPr
   const handlePrint = () => {
     console.log('🖨️ handlePrint called - Starting print process');
     
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      console.error('❌ Could not open print window');
-      return;
-    }
-
+    // Obtener el contenido ANTES de abrir la ventana
     const ticketContent = document.getElementById('ticket-content');
     if (!ticketContent) {
       console.error('❌ Could not find ticket-content element');
       return;
     }
 
-    console.log('✅ Print window opened and content found, proceeding with print');
+    console.log('✅ Content found, opening print window');
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      console.error('❌ Could not open print window');
+      return;
+    }
+
+    console.log('✅ Print window opened, writing content');
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -151,14 +154,20 @@ export function TicketReceipt({ bookingData, onClose, onPrint }: TicketReceiptPr
           </style>
         </head>
         <body>
-          ${ticketContent.innerHTML}
+          <div class="ticket-container">
+            ${ticketContent.innerHTML}
+          </div>
         </body>
       </html>
     `);
 
     printWindow.document.close();
-    printWindow.print();
-    printWindow.close();
+    
+    // Esperar un momento para que se cargue el contenido antes de imprimir
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
   };
 
   return (
