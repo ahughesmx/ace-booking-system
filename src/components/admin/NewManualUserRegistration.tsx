@@ -183,13 +183,18 @@ export default function NewManualUserRegistration({ onSuccess }: NewManualUserRe
       console.log("🎯 Starting user registration process...");
 
       // Verificar si el email ya existe
-      const { data: existingUsersResponse, error: checkError } = await supabase.auth.admin.listUsers();
-      
-      if (!checkError && existingUsersResponse?.users) {
-        const existingUser = existingUsersResponse.users.find(u => u.email === data.email);
-        if (existingUser) {
-          throw new Error("Ya existe un usuario con este correo electrónico");
+      try {
+        const { data: existingUsersResponse, error: checkError } = await supabase.auth.admin.listUsers();
+        
+        if (!checkError && existingUsersResponse?.users) {
+          const existingUser = existingUsersResponse.users.find((u: any) => u.email === data.email);
+          if (existingUser) {
+            throw new Error("Ya existe un usuario con este correo electrónico");
+          }
         }
+      } catch (checkErr) {
+        console.warn("Could not check for existing users:", checkErr);
+        // Continuar con el proceso
       }
 
       // Crear usuario directamente
