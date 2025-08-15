@@ -103,101 +103,50 @@ export default function DirectUserRegistration({ onSuccess }: DirectUserRegistra
       member_id: data.member_id
     });
 
-    // 1. Verificar email duplicado primero
-    const { data: existingUsersResponse } = await supabase.auth.admin.listUsers();
+    // Usar la nueva edge function para crear usuarios manualmente
+    const { data: { session } } = await supabase.auth.getSession();
     
-    if (existingUsersResponse?.users && Array.isArray(existingUsersResponse.users)) {
-      const existingUser = existingUsersResponse.users.find((user: any) => 
-        user.email && user.email.toLowerCase() === data.email.toLowerCase()
-      );
-      if (existingUser) {
-        throw new Error("Ya existe un usuario con este correo electrónico");
-      }
+    if (!session) {
+      throw new Error('No hay sesión activa. Por favor inicia sesión nuevamente.');
     }
 
-    // 2. Verificar member_id duplicado
-    const { data: existingProfile } = await supabase
-      .from("profiles")
-      .select("member_id")
-      .eq("member_id", data.member_id)
-      .single();
-
-    if (existingProfile) {
-      throw new Error("Ya existe un usuario con esta clave de socio");
-    }
-
-    // 3. Crear usuario en auth
-    const { data: authData, error: createUserError } = await supabase.auth.admin.createUser({
+    const requestBody = {
       email: data.email,
       password: data.password,
-      email_confirm: true,
-      user_metadata: {
-        member_id: data.member_id,
-        full_name: data.full_name,
-        phone: data.phone
-      }
+      full_name: data.full_name,
+      member_id: data.member_id,
+      phone: data.phone
+    };
+    
+    console.log("📝 Sending to manual-user-creation function:", JSON.stringify(requestBody, null, 2));
+
+    const { data: result, error } = await supabase.functions.invoke('manual-user-creation', {
+      body: requestBody,
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      },
     });
 
-    if (createUserError) {
-      console.error("❌ Error creating auth user:", createUserError);
-      throw new Error(`Error creando usuario: ${createUserError.message}`);
+    console.log("📡 Function response:", { result, error });
+
+    if (error) {
+      console.error("❌ Function invocation error:", error);
+      throw new Error(`Error creando usuario: ${error.message || 'Error desconocido'}`);
     }
 
-    console.log("✅ Auth user created:", authData.user.id);
-
-    try {
-      // 4. Crear perfil
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({
-          id: authData.user.id,
-          member_id: data.member_id,
-          full_name: data.full_name,
-          phone: data.phone
-        });
-
-      if (profileError) {
-        console.error("❌ Error creating profile:", profileError);
-        // Rollback: eliminar usuario de auth
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        throw new Error(`Error creando perfil: ${profileError.message}`);
-      }
-
-      console.log("✅ Profile created");
-
-      // 5. Asignar rol de usuario
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert({
-          user_id: authData.user.id,
-          role: 'user'
-        });
-
-      if (roleError) {
-        console.error("❌ Error creating role:", roleError);
-        // No hacer rollback por esto, solo logear
-        console.warn("User created but role assignment failed");
-      } else {
-        console.log("✅ User role assigned");
-      }
-
-      return {
-        user_id: authData.user.id,
-        email: data.email,
-        full_name: data.full_name,
-        member_id: data.member_id
-      };
-
-    } catch (error) {
-      // En caso de error después de crear el usuario, intentar eliminarlo
-      try {
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        console.log("🔄 User rollback completed");
-      } catch (rollbackError) {
-        console.error("❌ Error during rollback:", rollbackError);
-      }
-      throw error;
+    if (!result || !result.success) {
+      throw new Error(result?.error || 'Error desconocido al crear usuario');
     }
+
+    console.log("✅ User created successfully:", result);
+
+    return {
+      user_id: result.user_id,
+      email: data.email,
+      full_name: data.full_name,
+      member_id: data.member_id
+    };
   };
 
   const onSubmit = async (data: UserRegistrationData) => {
