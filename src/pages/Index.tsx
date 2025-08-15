@@ -149,7 +149,7 @@ export default function Index() {
     };
 
     return (
-      <div className="space-y-5 animate-fade-in">
+      <div className="space-y-4 animate-fade-in">
         <div className="text-left">
           <h1 className="text-xl sm:text-2xl font-bold text-[#1e3a8a]">
             Hola {user?.email?.split('@')[0] || 'Usuario'}
