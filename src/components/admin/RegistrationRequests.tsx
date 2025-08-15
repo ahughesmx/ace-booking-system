@@ -1,22 +1,13 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  UserCheck, 
-  UserX, 
-  Clock, 
-  Phone, 
-  Mail, 
-  User,
-  CreditCard,
   UserPlus,
   Search,
-  Upload
 } from "lucide-react";
 import { 
   Dialog, 
@@ -27,6 +18,8 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import PendingRequests from "./registration/PendingRequests";
+import ProcessedRequests from "./registration/ProcessedRequests";
 
 interface RegistrationRequest {
   id: string;
@@ -60,6 +53,14 @@ export default function RegistrationRequests() {
   const [consultingMember, setConsultingMember] = useState(false);
   const [memberInfo, setMemberInfo] = useState<any>(null);
   const [registrationLoading, setRegistrationLoading] = useState(false);
+  
+  // Pagination and search state
+  const [pendingCurrentPage, setPendingCurrentPage] = useState(1);
+  const [processedCurrentPage, setProcessedCurrentPage] = useState(1);
+  const [pendingSearchTerm, setPendingSearchTerm] = useState("");
+  const [processedSearchTerm, setProcessedSearchTerm] = useState("");
+  const itemsPerPage = 5;
+  
   const { toast } = useToast();
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<UserRegistrationData>();
   
@@ -253,132 +254,89 @@ export default function RegistrationRequests() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="text-yellow-600 border-yellow-600"><Clock className="w-3 h-3 mr-1" />Pendiente</Badge>;
-      case 'approved':
-        return <Badge variant="outline" className="text-green-600 border-green-600"><UserCheck className="w-3 h-3 mr-1" />Aprobado</Badge>;
-      case 'rejected':
-        return <Badge variant="outline" className="text-red-600 border-red-600"><UserX className="w-3 h-3 mr-1" />Rechazado</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
+  // Filter and paginate functions
+  const filterRequests = (requests: RegistrationRequest[], searchTerm: string) => {
+    if (!searchTerm) return requests;
+    return requests.filter(request => 
+      request.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.member_id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   };
+
+  const getPaginatedRequests = (requests: RegistrationRequest[], currentPage: number) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return requests.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (totalItems: number) => {
+    return Math.ceil(totalItems / itemsPerPage);
+  };
+
+  // Filtered requests
+  const pendingRequests = requests.filter(request => request.status === 'pending');
+  const processedRequests = requests.filter(request => request.status !== 'pending');
+  
+  const filteredPendingRequests = filterRequests(pendingRequests, pendingSearchTerm);
+  const filteredProcessedRequests = filterRequests(processedRequests, processedSearchTerm);
+  
+  const paginatedPendingRequests = getPaginatedRequests(filteredPendingRequests, pendingCurrentPage);
+  const paginatedProcessedRequests = getPaginatedRequests(filteredProcessedRequests, processedCurrentPage);
+  
+  const pendingTotalPages = getTotalPages(filteredPendingRequests.length);
+  const processedTotalPages = getTotalPages(filteredProcessedRequests.length);
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserCheck className="h-6 w-6" />
-            Solicitudes de Registro
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center p-8">
-            <div className="animate-pulse flex flex-col items-center gap-4">
-              <div className="h-8 w-8 rounded-full bg-gray-200" />
-              <div className="h-4 w-48 rounded bg-gray-200" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <Button disabled>
+        <UserPlus className="h-4 w-4 mr-2" />
+        Cargando...
+      </Button>
     );
   }
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <UserCheck className="h-6 w-6" />
-              Solicitudes de Registro
-            </div>
-            <Button onClick={() => setShowManualRegistration(true)}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Añadir Usuario Manualmente
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {requests.length === 0 ? (
-            <div className="text-center py-8">
-              <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No hay solicitudes de registro.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {requests.map((request) => (
-                <Card key={request.id} className="border">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-4">
-                          <h3 className="font-medium flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            {request.full_name}
-                          </h3>
-                          {getStatusBadge(request.status)}
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="h-4 w-4" />
-                            Socio: {request.member_id}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4" />
-                            {request.email}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4" />
-                            {request.phone}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            {new Date(request.created_at).toLocaleDateString('es-MX')}
-                          </div>
-                        </div>
+      <Button onClick={() => setShowManualRegistration(true)}>
+        <UserPlus className="h-4 w-4 mr-2" />
+        Añadir Usuario Manualmente
+      </Button>
 
-                        {request.rejection_reason && (
-                          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-                            <p className="text-sm text-red-800">
-                              <strong>Motivo del rechazo:</strong> {request.rejection_reason}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      {request.status === 'pending' && (
-                        <div className="flex gap-2 ml-4">
-                          <Button
-                            size="sm"
-                            onClick={() => handleApprove(request.id)}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <UserCheck className="h-4 w-4 mr-1" />
-                            Aprobar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleReject(request.id)}
-                          >
-                            <UserX className="h-4 w-4 mr-1" />
-                            Rechazar
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="pending" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="pending">
+            Solicitudes Pendientes ({filteredPendingRequests.length})
+          </TabsTrigger>
+          <TabsTrigger value="processed">
+            Solicitudes Procesadas ({filteredProcessedRequests.length})
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="pending" className="space-y-4">
+          <PendingRequests
+            requests={paginatedPendingRequests}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            currentPage={pendingCurrentPage}
+            totalPages={pendingTotalPages}
+            onPageChange={setPendingCurrentPage}
+            searchTerm={pendingSearchTerm}
+            onSearchChange={setPendingSearchTerm}
+          />
+        </TabsContent>
+        
+        <TabsContent value="processed" className="space-y-4">
+          <ProcessedRequests
+            requests={paginatedProcessedRequests}
+            currentPage={processedCurrentPage}
+            totalPages={processedTotalPages}
+            onPageChange={setProcessedCurrentPage}
+            searchTerm={processedSearchTerm}
+            onSearchChange={setProcessedSearchTerm}
+          />
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
         <DialogContent>

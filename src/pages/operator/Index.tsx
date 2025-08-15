@@ -53,17 +53,17 @@ const OperatorPage = () => {
     <div className="min-h-screen bg-background pb-20">
       <MainNav />
       <div className="container mx-auto py-6 space-y-6">
-        <Card>
-        <CardHeader>
-          <CardTitle>Solicitudes de Registro</CardTitle>
-          <CardDescription>
-            Revisa y procesa las solicitudes de nuevos usuarios para el sistema
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <RegistrationRequests />
-        </CardContent>
-      </Card>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Solicitudes de Registro</h1>
+              <p className="text-muted-foreground">
+                Revisa y procesa las solicitudes de nuevos usuarios para el sistema
+              </p>
+            </div>
+            <RegistrationRequests />
+          </div>
+        </div>
       </div>
     </div>
   );
