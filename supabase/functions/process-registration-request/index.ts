@@ -115,59 +115,29 @@ serve(async (req) => {
         }
       }
 
-      // Verificar si ya existe un perfil para este usuario
-      const { data: existingProfile } = await supabase
+      // Usar upsert para crear o actualizar el perfil con los datos completos
+      const { error: profileError } = await supabase
         .from("profiles")
-        .select("id, full_name, member_id, phone")
-        .eq("id", authData.user.id)
-        .single();
+        .upsert({
+          id: authData.user.id,
+          member_id: request.member_id,
+          full_name: request.full_name,
+          phone: request.phone,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        });
 
-      if (!existingProfile) {
-        // Crear el perfil del usuario si no existe
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: authData.user.id,
-            member_id: request.member_id,
-            full_name: request.full_name,
-            phone: request.phone
-          });
-
-        if (profileError) {
-          console.error("Error creating profile:", profileError);
-          // Solo intentar eliminar el usuario si lo acabamos de crear
-          if (!existingUser) {
-            await supabase.auth.admin.deleteUser(authData.user.id);
-          }
-          throw new Error("Failed to create user profile");
+      if (profileError) {
+        console.error("Error upserting profile:", profileError);
+        // Solo intentar eliminar el usuario si lo acabamos de crear
+        if (!existingUser) {
+          await supabase.auth.admin.deleteUser(authData.user.id);
         }
-      } else {
-        // El perfil existe, pero verificar si necesita actualización
-        const needsUpdate = !existingProfile.full_name || 
-                           !existingProfile.member_id || 
-                           !existingProfile.phone;
-        
-        if (needsUpdate) {
-          const { error: updateError } = await supabase
-            .from("profiles")
-            .update({
-              member_id: request.member_id,
-              full_name: request.full_name,
-              phone: request.phone,
-              updated_at: new Date().toISOString()
-            })
-            .eq("id", authData.user.id);
-
-          if (updateError) {
-            console.error("Error updating profile:", updateError);
-            throw new Error("Failed to update user profile");
-          }
-          
-          console.log(`Profile updated for user ${authData.user.id} with complete information`);
-        } else {
-          console.log(`Profile already exists for user ${authData.user.id} with complete information`);
-        }
+        throw new Error("Failed to create/update user profile");
       }
+
+      console.log(`Profile upserted successfully for user ${authData.user.id} with complete information`);
 
       // Actualizar la solicitud como aprobada
       const { error: updateError } = await supabase
