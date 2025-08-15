@@ -60,54 +60,82 @@ serve(async (req) => {
         throw new Error("Request not found or already processed");
       }
 
-      // Since we removed password_hash field, we need to generate a secure temporary password
-      const tempPassword = crypto.randomUUID() + "!Temp123";
+      // Verificar si ya existe un usuario con este email
+      const { data: existingUser, error: userCheckError } = await supabase.auth.admin.getUserByEmail(request.email);
       
-      // Crear el usuario en auth
-      const { data: authData, error: createUserError } = await supabase.auth.admin.createUser({
-        email: request.email,
-        password: tempPassword,
-        email_confirm: true,
-        user_metadata: {
-          member_id: request.member_id,
-          full_name: request.full_name,
-          phone: request.phone
-        }
-      });
-
-      if (createUserError) {
-        throw new Error(`Failed to create user: ${createUserError.message}`);
+      if (userCheckError && userCheckError.status !== 404) {
+        throw new Error(`Error checking existing user: ${userCheckError.message}`);
       }
 
-      // Send password reset email so user can set their own password
-      const { error: resetError } = await supabase.auth.admin.generateLink({
-        type: 'recovery',
-        email: request.email,
-        options: {
-          redirectTo: `${Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '')}/auth/callback`
-        }
-      });
-
-      if (resetError) {
-        console.error("Error sending password reset email:", resetError);
-        // Don't fail the registration for this, but log it
-      }
-
-      // Crear el perfil del usuario (permitir múltiples usuarios con el mismo member_id para membresías familiares)
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({
-          id: authData.user.id,
-          member_id: request.member_id,
-          full_name: request.full_name,
-          phone: request.phone
+      let authData;
+      
+      if (existingUser.user) {
+        // El usuario ya existe, usar el existente
+        authData = { user: existingUser.user };
+        console.log(`User with email ${request.email} already exists, using existing user`);
+      } else {
+        // Crear nuevo usuario
+        const tempPassword = crypto.randomUUID() + "!Temp123";
+        
+        const { data: newAuthData, error: createUserError } = await supabase.auth.admin.createUser({
+          email: request.email,
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: {
+            member_id: request.member_id,
+            full_name: request.full_name,
+            phone: request.phone
+          }
         });
 
-      if (profileError) {
-        console.error("Error creating profile:", profileError);
-        // Intentar eliminar el usuario auth si falla la creación del perfil
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        throw new Error("Failed to create user profile");
+        if (createUserError) {
+          throw new Error(`Failed to create user: ${createUserError.message}`);
+        }
+
+        authData = newAuthData;
+
+        // Send password reset email for new users
+        const { error: resetError } = await supabase.auth.admin.generateLink({
+          type: 'recovery',
+          email: request.email,
+          options: {
+            redirectTo: `${Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '')}/auth/callback`
+          }
+        });
+
+        if (resetError) {
+          console.error("Error sending password reset email:", resetError);
+        }
+      }
+
+      // Verificar si ya existe un perfil para este usuario
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", authData.user.id)
+        .single();
+
+      if (!existingProfile) {
+        // Crear el perfil del usuario solo si no existe
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: authData.user.id,
+            member_id: request.member_id,
+            full_name: request.full_name,
+            phone: request.phone
+          });
+
+        if (profileError) {
+          console.error("Error creating profile:", profileError);
+          // Solo intentar eliminar el usuario si lo acabamos de crear
+          if (!existingUser.user) {
+            await supabase.auth.admin.deleteUser(authData.user.id);
+          }
+          throw new Error("Failed to create user profile");
+        }
+      } else {
+        console.log(`Profile already exists for user ${authData.user.id}, skipping profile creation`);
       }
 
       // Actualizar la solicitud como aprobada
