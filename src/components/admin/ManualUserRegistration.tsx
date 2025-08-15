@@ -33,15 +33,21 @@ export default function ManualUserRegistration({ onSuccess }: ManualUserRegistra
   const [registrationLoading, setRegistrationLoading] = useState(false);
   
   const { toast } = useToast();
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<UserRegistrationData>({
+  
+  // Crear el formulario con valores vacíos siempre
+  const form = useForm<UserRegistrationData>({
+    mode: "onChange",
     defaultValues: {
       full_name: "",
       member_id: "",
       email: "",
       password: "",
       phone: ""
-    }
+    },
+    shouldUnregister: true, // Esto limpia completamente el estado al desmontar
   });
+  
+  const { register, handleSubmit, reset, watch, formState: { errors } } = form;
 
   const watchedMemberId = watch("member_id");
 
@@ -146,7 +152,8 @@ export default function ManualUserRegistration({ onSuccess }: ManualUserRegistra
   };
 
   const resetForm = () => {
-    reset({
+    // Resetear completamente el formulario
+    form.reset({
       full_name: "",
       member_id: "",
       email: "",
@@ -154,14 +161,18 @@ export default function ManualUserRegistration({ onSuccess }: ManualUserRegistra
       phone: ""
     });
     setMemberInfo(null);
+    setConsultingMember(false);
+    setRegistrationLoading(false);
   };
 
   const handleOpenDialog = () => {
+    console.log("🔍 Opening dialog - resetting form");
     resetForm(); // Always reset when opening
     setShowDialog(true);
   };
 
   const handleCloseDialog = () => {
+    console.log("🔍 Closing dialog - resetting form");
     resetForm(); // Reset when closing
     setShowDialog(false);
   };
@@ -173,11 +184,15 @@ export default function ManualUserRegistration({ onSuccess }: ManualUserRegistra
         Añadir Usuario Manualmente
       </Button>
 
-      <Dialog open={showDialog} onOpenChange={(open) => {
-        if (!open) {
-          handleCloseDialog();
-        }
-      }}>
+      <Dialog 
+        open={showDialog} 
+        onOpenChange={(open) => {
+          console.log("🔍 Dialog onOpenChange:", open);
+          if (!open) {
+            handleCloseDialog();
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Registro Manual de Usuario</DialogTitle>
