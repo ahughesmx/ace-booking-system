@@ -12,6 +12,7 @@ import OperatorIndex from "./pages/operator/Index";
 import Login from "./pages/auth/Login";
 import Courses from "./pages/Courses";
 import Display from "./pages/Display";
+import MyBookings from "./pages/MyBookings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +55,7 @@ const AppContent = () => {
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
         <Route path="/courses" element={<Courses />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/admin" element={<AdminRoute />} />
         <Route path="/operator" element={<OperatorIndex />} />
         <Route path="/display" element={<Display />} />

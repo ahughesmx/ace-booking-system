@@ -225,7 +225,7 @@ export default function Index() {
         </div>
         
         {/* Quick Actions */}
-        <HomeQuickActions onNavigateToBookings={() => handleNavigation("bookings")} />
+        <HomeQuickActions onNavigateToBookings={() => navigate("/my-bookings")} />
       </div>
     );
   };
