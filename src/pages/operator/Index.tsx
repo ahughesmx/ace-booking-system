@@ -61,8 +61,10 @@ const OperatorPage = () => {
                 Revisa y procesa las solicitudes de nuevos usuarios para el sistema
               </p>
             </div>
-            <RegistrationRequests />
+            <RegistrationRequests showOnlyButton />
           </div>
+          
+          <RegistrationRequests showOnlyTabs />
         </div>
       </div>
     </div>

@@ -43,7 +43,12 @@ type UserRegistrationData = {
   phone: string;
 };
 
-export default function RegistrationRequests() {
+interface RegistrationRequestsProps {
+  showOnlyButton?: boolean;
+  showOnlyTabs?: boolean;
+}
+
+export default function RegistrationRequests({ showOnlyButton = false, showOnlyTabs = false }: RegistrationRequestsProps) {
   const [requests, setRequests] = useState<RegistrationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
@@ -296,6 +301,194 @@ export default function RegistrationRequests() {
     );
   }
 
+  // Show only button when requested
+  if (showOnlyButton) {
+    return (
+      <>
+        <Button onClick={() => setShowManualRegistration(true)}>
+          <UserPlus className="h-4 w-4 mr-2" />
+          Añadir Usuario Manualmente
+        </Button>
+        {/* Manual Registration Dialog */}
+        <Dialog open={showManualRegistration} onOpenChange={setShowManualRegistration}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Registro Manual de Usuario</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit(onSubmitManualRegistration)} className="space-y-4">
+              <div>
+                <Label htmlFor="member_id">Número de Socio *</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="member_id"
+                    {...register("member_id", { required: "El número de socio es requerido" })}
+                    placeholder="12345"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={consultMember}
+                    disabled={consultingMember || !watchedMemberId}
+                  >
+                    <Search className="w-4 h-4 mr-2" />
+                    {consultingMember ? "Consultando..." : "Consultar"}
+                  </Button>
+                </div>
+                {errors.member_id && (
+                  <p className="text-sm text-red-600 mt-1">{errors.member_id.message}</p>
+                )}
+                {memberInfo && (
+                  <p className="text-sm text-green-600 mt-1">✓ Clave de socio válida</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="full_name">Nombre Completo *</Label>
+                <Input
+                  id="full_name"
+                  {...register("full_name", { required: "El nombre completo es requerido" })}
+                  placeholder="Juan Pérez García"
+                />
+                {errors.full_name && (
+                  <p className="text-sm text-red-600 mt-1">{errors.full_name.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="email">Correo Electrónico (Usuario) *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  {...register("email", { 
+                    required: "El correo electrónico es requerido",
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: "Correo electrónico inválido"
+                    }
+                  })}
+                  placeholder="juan@ejemplo.com"
+                />
+                {errors.email && (
+                  <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="password">Contraseña *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  {...register("password", { 
+                    required: "La contraseña es requerida",
+                    minLength: {
+                      value: 6,
+                      message: "La contraseña debe tener al menos 6 caracteres"
+                    }
+                  })}
+                  placeholder="••••••••"
+                />
+                {errors.password && (
+                  <p className="text-sm text-red-600 mt-1">{errors.password.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="phone">Número Telefónico *</Label>
+                <Input
+                  id="phone"
+                  {...register("phone", { required: "El número telefónico es requerido" })}
+                  placeholder="+52 55 1234 5678"
+                />
+                {errors.phone && (
+                  <p className="text-sm text-red-600 mt-1">{errors.phone.message}</p>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setShowManualRegistration(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={registrationLoading || !memberInfo}>
+                  {registrationLoading ? "Registrando..." : "Crear Solicitud"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Rechazar Solicitud de Registro</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="rejection-reason">Motivo del Rechazo</Label>
+                <Textarea
+                  id="rejection-reason"
+                  placeholder="Explica el motivo del rechazo..."
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={confirmReject}>
+                Rechazar Solicitud
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  // Show only tabs when requested
+  if (showOnlyTabs) {
+    return (
+      <Tabs defaultValue="pending" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="pending">
+            Solicitudes Pendientes ({filteredPendingRequests.length})
+          </TabsTrigger>
+          <TabsTrigger value="processed">
+            Solicitudes Procesadas ({filteredProcessedRequests.length})
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="pending" className="space-y-4">
+          <PendingRequests
+            requests={paginatedPendingRequests}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            currentPage={pendingCurrentPage}
+            totalPages={pendingTotalPages}
+            onPageChange={setPendingCurrentPage}
+            searchTerm={pendingSearchTerm}
+            onSearchChange={setPendingSearchTerm}
+          />
+        </TabsContent>
+        
+        <TabsContent value="processed" className="space-y-4">
+          <ProcessedRequests
+            requests={paginatedProcessedRequests}
+            currentPage={processedCurrentPage}
+            totalPages={processedTotalPages}
+            onPageChange={setProcessedCurrentPage}
+            searchTerm={processedSearchTerm}
+            onSearchChange={setProcessedSearchTerm}
+          />
+        </TabsContent>
+      </Tabs>
+    );
+  }
+
+  // Original full component
   return (
     <>
       <Button onClick={() => setShowManualRegistration(true)}>
@@ -366,7 +559,6 @@ export default function RegistrationRequests() {
         </DialogContent>
       </Dialog>
 
-      {/* Manual Registration Dialog */}
       <Dialog open={showManualRegistration} onOpenChange={setShowManualRegistration}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
