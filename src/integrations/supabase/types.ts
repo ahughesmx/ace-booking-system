@@ -1077,6 +1077,7 @@ export type Database = {
           full_name: string
           id: string
           member_id: string
+          password: string | null
           password_provided: boolean | null
           phone: string
           processed_at: string | null
@@ -1091,6 +1092,7 @@ export type Database = {
           full_name: string
           id?: string
           member_id: string
+          password?: string | null
           password_provided?: boolean | null
           phone: string
           processed_at?: string | null
@@ -1105,6 +1107,7 @@ export type Database = {
           full_name?: string
           id?: string
           member_id?: string
+          password?: string | null
           password_provided?: boolean | null
           phone?: string
           processed_at?: string | null
