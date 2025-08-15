@@ -112,7 +112,7 @@ export default function ManualUserRegistration({ onSuccess }: ManualUserRegistra
       }
 
       // Create registration request with password
-      const { error: registrationError } = await supabase
+      const { data: requestData, error: registrationError } = await supabase
         .from("user_registration_requests")
         .insert({
           full_name: data.full_name,
@@ -122,14 +122,33 @@ export default function ManualUserRegistration({ onSuccess }: ManualUserRegistra
           password: data.password,
           password_provided: true,
           status: "pending"
-        });
+        })
+        .select()
+        .single();
 
       if (registrationError) throw registrationError;
 
-      toast({
-        title: "¡Éxito!",
-        description: "Solicitud de registro creada correctamente. Será procesada automáticamente.",
+      // Automatically approve the request since it's manual registration by operator
+      const { error: approvalError } = await supabase.functions.invoke('process-registration-request', {
+        body: {
+          requestId: requestData.id,
+          action: 'approve'
+        }
       });
+
+      if (approvalError) {
+        console.error("Error auto-approving request:", approvalError);
+        toast({
+          title: "Advertencia",
+          description: "Usuario registrado pero requiere aprobación manual.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "¡Éxito!",
+          description: "Usuario registrado y aprobado correctamente.",
+        });
+      }
 
       // Reset form and close dialog
       resetForm();
