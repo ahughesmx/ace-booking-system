@@ -35,7 +35,15 @@ export function BookingSummary({
   processingPayment = null
 }: BookingSummaryProps) {
   const { data: courtSettings } = useCourtTypeSettings(courtType);
-  const { data: allPaymentGateways = [] } = useEnabledPaymentGateways();
+  const { data: allPaymentGateways = [], isLoading: isLoadingGateways } = useEnabledPaymentGateways();
+  
+  // DEBUG: Log para diagnóstico
+  console.log('🔍 BookingSummary DEBUG:', {
+    isOperator,
+    allPaymentGateways,
+    isLoadingGateways,
+    gatewaysLength: allPaymentGateways.length
+  });
   
   // Usar precio de operador si es una reserva hecha por operador
   const normalPrice = Array.isArray(courtSettings) 
@@ -49,7 +57,7 @@ export function BookingSummary({
   const duration = 1; // 1 hora por defecto
   const total = pricePerHour * duration;
 
-  // Filtrar métodos de pago según el rol
+  // ARREGLO: Lógica corregida para métodos de pago
   const paymentGateways = isOperator 
     ? [
         // Solo efectivo para operadores
@@ -63,7 +71,9 @@ export function BookingSummary({
           updated_at: ''
         }
       ]
-    : allPaymentGateways; // Para usuarios normales, métodos online sin efectivo
+    : allPaymentGateways.filter(gateway => gateway.enabled && gateway.name !== 'efectivo'); // Para usuarios normales, solo métodos online
+  
+  console.log('🎯 Final paymentGateways:', paymentGateways);
 
   const startTime = new Date(date);
   const [hours, minutes] = time.split(':').map(Number);
