@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import PendingRequests from "./registration/PendingRequests";
 import ProcessedRequests from "./registration/ProcessedRequests";
-import ManualUserRegistration from "./ManualUserRegistration";
+import NewManualUserRegistration from "./NewManualUserRegistration";
 
 interface RegistrationRequest {
   id: string;
@@ -202,7 +202,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   if (showOnlyButton) {
     return (
       <>
-        <ManualUserRegistration onSuccess={fetchRequests} />
+        <NewManualUserRegistration onSuccess={fetchRequests} />
 
         <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
           <DialogContent>
@@ -308,7 +308,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   // Original full component
   return (
     <>
-      <ManualUserRegistration onSuccess={fetchRequests} />
+      <NewManualUserRegistration onSuccess={fetchRequests} />
 
       <Tabs defaultValue="pending" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
