@@ -3,6 +3,7 @@ import { TimeSlot } from "./TimeSlot";
 import { format, addHours, isBefore, isToday } from "date-fns";
 import { useCourts } from "@/hooks/use-courts";
 import { useAllBookings } from "@/hooks/use-bookings";
+import { Booking, SpecialBooking } from "@/types/booking";
 
 interface TimeSlot {
   start: string;
@@ -70,12 +71,28 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
     return bookingsInSlot.length;
   };
 
+  // Función para verificar si hay eventos especiales en un slot
+  const getSpecialEventsForSlot = (slot: string) => {
+    return allBookings.filter(booking => {
+      const bookingHour = format(new Date(booking.start_time), "HH:00");
+      const bookingCourtType = booking.court?.court_type;
+      
+      // Solo verificar eventos especiales del tipo de cancha seleccionado
+      if (courtType && bookingCourtType !== courtType) {
+        return false;
+      }
+      
+      return bookingHour === slot && booking.isSpecial;
+    }) as SpecialBooking[];
+  };
+
   return (
     <div className="grid grid-cols-3 gap-3">
       {timeSlots.map(timeSlot => {
         const bookingsCount = getBookingsCountForSlot(timeSlot.start);
         const availableSlots = totalCourts - bookingsCount;
         const isAvailable = !timeSlot.isPast && availableSlots > 0;
+        const specialEvents = getSpecialEventsForSlot(timeSlot.start);
         
         return (
           <TimeSlot
@@ -84,6 +101,7 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
             end={timeSlot.end}
             isAvailable={isAvailable}
             availableCount={availableSlots}
+            specialEvents={specialEvents}
           />
         );
       })}

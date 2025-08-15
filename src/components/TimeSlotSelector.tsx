@@ -5,6 +5,8 @@ import { format, addHours, isBefore, isToday } from "date-fns";
 import { useCourts } from "@/hooks/use-courts";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { useActiveMaintenancePeriods } from "@/hooks/use-court-maintenance";
+import { useAllBookings } from "@/hooks/use-bookings";
+import { SpecialBooking } from "@/types/booking";
 
 interface TimeSlotSelectorProps {
   selectedDate?: Date;
@@ -67,6 +69,7 @@ export function TimeSlotSelector({
   const { data: courts = [] } = useCourts(courtType);
   const { data: settingsData } = useCourtTypeSettings(courtType);
   const { data: maintenanceCourts = new Set() } = useActiveMaintenancePeriods();
+  const { data: allBookings = [] } = useAllBookings(selectedDate);
   
   // Ensure we get the correct type - when courtType is provided, we get a single object
   const settings = courtType && settingsData && !Array.isArray(settingsData) ? settingsData : null;
@@ -89,6 +92,21 @@ export function TimeSlotSelector({
   console.log('TimeSlotSelector - timeSlots generated:', timeSlots.length);
   console.log('TimeSlotSelector - courts in maintenance:', maintenanceCourts.size);
   console.log('TimeSlotSelector - available courts:', totalCourts);
+
+  // Función para verificar si hay eventos especiales en un slot
+  const getSpecialEventsForSlot = (slot: string) => {
+    return allBookings.filter(booking => {
+      const bookingHour = format(new Date(booking.start_time), "HH:00");
+      const bookingCourtType = booking.court?.court_type;
+      
+      // Solo verificar eventos especiales del tipo de cancha seleccionado
+      if (courtType && bookingCourtType !== courtType) {
+        return false;
+      }
+      
+      return bookingHour === slot && booking.isSpecial;
+    }) as SpecialBooking[];
+  };
 
   const getAvailableSlots = (slot: string) => {
     if (totalCourts === 0) return 0;
@@ -189,19 +207,24 @@ export function TimeSlotSelector({
           const availableSlots = getAvailableSlots(timeSlot.start);
           const isAvailable = !timeSlot.isPast && availableSlots > 0;
           const isSelected = selectedTime === timeSlot.start;
+          const specialEvents = getSpecialEventsForSlot(timeSlot.start);
+          const hasSpecialEvents = specialEvents.length > 0;
           
-          console.log(`🔍 SLOT DEBUG - ${timeSlot.start}: isPast=${timeSlot.isPast}, availableSlots=${availableSlots}, isAvailable=${isAvailable}`);
+          console.log(`🔍 SLOT DEBUG - ${timeSlot.start}: isPast=${timeSlot.isPast}, availableSlots=${availableSlots}, isAvailable=${isAvailable}, hasSpecialEvents=${hasSpecialEvents}`);
           
           return (
             <Button
               key={timeSlot.start}
               variant={isSelected ? "default" : "outline"}
               className={cn(
-                "h-auto p-3 flex flex-col items-center justify-center space-y-1 transition-all",
-                isAvailable 
-                  ? "hover:bg-[#6898FE]/10 hover:border-[#6898FE] border-[#6898FE]/20" 
-                  : "opacity-50 cursor-not-allowed bg-gray-50",
-                isSelected && "bg-[#6898FE] text-white border-[#6898FE]"
+                "h-auto p-3 flex flex-col items-center justify-center space-y-1 transition-all relative",
+                hasSpecialEvents
+                  ? "bg-purple-50 border-purple-200 hover:bg-purple-100"
+                  : isAvailable 
+                    ? "hover:bg-[#6898FE]/10 hover:border-[#6898FE] border-[#6898FE]/20" 
+                    : "opacity-50 cursor-not-allowed bg-gray-50",
+                isSelected && !hasSpecialEvents && "bg-[#6898FE] text-white border-[#6898FE]",
+                isSelected && hasSpecialEvents && "bg-purple-600 text-white border-purple-600"
               )}
               disabled={!isAvailable}
               onClick={() => {
@@ -214,20 +237,38 @@ export function TimeSlotSelector({
                 }
               }}
             >
+              {hasSpecialEvents && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full border-2 border-white flex items-center justify-center">
+                  <span className="text-[8px] text-white font-bold">!</span>
+                </div>
+              )}
+              
               <span className="font-medium text-sm">
                 {timeSlot.start} - {timeSlot.end}
               </span>
-              <span className={cn(
-                "text-xs",
-                isSelected ? "text-white/80" : isAvailable ? "text-[#6898FE]" : "text-gray-500"
-              )}>
-                {timeSlot.isPast 
-                  ? "Horario pasado"
-                  : availableSlots > 0 
-                    ? `${availableSlots} ${availableSlots === 1 ? 'disponible' : 'disponibles'}`
-                    : "No disponible"
-                }
-              </span>
+              
+              {hasSpecialEvents ? (
+                <div className="space-y-0.5 text-center">
+                  <span className="text-xs text-purple-600 font-medium block">
+                    🎯 {specialEvents[0].event_type}
+                  </span>
+                  <span className="text-xs text-purple-500 block truncate max-w-full">
+                    {specialEvents[0].title}
+                  </span>
+                </div>
+              ) : (
+                <span className={cn(
+                  "text-xs",
+                  isSelected ? "text-white/80" : isAvailable ? "text-[#6898FE]" : "text-gray-500"
+                )}>
+                  {timeSlot.isPast 
+                    ? "Horario pasado"
+                    : availableSlots > 0 
+                      ? `${availableSlots} ${availableSlots === 1 ? 'disponible' : 'disponibles'}`
+                      : "No disponible"
+                   }
+                </span>
+              )}
             </Button>
           );
         })}
