@@ -139,6 +139,23 @@ serve(async (req) => {
 
       console.log(`Profile upserted successfully for user ${authData.user.id} with complete information`);
 
+      // Asignar rol de "user" por defecto si no existe
+      const { error: roleError } = await supabase
+        .from("user_roles")
+        .upsert({
+          user_id: authData.user.id,
+          role: 'user'
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (roleError) {
+        console.error("Error assigning user role:", roleError);
+        // No fallar por esto, pero loguear el error
+      } else {
+        console.log(`User role assigned successfully for user ${authData.user.id}`);
+      }
+
       // Actualizar la solicitud como aprobada
       const { error: updateError } = await supabase
         .from("user_registration_requests")
