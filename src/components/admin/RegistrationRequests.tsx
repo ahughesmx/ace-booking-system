@@ -223,7 +223,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
         return;
       }
 
-      // Create registration request
+      // Create registration request with password
       const { error: registrationError } = await supabase
         .from("user_registration_requests")
         .insert({
@@ -231,6 +231,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
           member_id: data.member_id,
           email: data.email,
           phone: data.phone,
+          password: data.password, // Include the password
           password_provided: true,
           status: "pending"
         });
