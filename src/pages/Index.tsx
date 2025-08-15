@@ -129,117 +129,99 @@ export default function Index() {
     console.log('  - home_card_matches:', isCardEnabled("home_card_matches"));
     console.log('  - home_card_courses:', isCardEnabled("home_card_courses"));
     console.log('  - home_card_competitions:', isCardEnabled("home_card_competitions"));
+    // Calculate enabled cards to determine grid layout
+    const enabledCards = [
+      { id: "bookings", enabled: true }, // Always enabled
+      { id: "matches", enabled: isCardEnabled("home_card_matches") },
+      { id: "courses", enabled: isCardEnabled("home_card_courses") },
+      { id: "competitions", enabled: isCardEnabled("home_card_competitions") }
+    ].filter(card => card.enabled);
+
+    const enabledCount = enabledCards.length;
     
+    // Dynamic grid classes based on number of enabled cards
+    const getGridClass = () => {
+      if (enabledCount === 1) return "grid-cols-1 max-w-sm mx-auto";
+      if (enabledCount === 2) return "grid-cols-1 sm:grid-cols-2";
+      if (enabledCount === 3) return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
+      return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4";
+    };
+
     return (
-      <div className="animate-fade-in">
-        {/* Hero Section */}
-        <div className="relative bg-gradient-to-br from-[#1e3a8a] via-[#2563eb] to-[#3b82f6] rounded-3xl p-8 md:p-12 mb-8 overflow-hidden">
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-10 left-10 w-32 h-32 border border-white/30 rounded-full"></div>
-            <div className="absolute bottom-10 right-10 w-24 h-24 border border-white/30 rounded-full"></div>
-            <div className="absolute top-1/2 right-1/4 w-16 h-16 border border-white/30 rounded-full"></div>
-          </div>
-          
-          {/* Content */}
-          <div className="relative z-10 text-white text-center">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              Hola {user?.email?.split('@')[0] || 'Usuario'} 
-              <span className="ml-3" role="img" aria-label="wave">👋</span>
-            </h1>
-            
-            <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold mb-6">
-              Juega tu partido perfecto
-            </h2>
-            
-            <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-              Reserva tu cancha en segundos y vive la experiencia al máximo.
-            </p>
-            
-            {/* Primary Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-lg mx-auto">
-              <button 
-                onClick={() => handleNavigation("bookings")}
-                className="w-full sm:w-auto bg-white text-[#1e3a8a] hover:bg-white/90 font-semibold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
-              >
-                Buscar canchas disponibles
-              </button>
-              
-              <button 
-                onClick={() => handleNavigation("bookings")}
-                className="w-full sm:w-auto bg-white/10 backdrop-blur-sm text-white border-2 border-white/30 hover:bg-white/20 font-semibold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105"
-              >
-                Ver mis reservas
-              </button>
-            </div>
-          </div>
+      <div className="space-y-4 animate-fade-in">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-[#1e3a8a]">
+            Hola {user?.email?.split('@')[0] || 'Usuario'}
+            <span className="ml-2 text-[#1e3a8a]" role="img" aria-label="wave">👋</span>
+          </h1>
         </div>
 
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="text-center p-6">
-            <div className="bg-[#1e3a8a] w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Search className="h-8 w-8 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold text-[#1e3a8a] mb-2">Ver disponibilidad</h3>
-            <p className="text-[#6898FE]/70 text-sm">Encuentra canchas libres al instante</p>
-          </div>
-          
+        <h2 className="text-2xl font-bold text-[#1e3a8a]">
+          Juega tu partido perfecto
+        </h2>
+
+        <div className={`grid ${getGridClass()} gap-4`}>
+          <button onClick={() => handleNavigation("bookings")} className="w-full text-left hover-scale">
+            <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 h-full">
+              <CardContent className="p-4">
+                <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
+                  <Search className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                  Reserva cancha
+                </h3>
+                <p className="text-sm text-[#6898FE]/70">Canchas disponibles</p>
+              </CardContent>
+            </Card>
+          </button>
+
           {isCardEnabled("home_card_matches") && (
-            <div className="text-center p-6">
-              <div className="bg-[#1e3a8a] w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <CircleDot className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-[#1e3a8a] mb-2">Mis deportes</h3>
-              <p className="text-[#6898FE]/70 text-sm">Registra partidos y mejora tu ranking</p>
+            <button onClick={() => handleNavigation("matches")} className="w-full text-left hover-scale">
+              <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 h-full">
+                <CardContent className="p-4">
+                  <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
+                    <CircleDot className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                    Registra un partido
+                  </h3>
+                  <p className="text-sm text-[#6898FE]/70">Si quieres rankear tu posición</p>
+                </CardContent>
+              </Card>
+            </button>
+          )}
+
+          {isCardEnabled("home_card_courses") && (
+            <button onClick={() => navigate("/courses")} className="w-full text-left hover-scale">
+              <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 cursor-pointer h-full">
+                <CardContent className="p-4">
+                  <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
+                    <GraduationCap className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                    Clases y cursos
+                  </h3>
+                  <p className="text-sm text-[#6898FE]/70">Conoce horarios, días y deportes que puedes aprender</p>
+                </CardContent>
+              </Card>
+            </button>
+          )}
+
+          {isCardEnabled("home_card_competitions") && (
+            <div className="hover-scale">
+              <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 h-full">
+                <CardContent className="p-4">
+                  <div className="bg-[#1e3a8a] w-10 h-10 rounded-lg flex items-center justify-center mb-2">
+                    <Shield className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
+                    Competencias
+                  </h3>
+                </CardContent>
+              </Card>
             </div>
           )}
-          
-          <div className="text-center p-6">
-            <div className="bg-[#1e3a8a] w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <UserCircle2 className="h-8 w-8 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold text-[#1e3a8a] mb-2">Canchas cercanas</h3>
-            <p className="text-[#6898FE]/70 text-sm">Encuentra las mejores opciones cerca</p>
-          </div>
         </div>
-
-        {/* Additional Cards for enabled features */}
-        {(isCardEnabled("home_card_courses") || isCardEnabled("home_card_competitions")) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {isCardEnabled("home_card_courses") && (
-              <button onClick={() => navigate("/courses")} className="w-full text-left hover-scale">
-                <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 h-full">
-                  <CardContent className="p-6">
-                    <div className="bg-[#1e3a8a] w-12 h-12 rounded-xl flex items-center justify-center mb-4">
-                      <GraduationCap className="h-6 w-6 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE] mb-2">
-                      Clases y cursos
-                    </h3>
-                    <p className="text-sm text-[#6898FE]/70">Conoce horarios, días y deportes que puedes aprender</p>
-                  </CardContent>
-                </Card>
-              </button>
-            )}
-
-            {isCardEnabled("home_card_competitions") && (
-              <div className="hover-scale">
-                <Card className="hover:shadow-lg transition-all duration-300 border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 h-full">
-                  <CardContent className="p-6">
-                    <div className="bg-[#1e3a8a] w-12 h-12 rounded-xl flex items-center justify-center mb-4">
-                      <Shield className="h-6 w-6 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE] mb-2">
-                      Competencias
-                    </h3>
-                    <p className="text-sm text-[#6898FE]/70">Participa en torneos y competencias</p>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     );
   };
