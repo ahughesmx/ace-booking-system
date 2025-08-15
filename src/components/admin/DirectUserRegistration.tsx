@@ -128,6 +128,9 @@ export default function DirectUserRegistration({ onSuccess }: DirectUserRegistra
       },
     });
 
+    console.log("📡 Function response - data:", result);
+    console.log("📡 Function response - error:", error);
+
     console.log("📡 Function response:", { result, error });
 
     if (error) {
