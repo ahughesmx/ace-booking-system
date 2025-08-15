@@ -1240,6 +1240,10 @@ export type Database = {
         Args: { booking_time: string }
         Returns: string
       }
+      can_use_member_id: {
+        Args: { p_email: string; p_full_name: string; p_member_id: string }
+        Returns: boolean
+      }
       cleanup_expired_bookings: {
         Args: Record<PropertyKey, never>
         Returns: number

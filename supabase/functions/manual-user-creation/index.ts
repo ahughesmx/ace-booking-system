@@ -54,7 +54,7 @@ serve(async (req) => {
 
     console.log("📝 Creating user:", { email, full_name, member_id });
 
-    // 1. Verificar si ya existe un usuario con este email
+    // 1. Verificar si ya existe un usuario con este email (movido después de member_id check)
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
     const existingUser = existingUsers.users.find(u => u.email === email);
 
@@ -62,24 +62,24 @@ serve(async (req) => {
       throw new Error("Ya existe un usuario con este correo electrónico");
     }
 
-    // 2. Verificar member_id duplicado - permitir familias con mismo member_id
-    // Solo verificar duplicado si es el mismo email (usuario exacto)
-    const { data: existingProfile } = await supabase
-      .from("profiles")
-      .select("member_id, id")
-      .eq("member_id", member_id)
-      .neq("id", "00000000-0000-0000-0000-000000000000"); // Placeholder para evitar conflicto
+    // 2. Verificar si puede usar este member_id usando la función de negocio
+    const { data: canUseId, error: memberIdError } = await supabase
+      .rpc('can_use_member_id', {
+        p_member_id: member_id,
+        p_email: email,
+        p_full_name: full_name
+      });
 
-    console.log("🔍 Existing profiles with member_id:", existingProfile);
-    
-    // Permitir múltiples usuarios con el mismo member_id (familias)
-    // Solo bloquear si ya existe el email exacto
-    const { data: emailCheck } = await supabase.auth.admin.listUsers();
-    const existingEmail = emailCheck.users.find(u => u.email === email);
-    
-    if (existingEmail) {
-      throw new Error("Ya existe un usuario con este correo electrónico");
+    if (memberIdError) {
+      console.error("❌ Error checking member_id:", memberIdError);
+      throw new Error("Error validando clave de socio");
     }
+
+    if (!canUseId) {
+      throw new Error("Esta clave de socio no está disponible o no pertenece a su familia");
+    }
+
+    console.log("✅ Member ID validation passed for:", member_id);
 
     // 3. Crear usuario en auth
     const { data: authData, error: createUserError } = await supabase.auth.admin.createUser({
