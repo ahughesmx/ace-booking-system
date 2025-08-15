@@ -306,7 +306,11 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   if (showOnlyButton) {
     return (
       <>
-        <Button onClick={() => setShowManualRegistration(true)}>
+        <Button onClick={() => {
+          reset(); // Reset form before opening
+          setMemberInfo(null);
+          setShowManualRegistration(true);
+        }}>
           <UserPlus className="h-4 w-4 mr-2" />
           Añadir Usuario Manualmente
         </Button>
