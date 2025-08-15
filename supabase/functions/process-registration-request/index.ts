@@ -60,18 +60,20 @@ serve(async (req) => {
         throw new Error("Request not found or already processed");
       }
 
-      // Verificar si ya existe un usuario con este email
-      const { data: existingUser, error: userCheckError } = await supabase.auth.admin.getUserByEmail(request.email);
+      // Verificar si ya existe un usuario con este email usando listUsers
+      const { data: existingUsers, error: userCheckError } = await supabase.auth.admin.listUsers();
       
-      if (userCheckError && userCheckError.status !== 404) {
-        throw new Error(`Error checking existing user: ${userCheckError.message}`);
+      if (userCheckError) {
+        throw new Error(`Error checking existing users: ${userCheckError.message}`);
       }
+
+      const existingUser = existingUsers.users.find(u => u.email === request.email);
 
       let authData;
       
-      if (existingUser.user) {
+      if (existingUser) {
         // El usuario ya existe, usar el existente
-        authData = { user: existingUser.user };
+        authData = { user: existingUser };
         console.log(`User with email ${request.email} already exists, using existing user`);
       } else {
         // Crear nuevo usuario
@@ -129,7 +131,7 @@ serve(async (req) => {
         if (profileError) {
           console.error("Error creating profile:", profileError);
           // Solo intentar eliminar el usuario si lo acabamos de crear
-          if (!existingUser.user) {
+          if (!existingUser) {
             await supabase.auth.admin.deleteUser(authData.user.id);
           }
           throw new Error("Failed to create user profile");
