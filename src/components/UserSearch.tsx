@@ -21,15 +21,17 @@ export function UserSearch({ onSelect, excludeIds = [] }: UserSearchProps) {
 
     setIsSearching(true);
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .ilike("full_name", `%${searchTerm}%`)
-        .not("id", "in", `(${excludeIds.join(",")})`)
-        .limit(5);
+      // Usar la función segura de búsqueda
+      const { data, error } = await supabase.rpc(
+        'search_users_for_invitations',
+        { search_term: searchTerm }
+      );
 
       if (error) throw error;
-      setSearchResults(data || []);
+
+      // Filtrar usuarios excluidos
+      const filteredData = data?.filter(user => !excludeIds.includes(user.id)) || [];
+      setSearchResults(filteredData.slice(0, 5));
     } catch (error) {
       console.error("Error searching users:", error);
       setSearchResults([]);

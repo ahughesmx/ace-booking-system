@@ -1216,6 +1216,14 @@ export type Database = {
         Args: Record<PropertyKey, never> | { user_uuid: string }
         Returns: undefined
       }
+      search_users_for_invitations: {
+        Args: { search_term: string }
+        Returns: {
+          full_name: string
+          id: string
+          member_id: string
+        }[]
+      }
     }
     Enums: {
       user_role: "admin" | "user" | "operador"

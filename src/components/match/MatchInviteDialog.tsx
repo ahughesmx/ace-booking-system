@@ -34,10 +34,11 @@ export function MatchInviteDialog({ matchId, currentUserId, isDoubles, position 
   const { data: profiles } = useQuery({
     queryKey: ["profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .neq("id", currentUserId);
+      // Usar la función segura de búsqueda con término vacío para obtener todos los usuarios
+      const { data, error } = await supabase.rpc(
+        'search_users_for_invitations',
+        { search_term: '' }
+      );
 
       if (error) throw error;
       return data;

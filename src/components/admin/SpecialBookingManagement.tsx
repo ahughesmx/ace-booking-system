@@ -126,11 +126,11 @@ export default function SpecialBookingManagement() {
 
     try {
       setSearchingUsers(true);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, member_id")
-        .or(`full_name.ilike.%${searchTerm}%,member_id.ilike.%${searchTerm}%`)
-        .limit(10);
+      // Para admins, usar la función de búsqueda segura
+      const { data, error } = await supabase.rpc(
+        'search_users_for_invitations',
+        { search_term: searchTerm }
+      );
 
       if (error) throw error;
       setUserSuggestions(data || []);
