@@ -161,7 +161,12 @@ export function BookingSummary({
             Métodos de Pago
           </h4>
           
-          {paymentGateways.length === 0 ? (
+          {isLoadingGateways ? (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Cargando métodos de pago...</span>
+            </div>
+          ) : paymentGateways.length === 0 ? (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
