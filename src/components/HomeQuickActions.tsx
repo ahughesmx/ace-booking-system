@@ -1,4 +1,5 @@
 import { Calendar, CreditCard, Shield } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 type QuickAction = {
   icon: React.ElementType;
@@ -11,6 +12,7 @@ interface HomeQuickActionsProps {
 }
 
 export function HomeQuickActions({ onNavigateToBookings }: HomeQuickActionsProps) {
+  const navigate = useNavigate();
   const actions: QuickAction[] = [
     {
       icon: Calendar,
@@ -20,10 +22,7 @@ export function HomeQuickActions({ onNavigateToBookings }: HomeQuickActionsProps
     {
       icon: CreditCard,
       label: "Membresía",
-      onClick: () => {
-        // TODO: Implement membership navigation
-        console.log("Navigate to membership");
-      },
+      onClick: () => navigate("/membership"),
     },
     {
       icon: Shield,
