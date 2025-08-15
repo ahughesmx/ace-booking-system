@@ -134,16 +134,22 @@ export default function NewManualUserRegistration({ onSuccess }: NewManualUserRe
 
     console.log("🔄 Processing registration request automatically...");
 
+    const requestBody = {
+      requestId: requestData.id,
+      action: 'approve'
+    };
+    
+    console.log("📝 Sending to edge function:", JSON.stringify(requestBody, null, 2));
+
     const { data: processData, error: processError } = await supabase.functions.invoke('process-registration-request', {
-      body: {
-        requestId: requestData.id,
-        action: 'approve'
-      },
+      body: requestBody,
       headers: {
         Authorization: `Bearer ${session.access_token}`,
         'Content-Type': 'application/json'
       },
     });
+
+    console.log("📡 Edge function response:", { processData, processError });
 
     if (processError) {
       console.error("❌ Function invocation error:", processError);
