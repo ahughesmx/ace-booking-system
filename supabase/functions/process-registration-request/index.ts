@@ -93,16 +93,14 @@ serve(async (req) => {
         // Don't fail the registration for this, but log it
       }
 
-      // Crear el perfil del usuario (usar upsert para evitar errores de duplicados)
+      // Crear el perfil del usuario (permitir múltiples usuarios con el mismo member_id para membresías familiares)
       const { error: profileError } = await supabase
         .from("profiles")
-        .upsert({
+        .insert({
           id: authData.user.id,
           member_id: request.member_id,
           full_name: request.full_name,
           phone: request.phone
-        }, {
-          onConflict: 'id'
         });
 
       if (profileError) {
