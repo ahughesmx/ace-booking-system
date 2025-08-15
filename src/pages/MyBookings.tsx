@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import MainNav from "@/components/MainNav";
 import { useUserBookings } from "@/hooks/use-user-bookings";
 import { BookingCard } from "@/components/BookingCard";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Pagination,
   PaginationContent,
@@ -16,6 +17,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -165,14 +168,49 @@ export default function MyBookings() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {paginatedPastBookings.map((booking) => (
-                      <BookingCard
-                        key={booking.id}
-                        booking={booking}
-                        isOwner={false} // Past bookings can't be cancelled
-                        onCancel={() => {}} // No cancellation for past bookings
-                      />
-                    ))}
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Fecha</TableHead>
+                          <TableHead>Hora</TableHead>
+                          <TableHead>Cancha</TableHead>
+                          <TableHead>Usuario</TableHead>
+                          <TableHead>Tipo</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedPastBookings.map((booking) => (
+                          <TableRow key={booking.id}>
+                            <TableCell className="font-medium">
+                              {format(new Date(booking.start_time), "dd/MM/yyyy", { locale: es })}
+                            </TableCell>
+                            <TableCell>
+                              {format(new Date(booking.start_time), "HH:mm", { locale: es })} - {format(new Date(booking.end_time), "HH:mm", { locale: es })}
+                            </TableCell>
+                            <TableCell>
+                              {booking.court?.name} ({booking.court?.court_type})
+                            </TableCell>
+                            <TableCell>
+                              {booking.isSpecial ? 
+                                (booking.title || "Evento especial") : 
+                                (booking.user?.full_name || "Usuario no disponible")
+                              }
+                            </TableCell>
+                            <TableCell>
+                              {booking.isSpecial ? (
+                                <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                  {booking.event_type || "Evento"}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700/10">
+                                  Reservación
+                                </span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                     
                     {pastTotalPages > 1 && (
                       <div className="mt-6">
