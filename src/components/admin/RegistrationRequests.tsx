@@ -315,7 +315,13 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
           Añadir Usuario Manualmente
         </Button>
         {/* Manual Registration Dialog */}
-        <Dialog open={showManualRegistration} onOpenChange={setShowManualRegistration}>
+        <Dialog open={showManualRegistration} onOpenChange={(open) => {
+          setShowManualRegistration(open);
+          if (open) {
+            reset(); // Reset form when opening
+            setMemberInfo(null);
+          }
+        }}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Registro Manual de Usuario</DialogTitle>
@@ -496,7 +502,11 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   // Original full component
   return (
     <>
-      <Button onClick={() => setShowManualRegistration(true)}>
+      <Button onClick={() => {
+        reset(); // Reset form before opening
+        setMemberInfo(null);
+        setShowManualRegistration(true);
+      }}>
         <UserPlus className="h-4 w-4 mr-2" />
         Añadir Usuario Manualmente
       </Button>
@@ -564,7 +574,13 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showManualRegistration} onOpenChange={setShowManualRegistration}>
+      <Dialog open={showManualRegistration} onOpenChange={(open) => {
+        setShowManualRegistration(open);
+        if (open) {
+          reset(); // Reset form when opening
+          setMemberInfo(null);
+        }
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Registro Manual de Usuario</DialogTitle>
