@@ -97,72 +97,63 @@ export default function NewManualUserRegistration({ onSuccess }: NewManualUserRe
   };
 
   const createUserDirectly = async (data: UserRegistrationData) => {
-    console.log("🚀 Creating user directly with data:", {
+    console.log("🚀 Creating user via registration request:", {
       full_name: data.full_name,
       email: data.email,
       member_id: data.member_id
     });
 
-    // 1. Crear usuario en Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: data.email,
-      password: data.password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: data.full_name,
+    // 1. Crear solicitud en user_registration_requests
+    const { data: requestData, error: requestError } = await supabase
+      .from("user_registration_requests")
+      .insert({
         member_id: data.member_id,
-        phone: data.phone
-      }
+        full_name: data.full_name,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
+        password_provided: true,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (requestError) {
+      console.error("❌ Registration request creation error:", requestError);
+      throw new Error(`Error creando solicitud: ${requestError.message}`);
+    }
+
+    console.log("✅ Registration request created:", requestData.id);
+
+    // 2. Procesar automáticamente usando la edge function
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      throw new Error('No hay sesión activa. Por favor inicia sesión nuevamente.');
+    }
+
+    console.log("🔄 Processing registration request automatically...");
+
+    const { data: processData, error: processError } = await supabase.functions.invoke('process-registration-request', {
+      body: {
+        requestId: requestData.id,
+        action: 'approve'
+      },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      },
     });
 
-    if (authError) {
-      console.error("❌ Auth creation error:", authError);
-      throw new Error(`Error creando usuario: ${authError.message}`);
+    if (processError) {
+      console.error("❌ Function invocation error:", processError);
+      throw new Error(`Error procesando registro: ${processError.message || 'Error desconocido'}`);
     }
 
-    if (!authData.user) {
-      throw new Error("No se pudo crear el usuario en el sistema de autenticación");
-    }
+    console.log("✅ Registration processed successfully:", processData);
 
-    console.log("✅ User created in auth:", authData.user.id);
-
-    // 2. Crear perfil completo
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .upsert({
-        id: authData.user.id,
-        full_name: data.full_name,
-        member_id: data.member_id,
-        phone: data.phone
-      });
-
-    if (profileError) {
-      console.error("❌ Profile creation error:", profileError);
-      // Eliminar usuario de auth si falló el perfil
-      await supabase.auth.admin.deleteUser(authData.user.id);
-      throw new Error(`Error creando perfil: ${profileError.message}`);
-    }
-
-    console.log("✅ Profile created successfully");
-
-    // 3. Asignar rol de usuario
-    const { error: roleError } = await supabase
-      .from("user_roles")
-      .insert({
-        user_id: authData.user.id,
-        role: 'user'
-      });
-
-    if (roleError) {
-      console.error("❌ Role assignment error:", roleError);
-      // No eliminar usuario por esto, solo advertir
-      console.warn("⚠️ Role assignment failed but user was created");
-    } else {
-      console.log("✅ Role assigned successfully");
-    }
-
-    return {
-      user_id: authData.user.id,
+    return processData || { 
+      user_id: processData?.user_id,
       email: data.email,
       full_name: data.full_name
     };
