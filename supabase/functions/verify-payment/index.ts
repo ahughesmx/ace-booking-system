@@ -94,12 +94,17 @@ serve(async (req) => {
             user_phone: profile?.phone,
             remotejid: profile?.phone,
             date: new Date(existingBooking.start_time).toISOString().split('T')[0],
-            time: new Date(existingBooking.start_time).toLocaleTimeString('es-ES', { 
+            time: `${new Date(existingBooking.start_time).toLocaleTimeString('es-ES', { 
               hour: '2-digit', 
               minute: '2-digit', 
               hour12: false,
               timeZone: 'America/Mexico_City'
-            })
+            })} - ${new Date(existingBooking.end_time).toLocaleTimeString('es-ES', { 
+              hour: '2-digit', 
+              minute: '2-digit', 
+              hour12: false,
+              timeZone: 'America/Mexico_City'
+            })}`
           };
 
           console.log('📋 STRIPE VERIFY-PAYMENT: Datos del webhook preparados:', webhookData);
