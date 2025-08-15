@@ -62,15 +62,18 @@ serve(async (req) => {
       throw new Error("Ya existe un usuario con este correo electrónico");
     }
 
-    // 2. Verificar member_id duplicado
-    const { data: existingProfile } = await supabase
-      .from("profiles")
-      .select("member_id")
-      .eq("member_id", member_id)
-      .single();
+    // 2. Verificar member_id duplicado solo si no es de la familia Baldomar
+    // La familia Baldomar puede compartir el member_id 422
+    if (member_id !== '422') {
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("member_id")
+        .eq("member_id", member_id)
+        .single();
 
-    if (existingProfile) {
-      throw new Error("Ya existe un usuario con esta clave de socio");
+      if (existingProfile) {
+        throw new Error("Ya existe un usuario con esta clave de socio");
+      }
     }
 
     // 3. Crear usuario en auth
