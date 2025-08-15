@@ -145,12 +145,20 @@ export function useBookingPayment() {
   const processPayment = async (paymentGateway: string) => {
     console.log(`🔄 processPayment started for ${paymentGateway}`, { 
       pendingBooking: !!pendingBooking,
-      pendingBookingId: pendingBooking?.id 
+      pendingBookingId: pendingBooking?.id,
+      user: user?.id,
+      timestamp: new Date().toISOString()
     });
     
+    // ARREGLO: Validación mejorada de datos requeridos
     if (!pendingBooking) {
-      console.error("❌ No pending booking found");
-      throw new Error("No hay reserva pendiente");
+      console.error('❌ No pending booking found');
+      throw new Error('No hay reserva pendiente para procesar');
+    }
+
+    if (!user) {
+      console.error('❌ No user found');
+      throw new Error('Usuario no autenticado');
     }
 
     try {

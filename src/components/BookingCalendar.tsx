@@ -77,10 +77,11 @@ function BookingCalendar({ selectedCourtType: initialCourtType, selectedDate: in
     // Siempre deshabilitar fechas pasadas
     if (date < today) return true;
     
-    // Si no hay tipo de cancha seleccionado, deshabilitar todo excepto hoy
+    // ARREGLO CRÍTICO: Si no hay tipo de cancha seleccionado, permitir hoy y mañana para que el usuario pueda interactuar
     if (!selectedCourtType) {
-      console.log('❌ No selectedCourtType - disabling date:', date.toDateString());
-      return date > today;
+      console.log('⚠️ No selectedCourtType - allowing today and tomorrow for interaction');
+      const tomorrow = addDays(today, 1);
+      return date > tomorrow;
     }
     
     // Deshabilitar fechas más allá del máximo permitido según booking_rules

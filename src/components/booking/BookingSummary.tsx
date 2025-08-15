@@ -152,9 +152,12 @@ export function BookingSummary({
           </h4>
           
           {paymentGateways.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No hay métodos de pago configurados
-            </p>
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Error:</strong> No hay métodos de pago configurados. Por favor contacte al administrador.
+              </AlertDescription>
+            </Alert>
           ) : (
             <div className="space-y-2">
               {paymentGateways.map((gateway) => {
