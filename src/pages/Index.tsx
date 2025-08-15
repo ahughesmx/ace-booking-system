@@ -149,8 +149,8 @@ export default function Index() {
     };
 
     return (
-      <div className="space-y-4 animate-fade-in">
-        <div className="text-left">
+      <div className="animate-fade-in">
+        <div className="text-left mb-4">
           <h1 className="text-xl sm:text-2xl font-bold text-[#1e3a8a]">
             Hola {user?.email?.split('@')[0] || 'Usuario'}
             <span className="ml-2 text-[#1e3a8a]" role="img" aria-label="wave">👋</span>
