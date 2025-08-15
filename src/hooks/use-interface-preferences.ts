@@ -66,22 +66,40 @@ export const useInterfacePreferences = () => {
   return useQuery({
     queryKey: ["interface-preferences"],
     queryFn: async () => {
+      console.log('🔍 PREFERENCES FETCH - Starting...');
+      
       try {
         const { data, error } = await supabase
           .from("interface_preferences")
           .select("*");
 
-        // If there's an error or no data, return defaults
-        if (error || !data || data.length === 0) {
-          console.log("Using default preferences:", error?.message || "No preferences found");
+        console.log('🔍 PREFERENCES FETCH - Raw result:', { data, error, dataLength: data?.length });
+
+        // IMPORTANTE: Solo usar defaults si realmente no hay datos en la BD
+        if (error) {
+          console.error('🚨 PREFERENCES FETCH - Error occurred:', error);
+          // No retornar defaults en caso de error, mejor fallar
+          throw error;
+        }
+        
+        if (!data || data.length === 0) {
+          console.warn('🚨 PREFERENCES FETCH - No data found, using defaults');
           return getDefaultPreferences();
         }
         
-        console.log('✅ Using database preferences:', data);
+        console.log('✅ PREFERENCES FETCH - Using database preferences:', data);
         return data as InterfacePreference[];
       } catch (error) {
-        console.warn("❌ Error fetching preferences, using defaults:", error);
-        return getDefaultPreferences();
+        console.error("🚨 PREFERENCES FETCH - Exception:", error);
+        // En lugar de defaults, vamos a retornar preferencias todas en false para debug
+        return [
+          { id: "debug-menu-matches", feature_key: "menu_matches", display_name: "Debug", category: "menu", is_enabled: false },
+          { id: "debug-menu-courses", feature_key: "menu_courses", display_name: "Debug", category: "menu", is_enabled: false },
+          { id: "debug-menu-ranking", feature_key: "menu_ranking", display_name: "Debug", category: "menu", is_enabled: false },
+          { id: "debug-home-matches", feature_key: "home_card_matches", display_name: "Debug", category: "home_cards", is_enabled: false },
+          { id: "debug-home-courses", feature_key: "home_card_courses", display_name: "Debug", category: "home_cards", is_enabled: false },
+          { id: "debug-home-competitions", feature_key: "home_card_competitions", display_name: "Debug", category: "home_cards", is_enabled: false }
+        ];
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutos
