@@ -71,6 +71,25 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
     return bookingsInSlot.length;
   };
 
+  // Función para obtener el nombre del usuario que reservó un slot
+  const getBookedUserForSlot = (slot: string) => {
+    const booking = allBookings.find(booking => {
+      if (booking.isSpecial) return false;
+      
+      const bookingHour = format(new Date(booking.start_time), "HH:00");
+      const bookingCourtType = booking.court?.court_type;
+      
+      // Solo contar reservas del tipo de cancha seleccionado
+      if (courtType && bookingCourtType !== courtType) {
+        return false;
+      }
+      
+      return bookingHour === slot;
+    });
+    
+    return booking?.user?.full_name || null;
+  };
+
   // Función para verificar si hay eventos especiales en un slot
   const getSpecialEventsForSlot = (slot: string) => {
     return allBookings.filter(booking => {
@@ -123,6 +142,7 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
         const bookingsCount = getBookingsCountForSlot(timeSlot.start);
         const availableSlots = totalCourts - bookingsCount;
         const isAvailable = !timeSlot.isPast && availableSlots > 0;
+        const bookedUser = !isAvailable && !timeSlot.isPast ? getBookedUserForSlot(timeSlot.start) : undefined;
         
         return (
           <TimeSlot
@@ -132,6 +152,7 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
             isAvailable={isAvailable}
             availableCount={availableSlots}
             specialEvents={specialEvents}
+            bookedUser={bookedUser}
           />
         );
       })}
