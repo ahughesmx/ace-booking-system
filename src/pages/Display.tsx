@@ -567,6 +567,8 @@ export default function Display() {
                                 ? slotInfo.type === 'special'
                                   ? 'bg-purple-100 border-purple-300 text-purple-800'
                                   : 'bg-red-100 border-red-300 text-red-800'
+                                : slotInfo.type === 'past'
+                                ? 'bg-gray-100 border-gray-300 text-gray-600'
                                 : isCurrent
                                 ? 'bg-blue-100 border-blue-300 text-blue-800'
                                 : 'bg-green-50 border-green-200 text-green-800'
@@ -589,6 +591,8 @@ export default function Display() {
                                    </>
                                  )}
                                </div>
+                             ) : slotInfo.type === 'past' ? (
+                               <div className="text-xs font-medium">Horario pasado</div>
                              ) : (
                               <div className="text-xs font-medium">Disponible</div>
                             )}
@@ -615,6 +619,10 @@ export default function Display() {
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 bg-purple-100 border border-purple-300 rounded"></div>
                   <span className="text-gray-700 font-medium">Evento Especial</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-gray-100 border border-gray-300 rounded"></div>
+                  <span className="text-gray-700 font-medium">Horario pasado</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
