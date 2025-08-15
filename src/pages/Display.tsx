@@ -242,6 +242,13 @@ export default function Display() {
 
   // Get slot information
   const getSlotInfo = (courtId: string, timeSlot: string) => {
+    // Check if this time slot is in the past
+    const now = new Date();
+    const slotTime = new Date(currentDate);
+    const [hour] = timeSlot.split(':');
+    slotTime.setHours(parseInt(hour), 0, 0, 0);
+    const isPast = isToday(currentDate) && isBefore(slotTime, now);
+
     const booking = allBookings.find(booking => {
       const bookingDate = new Date(booking.start_time);
       const bookingHour = format(bookingDate, "HH:00");
@@ -259,14 +266,16 @@ export default function Display() {
       return {
         type,
         booking: booking,
-        isBooked: true
+        isBooked: true,
+        isPast
       };
     }
 
     return {
-      type: 'available',
+      type: isPast ? 'past' : 'available',
       booking: null,
-      isBooked: false
+      isBooked: false,
+      isPast
     };
   };
 
@@ -393,6 +402,8 @@ export default function Display() {
                                 ? slotInfo.type === 'special' 
                                   ? 'bg-purple-500 hover:bg-purple-600' 
                                   : 'bg-red-500 hover:bg-red-600'
+                                : slotInfo.type === 'past'
+                                ? 'bg-gray-400 text-gray-600'
                                 : 'bg-green-100 text-green-800 hover:bg-green-200'
                             }`}
                             title={
@@ -402,11 +413,15 @@ export default function Display() {
                                 ? `Reservado - ${slotInfo.booking.user.full_name}`
                                 : slotInfo.isBooked
                                 ? 'Reservado'
+                                : slotInfo.type === 'past'
+                                ? 'Horario pasado'
                                 : 'Disponible'
                             }
                           >
                             {slotInfo.isBooked ? (
                               slotInfo.type === 'special' ? '🎉' : '👤'
+                            ) : slotInfo.type === 'past' ? (
+                              '⏰'
                             ) : (
                               '✓'
                             )}
@@ -435,6 +450,10 @@ export default function Display() {
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-purple-500 rounded"></div>
               <span className="text-gray-700 text-sm font-medium">Evento Especial</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-gray-400 rounded"></div>
+              <span className="text-gray-700 text-sm font-medium">Horario pasado</span>
             </div>
           </div>
         </div>
