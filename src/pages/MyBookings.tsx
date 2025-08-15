@@ -63,14 +63,6 @@ export default function MyBookings() {
       <MainNav />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/")}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver al inicio
-          </Button>
           <h1 className="text-3xl font-bold text-primary">Mis Reservaciones</h1>
           <p className="text-muted-foreground mt-2">
             Consulta todas las reservaciones de tu familia
