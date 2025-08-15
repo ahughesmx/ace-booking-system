@@ -150,7 +150,7 @@ export function TimeSlotSelector({
       <div className="space-y-4">
         <div className="text-center">
           <h4 className="text-lg font-semibold text-[#1e3a8a] mb-2">
-            Selecciona tu horario para {courtType}
+            Selecciona tu horario para {courtType === 'padel' ? 'pádel' : courtType}
           </h4>
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-sm text-red-600">
@@ -174,7 +174,7 @@ export function TimeSlotSelector({
       <div className="space-y-4">
         <div className="text-center">
           <h4 className="text-lg font-semibold text-[#1e3a8a] mb-2">
-            Selecciona tu horario para {courtType}
+            Selecciona tu horario para {courtType === 'padel' ? 'pádel' : courtType}
           </h4>
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <p className="text-sm text-yellow-600">
@@ -201,7 +201,7 @@ export function TimeSlotSelector({
     <div className="space-y-4">
       <div className="text-center">
         <h4 className="text-lg font-semibold text-[#1e3a8a] mb-2">
-          Selecciona tu horario para {courtType}
+          Selecciona tu horario para {courtType === 'padel' ? 'pádel' : courtType}
         </h4>
         <p className="text-sm text-muted-foreground">
           {totalCourts} {totalCourts === 1 ? 'cancha disponible' : 'canchas disponibles'}
