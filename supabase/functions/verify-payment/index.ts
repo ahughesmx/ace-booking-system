@@ -93,7 +93,12 @@ serve(async (req) => {
             user_name: profile?.full_name,
             user_phone: profile?.phone,
             remotejid: profile?.phone,
-            date: new Date(existingBooking.start_time).toISOString().split('T')[0],
+            date: new Date(existingBooking.start_time).toLocaleDateString('es-MX', { 
+              timeZone: 'America/Mexico_City',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }).split('/').reverse().join('-'),
             time: `${new Date(existingBooking.start_time).toLocaleTimeString('es-ES', { 
               hour: '2-digit', 
               minute: '2-digit', 
