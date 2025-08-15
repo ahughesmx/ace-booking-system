@@ -13,7 +13,7 @@ const MainNav = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { data: userRole, isLoading: roleLoading } = useGlobalRole(user?.id);
-  const { isMenuItemEnabled } = useMenuPreferences();
+  const { isMenuItemEnabled, isLoading: preferencesLoading } = useMenuPreferences();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -45,11 +45,6 @@ const MainNav = () => {
     navigate("/admin");
   };
 
-  console.log('🚨 MainNav - isMenuItemEnabled results:');
-  console.log('  - menu_matches:', isMenuItemEnabled("menu_matches"));
-  console.log('  - menu_courses:', isMenuItemEnabled("menu_courses"));
-  console.log('  - menu_ranking:', isMenuItemEnabled("menu_ranking"));
-
   const navigationItems = [
     { label: "Inicio", icon: Home, onClick: () => handleNavigation(null) },
     { label: "Reservas", icon: Calendar, onClick: () => handleNavigation("bookings") },
@@ -57,9 +52,6 @@ const MainNav = () => {
     ...(isMenuItemEnabled("menu_courses") ? [{ label: "Cursos", icon: Calendar, onClick: () => navigate("/courses") }] : []),
     ...(isMenuItemEnabled("menu_ranking") ? [{ label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") }] : []),
   ];
-
-  console.log('🚨 MainNav - Final navigationItems count:', navigationItems.length);
-  console.log('🚨 MainNav - navigationItems:', navigationItems.map(item => item.label));
 
   // Panel de Control solo para admins
   if (user && !roleLoading && userRole?.role === "admin") {
