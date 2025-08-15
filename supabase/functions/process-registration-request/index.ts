@@ -60,10 +60,13 @@ serve(async (req) => {
         throw new Error("Request not found or already processed");
       }
 
+      // Since we removed password_hash field, we need to generate a secure temporary password
+      const tempPassword = crypto.randomUUID() + "!Temp123";
+      
       // Crear el usuario en auth
       const { data: authData, error: createUserError } = await supabase.auth.admin.createUser({
         email: request.email,
-        password: request.password_hash,
+        password: tempPassword,
         email_confirm: true,
         user_metadata: {
           member_id: request.member_id,
@@ -74,6 +77,20 @@ serve(async (req) => {
 
       if (createUserError) {
         throw new Error(`Failed to create user: ${createUserError.message}`);
+      }
+
+      // Send password reset email so user can set their own password
+      const { error: resetError } = await supabase.auth.admin.generateLink({
+        type: 'recovery',
+        email: request.email,
+        options: {
+          redirectTo: `${Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '')}/auth/callback`
+        }
+      });
+
+      if (resetError) {
+        console.error("Error sending password reset email:", resetError);
+        // Don't fail the registration for this, but log it
       }
 
       // Crear el perfil del usuario

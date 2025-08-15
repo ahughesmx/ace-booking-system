@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AdminButton } from "@/components/admin/AdminButton";
 import { Plus, Edit, Trash2, Star, Phone, Mail } from "lucide-react";
-import { useInstructors, useCreateInstructor, useUpdateInstructor } from "@/hooks/use-instructors";
+import { useInstructors, useCreateInstructor, useUpdateInstructor, useInstructorWithPII } from "@/hooks/use-instructors";
+import { useAdminAuth } from "@/hooks/use-admin-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -31,9 +32,13 @@ export default function InstructorManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingInstructor, setEditingInstructor] = useState<any>(null);
 
+  const { userRole } = useAdminAuth();
   const { data: instructors, isLoading } = useInstructors();
   const createMutation = useCreateInstructor();
   const updateMutation = useUpdateInstructor();
+  
+  // Check if user is admin to view PII data
+  const isAdmin = userRole?.role === 'admin';
 
   const form = useForm<InstructorFormData>({
     resolver: zodResolver(instructorSchema),
@@ -75,20 +80,29 @@ export default function InstructorManagement() {
     }
   };
 
+  // Hook to fetch full instructor data with PII for editing (admin only)
+  const { data: editingInstructorWithPII } = useInstructorWithPII(editingInstructor?.id || "");
+  
   const handleEdit = (instructor: any) => {
     setEditingInstructor(instructor);
-    form.reset({
-      full_name: instructor.full_name,
-      bio: instructor.bio || "",
-      email: instructor.email || "",
-      phone: instructor.phone || "",
-      experience_years: instructor.experience_years || 0,
-      avatar_url: instructor.avatar_url || "",
-      specialties: instructor.specialties?.join(', ') || "",
-      certifications: instructor.certifications?.join(', ') || "",
-    });
     setIsDialogOpen(true);
   };
+  
+  // Update form when PII data is loaded
+  useEffect(() => {
+    if (editingInstructorWithPII && isDialogOpen && editingInstructor) {
+      form.reset({
+        full_name: editingInstructorWithPII.full_name,
+        bio: editingInstructorWithPII.bio || "",
+        email: editingInstructorWithPII.email || "",
+        phone: editingInstructorWithPII.phone || "",
+        experience_years: editingInstructorWithPII.experience_years || 0,
+        avatar_url: editingInstructorWithPII.avatar_url || "",
+        specialties: editingInstructorWithPII.specialties?.join(', ') || "",
+        certifications: editingInstructorWithPII.certifications?.join(', ') || "",
+      });
+    }
+  }, [editingInstructorWithPII, isDialogOpen, editingInstructor, form]);
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
@@ -319,16 +333,21 @@ export default function InstructorManagement() {
                     )}
 
                     <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                      {instructor.email && (
+                      {isAdmin && (instructor as any).email && (
                         <div className="flex items-center gap-1">
                           <Mail className="h-4 w-4" />
-                          {instructor.email}
+                          {(instructor as any).email}
                         </div>
                       )}
-                      {instructor.phone && (
+                      {isAdmin && (instructor as any).phone && (
                         <div className="flex items-center gap-1">
                           <Phone className="h-4 w-4" />
-                          {instructor.phone}
+                          {(instructor as any).phone}
+                        </div>
+                      )}
+                      {!isAdmin && (
+                        <div className="text-sm text-muted-foreground">
+                          Contacto visible solo para administradores
                         </div>
                       )}
                     </div>

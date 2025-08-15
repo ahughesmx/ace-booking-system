@@ -11,9 +11,10 @@ export function useInstructors() {
   return useQuery({
     queryKey: ["instructors"],
     queryFn: async () => {
+      // Only select non-PII fields to protect instructor privacy
       const { data, error } = await supabase
         .from("instructors")
-        .select("*")
+        .select("id, full_name, bio, specialties, certifications, experience_years, avatar_url, is_active, created_at, updated_at")
         .eq("is_active", true)
         .order("full_name");
 
@@ -26,6 +27,26 @@ export function useInstructors() {
 export function useInstructor(id: string) {
   return useQuery({
     queryKey: ["instructor", id],
+    queryFn: async () => {
+      // Only select non-PII fields by default
+      const { data, error } = await supabase
+        .from("instructors")
+        .select("id, full_name, bio, specialties, certifications, experience_years, avatar_url, is_active, created_at, updated_at")
+        .eq("id", id)
+        .eq("is_active", true)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+}
+
+// Admin-only hook to fetch full instructor details including PII
+export function useInstructorWithPII(id: string) {
+  return useQuery({
+    queryKey: ["instructor-pii", id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("instructors")

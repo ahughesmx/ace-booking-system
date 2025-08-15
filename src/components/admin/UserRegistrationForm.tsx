@@ -88,50 +88,35 @@ export default function UserRegistrationForm() {
         return;
       }
 
-      // Create user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            full_name: data.full_name,
-            member_id: data.member_id,
-            phone: data.phone,
-          }
-        }
-      });
-
-      if (authError) throw authError;
-
-      if (authData.user) {
-        // Update profile with additional data
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({
-            full_name: data.full_name,
-            member_id: data.member_id,
-            phone: data.phone,
-          })
-          .eq("id", authData.user.id);
-
-        if (profileError) throw profileError;
-
-        // Handle file uploads if files were selected
-        if (responsiveFile || idFile) {
-          console.log("Files to upload:", { responsiveFile, idFile });
-        }
-
-        toast({
-          title: "¡Éxito!",
-          description: "Usuario registrado correctamente",
+      // Create registration request instead of directly creating user
+      const { error: registrationError } = await supabase
+        .from("user_registration_requests")
+        .insert({
+          full_name: data.full_name,
+          member_id: data.member_id,
+          email: data.email,
+          phone: data.phone,
+          password_provided: true, // Flag that password was provided
+          status: "pending"
         });
 
-        // Reset form
-        reset();
-        setMemberInfo(null);
-        setResponsiveFile(null);
-        setIdFile(null);
+      if (registrationError) throw registrationError;
+
+      // Handle file uploads if files were selected
+      if (responsiveFile || idFile) {
+        console.log("Files to upload:", { responsiveFile, idFile });
       }
+
+      toast({
+        title: "¡Éxito!",
+        description: "Solicitud de registro enviada correctamente. El usuario será notificado cuando sea aprobado.",
+      });
+
+      // Reset form
+      reset();
+      setMemberInfo(null);
+      setResponsiveFile(null);
+      setIdFile(null);
     } catch (error: any) {
       console.error("Error registering user:", error);
       toast({
