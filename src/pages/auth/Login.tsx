@@ -69,7 +69,7 @@ export default function Login() {
         return;
       }
 
-      // Crear solicitud de registro en lugar de usuario directamente
+      // Crear solicitud de registro usando el nuevo modelo seguro
       const { error } = await supabase
         .from('user_registration_requests')
         .insert({
@@ -77,7 +77,7 @@ export default function Login() {
           full_name: fullName,
           phone: phone,
           email: email,
-          password_hash: password, // En producción esto debería estar hasheado
+          password_provided: true, // Usar el nuevo campo boolean
           status: 'pending'
         });
 

@@ -29,6 +29,7 @@ interface RegistrationRequest {
   full_name: string;
   phone: string;
   email: string;
+  password_provided?: boolean; // Nuevo campo para indicar si se proporcionó contraseña
   status: 'pending' | 'approved' | 'rejected';
   rejection_reason?: string;
   created_at: string;
