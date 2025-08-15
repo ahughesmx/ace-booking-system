@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useHomeCardPreferences } from "@/hooks/use-interface-preferences";
+import { HomeQuickActions } from "@/components/HomeQuickActions";
 
 export default function Index() {
   const { user, loading } = useAuth();
@@ -222,6 +223,9 @@ export default function Index() {
             </div>
           )}
         </div>
+        
+        {/* Quick Actions */}
+        <HomeQuickActions onNavigateToBookings={() => handleNavigation("bookings")} />
       </div>
     );
   };
