@@ -14,15 +14,23 @@ interface ProcessRequestBody {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log("🚀 Process registration request called");
+  console.log("Method:", req.method);
+  console.log("Headers:", Object.fromEntries(req.headers.entries()));
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
+      console.error("❌ No authorization header");
       throw new Error("No authorization header");
     }
+
+    console.log("🔐 Authorization header found:", authHeader.substring(0, 20) + "...");
 
     // Verificar autenticación del usuario
     const { data: { user }, error: authError } = await supabase.auth.getUser(
@@ -30,24 +38,38 @@ serve(async (req) => {
     );
 
     if (authError || !user) {
+      console.error("❌ Auth error:", authError);
       throw new Error("Unauthorized");
     }
 
+    console.log("✅ User authenticated:", user.id);
+
     // Verificar que el usuario sea admin u operador
-    const { data: userRole } = await supabase
+    const { data: userRole, error: roleError } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
       .single();
 
+    if (roleError) {
+      console.error("❌ Role query error:", roleError);
+    }
+
     if (!userRole || !['admin', 'operador'].includes(userRole.role)) {
+      console.error("❌ Insufficient permissions. User role:", userRole?.role);
       throw new Error("Insufficient permissions");
     }
+
+    console.log("✅ User has sufficient permissions:", userRole.role);
 
     const body: ProcessRequestBody = await req.json();
     const { requestId, action, rejectionReason } = body;
 
+    console.log("📝 Request body:", { requestId, action, rejectionReason: rejectionReason ? "PROVIDED" : "NONE" });
+
     if (action === 'approve') {
+      console.log("🟢 Processing approval for request:", requestId);
+      
       // Obtener los datos de la solicitud
       const { data: request, error: requestError } = await supabase
         .from("user_registration_requests")
@@ -57,8 +79,15 @@ serve(async (req) => {
         .single();
 
       if (requestError || !request) {
+        console.error("❌ Request not found or already processed:", requestError);
         throw new Error("Request not found or already processed");
       }
+
+      console.log("📋 Request data:", { 
+        full_name: request.full_name, 
+        email: request.email, 
+        member_id: request.member_id 
+      });
 
       // Verificar si ya existe un usuario con este email usando listUsers
       const { data: existingUsers, error: userCheckError } = await supabase.auth.admin.listUsers();
@@ -206,8 +235,14 @@ serve(async (req) => {
         }
       }
 
+      console.log("✅ User approval process completed successfully");
+      
       return new Response(
-        JSON.stringify({ message: "User approved and created successfully" }),
+        JSON.stringify({ 
+          message: "User approved and created successfully",
+          user_id: authData.user.id,
+          full_name: request.full_name 
+        }),
         { headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
 
