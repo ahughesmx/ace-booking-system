@@ -124,6 +124,11 @@ export default function Index() {
   };
 
   const renderHomeCards = () => {
+    console.log('🏠 Home - isCardEnabled results:');
+    console.log('  - home_card_matches:', isCardEnabled("home_card_matches"));
+    console.log('  - home_card_courses:', isCardEnabled("home_card_courses"));
+    console.log('  - home_card_competitions:', isCardEnabled("home_card_competitions"));
+
     // Calculate enabled cards to determine grid layout
     const enabledCards = [
       { id: "bookings", enabled: true }, // Always enabled
@@ -132,7 +137,9 @@ export default function Index() {
       { id: "competitions", enabled: isCardEnabled("home_card_competitions") }
     ].filter(card => card.enabled);
 
+    console.log('🏠 Home - enabledCards:', enabledCards);
     const enabledCount = enabledCards.length;
+    console.log('🏠 Home - enabledCount:', enabledCount);
     
     // Dynamic grid classes based on number of enabled cards
     const getGridClass = () => {

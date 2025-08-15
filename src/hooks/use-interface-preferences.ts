@@ -92,8 +92,10 @@ export const useInterfacePreferences = () => {
         return getDefaultPreferences();
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    refetchOnWindowFocus: false,
+    staleTime: 0, // No cachear para debug
+    gcTime: 0, // No mantener en cache para debug  
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
     retry: false, // Don't retry on auth errors
   });
 };
