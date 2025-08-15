@@ -74,7 +74,8 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
   // Función para verificar si hay eventos especiales en un slot
   const getSpecialEventsForSlot = (slot: string) => {
     return allBookings.filter(booking => {
-      const bookingHour = format(new Date(booking.start_time), "HH:00");
+      if (!booking.isSpecial) return false;
+      
       const bookingCourtType = booking.court?.court_type;
       
       // Solo verificar eventos especiales del tipo de cancha seleccionado
@@ -82,17 +83,46 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
         return false;
       }
       
-      return bookingHour === slot && booking.isSpecial;
+      // Verificar si el slot está dentro del rango de la reserva especial
+      const bookingStart = new Date(booking.start_time);
+      const bookingEnd = new Date(booking.end_time);
+      const slotHour = parseInt(slot.split(':')[0]);
+      
+      // Crear fecha del slot para comparar
+      const slotStart = new Date(selectedDate || new Date());
+      slotStart.setHours(slotHour, 0, 0, 0);
+      const slotEnd = new Date(slotStart);
+      slotEnd.setHours(slotHour + 1, 0, 0, 0);
+      
+      // Verificar si hay superposición
+      return slotStart < bookingEnd && slotEnd > bookingStart;
     }) as SpecialBooking[];
   };
 
   return (
     <div className="grid grid-cols-3 gap-3">
       {timeSlots.map(timeSlot => {
+        const specialEvents = getSpecialEventsForSlot(timeSlot.start);
+        const hasSpecialEvents = specialEvents.length > 0;
+        
+        // Si hay eventos especiales, el slot no está disponible
+        if (hasSpecialEvents) {
+          return (
+            <TimeSlot
+              key={timeSlot.start}
+              start={timeSlot.start}
+              end={timeSlot.end}
+              isAvailable={false}
+              availableCount={0}
+              specialEvents={specialEvents}
+            />
+          );
+        }
+        
+        // Para slots normales, calcular disponibilidad normal
         const bookingsCount = getBookingsCountForSlot(timeSlot.start);
         const availableSlots = totalCourts - bookingsCount;
         const isAvailable = !timeSlot.isPast && availableSlots > 0;
-        const specialEvents = getSpecialEventsForSlot(timeSlot.start);
         
         return (
           <TimeSlot

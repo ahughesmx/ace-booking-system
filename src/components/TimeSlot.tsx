@@ -39,8 +39,8 @@ export function TimeSlot({ start, end, isAvailable, availableCount = 0, specialE
           <p className="text-xs text-purple-600 font-medium">
             🎯 {specialEvents[0].event_type}
           </p>
-          <p className="text-xs text-purple-500 truncate">
-            {specialEvents[0].title}
+          <p className="text-xs text-purple-500">
+            No disponible
           </p>
         </div>
       ) : (

@@ -96,7 +96,8 @@ export function TimeSlotSelector({
   // Función para verificar si hay eventos especiales en un slot
   const getSpecialEventsForSlot = (slot: string) => {
     return allBookings.filter(booking => {
-      const bookingHour = format(new Date(booking.start_time), "HH:00");
+      if (!booking.isSpecial) return false;
+      
       const bookingCourtType = booking.court?.court_type;
       
       // Solo verificar eventos especiales del tipo de cancha seleccionado
@@ -104,14 +105,36 @@ export function TimeSlotSelector({
         return false;
       }
       
-      return bookingHour === slot && booking.isSpecial;
+      // Verificar si el slot está dentro del rango de la reserva especial
+      const bookingStart = new Date(booking.start_time);
+      const bookingEnd = new Date(booking.end_time);
+      const slotHour = parseInt(slot.split(':')[0]);
+      
+      // Crear fecha del slot para comparar
+      const slotStart = new Date(selectedDate || new Date());
+      slotStart.setHours(slotHour, 0, 0, 0);
+      const slotEnd = new Date(slotStart);
+      slotEnd.setHours(slotHour + 1, 0, 0, 0);
+      
+      // Verificar si hay superposición
+      return slotStart < bookingEnd && slotEnd > bookingStart;
     }) as SpecialBooking[];
   };
 
   const getAvailableSlots = (slot: string) => {
     if (totalCourts === 0) return 0;
     
-    // Contar cuántas reservas hay para este horario específico del tipo de cancha seleccionado
+    // Verificar si hay eventos especiales que ocupen este slot
+    const specialEvents = getSpecialEventsForSlot(slot);
+    const hasSpecialEvents = specialEvents.length > 0;
+    
+    // Si hay eventos especiales, no hay slots disponibles
+    if (hasSpecialEvents) {
+      console.log(`🎯 SLOT ${slot} OCUPADO POR EVENTO ESPECIAL:`, specialEvents[0].event_type);
+      return 0;
+    }
+    
+    // Contar cuántas reservas regulares hay para este horario específico del tipo de cancha seleccionado
     const bookingsCount = bookedSlots.has(slot) ? 1 : 0;
     const available = Math.max(0, totalCourts - bookingsCount);
     
@@ -252,8 +275,8 @@ export function TimeSlotSelector({
                   <span className="text-xs text-purple-600 font-medium block">
                     🎯 {specialEvents[0].event_type}
                   </span>
-                  <span className="text-xs text-purple-500 block truncate max-w-full">
-                    {specialEvents[0].title}
+                  <span className="text-xs text-purple-500 block">
+                    No disponible
                   </span>
                 </div>
               ) : (
