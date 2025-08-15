@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase-client";
 
 interface InterfacePreference {
   id: string;
@@ -66,20 +66,29 @@ export const useInterfacePreferences = () => {
   return useQuery({
     queryKey: ["interface-preferences"],
     queryFn: async () => {
+      console.log('🚀 Starting interface preferences fetch...');
+      
+      // Check authentication first
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('👤 Current user:', user?.id ? 'Authenticated' : 'Not authenticated', 'User ID:', user?.id);
+      
       try {
         const { data, error } = await supabase
           .from("interface_preferences")
           .select("*");
 
+        console.log('📊 Raw query result - data length:', data?.length, 'error:', error);
+
         // If there's an error or no data, return defaults
         if (error || !data || data.length === 0) {
-          console.log("Using default preferences:", error?.message || "No preferences found");
+          console.log("⚠️ Using default preferences:", error?.message || "No preferences found");
           return getDefaultPreferences();
         }
         
+        console.log('✅ Using database preferences:', data);
         return data as InterfacePreference[];
       } catch (error) {
-        console.warn("Error fetching preferences, using defaults:", error);
+        console.warn("❌ Error fetching preferences, using defaults:", error);
         return getDefaultPreferences();
       }
     },
@@ -99,9 +108,14 @@ export const useMenuPreferences = () => {
     error,
     preferences: menuPreferences,
     isMenuItemEnabled: (featureKey: string) => {
+      console.log('🔍 Menu - isLoading:', isLoading, 'featureKey:', featureKey);
+      console.log('🔍 Menu - menuPreferences:', menuPreferences);
       if (isLoading) return true; // Show items while loading
       const preference = menuPreferences.find(p => p.feature_key === featureKey);
-      return preference?.is_enabled ?? true; // Por defecto habilitado si no existe
+      console.log('🔍 Menu - found preference:', preference);
+      const result = preference?.is_enabled ?? true;
+      console.log('🔍 Menu - final result for', featureKey, ':', result);
+      return result;
     }
   };
 };
@@ -116,9 +130,14 @@ export const useHomeCardPreferences = () => {
     error,
     preferences: homeCardPreferences,
     isCardEnabled: (featureKey: string) => {
+      console.log('🏠 Cards - isLoading:', isLoading, 'featureKey:', featureKey);
+      console.log('🏠 Cards - homeCardPreferences:', homeCardPreferences);
       if (isLoading) return true; // Show cards while loading
       const preference = homeCardPreferences.find(p => p.feature_key === featureKey);
-      return preference?.is_enabled ?? true; // Por defecto habilitado si no existe
+      console.log('🏠 Cards - found preference:', preference);
+      const result = preference?.is_enabled ?? true;
+      console.log('🏠 Cards - final result for', featureKey, ':', result);
+      return result;
     }
   };
 };
