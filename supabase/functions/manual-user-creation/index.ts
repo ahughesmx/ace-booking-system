@@ -62,18 +62,23 @@ serve(async (req) => {
       throw new Error("Ya existe un usuario con este correo electrónico");
     }
 
-    // 2. Verificar member_id duplicado solo si no es de la familia Baldomar
-    // La familia Baldomar puede compartir el member_id 422
-    if (member_id !== '422') {
-      const { data: existingProfile } = await supabase
-        .from("profiles")
-        .select("member_id")
-        .eq("member_id", member_id)
-        .single();
+    // 2. Verificar member_id duplicado - permitir familias con mismo member_id
+    // Solo verificar duplicado si es el mismo email (usuario exacto)
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("member_id, id")
+      .eq("member_id", member_id)
+      .neq("id", "00000000-0000-0000-0000-000000000000"); // Placeholder para evitar conflicto
 
-      if (existingProfile) {
-        throw new Error("Ya existe un usuario con esta clave de socio");
-      }
+    console.log("🔍 Existing profiles with member_id:", existingProfile);
+    
+    // Permitir múltiples usuarios con el mismo member_id (familias)
+    // Solo bloquear si ya existe el email exacto
+    const { data: emailCheck } = await supabase.auth.admin.listUsers();
+    const existingEmail = emailCheck.users.find(u => u.email === email);
+    
+    if (existingEmail) {
+      throw new Error("Ya existe un usuario con este correo electrónico");
     }
 
     // 3. Crear usuario en auth
