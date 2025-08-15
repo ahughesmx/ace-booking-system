@@ -42,11 +42,21 @@ export function TicketReceipt({ bookingData, onClose, onPrint }: TicketReceiptPr
   const pricePerHour = amount / duration;
 
   const handlePrint = () => {
+    console.log('🖨️ handlePrint called - Starting print process');
+    
     const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    if (!printWindow) {
+      console.error('❌ Could not open print window');
+      return;
+    }
 
     const ticketContent = document.getElementById('ticket-content');
-    if (!ticketContent) return;
+    if (!ticketContent) {
+      console.error('❌ Could not find ticket-content element');
+      return;
+    }
+
+    console.log('✅ Print window opened and content found, proceeding with print');
 
     printWindow.document.write(`
       <!DOCTYPE html>

@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         // Set up auth state listener FIRST
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-          console.log("Auth event:", event);
+          console.log("Auth event:", event, "isInitialLoad:", isInitialLoad);
           
           if (currentSession) {
             setSession(currentSession);
@@ -44,7 +45,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(null);
           }
 
-          if (event === "SIGNED_IN") {
+          // Solo mostrar toast de "Sesión iniciada" si no es la carga inicial 
+          // y si es un evento explícito de SIGNED_IN (no un refresh de token)
+          if (event === "SIGNED_IN" && !isInitialLoad) {
             toast({
               title: "Sesión iniciada",
               description: "Has iniciado sesión exitosamente",
@@ -65,6 +68,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         
         setLoading(false);
+        setIsInitialLoad(false); // Marcar que la carga inicial ha terminado
         
         return () => {
           subscription.unsubscribe();
