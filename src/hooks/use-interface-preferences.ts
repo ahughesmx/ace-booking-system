@@ -100,9 +100,15 @@ export const useMenuPreferences = () => {
     error,
     preferences: menuPreferences,
     isMenuItemEnabled: (featureKey: string) => {
-      if (isLoading) return true; // Show items while loading
+      console.log('🐛 Hook - isMenuItemEnabled called:', { featureKey, isLoading });
+      if (isLoading) {
+        console.log('🐛 Hook - Still loading, returning true');
+        return true; // Show items while loading
+      }
       const preference = menuPreferences.find(p => p.feature_key === featureKey);
-      return preference?.is_enabled ?? true;
+      const result = preference?.is_enabled ?? true;
+      console.log('🐛 Hook - Final result:', { featureKey, preference: !!preference, is_enabled: preference?.is_enabled, result });
+      return result;
     }
   };
 };
@@ -117,9 +123,15 @@ export const useHomeCardPreferences = () => {
     error,
     preferences: homeCardPreferences,
     isCardEnabled: (featureKey: string) => {
-      if (isLoading) return true; // Show cards while loading
+      console.log('🐛 Hook - isCardEnabled called:', { featureKey, isLoading });
+      if (isLoading) {
+        console.log('🐛 Hook - Still loading, returning true');
+        return true; // Show cards while loading
+      }
       const preference = homeCardPreferences.find(p => p.feature_key === featureKey);
-      return preference?.is_enabled ?? true;
+      const result = preference?.is_enabled ?? true;
+      console.log('🐛 Hook - Final result:', { featureKey, preference: !!preference, is_enabled: preference?.is_enabled, result });
+      return result;
     }
   };
 };

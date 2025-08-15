@@ -102,6 +102,7 @@ export default function Index() {
     }
   }, [paymentStatus, sessionId, paymentProcessed, user?.id, toast, queryClient, navigate]);
 
+  console.log('🐛 Index.tsx - Debug states:', { loading, isProcessingPayment, cardsLoading, currentTab });
   if (loading || isProcessingPayment || cardsLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -124,6 +125,10 @@ export default function Index() {
   };
 
   const renderHomeCards = () => {
+    console.log('🐛 renderHomeCards called - isCardEnabled results:');
+    console.log('  - home_card_matches:', isCardEnabled("home_card_matches"));
+    console.log('  - home_card_courses:', isCardEnabled("home_card_courses"));
+    console.log('  - home_card_competitions:', isCardEnabled("home_card_competitions"));
     // Calculate enabled cards to determine grid layout
     const enabledCards = [
       { id: "bookings", enabled: true }, // Always enabled
