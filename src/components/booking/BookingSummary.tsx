@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Clock, MapPin, CreditCard, Timer, Loader2 } from "lucide-react";
+import { Clock, MapPin, CreditCard, Timer, Loader2, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { useEnabledPaymentGateways } from "@/hooks/use-payment-settings";
 
@@ -134,6 +135,14 @@ export function BookingSummary({
         </div>
 
         <Separator />
+
+        {/* Warning sobre política de reembolsos */}
+        <Alert variant="warning">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Importante:</strong> Las reservaciones realizadas no son reembolsables por cancelación o falta de uso.
+          </AlertDescription>
+        </Alert>
 
         {/* Métodos de pago */}
         <div className="space-y-3">
