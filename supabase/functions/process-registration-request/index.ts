@@ -23,15 +23,15 @@ serve(async (req) => {
   console.log("Method:", req.method);
   console.log("Headers:", Object.fromEntries(req.headers.entries()));
   
-  // Agregar logging del cuerpo de la request
-  let requestBody: string | null = null;
+  // Leer el cuerpo de la petición directamente como JSON
+  let body: ProcessRequestBody;
   try {
-    requestBody = await req.text();
-    console.log("📝 Raw request body:", requestBody);
+    body = await req.json();
+    console.log("📝 Request body:", JSON.stringify(body, null, 2));
   } catch (error) {
-    console.error("❌ Error reading request body:", error);
+    console.error("❌ Error parsing JSON body:", error);
     return new Response(
-      JSON.stringify({ error: "Invalid request body" }),
+      JSON.stringify({ error: "Invalid JSON body format" }),
       { 
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders }
@@ -78,22 +78,8 @@ serve(async (req) => {
 
     console.log("✅ User has sufficient permissions:", userRole.role);
 
-    // Parse del cuerpo JSON con validación mejorada
-    let body: ProcessRequestBody;
-    try {
-      if (!requestBody || requestBody.trim() === '') {
-        throw new Error("Empty request body");
-      }
-      body = JSON.parse(requestBody);
-      console.log("📝 Parsed request body:", JSON.stringify(body, null, 2));
-    } catch (parseError) {
-      console.error("❌ JSON parse error:", parseError);
-      throw new Error(`Invalid JSON in request body: ${parseError.message}`);
-    }
-    
-    const { requestId, action, rejectionReason } = body;
-    
     // Validar campos requeridos
+    const { requestId, action, rejectionReason } = body;
     if (!requestId || !action) {
       throw new Error("Missing required fields: requestId and action are required");
     }
