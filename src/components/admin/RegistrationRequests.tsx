@@ -97,11 +97,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
           requestId,
           action,
           rejectionReason
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
+        }
       });
 
       if (error) {
