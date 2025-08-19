@@ -910,6 +910,7 @@ export type Database = {
           id: string
           member_id: string | null
           phone: string | null
+          updated_at: string | null
         }
         Insert: {
           active_bookings?: number | null
@@ -919,6 +920,7 @@ export type Database = {
           id: string
           member_id?: string | null
           phone?: string | null
+          updated_at?: string | null
         }
         Update: {
           active_bookings?: number | null
@@ -928,6 +930,7 @@ export type Database = {
           id?: string
           member_id?: string | null
           phone?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
