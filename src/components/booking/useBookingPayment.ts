@@ -165,6 +165,7 @@ export function useBookingPayment() {
 
     try {
       if (paymentGateway === 'stripe') {
+        console.log('💳 STRIPE: Starting Stripe payment process');
         // First try modal method, fallback to redirect if fails
         if (paymentMethod === 'modal') {
           try {
@@ -181,13 +182,16 @@ export function useBookingPayment() {
               amount: pendingBooking.amount
             };
 
+            console.log('📤 Calling create-payment-intent with:', bookingData);
             const { data, error } = await supabase.functions.invoke('create-payment-intent', {
               body: { bookingData }
             });
 
+            console.log('📥 create-payment-intent response:', { data, error });
             if (error) throw error;
             if (!data?.clientSecret) throw new Error("No client secret received");
 
+            console.log('✅ Setting clientSecret for modal');
             setClientSecret(data.clientSecret);
             return { useModal: true, clientSecret: data.clientSecret };
           } catch (modalError) {
