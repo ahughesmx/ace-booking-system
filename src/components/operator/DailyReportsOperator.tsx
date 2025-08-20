@@ -163,14 +163,13 @@ export function DailyReportsOperator() {
   }, [selectedDate]);
 
   const exportToCSV = () => {
-    const headers = ['Fecha', 'Hora', 'Cliente', 'Membresía', 'Cancha', 'Tipo', 'Método Pago', 'Procesado Por', 'Monto'];
+    const headers = ['Fecha', 'Hora', 'Cliente', 'Membresía', 'Cancha', 'Método Pago', 'Procesado Por', 'Monto'];
     const csvData = bookings.map(booking => [
       format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es }),
       format(new Date(booking.start_time), 'HH:mm', { locale: es }),
       booking.user?.full_name || 'N/A',
       booking.user?.member_id || 'N/A',
       booking.court?.name || 'N/A',
-      booking.court?.court_type || 'N/A',
       booking.payment_method === 'cash' ? 'Efectivo' : 'En Línea',
       booking.processed_by_user?.full_name || 'Sistema',
       `$${booking.actual_amount_charged?.toFixed(2) || '0.00'}`
@@ -198,7 +197,6 @@ export function DailyReportsOperator() {
       cliente: booking.user?.full_name || 'N/A',
       membresia: booking.user?.member_id || 'N/A',
       cancha: booking.court?.name || 'N/A',
-      tipo: booking.court?.court_type || 'N/A',
       metodo_pago: booking.payment_method === 'cash' ? 'Efectivo' : 'En línea',
       procesado_por: booking.processed_by_user?.full_name || 'Sistema',
       monto: booking.actual_amount_charged || 0
@@ -209,15 +207,14 @@ export function DailyReportsOperator() {
       subtitle: `Fecha: ${format(new Date(selectedDate), 'dd/MM/yyyy', { locale: es })}`,
       data: pdfData,
       columns: [
-        { header: 'Fecha', dataKey: 'fecha', width: 20 },
-        { header: 'Hora', dataKey: 'hora', width: 25 },
-        { header: 'Cliente', dataKey: 'cliente', width: 30 },
-        { header: 'Membresía', dataKey: 'membresia', width: 20 },
-        { header: 'Cancha', dataKey: 'cancha', width: 20 },
-        { header: 'Tipo', dataKey: 'tipo', width: 20 },
-        { header: 'Método', dataKey: 'metodo_pago', width: 20 },
-        { header: 'Procesado Por', dataKey: 'procesado_por', width: 25 },
-        { header: 'Monto', dataKey: 'monto', width: 20 }
+        { header: 'Fecha', dataKey: 'fecha', width: 22 },
+        { header: 'Hora', dataKey: 'hora', width: 28 },
+        { header: 'Cliente', dataKey: 'cliente', width: 35 },
+        { header: 'Membresía', dataKey: 'membresia', width: 25 },
+        { header: 'Cancha', dataKey: 'cancha', width: 25 },
+        { header: 'Método', dataKey: 'metodo_pago', width: 25 },
+        { header: 'Procesado Por', dataKey: 'procesado_por', width: 30 },
+        { header: 'Monto', dataKey: 'monto', width: 25 }
       ],
       summary: [
         { label: 'Total efectivo:', value: formatCurrency(summary.cashTotal) },
