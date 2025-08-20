@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { exportToPDF, formatCurrency } from "@/utils/pdf-export";
 import { useAuth } from "@/components/AuthProvider";
+import { getStartOfTodayMexicoCityISO, getEndOfTodayMexicoCityISO, toMexicoCityTime } from "@/utils/timezone";
 
 interface DailyBooking {
   id: string;
@@ -50,10 +51,17 @@ export function DailyReportsOperator() {
   const fetchDailyBookings = async () => {
     setLoading(true);
     try {
-      // Convertir fecha seleccionada a UTC para la consulta
-      const selectedDateObj = new Date(selectedDate + 'T00:00:00-06:00'); // México timezone
-      const startOfDay = selectedDateObj.toISOString();
-      const endOfDay = new Date(selectedDateObj.getTime() + 24 * 60 * 60 * 1000 - 1).toISOString();
+      // Convertir fecha seleccionada a rango usando timezone de México
+      const selectedMexicoDate = new Date(selectedDate + 'T00:00:00');
+      
+      // Crear fecha de inicio y fin del día en México
+      const startOfDayMexico = new Date(selectedMexicoDate);
+      const endOfDayMexico = new Date(selectedMexicoDate);
+      endOfDayMexico.setHours(23, 59, 59, 999);
+      
+      // Convertir a UTC para la consulta (México es UTC-6)
+      const startOfDayUTC = new Date(startOfDayMexico.getTime() + (6 * 60 * 60 * 1000)).toISOString();
+      const endOfDayUTC = new Date(endOfDayMexico.getTime() + (6 * 60 * 60 * 1000)).toISOString();
 
       const { data, error } = await supabase
         .from('bookings')
@@ -70,9 +78,10 @@ export function DailyReportsOperator() {
           processed_by
         `)
         .eq('status', 'paid')
-        .gte('booking_made_at', startOfDay)
-        .lte('booking_made_at', endOfDay)
-        .order('booking_made_at', { ascending: false });
+        .gte('start_time', startOfDayUTC)
+        .lte('start_time', endOfDayUTC)
+        .not('actual_amount_charged', 'is', null)
+        .order('start_time', { ascending: false });
 
       if (error) throw error;
 
