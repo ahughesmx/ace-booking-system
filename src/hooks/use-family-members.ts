@@ -8,6 +8,7 @@ interface FamilyMember {
   avatar_url: string | null;
   phone: string | null;
   created_at: string;
+  is_membership_holder: boolean;
 }
 
 interface MemberInfo {
@@ -44,7 +45,8 @@ export function useFamilyMembers(userId?: string) {
           member_id,
           avatar_url,
           phone,
-          created_at
+          created_at,
+          is_membership_holder
         `)
         .eq("member_id", currentUser.member_id)
         .order("created_at", { ascending: true });

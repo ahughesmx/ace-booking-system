@@ -918,6 +918,7 @@ export type Database = {
           created_at: string | null
           full_name: string | null
           id: string
+          is_membership_holder: boolean | null
           member_id: string | null
           phone: string | null
           updated_at: string | null
@@ -928,6 +929,7 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id: string
+          is_membership_holder?: boolean | null
           member_id?: string | null
           phone?: string | null
           updated_at?: string | null
@@ -938,6 +940,7 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
+          is_membership_holder?: boolean | null
           member_id?: string | null
           phone?: string | null
           updated_at?: string | null
@@ -1268,6 +1271,13 @@ export type Database = {
       create_receipt_number: {
         Args: { p_booking_id: string }
         Returns: string
+      }
+      deactivate_family_member: {
+        Args: {
+          p_member_id_to_deactivate: string
+          p_requesting_user_id: string
+        }
+        Returns: boolean
       }
       generate_receipt_number: {
         Args: Record<PropertyKey, never>

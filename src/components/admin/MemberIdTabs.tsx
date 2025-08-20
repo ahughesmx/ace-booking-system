@@ -4,20 +4,21 @@ import ValidMemberIdManagement from "./ValidMemberIdManagement";
 import UserRegistrationForm from "./UserRegistrationForm";
 import { BulkMemberIdUpload } from "./BulkMemberIdUpload";
 import { MemberIdFormatSettings } from "./MemberIdFormatSettings";
-import { Settings, Upload, List, UserPlus } from "lucide-react";
+import MembershipHolderManagement from "./MembershipHolderManagement";
+import { Settings, Upload, List, UserPlus, Crown } from "lucide-react";
 
 export default function MemberIdTabs() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Gestión de IDs de Miembros</h1>
+        <h1 className="text-3xl font-bold">Gestión de Membresías</h1>
         <p className="text-muted-foreground">
-          Administra las claves de socio válidas y registra nuevos usuarios
+          Administra las claves de socio válidas, registra nuevos usuarios y gestiona titulares de membresía
         </p>
       </div>
 
       <Tabs defaultValue="list" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="list" className="flex items-center gap-2">
             <List className="w-4 h-4" />
             Listado
@@ -33,6 +34,10 @@ export default function MemberIdTabs() {
           <TabsTrigger value="register-user" className="flex items-center gap-2">
             <UserPlus className="w-4 h-4" />
             Registro Usuario
+          </TabsTrigger>
+          <TabsTrigger value="holders" className="flex items-center gap-2">
+            <Crown className="w-4 h-4" />
+            Titulares
           </TabsTrigger>
         </TabsList>
 
@@ -88,6 +93,20 @@ export default function MemberIdTabs() {
             </CardHeader>
             <CardContent>
               <UserRegistrationForm />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="holders" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gestión de Titulares de Membresía</CardTitle>
+              <CardDescription>
+                Administra quién es el titular de cada membresía familiar
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MembershipHolderManagement />
             </CardContent>
           </Card>
         </TabsContent>

@@ -2,10 +2,13 @@ import { useAuth } from "@/components/AuthProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Users, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { CalendarDays, Users, User, UserMinus, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import MainNav from "@/components/MainNav";
 import { useFamilyMembers } from "@/hooks/use-family-members";
+import { useMembershipManagement } from "@/hooks/use-membership-management";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -19,6 +22,12 @@ export default function Membership() {
     error,
     memberInfo
   } = useFamilyMembers(user?.id);
+
+  const { deactivateMember, isDeactivating } = useMembershipManagement();
+  
+  // Encontrar al titular de la membresía
+  const membershipHolder = familyMembers?.find(member => member.is_membership_holder);
+  const isCurrentUserHolder = user?.id === membershipHolder?.id;
 
   if (!user) {
     return (
@@ -38,10 +47,18 @@ export default function Membership() {
       <MainNav />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-primary">Membresía Familiar</h1>
+          <h1 className="text-3xl font-bold text-primary">Gestión de Membresías</h1>
           <p className="text-muted-foreground mt-2">
-            Información de todos los miembros de la familia
+            Información y gestión de todos los miembros de la familia
           </p>
+          {isCurrentUserHolder && (
+            <div className="mt-3 flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
+              <Crown className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium text-primary">
+                Eres el titular de esta membresía y puedes gestionar a los demás miembros
+              </span>
+            </div>
+          )}
         </div>
 
         {isLoading ? (
@@ -132,10 +149,63 @@ export default function Membership() {
                               {format(new Date(member.created_at), "dd/MM/yyyy", { locale: es })}
                             </span>
                           </div>
-                          {member.id === user.id && (
-                            <Badge variant="default" className="text-xs">
-                              Tú
-                            </Badge>
+                          <div className="flex items-center gap-2">
+                            {member.is_membership_holder && (
+                              <Badge variant="default" className="text-xs bg-primary">
+                                <Crown className="h-3 w-3 mr-1" />
+                                Titular
+                              </Badge>
+                            )}
+                            {member.id === user.id && (
+                              <Badge variant="secondary" className="text-xs">
+                                Tú
+                              </Badge>
+                            )}
+                          </div>
+                          {/* Botón para dar de baja (solo visible para el titular y no para sí mismo) */}
+                          {isCurrentUserHolder && member.id !== user?.id && (
+                            <div className="mt-2">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    disabled={isDeactivating}
+                                    className="text-xs"
+                                  >
+                                    <UserMinus className="h-3 w-3 mr-1" />
+                                    Dar de baja
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>¿Dar de baja miembro?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Estás a punto de dar de baja a <strong>{member.full_name}</strong> de la membresía.
+                                      Esta acción eliminará permanentemente su cuenta y no se puede deshacer.
+                                      <br /><br />
+                                      El usuario perderá acceso a todas sus reservas y datos asociados.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={async () => {
+                                        if (user?.id) {
+                                          await deactivateMember({
+                                            memberId: member.id,
+                                            requestingUserId: user.id
+                                          });
+                                        }
+                                      }}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Dar de baja
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           )}
                         </div>
                       </div>
