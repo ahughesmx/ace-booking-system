@@ -11,7 +11,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { exportToPDF, formatCurrency } from "@/utils/pdf-export";
 import { useAuth } from "@/components/AuthProvider";
-import { getStartOfTodayMexicoCityISO, getEndOfTodayMexicoCityISO, toMexicoCityTime } from "@/utils/timezone";
+import { getStartOfTodayMexicoCityISO, getEndOfTodayMexicoCityISO, toMexicoCityTime, fromMexicoCityTimeToUTC } from "@/utils/timezone";
 
 interface DailyBooking {
   id: string;
@@ -51,24 +51,26 @@ export function DailyReportsOperator() {
   const fetchDailyBookings = async () => {
     setLoading(true);
     try {
-      // Usar las utilidades de timezone para obtener el rango correcto
+      // Crear fechas usando timezone de México correctamente
       const selectedMexicoDate = new Date(selectedDate + 'T00:00:00');
       
-      // Crear fecha de inicio y fin del día en México
+      // Crear inicio y fin del día en tiempo de México
       const startOfDayMexico = new Date(selectedMexicoDate);
+      startOfDayMexico.setHours(0, 0, 0, 0);
+      
       const endOfDayMexico = new Date(selectedMexicoDate);
       endOfDayMexico.setHours(23, 59, 59, 999);
       
-      // Convertir a UTC para la consulta (México es UTC-6, por lo tanto RESTAMOS 6 horas)
-      const startOfDayUTC = new Date(startOfDayMexico.getTime() - (6 * 60 * 60 * 1000)).toISOString();
-      const endOfDayUTC = new Date(endOfDayMexico.getTime() - (6 * 60 * 60 * 1000)).toISOString();
+      // Convertir a UTC usando las utilidades de timezone
+      const startOfDayUTC = fromMexicoCityTimeToUTC(startOfDayMexico).toISOString();
+      const endOfDayUTC = fromMexicoCityTimeToUTC(endOfDayMexico).toISOString();
 
-      console.log('Filtro de fechas:', {
+      console.log('Filtro de fechas corregido:', {
         selectedDate,
-        startOfDayUTC,
-        endOfDayUTC,
         startOfDayMexico: startOfDayMexico.toISOString(),
-        endOfDayMexico: endOfDayMexico.toISOString()
+        endOfDayMexico: endOfDayMexico.toISOString(),
+        startOfDayUTC,
+        endOfDayUTC
       });
 
       const { data, error } = await supabase
