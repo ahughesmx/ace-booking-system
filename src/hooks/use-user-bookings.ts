@@ -26,7 +26,15 @@ export function useUserBookings(userId?: string) {
 
       if (!profile?.member_id) return [];
 
-      // Get all upcoming regular bookings for this member_id (family)
+      // Get all family member IDs first
+      const { data: familyMembers } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("member_id", profile.member_id);
+
+      const familyUserIds = familyMembers?.map(member => member.id) || [];
+
+      // Get upcoming regular bookings directly filtered by family user IDs
       const { data: regularBookings, error: regularError } = await supabase
         .from("bookings")
         .select(`
@@ -41,13 +49,14 @@ export function useUserBookings(userId?: string) {
             court_type
           )
         `)
+        .in("user_id", familyUserIds)
         .eq("status", "paid")
         .gte("start_time", new Date().toISOString())
         .order("start_time", { ascending: true });
 
       if (regularError) throw regularError;
 
-      // Get all upcoming special bookings for this member_id (family)
+      // Get upcoming special bookings directly filtered by family user IDs
       const { data: specialBookings, error: specialError } = await supabase
         .from("special_bookings")
         .select(`
@@ -58,29 +67,21 @@ export function useUserBookings(userId?: string) {
             court_type
           )
         `)
+        .in("reference_user_id", familyUserIds)
         .gte("start_time", new Date().toISOString())
         .order("start_time", { ascending: true });
 
       if (specialError) throw specialError;
 
-      // Filter regular bookings by member_id
+      // Map regular bookings (no need to filter since we already filtered in SQL)
       const filteredRegularBookings = (regularBookings || [])
-        .filter((booking) => booking.user?.member_id === profile.member_id)
         .map((booking) => ({
           ...booking,
           isSpecial: false as const,
         }));
 
-      // Filter special bookings by reference_user_id belonging to the same family
-      const { data: familyMembers } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("member_id", profile.member_id);
-
-      const familyUserIds = familyMembers?.map(member => member.id) || [];
-
+      // Map special bookings (no need to filter since we already filtered in SQL)
       const filteredSpecialBookings = (specialBookings || [])
-        .filter((booking) => booking.reference_user_id && familyUserIds.includes(booking.reference_user_id))
         .map((booking) => ({
           id: booking.id,
           court_id: booking.court_id,
@@ -126,7 +127,15 @@ export function useUserBookings(userId?: string) {
 
       if (!profile?.member_id) return [];
 
-      // Get all past regular bookings for this member_id (family)
+      // Get all family member IDs first
+      const { data: familyMembers } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("member_id", profile.member_id);
+
+      const familyUserIds = familyMembers?.map(member => member.id) || [];
+
+      // Get past regular bookings directly filtered by family user IDs
       const { data: regularBookings, error: regularError } = await supabase
         .from("bookings")
         .select(`
@@ -141,13 +150,14 @@ export function useUserBookings(userId?: string) {
             court_type
           )
         `)
+        .in("user_id", familyUserIds)
         .eq("status", "paid")
         .lt("end_time", new Date().toISOString())
         .order("start_time", { ascending: false });
 
       if (regularError) throw regularError;
 
-      // Get all past special bookings for this member_id (family)
+      // Get past special bookings directly filtered by family user IDs
       const { data: specialBookings, error: specialError } = await supabase
         .from("special_bookings")
         .select(`
@@ -158,29 +168,21 @@ export function useUserBookings(userId?: string) {
             court_type
           )
         `)
+        .in("reference_user_id", familyUserIds)
         .lt("end_time", new Date().toISOString())
         .order("start_time", { ascending: false });
 
       if (specialError) throw specialError;
 
-      // Filter regular bookings by member_id
+      // Map regular bookings (no need to filter since we already filtered in SQL)
       const filteredRegularBookings = (regularBookings || [])
-        .filter((booking) => booking.user?.member_id === profile.member_id)
         .map((booking) => ({
           ...booking,
           isSpecial: false as const,
         }));
 
-      // Filter special bookings by reference_user_id belonging to the same family
-      const { data: familyMembers } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("member_id", profile.member_id);
-
-      const familyUserIds = familyMembers?.map(member => member.id) || [];
-
+      // Map special bookings (no need to filter since we already filtered in SQL)
       const filteredSpecialBookings = (specialBookings || [])
-        .filter((booking) => booking.reference_user_id && familyUserIds.includes(booking.reference_user_id))
         .map((booking) => ({
           id: booking.id,
           court_id: booking.court_id,
