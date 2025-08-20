@@ -59,7 +59,7 @@ export default function MyBookings() {
     const duration = differenceInHours(endTime, startTime);
     
     // Determinar quién atendió basado en el método de pago
-    const operatorName = booking.payment_method === 'efectivo' 
+    const operatorName = (booking.payment_method === 'efectivo' || booking.payment_method === 'Cash') 
       ? booking.user?.full_name || "Usuario no disponible"
       : "Sistema";
     
@@ -357,6 +357,10 @@ export default function MyBookings() {
       {/* Modal para mostrar ticket */}
       <Dialog open={showTicketModal} onOpenChange={setShowTicketModal}>
         <DialogContent className="max-w-md">
+          <div className="sr-only">
+            <h2>Ticket de Reimpresión</h2>
+            <p>Ticket de cobro para reimpresión de reservación</p>
+          </div>
           {selectedTicketData && (
             <TicketReceipt
               bookingData={selectedTicketData}
