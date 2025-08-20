@@ -13,7 +13,7 @@ import { PaymentForm } from "./PaymentForm";
 
 // Initialize Stripe
 const stripePromise = loadStripe(
-  "pk_test_51QJhq0FKJmGO4KNv9MhPleCvVqILXJoSHaHqnq6jfEz4s7F7KxJMZA8tVHCmVKGkGPZJhGSUW8L8VBj4HS8XEvJz00gU8cImU6"
+  "pk_test_51RsF4LJYO9TGGmGZnQKWVG48fPOlHrdaK6FJ1m5VAoNztk60O4q9bzMTuSEm6ZLksr4fAbRxF5ktqRRvYIQZ2aij00c5xghzBR"
 );
 
 interface PaymentModalProps {
