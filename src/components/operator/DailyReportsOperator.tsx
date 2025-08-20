@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download } from "lucide-react";
+import { Download, Calendar, DollarSign, CreditCard, Hash, TrendingUp, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { exportToPDF, formatCurrency } from "@/utils/pdf-export";
+import { useAuth } from "@/components/AuthProvider";
 
 interface DailyBooking {
   id: string;
@@ -32,17 +34,18 @@ interface DailyBooking {
 }
 
 interface PaymentSummary {
-  cash: number;
-  online: number;
+  cashTotal: number;
+  onlineTotal: number;
   total: number;
   count: number;
 }
 
 export function DailyReportsOperator() {
+  const { user } = useAuth();
   const [bookings, setBookings] = useState<DailyBooking[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [summary, setSummary] = useState<PaymentSummary>({ cash: 0, online: 0, total: 0, count: 0 });
+  const [summary, setSummary] = useState<PaymentSummary>({ cashTotal: 0, onlineTotal: 0, total: 0, count: 0 });
 
   const fetchDailyBookings = async () => {
     setLoading(true);
@@ -100,8 +103,8 @@ export function DailyReportsOperator() {
       const total = cashTotal + onlineTotal;
 
       setSummary({
-        cash: cashTotal,
-        online: onlineTotal,
+        cashTotal: cashTotal,
+        onlineTotal: onlineTotal,
         total: total,
         count: transformedBookings.length
       });
@@ -146,6 +149,45 @@ export function DailyReportsOperator() {
     document.body.removeChild(link);
   };
 
+  const exportToPDFReport = () => {
+    const pdfData = bookings.map(booking => ({
+      fecha: format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es }),
+      hora: `${format(new Date(booking.start_time), 'HH:mm', { locale: es })} - ${format(new Date(booking.end_time), 'HH:mm', { locale: es })}`,
+      cliente: booking.user?.full_name || 'N/A',
+      membresia: booking.user?.member_id || 'N/A',
+      cancha: booking.court?.name || 'N/A',
+      tipo: booking.court?.court_type || 'N/A',
+      metodo_pago: booking.payment_method === 'cash' ? 'Efectivo' : 'En línea',
+      procesado_por: booking.processed_by_user?.full_name || 'Sistema',
+      monto: booking.actual_amount_charged || 0
+    }));
+
+    exportToPDF({
+      title: 'Reporte de Cobros del Día',
+      subtitle: `Fecha: ${format(new Date(selectedDate), 'dd/MM/yyyy', { locale: es })}`,
+      data: pdfData,
+      columns: [
+        { header: 'Fecha', dataKey: 'fecha', width: 20 },
+        { header: 'Hora', dataKey: 'hora', width: 25 },
+        { header: 'Cliente', dataKey: 'cliente', width: 30 },
+        { header: 'Membresía', dataKey: 'membresia', width: 20 },
+        { header: 'Cancha', dataKey: 'cancha', width: 20 },
+        { header: 'Tipo', dataKey: 'tipo', width: 20 },
+        { header: 'Método', dataKey: 'metodo_pago', width: 20 },
+        { header: 'Procesado Por', dataKey: 'procesado_por', width: 25 },
+        { header: 'Monto', dataKey: 'monto', width: 20 }
+      ],
+      summary: [
+        { label: 'Total efectivo:', value: formatCurrency(summary.cashTotal) },
+        { label: 'Total en línea:', value: formatCurrency(summary.onlineTotal) },
+        { label: 'Total general:', value: formatCurrency(summary.total) },
+        { label: 'Número de reservas:', value: summary.count.toString() }
+      ],
+      generatedBy: user?.user_metadata?.full_name || 'Operador',
+      fileName: `cobros_diarios_${selectedDate}.pdf`
+    });
+  };
+
   const getPaymentMethodBadge = (method: string) => {
     return method === 'cash' ? (
       <Badge variant="secondary">Efectivo</Badge>
@@ -167,10 +209,16 @@ export function DailyReportsOperator() {
             className="w-auto"
           />
         </div>
-        <Button onClick={exportToCSV} variant="outline" size="sm">
-          <Download className="h-4 w-4 mr-2" />
-          Exportar CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={exportToCSV} variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Exportar CSV
+          </Button>
+          <Button onClick={exportToPDFReport} variant="outline" size="sm">
+            <FileText className="h-4 w-4 mr-2" />
+            Exportar PDF
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -180,7 +228,7 @@ export function DailyReportsOperator() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              ${summary.cash.toFixed(2)}
+              ${summary.cashTotal.toFixed(2)}
             </div>
           </CardContent>
         </Card>
@@ -191,7 +239,7 @@ export function DailyReportsOperator() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              ${summary.online.toFixed(2)}
+              ${summary.onlineTotal.toFixed(2)}
             </div>
           </CardContent>
         </Card>

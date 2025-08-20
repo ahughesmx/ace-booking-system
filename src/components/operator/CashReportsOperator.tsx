@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Calendar } from "lucide-react";
+import { Download, Calendar, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { exportToPDF, formatCurrency } from "@/utils/pdf-export";
 
 interface CashBooking {
   id: string;
@@ -120,6 +121,39 @@ export function CashReportsOperator() {
     document.body.removeChild(link);
   };
 
+  const exportToPDFReport = () => {
+    const pdfData = bookings.map(booking => ({
+      fecha: format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es }),
+      hora: `${format(new Date(booking.start_time), 'HH:mm', { locale: es })} - ${format(new Date(booking.end_time), 'HH:mm', { locale: es })}`,
+      cliente: booking.user?.full_name || 'N/A',
+      membresia: booking.user?.member_id || 'N/A',
+      cancha: booking.court?.name || 'N/A',
+      tipo: booking.court?.court_type || 'N/A',
+      monto: booking.actual_amount_charged || 0
+    }));
+
+    exportToPDF({
+      title: 'Reporte de Cobros en Efectivo',
+      subtitle: `Fecha: ${format(new Date(selectedDate), 'dd/MM/yyyy', { locale: es })}`,
+      data: pdfData,
+      columns: [
+        { header: 'Fecha', dataKey: 'fecha', width: 25 },
+        { header: 'Hora', dataKey: 'hora', width: 30 },
+        { header: 'Cliente', dataKey: 'cliente', width: 40 },
+        { header: 'Membresía', dataKey: 'membresia', width: 25 },
+        { header: 'Cancha', dataKey: 'cancha', width: 25 },
+        { header: 'Tipo', dataKey: 'tipo', width: 25 },
+        { header: 'Monto', dataKey: 'monto', width: 25 }
+      ],
+      summary: [
+        { label: 'Total de cobros:', value: formatCurrency(total) },
+        { label: 'Número de reservas:', value: bookings.length.toString() }
+      ],
+      generatedBy: user?.user_metadata?.full_name || 'Operador',
+      fileName: `cobros_efectivo_${selectedDate}.pdf`
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4 mb-4">
@@ -133,10 +167,16 @@ export function CashReportsOperator() {
             className="w-auto"
           />
         </div>
-        <Button onClick={exportToCSV} variant="outline" size="sm">
-          <Download className="h-4 w-4 mr-2" />
-          Exportar CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={exportToCSV} variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Exportar CSV
+          </Button>
+          <Button onClick={exportToPDFReport} variant="outline" size="sm">
+            <FileText className="h-4 w-4 mr-2" />
+            Exportar PDF
+          </Button>
+        </div>
       </div>
 
       <Card>
