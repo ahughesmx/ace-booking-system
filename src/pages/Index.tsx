@@ -138,7 +138,7 @@ export default function Index() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="text-xl font-semibold text-[#1e3a8a]">
-            {loading ? "Cargando..." : "Procesando pago..."}
+            {isProcessingPayment ? "Procesando pago..." : "Cargando..."}
           </div>
           {isProcessingPayment && (
             <div className="text-sm text-[#6898FE]/70">
