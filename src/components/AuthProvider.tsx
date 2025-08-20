@@ -38,60 +38,62 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log("Auth event:", event, "isInitialLoad:", isInitialLoad);
           
           if (currentSession?.user) {
-            // Verificar si el usuario está activo antes de establecer la sesión
-            try {
-              const { data: profile, error } = await supabase
-                .from('profiles')
-                .select('is_active, full_name')
-                .eq('id', currentSession.user.id)
-                .single();
+            // Establecer sesión inmediatamente (sincrónico)
+            setSession(currentSession);
+            setUser(currentSession.user);
+            
+            // Diferir la verificación de usuario inactivo para evitar deadlocks
+            setTimeout(async () => {
+              try {
+                const { data: profile, error } = await supabase
+                  .from('profiles')
+                  .select('is_active, full_name')
+                  .eq('id', currentSession.user.id)
+                  .single();
 
-              if (error) {
-                console.error("Error fetching user profile:", error);
-                // Si no se puede verificar el perfil, cerrar sesión por seguridad
-                await supabase.auth.signOut();
+                if (error) {
+                  console.error("Error fetching user profile:", error);
+                  // Si no se puede verificar el perfil, cerrar sesión por seguridad
+                  cleanupAuthState();
+                  setSession(null);
+                  setUser(null);
+                  
+                  toast({
+                    title: "Error de autenticación",
+                    description: "No se pudo verificar el estado de tu cuenta",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
+                // Si el usuario está inactivo, cerrar sesión inmediatamente
+                if (!profile?.is_active) {
+                  console.log("Usuario inactivo detectado, cerrando sesión");
+                  cleanupAuthState();
+                  await supabase.auth.signOut();
+                  setSession(null);
+                  setUser(null);
+                  
+                  toast({
+                    title: "Usuario desactivado",
+                    description: "Tu cuenta ha sido desactivada. Contacta al administrador para más información.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+              } catch (profileError) {
+                console.error("Error verificando estado del usuario:", profileError);
+                cleanupAuthState();
                 setSession(null);
                 setUser(null);
                 
                 toast({
-                  title: "Error de autenticación",
+                  title: "Error de verificación",
                   description: "No se pudo verificar el estado de tu cuenta",
                   variant: "destructive",
                 });
-                return;
               }
-
-              // Si el usuario está inactivo, cerrar sesión inmediatamente
-              if (!profile?.is_active) {
-                console.log("Usuario inactivo detectado, cerrando sesión");
-                await supabase.auth.signOut();
-                setSession(null);
-                setUser(null);
-                
-                toast({
-                  title: "Usuario desactivado",
-                  description: "Tu cuenta ha sido desactivada. Contacta al administrador para más información.",
-                  variant: "destructive",
-                });
-                return;
-              }
-
-              // Usuario activo, establecer sesión
-              setSession(currentSession);
-              setUser(currentSession.user);
-            } catch (profileError) {
-              console.error("Error verificando estado del usuario:", profileError);
-              await supabase.auth.signOut();
-              setSession(null);
-              setUser(null);
-              
-              toast({
-                title: "Error de verificación",
-                description: "No se pudo verificar el estado de tu cuenta",
-                variant: "destructive",
-              });
-              return;
-            }
+            }, 0);
           } else {
             setSession(null);
             setUser(null);
@@ -115,37 +117,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // THEN check for existing session
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         if (initialSession?.user) {
-          // Verificar estado del usuario para sesión inicial también
-          try {
-            const { data: profile, error } = await supabase
-              .from('profiles')
-              .select('is_active, full_name')
-              .eq('id', initialSession.user.id)
-              .single();
+          // Establecer sesión inmediatamente
+          setSession(initialSession);
+          setUser(initialSession.user);
+          
+          // Diferir verificación para evitar bloqueos
+          setTimeout(async () => {
+            try {
+              const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('is_active, full_name')
+                .eq('id', initialSession.user.id)
+                .single();
 
-            if (error || !profile?.is_active) {
-              console.log("Usuario inactivo en sesión inicial, cerrando sesión");
-              await supabase.auth.signOut();
+              if (error || !profile?.is_active) {
+                console.log("Usuario inactivo en sesión inicial, cerrando sesión");
+                cleanupAuthState();
+                await supabase.auth.signOut();
+                setSession(null);
+                setUser(null);
+                
+                if (!profile?.is_active) {
+                  toast({
+                    title: "Usuario desactivado",
+                    description: "Tu cuenta ha sido desactivada. Contacta al administrador para más información.",
+                    variant: "destructive",
+                  });
+                }
+              }
+            } catch (profileError) {
+              console.error("Error verificando estado inicial del usuario:", profileError);
+              cleanupAuthState();
               setSession(null);
               setUser(null);
-              
-              if (!profile?.is_active) {
-                toast({
-                  title: "Usuario desactivado",
-                  description: "Tu cuenta ha sido desactivada. Contacta al administrador para más información.",
-                  variant: "destructive",
-                });
-              }
-            } else {
-              setSession(initialSession);
-              setUser(initialSession.user);
             }
-          } catch (profileError) {
-            console.error("Error verificando estado inicial del usuario:", profileError);
-            await supabase.auth.signOut();
-            setSession(null);
-            setUser(null);
-          }
+          }, 0);
         }
         
         setLoading(false);
