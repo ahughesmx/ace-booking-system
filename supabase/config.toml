@@ -66,6 +66,9 @@ verify_jwt = false
 [functions.update-user-auth]
 verify_jwt = false
 
+[functions.cleanup-expired-bookings-manual]
+verify_jwt = false
+
 [functions.create-payment]
 verify_jwt = true
 
