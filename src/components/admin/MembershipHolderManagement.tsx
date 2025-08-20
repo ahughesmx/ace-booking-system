@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,12 +26,22 @@ interface MembershipGroup {
 }
 
 export default function MembershipHolderManagement() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [inputValue, setInputValue] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const { updateMembershipHolder, reactivateMember, isUpdatingHolder, isReactivating } = useMembershipManagement();
   const { toast } = useToast();
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(inputValue);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [inputValue]);
+
   const { data: membershipGroups, isLoading, refetch } = useQuery({
-    queryKey: ["membershipGroups", searchTerm],
+    queryKey: ["membershipGroups", debouncedSearchTerm],
     queryFn: async () => {
       let query = supabase
         .from("profiles")
@@ -50,8 +60,8 @@ export default function MembershipHolderManagement() {
         .order("member_id")
         .order("created_at");
 
-      if (searchTerm) {
-        query = query.or(`full_name.ilike.%${searchTerm}%,member_id.ilike.%${searchTerm}%`);
+      if (debouncedSearchTerm) {
+        query = query.or(`full_name.ilike.%${debouncedSearchTerm}%,member_id.ilike.%${debouncedSearchTerm}%`);
       }
 
       const { data, error } = await query;
@@ -118,8 +128,8 @@ export default function MembershipHolderManagement() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Buscar por nombre o clave de socio..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -277,7 +287,7 @@ export default function MembershipHolderManagement() {
         {membershipGroups?.length === 0 && (
           <div className="text-center py-8">
             <p className="text-muted-foreground">
-              {searchTerm ? "No se encontraron membresías" : "No hay membresías registradas"}
+              {debouncedSearchTerm ? "No se encontraron membresías" : "No hay membresías registradas"}
             </p>
           </div>
         )}
