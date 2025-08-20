@@ -35,8 +35,17 @@ serve(async (req) => {
 
     console.log("Creating Payment Intent for booking:", bookingData);
 
+    // Debug: Check if Stripe key is available
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    console.log("🔑 Stripe key available:", !!stripeKey);
+    console.log("🔑 Stripe key prefix:", stripeKey?.substring(0, 12) + "...");
+
+    if (!stripeKey) {
+      throw new Error("STRIPE_SECRET_KEY not configured");
+    }
+
     // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    const stripe = new Stripe(stripeKey, {
       apiVersion: "2023-10-16",
     });
 
