@@ -27,7 +27,7 @@ export function useBookingPayment() {
   });
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   // Recuperar reserva pendiente automáticamente al cargar
   useEffect(() => {
@@ -156,6 +156,8 @@ export function useBookingPayment() {
       pendingBooking: !!pendingBooking,
       pendingBookingId: pendingBooking?.id,
       user: user?.id,
+      session: !!session,
+      sessionAccessToken: session?.access_token ? 'PRESENT' : 'MISSING',
       timestamp: new Date().toISOString()
     });
     
@@ -189,6 +191,13 @@ export function useBookingPayment() {
             };
 
             console.log('📤 Calling create-payment-intent with:', bookingData);
+            console.log('🔑 JWT Token status:', {
+              hasSession: !!session,
+              hasAccessToken: !!session?.access_token,
+              tokenLength: session?.access_token?.length || 0,
+              expiresAt: session?.expires_at || 'unknown'
+            });
+            
             const { data, error } = await supabase.functions.invoke('create-payment-intent', {
               body: { bookingData }
             });
