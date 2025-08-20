@@ -21,7 +21,7 @@ export function HomeQuickActions({ onNavigateToBookings }: HomeQuickActionsProps
     },
     {
       icon: CreditCard,
-      label: "Gestión de Membresías",
+      label: "Membresía familiar",
       onClick: () => navigate("/membership"),
     },
     {
