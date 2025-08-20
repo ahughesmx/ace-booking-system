@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
-import { Home, Calendar, Trophy, Settings } from "lucide-react";
+import { Home, Calendar, Trophy, Settings, Receipt } from "lucide-react";
 import { MatchInvitationNotification } from "./match/MatchInvitationNotification";
 import { NavItems } from "./nav/NavItems";
 import { MobileNav } from "./nav/MobileNav";
@@ -54,6 +54,7 @@ const MainNav = () => {
   const navigationItems = [
     { label: "Inicio", icon: Home, onClick: () => handleNavigation(null) },
     { label: "Reservas", icon: Calendar, onClick: () => handleNavigation("bookings") },
+    ...(user ? [{ label: "Tickets", icon: Receipt, onClick: () => { setMobileOpen(false); navigate("/ticket-reprint"); } }] : []),
     ...(isMenuItemEnabled("menu_matches") ? [{ label: "Partidos", icon: Calendar, onClick: () => handleNavigation("matches") }] : []),
     ...(isMenuItemEnabled("menu_courses") ? [{ label: "Cursos", icon: Calendar, onClick: () => navigate("/courses") }] : []),
     ...(isMenuItemEnabled("menu_ranking") ? [{ label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") }] : []),

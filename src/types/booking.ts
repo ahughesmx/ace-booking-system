@@ -9,6 +9,13 @@ export interface BaseBooking {
   booking_made_at: string;
   payment_method: string;
   actual_amount_charged: number | null;
+  amount?: number;
+  currency?: string;
+  payment_id?: string | null;
+  payment_gateway?: string | null;
+  payment_completed_at?: string | null;
+  expires_at?: string | null;
+  status?: string;
   user: {
     full_name: string;
     member_id: string;
