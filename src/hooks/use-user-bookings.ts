@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
 import type { Booking } from "@/types/booking";
+import { getCurrentMexicoCityTimeISO } from "@/utils/timezone";
 
 export function useUserBookings(userId?: string) {
   const { toast } = useToast();
@@ -51,7 +52,7 @@ export function useUserBookings(userId?: string) {
         `)
         .in("user_id", familyUserIds)
         .eq("status", "paid")
-        .gte("start_time", new Date().toISOString())
+        .gte("start_time", getCurrentMexicoCityTimeISO())
         .order("start_time", { ascending: true });
 
       if (regularError) throw regularError;
@@ -68,7 +69,7 @@ export function useUserBookings(userId?: string) {
           )
         `)
         .in("reference_user_id", familyUserIds)
-        .gte("start_time", new Date().toISOString())
+        .gte("start_time", getCurrentMexicoCityTimeISO())
         .order("start_time", { ascending: true });
 
       if (specialError) throw specialError;
@@ -152,7 +153,7 @@ export function useUserBookings(userId?: string) {
         `)
         .in("user_id", familyUserIds)
         .eq("status", "paid")
-        .lt("end_time", new Date().toISOString())
+        .lt("end_time", getCurrentMexicoCityTimeISO())
         .order("start_time", { ascending: false });
 
       if (regularError) throw regularError;
@@ -169,7 +170,7 @@ export function useUserBookings(userId?: string) {
           )
         `)
         .in("reference_user_id", familyUserIds)
-        .lt("end_time", new Date().toISOString())
+        .lt("end_time", getCurrentMexicoCityTimeISO())
         .order("start_time", { ascending: false });
 
       if (specialError) throw specialError;
