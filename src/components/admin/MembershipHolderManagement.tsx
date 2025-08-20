@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, Crown, UserCheck, UserX, UserPlus } from "lucide-react";
+import { Crown, UserCheck, UserX, UserPlus } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useMembershipManagement } from "@/hooks/use-membership-management";
 import { useToast } from "@/hooks/use-toast";
+import SearchInput from "./SearchInput";
 
 interface MembershipGroup {
   member_id: string;
@@ -25,54 +25,15 @@ interface MembershipGroup {
   }[];
 }
 
-// Separar componente de búsqueda con manejo de foco
-const SearchInput = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [wasFocused, setWasFocused] = useState(false);
-
-  // Mantener el foco después de re-renders
-  useEffect(() => {
-    if (wasFocused && inputRef.current) {
-      inputRef.current.focus();
-      // Mantener la posición del cursor al final
-      const length = inputRef.current.value.length;
-      inputRef.current.setSelectionRange(length, length);
-    }
-  }, [value, wasFocused]);
-
-  const handleFocus = () => setWasFocused(true);
-  const handleBlur = () => setWasFocused(false);
-
-  return (
-    <div className="relative flex-1">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-      <Input
-        ref={inputRef}
-        placeholder="Buscar por nombre o clave de socio..."
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        className="pl-10"
-      />
-    </div>
-  );
-};
-
 const MembershipHolderManagement = () => {
-  const [inputValue, setInputValue] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const { updateMembershipHolder, reactivateMember, isUpdatingHolder, isReactivating } = useMembershipManagement();
   const { toast } = useToast();
 
-  // Debounce search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(inputValue);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [inputValue]);
+  // Callback para manejar cambios del SearchInput
+  const handleSearchChange = useCallback((searchTerm: string) => {
+    setDebouncedSearchTerm(searchTerm);
+  }, []);
 
   const { data: membershipGroups, isLoading, refetch } = useQuery({
     queryKey: ["membershipGroups", debouncedSearchTerm],
@@ -152,16 +113,6 @@ const MembershipHolderManagement = () => {
     }
   }, [updateMembershipHolder, refetch]);
 
-  // Memorizar el cambio de input para evitar re-renders
-  const handleInputChange = useCallback((value: string) => {
-    setInputValue(value);
-  }, []);
-
-  // Memorizar el procesamiento de grupos para optimizar renders
-  const processedGroups = useMemo(() => {
-    return membershipGroups || [];
-  }, [membershipGroups]);
-
   if (isLoading) {
     return <div className="text-center py-8">Cargando membresías...</div>;
   }
@@ -169,11 +120,14 @@ const MembershipHolderManagement = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <SearchInput value={inputValue} onChange={handleInputChange} />
+        <SearchInput 
+          placeholder="Buscar por nombre o clave de socio..."
+          onDebouncedChange={handleSearchChange}
+        />
       </div>
 
       <div className="space-y-4">
-        {processedGroups.map((group) => {
+        {membershipGroups?.map((group) => {
           const currentHolder = group.members.find(m => m.is_membership_holder);
           
           return (
@@ -321,7 +275,7 @@ const MembershipHolderManagement = () => {
           );
         })}
 
-        {processedGroups.length === 0 && (
+        {membershipGroups?.length === 0 && (
           <div className="text-center py-8">
             <p className="text-muted-foreground">
               {debouncedSearchTerm ? "No se encontraron membresías" : "No hay membresías registradas"}
