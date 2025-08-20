@@ -172,11 +172,10 @@ export function useBookingPayment() {
 
     try {
       if (paymentGateway === 'stripe') {
-        console.log('💳 STRIPE: Starting Stripe payment process');
-        // First try modal method, fallback to redirect if fails
-        if (paymentMethod === 'modal') {
-          try {
-            console.log('💳 STRIPE: Trying modal method first');
+        console.log('💳 STRIPE: Starting Stripe payment process, paymentMethod:', paymentMethod);
+        // Always try modal method first, fallback to redirect if fails
+        try {
+          console.log('💳 STRIPE: Trying modal method first');
             const bookingData = {
               selectedDate: new Date(pendingBooking.start_time),
               selectedTime: new Date(pendingBooking.start_time).toLocaleTimeString('es-ES', { 
@@ -198,13 +197,12 @@ export function useBookingPayment() {
             if (error) throw error;
             if (!data?.clientSecret) throw new Error("No client secret received");
 
-            console.log('✅ Setting clientSecret for modal');
-            setClientSecret(data.clientSecret);
-            return { useModal: true, clientSecret: data.clientSecret };
-          } catch (modalError) {
-            console.warn('💳 STRIPE: Modal method failed, falling back to redirect:', modalError);
-            // Continue to redirect method below
-          }
+          console.log('✅ Setting clientSecret for modal');
+          setClientSecret(data.clientSecret);
+          return { useModal: true, clientSecret: data.clientSecret };
+        } catch (modalError) {
+          console.warn('💳 STRIPE: Modal method failed, falling back to redirect:', modalError);
+          // Continue to redirect method below
         }
 
         // Fallback to redirect method

@@ -212,12 +212,18 @@ export function BookingSummary({
                           console.log('📋 Payment result:', result);
                           
                           if (result?.useModal && result?.clientSecret) {
-                            console.log('✅ Using modal with clientSecret:', result.clientSecret);
+                            console.log('✅ Using modal with clientSecret:', result.clientSecret.substring(0, 20) + '...');
                             setLocalClientSecret(result.clientSecret);
-                            setShowPaymentModal(true);
+                            setTimeout(() => {
+                              console.log('🎯 Setting modal to true after clientSecret');
+                              setShowPaymentModal(true);
+                            }, 100);
                           } else if (result?.redirectUrl) {
                             console.log('🔄 Redirecting to Stripe checkout:', result.redirectUrl);
                             window.location.href = result.redirectUrl;
+                          } else {
+                            console.error('❌ Unexpected payment result structure:', result);
+                            throw new Error('Respuesta inesperada del servidor');
                           }
                         } catch (error) {
                           console.error('❌ Stripe payment error:', error);
