@@ -228,7 +228,8 @@ export function useBookingPayment() {
             payment_completed_at: new Date().toISOString(),
             payment_id: `${paymentGateway}_${Date.now()}`,
             actual_amount_charged: pendingBooking.amount,
-            expires_at: null // Limpiar fecha de expiración al marcar como pagado
+            expires_at: null, // Limpiar fecha de expiración al marcar como pagado
+            processed_by: paymentGateway === 'efectivo' ? user.id : null
           })
           .eq("id", pendingBooking.id);
 

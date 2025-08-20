@@ -54,7 +54,8 @@ export function ExpiredBookingsManager() {
           payment_completed_at: new Date().toISOString(),
           payment_id: `cash_${Date.now()}`,
           actual_amount_charged: 200, // Usar el amount original
-          expires_at: null
+          expires_at: null,
+          processed_by: (await supabase.auth.getUser()).data.user?.id
         })
         .eq("id", bookingId);
 
