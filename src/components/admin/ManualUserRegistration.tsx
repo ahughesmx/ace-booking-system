@@ -123,6 +123,40 @@ export default function ManualUserRegistration({ onSuccess }: ManualUserRegistra
         return;
       }
 
+      // Check for existing registration request with same phone
+      const { data: existingRequest, error: checkRequestError } = await supabase
+        .from("user_registration_requests")
+        .select("id, status, full_name")
+        .eq("phone", data.phone)
+        .eq("status", "pending")
+        .single();
+
+      if (existingRequest && !checkRequestError) {
+        toast({
+          title: "Solicitud duplicada",
+          description: `Ya existe una solicitud pendiente para el teléfono ${data.phone} (${existingRequest.full_name})`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if user already exists with this phone and member_id
+      const { data: existingProfile, error: checkProfileError } = await supabase
+        .from("profiles")
+        .select("id, full_name, member_id")
+        .eq("phone", data.phone)
+        .eq("member_id", data.member_id)
+        .single();
+
+      if (existingProfile && !checkProfileError) {
+        toast({
+          title: "Usuario ya registrado",
+          description: `El teléfono ${data.phone} ya está registrado para ${existingProfile.full_name} con la clave ${data.member_id}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Create registration request with password
       const { data: requestData, error: registrationError } = await supabase
         .from("user_registration_requests")

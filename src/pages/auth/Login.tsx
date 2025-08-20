@@ -69,6 +69,32 @@ export default function Login() {
         return;
       }
 
+      // Check for existing registration request with same phone
+      const { data: existingRequest, error: checkRequestError } = await supabase
+        .from('user_registration_requests')
+        .select('id, status, full_name')
+        .eq('phone', phone)
+        .eq('status', 'pending')
+        .single();
+
+      if (existingRequest && !checkRequestError) {
+        setError(`Ya existe una solicitud pendiente para el teléfono ${phone} (${existingRequest.full_name})`);
+        return;
+      }
+
+      // Check if user already exists with this phone and member_id
+      const { data: existingProfile, error: checkProfileError } = await supabase
+        .from('profiles')
+        .select('id, full_name, member_id')
+        .eq('phone', phone)
+        .eq('member_id', memberId)
+        .single();
+
+      if (existingProfile && !checkProfileError) {
+        setError(`El teléfono ${phone} ya está registrado para ${existingProfile.full_name} con la clave ${memberId}`);
+        return;
+      }
+
       // Crear solicitud de registro usando el nuevo modelo seguro
       const { error } = await supabase
         .from('user_registration_requests')
