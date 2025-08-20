@@ -51,7 +51,7 @@ export function DailyReportsOperator() {
   const fetchDailyBookings = async () => {
     setLoading(true);
     try {
-      // Convertir fecha seleccionada a rango usando timezone de México
+      // Usar las utilidades de timezone para obtener el rango correcto
       const selectedMexicoDate = new Date(selectedDate + 'T00:00:00');
       
       // Crear fecha de inicio y fin del día en México
@@ -59,9 +59,17 @@ export function DailyReportsOperator() {
       const endOfDayMexico = new Date(selectedMexicoDate);
       endOfDayMexico.setHours(23, 59, 59, 999);
       
-      // Convertir a UTC para la consulta (México es UTC-6)
-      const startOfDayUTC = new Date(startOfDayMexico.getTime() + (6 * 60 * 60 * 1000)).toISOString();
-      const endOfDayUTC = new Date(endOfDayMexico.getTime() + (6 * 60 * 60 * 1000)).toISOString();
+      // Convertir a UTC para la consulta (México es UTC-6, por lo tanto RESTAMOS 6 horas)
+      const startOfDayUTC = new Date(startOfDayMexico.getTime() - (6 * 60 * 60 * 1000)).toISOString();
+      const endOfDayUTC = new Date(endOfDayMexico.getTime() - (6 * 60 * 60 * 1000)).toISOString();
+
+      console.log('Filtro de fechas:', {
+        selectedDate,
+        startOfDayUTC,
+        endOfDayUTC,
+        startOfDayMexico: startOfDayMexico.toISOString(),
+        endOfDayMexico: endOfDayMexico.toISOString()
+      });
 
       const { data, error } = await supabase
         .from('bookings')
