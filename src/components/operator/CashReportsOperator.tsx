@@ -10,7 +10,7 @@ import { Download, Calendar, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { exportToPDF, formatCurrency } from "@/utils/pdf-export";
-import { getStartOfTodayMexicoCityISO, getEndOfTodayMexicoCityISO, toMexicoCityTime } from "@/utils/timezone";
+import { getStartOfTodayMexicoCityISO, getEndOfTodayMexicoCityISO, toMexicoCityTime, fromMexicoCityTimeToUTC } from "@/utils/timezone";
 
 interface CashBooking {
   id: string;
@@ -41,17 +41,19 @@ export function CashReportsOperator() {
     
     setLoading(true);
     try {
-      // Convertir fecha seleccionada a rango usando timezone de México
+      // Crear fechas usando timezone de México correctamente
       const selectedMexicoDate = new Date(selectedDate + 'T00:00:00');
       
-      // Crear fecha de inicio y fin del día en México
+      // Crear inicio y fin del día en tiempo de México
       const startOfDayMexico = new Date(selectedMexicoDate);
+      startOfDayMexico.setHours(0, 0, 0, 0);
+      
       const endOfDayMexico = new Date(selectedMexicoDate);
       endOfDayMexico.setHours(23, 59, 59, 999);
       
-      // Convertir a UTC para la consulta (México es UTC-6)
-      const startOfDayUTC = new Date(startOfDayMexico.getTime() + (6 * 60 * 60 * 1000)).toISOString();
-      const endOfDayUTC = new Date(endOfDayMexico.getTime() + (6 * 60 * 60 * 1000)).toISOString();
+      // Convertir a UTC usando las utilidades de timezone
+      const startOfDayUTC = fromMexicoCityTimeToUTC(startOfDayMexico).toISOString();
+      const endOfDayUTC = fromMexicoCityTimeToUTC(endOfDayMexico).toISOString();
 
       const { data, error } = await supabase
         .from('bookings')
@@ -65,7 +67,7 @@ export function CashReportsOperator() {
           user_id,
           court_id
         `)
-        .eq('payment_method', 'cash')
+        .in('payment_method', ['cash', 'efectivo'])
         .eq('status', 'paid')
         .gte('start_time', startOfDayUTC)
         .lte('start_time', endOfDayUTC)

@@ -122,11 +122,11 @@ export function DailyReportsOperator() {
       setBookings(bookingsWithDetails);
       // Calculate summaries
       const cashTotal = bookingsWithDetails
-        .filter(booking => booking.payment_method === 'cash' && booking.actual_amount_charged)
+        .filter(booking => (booking.payment_method === 'cash' || booking.payment_method === 'efectivo') && booking.actual_amount_charged)
         .reduce((sum, booking) => sum + (booking.actual_amount_charged || 0), 0);
       
       const onlineTotal = bookingsWithDetails
-        .filter(booking => booking.payment_method === 'online' && booking.actual_amount_charged)
+        .filter(booking => (booking.payment_method === 'online' || booking.payment_method === 'en_linea') && booking.actual_amount_charged)
         .reduce((sum, booking) => sum + (booking.actual_amount_charged || 0), 0);
       
       const total = bookingsWithDetails
@@ -170,7 +170,7 @@ export function DailyReportsOperator() {
       booking.user?.full_name || 'N/A',
       booking.user?.member_id || 'N/A',
       booking.court?.name || 'N/A',
-      booking.payment_method === 'cash' ? 'Efectivo' : 'En Línea',
+      booking.payment_method === 'cash' || booking.payment_method === 'efectivo' ? 'Efectivo' : 'En Línea',
       booking.processed_by_user?.full_name || 'Sistema',
       `$${booking.actual_amount_charged?.toFixed(2) || '0.00'}`
     ]);
@@ -197,7 +197,7 @@ export function DailyReportsOperator() {
       cliente: booking.user?.full_name || 'N/A',
       membresia: booking.user?.member_id || 'N/A',
       cancha: booking.court?.name || 'N/A',
-      metodo_pago: booking.payment_method === 'cash' ? 'Efectivo' : 'En línea',
+      metodo_pago: booking.payment_method === 'cash' || booking.payment_method === 'efectivo' ? 'Efectivo' : 'En línea',
       procesado_por: booking.processed_by_user?.full_name || 'Sistema',
       monto: booking.actual_amount_charged || 0
     }));
@@ -228,7 +228,7 @@ export function DailyReportsOperator() {
   };
 
   const getPaymentMethodBadge = (method: string) => {
-    return method === 'cash' ? (
+    return (method === 'cash' || method === 'efectivo') ? (
       <Badge variant="secondary">Efectivo</Badge>
     ) : (
       <Badge variant="default">En Línea</Badge>
