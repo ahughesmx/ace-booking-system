@@ -9,6 +9,8 @@ interface FamilyMember {
   phone: string | null;
   created_at: string;
   is_membership_holder: boolean;
+  is_active: boolean;
+  deactivated_at: string | null;
 }
 
 interface MemberInfo {
@@ -36,7 +38,7 @@ export function useFamilyMembers(userId?: string) {
       if (userError) throw userError;
       if (!currentUser?.member_id) return [];
 
-      // Get all family members with the same member_id
+      // Get all active family members with the same member_id
       const { data: members, error: membersError } = await supabase
         .from("profiles")
         .select(`
@@ -46,9 +48,12 @@ export function useFamilyMembers(userId?: string) {
           avatar_url,
           phone,
           created_at,
-          is_membership_holder
+          is_membership_holder,
+          is_active,
+          deactivated_at
         `)
         .eq("member_id", currentUser.member_id)
+        .eq("is_active", true)
         .order("created_at", { ascending: true });
 
       if (membersError) throw membersError;

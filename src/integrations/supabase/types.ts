@@ -916,8 +916,11 @@ export type Database = {
           active_bookings: number | null
           avatar_url: string | null
           created_at: string | null
+          deactivated_at: string | null
+          deactivated_by: string | null
           full_name: string | null
           id: string
+          is_active: boolean
           is_membership_holder: boolean | null
           member_id: string | null
           phone: string | null
@@ -927,8 +930,11 @@ export type Database = {
           active_bookings?: number | null
           avatar_url?: string | null
           created_at?: string | null
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           full_name?: string | null
           id: string
+          is_active?: boolean
           is_membership_holder?: boolean | null
           member_id?: string | null
           phone?: string | null
@@ -938,8 +944,11 @@ export type Database = {
           active_bookings?: number | null
           avatar_url?: string | null
           created_at?: string | null
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean
           is_membership_holder?: boolean | null
           member_id?: string | null
           phone?: string | null
@@ -1289,6 +1298,10 @@ export type Database = {
       }
       is_admin_or_operator: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      reactivate_family_member: {
+        Args: { p_member_id_to_reactivate: string }
         Returns: boolean
       }
       recalculate_active_bookings: {

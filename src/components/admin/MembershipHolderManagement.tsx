@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, Crown, UserCheck } from "lucide-react";
+import { Search, Crown, UserCheck, UserX, UserPlus } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useMembershipManagement } from "@/hooks/use-membership-management";
 import { useToast } from "@/hooks/use-toast";
@@ -20,12 +20,14 @@ interface MembershipGroup {
     avatar_url: string | null;
     created_at: string;
     is_membership_holder: boolean;
+    is_active: boolean;
+    deactivated_at: string | null;
   }[];
 }
 
 export default function MembershipHolderManagement() {
   const [searchTerm, setSearchTerm] = useState("");
-  const { updateMembershipHolder, isUpdatingHolder } = useMembershipManagement();
+  const { updateMembershipHolder, reactivateMember, isUpdatingHolder, isReactivating } = useMembershipManagement();
   const { toast } = useToast();
 
   const { data: membershipGroups, isLoading, refetch } = useQuery({
@@ -40,7 +42,9 @@ export default function MembershipHolderManagement() {
           phone,
           avatar_url,
           created_at,
-          is_membership_holder
+          is_membership_holder,
+          is_active,
+          deactivated_at
         `)
         .not("member_id", "is", null)
         .order("member_id")
@@ -72,13 +76,24 @@ export default function MembershipHolderManagement() {
           phone: member.phone,
           avatar_url: member.avatar_url,
           created_at: member.created_at,
-          is_membership_holder: member.is_membership_holder || false
+          is_membership_holder: member.is_membership_holder || false,
+          is_active: member.is_active || false,
+          deactivated_at: member.deactivated_at
         });
       });
 
       return Object.values(groups);
     },
   });
+
+  const handleReactivateMember = async (memberId: string) => {
+    try {
+      await reactivateMember(memberId);
+      refetch();
+    } catch (error) {
+      console.error('Error reactivating member:', error);
+    }
+  };
 
   const handleChangeHolder = async (newHolderId: string, membershipId: string) => {
     try {
@@ -121,7 +136,7 @@ export default function MembershipHolderManagement() {
                   <Crown className="h-5 w-5 text-primary" />
                   Membresía: {group.member_id}
                   <Badge variant="secondary">
-                    {group.members.length} miembro(s)
+                    {group.members.filter(m => m.is_active).length} activo(s) | {group.members.filter(m => !m.is_active).length} inactivo(s)
                   </Badge>
                 </CardTitle>
               </CardHeader>
@@ -131,9 +146,11 @@ export default function MembershipHolderManagement() {
                     <div
                       key={member.id}
                       className={`flex items-center justify-between p-3 rounded-lg border ${
-                        member.is_membership_holder 
-                          ? 'bg-primary/5 border-primary/20' 
-                          : 'bg-card/50'
+                        !member.is_active 
+                          ? 'bg-muted/50 border-muted opacity-70'
+                          : member.is_membership_holder 
+                            ? 'bg-primary/5 border-primary/20' 
+                            : 'bg-card/50'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -159,11 +176,55 @@ export default function MembershipHolderManagement() {
                               Tel: {member.phone}
                             </p>
                           )}
+                          {!member.is_active && member.deactivated_at && (
+                            <p className="text-xs text-muted-foreground">
+                              Desactivado: {new Date(member.deactivated_at).toLocaleDateString()}
+                            </p>
+                          )}
                         </div>
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        {member.is_membership_holder ? (
+                        {!member.is_active ? (
+                          <>
+                            <Badge variant="secondary" className="bg-red-100 text-red-800">
+                              <UserX className="h-3 w-3 mr-1" />
+                              Inactivo
+                            </Badge>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={isReactivating}
+                                  className="text-green-600 border-green-200 hover:bg-green-50"
+                                >
+                                  <UserPlus className="h-4 w-4 mr-1" />
+                                  Reactivar
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>¿Reactivar miembro?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Estás a punto de reactivar a <strong>{member.full_name}</strong>.
+                                    <br/><br/>
+                                    El usuario recuperará acceso completo a su cuenta y podrá usar todas las funcionalidades del sistema.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleReactivateMember(member.id)}
+                                    className="bg-green-600 hover:bg-green-700"
+                                  >
+                                    Reactivar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
+                        ) : member.is_membership_holder ? (
                           <Badge variant="default" className="bg-primary">
                             <Crown className="h-3 w-3 mr-1" />
                             Titular

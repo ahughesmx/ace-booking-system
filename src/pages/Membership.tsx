@@ -180,12 +180,12 @@ export default function Membership() {
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>¿Dar de baja miembro?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Estás a punto de dar de baja a <strong>{member.full_name}</strong> de la membresía.
-                                      Esta acción eliminará permanentemente su cuenta y no se puede deshacer.
-                                      <br /><br />
-                                      El usuario perderá acceso a todas sus reservas y datos asociados.
-                                    </AlertDialogDescription>
+                                     <AlertDialogDescription>
+                                       Estás a punto de dar de baja a <strong>{member.full_name}</strong> de la membresía.
+                                       El usuario será desactivado temporalmente pero su historial y datos se conservarán.
+                                       <br /><br />
+                                       Esta acción puede ser revertida por un administrador si es necesario.
+                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>

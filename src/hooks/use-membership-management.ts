@@ -22,7 +22,7 @@ export function useMembershipManagement() {
     onSuccess: () => {
       toast({
         title: "Miembro dado de baja",
-        description: "El miembro ha sido eliminado de la membresía exitosamente.",
+        description: "El miembro ha sido desactivado de la membresía. Su historial se conserva para futuras consultas.",
       });
       
       // Invalidar queries relacionadas
@@ -45,7 +45,8 @@ export function useMembershipManagement() {
         .from('profiles')
         .update({ is_membership_holder: false })
         .eq('member_id', currentMemberId)
-        .eq('is_membership_holder', true);
+        .eq('is_membership_holder', true)
+        .eq('is_active', true);
 
       if (removeError) throw removeError;
 
@@ -53,7 +54,8 @@ export function useMembershipManagement() {
       const { error: setError } = await supabase
         .from('profiles')
         .update({ is_membership_holder: true })
-        .eq('id', newHolderId);
+        .eq('id', newHolderId)
+        .eq('is_active', true);
 
       if (setError) throw setError;
     },
@@ -75,10 +77,43 @@ export function useMembershipManagement() {
     },
   });
 
+  const reactivateMemberMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { data, error } = await supabase.rpc('reactivate_family_member', {
+        p_member_id_to_reactivate: memberId
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Miembro reactivado",
+        description: "El miembro ha sido reactivado exitosamente.",
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["familyMembers"] });
+      queryClient.invalidateQueries({ queryKey: ["inactiveMembers"] });
+    },
+    onError: (error: any) => {
+      console.error('Error reactivating member:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo reactivar al miembro",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     deactivateMember: deactivateMemberMutation.mutateAsync,
     updateMembershipHolder: updateMembershipHolderMutation.mutateAsync,
+    reactivateMember: reactivateMemberMutation.mutateAsync,
     isDeactivating: deactivateMemberMutation.isPending,
     isUpdatingHolder: updateMembershipHolderMutation.isPending,
+    isReactivating: reactivateMemberMutation.isPending,
   };
 }
