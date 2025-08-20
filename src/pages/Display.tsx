@@ -64,11 +64,13 @@ export default function Display() {
   const { data: allCourtTypeSettingsData } = useCourtTypeSettings();
   const allCourtTypeSettings = Array.isArray(allCourtTypeSettingsData) ? allCourtTypeSettingsData : [];
 
-  console.log("🖥️ Display component - All bookings received:", {
-    total: allBookings.length,
+  console.log("🖥️ Display component - Data loaded:", {
+    bookings: allBookings.length,
     regular: allBookings.filter(b => !b.isSpecial).length,
     special: allBookings.filter(b => b.isSpecial).length,
-    bookings: allBookings
+    availableCourtTypes: availableCourtTypes.length,
+    courtTypeSettings: allCourtTypeSettings.length,
+    isLoading
   });
 
 
@@ -129,6 +131,13 @@ export default function Display() {
         availableCourtTypes.some(type => type.type_name === court.court_type)
       ) || []
     : allCourts || [];
+
+  console.log("🏟️ Filtered courts for display:", {
+    viewMode,
+    totalCourts: allCourts?.length || 0,
+    filteredCourts: courts?.length || 0,
+    availableCourtTypes: availableCourtTypes.map(t => t.type_name)
+  });
 
   // Generate unified time slots based on all court type settings
   const timeSlots = (() => {
@@ -351,12 +360,17 @@ export default function Display() {
           </div>
         </div>
 
-        {/* Debug info */}
-        <div className="bg-yellow-100 p-2 text-xs text-center">
-          Reservas: {allBookings.filter(b => !b.isSpecial).length} regulares, {allBookings.filter(b => b.isSpecial).length} especiales | 
-          Canchas: {courts?.length || 0} | 
-          Fecha: {format(currentDate, "yyyy-MM-dd")}
-        </div>
+        {/* Debug info - only in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="bg-yellow-100 p-2 text-xs text-center">
+            Reservas: {allBookings.filter(b => !b.isSpecial).length} regulares, {allBookings.filter(b => b.isSpecial).length} especiales | 
+            Canchas: {courts?.length || 0} | 
+            Fecha: {format(currentDate, "yyyy-MM-dd")} |
+            TimeSlots: {timeSlots.length} |
+            AvailableCourtTypes: {availableCourtTypes.length} |
+            DisplayEnabled: {displaySettings?.is_enabled ? 'Yes' : 'No'}
+          </div>
+        )}
 
         {/* Main Grid */}
         <div className="flex-1 p-4 min-h-0">
