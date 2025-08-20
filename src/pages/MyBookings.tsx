@@ -58,10 +58,31 @@ export default function MyBookings() {
     const endTime = new Date(booking.end_time);
     const duration = differenceInHours(endTime, startTime);
     
-    // Determinar quién atendió basado en el método de pago y operador
-    const operatorName = (booking.payment_method === 'efectivo' || booking.payment_method === 'Cash') 
+    // Debug logging para identificar el problema
+    console.log('🔍 Booking Debug:', {
+      booking_id: booking.id,
+      payment_method: booking.payment_method,
+      processed_by_user: booking.processed_by_user,
+      processed_by: (booking as any).processed_by
+    });
+    
+    // Determinar quién atendió basado en el método de pago (case-insensitive)
+    const paymentMethod = (booking.payment_method || '').toLowerCase();
+    const isCashPayment = paymentMethod.includes('efectivo') || 
+                         paymentMethod.includes('cash') || 
+                         paymentMethod === 'efectivo' ||
+                         paymentMethod === 'cash';
+    
+    const operatorName = isCashPayment
       ? booking.processed_by_user?.full_name || "Operador no identificado"
       : "Sistema";
+    
+    console.log('🔍 Operator calculation:', {
+      paymentMethod,
+      isCashPayment,
+      operatorName,
+      processed_by_user_name: booking.processed_by_user?.full_name
+    });
     
     const ticketData = {
       courtName: booking.court?.name || "Cancha no disponible",
