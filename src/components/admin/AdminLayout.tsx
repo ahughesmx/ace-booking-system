@@ -31,7 +31,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
     { id: "registration-requests", label: "Solicitudes Registro", icon: UserPlus },
     { id: "courts", label: "Canchas", icon: Settings },
     { id: "court-settings", label: "Configuración Canchas", icon: Wrench },
-    { id: "member-ids", label: "IDs de Miembros", icon: CreditCard },
+    { id: "member-ids", label: "Membresías", icon: CreditCard },
     { id: "booking-rules", label: "Reglas de Reserva", icon: Calendar },
     { id: "special-bookings", label: "Reservas Especiales", icon: CalendarCheck },
     { id: "matches", label: "Partidos", icon: Trophy },
