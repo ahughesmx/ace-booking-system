@@ -50,24 +50,28 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
   return (
     <Card className="w-full">
       <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2 min-w-0">
               {booking.isSpecial ? (
                 <>
-                  {getEventIcon(booking.event_type)}
-                  <h3 className="font-semibold text-lg">{booking.title || 'Evento Especial'}</h3>
-                  <Badge className={getEventColor(booking.event_type)}>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {getEventIcon(booking.event_type)}
+                    <h3 className="font-semibold text-lg truncate">{booking.title || 'Evento Especial'}</h3>
+                  </div>
+                  <Badge className={`${getEventColor(booking.event_type)} flex-shrink-0`}>
                     {booking.event_type?.charAt(0).toUpperCase() + booking.event_type?.slice(1) || 'Evento'}
                   </Badge>
                 </>
               ) : (
                 <>
-                  <User className="w-4 h-4 text-gray-500" />
-                  <h3 className="font-semibold text-lg">
-                    {booking.user?.full_name || "Reserva Regular"}
-                  </h3>
-                  <Badge variant="outline">Reserva Regular</Badge>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <User className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                    <h3 className="font-semibold text-lg truncate">
+                      {booking.user?.full_name || "Reserva Regular"}
+                    </h3>
+                  </div>
+                  <Badge variant="outline" className="flex-shrink-0">Reserva Regular</Badge>
                 </>
               )}
             </div>
