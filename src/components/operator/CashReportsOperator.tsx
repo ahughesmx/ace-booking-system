@@ -40,8 +40,10 @@ export function CashReportsOperator() {
     
     setLoading(true);
     try {
-      const startOfDay = `${selectedDate}T00:00:00-06:00`; // México timezone
-      const endOfDay = `${selectedDate}T23:59:59-06:00`;
+      // Convertir fecha seleccionada a UTC para la consulta
+      const selectedDateObj = new Date(selectedDate + 'T00:00:00-06:00'); // México timezone
+      const startOfDay = selectedDateObj.toISOString();
+      const endOfDay = new Date(selectedDateObj.getTime() + 24 * 60 * 60 * 1000 - 1).toISOString();
 
       const { data, error } = await supabase
         .from('bookings')
