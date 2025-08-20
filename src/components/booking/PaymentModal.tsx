@@ -7,6 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { PaymentForm } from "./PaymentForm";
 
 // Initialize Stripe
@@ -39,6 +41,14 @@ export function PaymentModal({
   onError,
 }: PaymentModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [stripeError, setStripeError] = useState<string>("");
+
+  // DEBUG: Log modal state
+  console.log('💳 PaymentModal render:', {
+    isOpen,
+    clientSecret: clientSecret ? `${clientSecret.substring(0, 20)}...` : 'NONE',
+    stripePromise: !!stripePromise
+  });
 
   const appearance = {
     theme: 'stripe' as const,
@@ -93,16 +103,31 @@ export function PaymentModal({
           </div>
 
           {/* Stripe Elements */}
-          {clientSecret && (
+          {stripeError && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{stripeError}</AlertDescription>
+            </Alert>
+          )}
+          
+          {clientSecret ? (
             <Elements options={options} stripe={stripePromise}>
               <PaymentForm
                 clientSecret={clientSecret}
                 onSuccess={onSuccess}
-                onError={onError}
+                onError={(error) => {
+                  setStripeError(error);
+                  onError(error);
+                }}
                 isProcessing={isProcessing}
                 setIsProcessing={setIsProcessing}
               />
             </Elements>
+          ) : (
+            <div className="flex items-center justify-center p-4">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span className="ml-2">Preparando pago...</span>
+            </div>
           )}
         </div>
       </DialogContent>

@@ -27,6 +27,14 @@ export function PaymentForm({
   const elements = useElements();
   const [error, setError] = useState<string>("");
 
+  // DEBUG: Log form state
+  console.log('💳 PaymentForm render:', {
+    stripe: !!stripe,
+    elements: !!elements,
+    clientSecret: clientSecret ? `${clientSecret.substring(0, 20)}...` : 'NONE',
+    isProcessing
+  });
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -71,13 +79,31 @@ export function PaymentForm({
     }
   };
 
+  if (!stripe || !elements) {
+    return (
+      <div className="flex items-center justify-center p-4">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        <span className="ml-2">Cargando formulario de pago...</span>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement
-        options={{
-          layout: "tabs",
-        }}
-      />
+      <div className="min-h-[120px]">
+        <PaymentElement
+          options={{
+            layout: "tabs",
+          }}
+          onReady={() => {
+            console.log('✅ PaymentElement ready!');
+          }}
+          onLoadError={(error) => {
+            console.error('❌ PaymentElement load error:', error);
+            setError('Error al cargar el formulario de pago');
+          }}
+        />
+      </div>
       
       {error && (
         <Alert variant="destructive">

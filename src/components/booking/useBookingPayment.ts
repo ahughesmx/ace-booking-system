@@ -18,6 +18,13 @@ export function useBookingPayment() {
   const [pendingBooking, setPendingBooking] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState<'modal' | 'redirect'>('modal');
   const [clientSecret, setClientSecret] = useState<string>("");
+
+  // DEBUG: Log hook state
+  console.log('🔄 useBookingPayment state:', {
+    paymentMethod,
+    pendingBooking: !!pendingBooking,
+    clientSecret: clientSecret ? 'SET' : 'NONE'
+  });
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
