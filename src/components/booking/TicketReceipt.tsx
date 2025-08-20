@@ -128,7 +128,7 @@ export function TicketReceipt({ bookingData, onClose, onPrint }: TicketReceiptPr
               #${receiptNumber}
             </div>
             <div style="color: #6b7280; font-size: 12px;">
-              ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}
+              Fecha de impresión: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}
             </div>
           </div>
           
@@ -252,7 +252,7 @@ export function TicketReceipt({ bookingData, onClose, onPrint }: TicketReceiptPr
             #{receiptNumber}
           </div>
           <div className="text-xs text-muted-foreground">
-            {format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}
+            Fecha de impresión: {format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}
           </div>
         </CardHeader>
       
