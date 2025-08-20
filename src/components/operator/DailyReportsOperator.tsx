@@ -63,17 +63,9 @@ export function DailyReportsOperator() {
           currency,
           payment_method,
           booking_made_at,
-          user:profiles!bookings_user_id_fkey (
-            full_name,
-            member_id
-          ),
-          court:courts!bookings_court_id_fkey (
-            name,
-            court_type
-          ),
-          processed_by_user:profiles!bookings_processed_by_fkey (
-            full_name
-          )
+          user_id,
+          court_id,
+          processed_by
         `)
         .eq('status', 'paid')
         .gte('booking_made_at', startOfDay)
@@ -82,31 +74,49 @@ export function DailyReportsOperator() {
 
       if (error) throw error;
 
-      const bookingsData = data as any[];
-      const transformedBookings: DailyBooking[] = bookingsData.map(booking => ({
-        ...booking,
-        user: Array.isArray(booking.user) ? booking.user[0] : booking.user,
-        court: Array.isArray(booking.court) ? booking.court[0] : booking.court,
-        processed_by_user: Array.isArray(booking.processed_by_user) ? booking.processed_by_user[0] : booking.processed_by_user,
-      }));
-      setBookings(transformedBookings);
-      
-      // Calculate summary
-      const cashTotal = transformedBookings
-        .filter(b => b.payment_method === 'cash')
+      // Get user and court information separately
+      const bookingsWithDetails = await Promise.all(
+        (data || []).map(async (booking) => {
+          const [userResponse, courtResponse, processedByResponse] = await Promise.all([
+            booking.user_id 
+              ? supabase.from('profiles').select('full_name, member_id').eq('id', booking.user_id).single()
+              : Promise.resolve({ data: null }),
+            booking.court_id
+              ? supabase.from('courts').select('name, court_type').eq('id', booking.court_id).single()
+              : Promise.resolve({ data: null }),
+            booking.processed_by
+              ? supabase.from('profiles').select('full_name').eq('id', booking.processed_by).single()
+              : Promise.resolve({ data: null })
+          ]);
+
+          return {
+            ...booking,
+            user: userResponse.data,
+            court: courtResponse.data,
+            processed_by_user: processedByResponse.data
+          };
+        })
+      );
+
+      setBookings(bookingsWithDetails);
+      // Calculate summaries
+      const cashTotal = bookingsWithDetails
+        .filter(booking => booking.payment_method === 'cash')
         .reduce((sum, booking) => sum + (booking.actual_amount_charged || 0), 0);
       
-      const onlineTotal = transformedBookings
-        .filter(b => b.payment_method === 'online')
+      const onlineTotal = bookingsWithDetails
+        .filter(booking => booking.payment_method === 'online')
         .reduce((sum, booking) => sum + (booking.actual_amount_charged || 0), 0);
       
-      const total = cashTotal + onlineTotal;
+      const total = bookingsWithDetails.reduce((sum, booking) => 
+        sum + (booking.actual_amount_charged || 0), 0
+      );
 
       setSummary({
         cashTotal: cashTotal,
         onlineTotal: onlineTotal,
         total: total,
-        count: transformedBookings.length
+        count: bookingsWithDetails.length
       });
 
     } catch (error) {

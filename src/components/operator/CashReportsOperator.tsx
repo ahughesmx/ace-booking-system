@@ -52,14 +52,8 @@ export function CashReportsOperator() {
           actual_amount_charged,
           currency,
           booking_made_at,
-          user:profiles!bookings_user_id_fkey (
-            full_name,
-            member_id
-          ),
-          court:courts!bookings_court_id_fkey (
-            name,
-            court_type
-          )
+          user_id,
+          court_id
         `)
         .eq('payment_method', 'cash')
         .eq('processed_by', user.id)
@@ -70,15 +64,29 @@ export function CashReportsOperator() {
 
       if (error) throw error;
 
-      const bookingsData = data as any[];
-      const transformedBookings: CashBooking[] = bookingsData.map(booking => ({
-        ...booking,
-        user: Array.isArray(booking.user) ? booking.user[0] : booking.user,
-        court: Array.isArray(booking.court) ? booking.court[0] : booking.court,
-      }));
-      setBookings(transformedBookings);
+      // Get user and court information separately
+      const bookingsWithDetails = await Promise.all(
+        (data || []).map(async (booking) => {
+          const [userResponse, courtResponse] = await Promise.all([
+            booking.user_id 
+              ? supabase.from('profiles').select('full_name, member_id').eq('id', booking.user_id).single()
+              : Promise.resolve({ data: null }),
+            booking.court_id
+              ? supabase.from('courts').select('name, court_type').eq('id', booking.court_id).single()
+              : Promise.resolve({ data: null })
+          ]);
+
+          return {
+            ...booking,
+            user: userResponse.data,
+            court: courtResponse.data
+          };
+        })
+      );
+
+      setBookings(bookingsWithDetails);
       
-      const totalAmount = transformedBookings.reduce((sum, booking) => 
+      const totalAmount = bookingsWithDetails.reduce((sum, booking) => 
         sum + (booking.actual_amount_charged || 0), 0
       );
       setTotal(totalAmount);
