@@ -113,14 +113,13 @@ export function CashReportsOperator() {
   }, [selectedDate, user]);
 
   const exportToCSV = () => {
-    const headers = ['Fecha', 'Hora', 'Cliente', 'Membresía', 'Cancha', 'Tipo', 'Monto'];
+    const headers = ['Fecha', 'Hora', 'Cliente', 'Membresía', 'Cancha', 'Monto'];
     const csvData = bookings.map(booking => [
       format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es }),
       format(new Date(booking.start_time), 'HH:mm', { locale: es }),
       booking.user?.full_name || 'N/A',
       booking.user?.member_id || 'N/A',
       booking.court?.name || 'N/A',
-      booking.court?.court_type || 'N/A',
       `$${booking.actual_amount_charged?.toFixed(2) || '0.00'}`
     ]);
 
@@ -146,7 +145,6 @@ export function CashReportsOperator() {
       cliente: booking.user?.full_name || 'N/A',
       membresia: booking.user?.member_id || 'N/A',
       cancha: booking.court?.name || 'N/A',
-      tipo: booking.court?.court_type || 'N/A',
       monto: booking.actual_amount_charged || 0
     }));
 
@@ -155,13 +153,12 @@ export function CashReportsOperator() {
       subtitle: `Fecha: ${format(new Date(selectedDate), 'dd/MM/yyyy', { locale: es })}`,
       data: pdfData,
       columns: [
-        { header: 'Fecha', dataKey: 'fecha', width: 25 },
-        { header: 'Hora', dataKey: 'hora', width: 30 },
-        { header: 'Cliente', dataKey: 'cliente', width: 40 },
-        { header: 'Membresía', dataKey: 'membresia', width: 25 },
+        { header: 'Fecha', dataKey: 'fecha', width: 18 },
+        { header: 'Hora', dataKey: 'hora', width: 24 },
+        { header: 'Cliente', dataKey: 'cliente', width: 45 },
+        { header: 'Membresía', dataKey: 'membresia', width: 20 },
         { header: 'Cancha', dataKey: 'cancha', width: 25 },
-        { header: 'Tipo', dataKey: 'tipo', width: 25 },
-        { header: 'Monto', dataKey: 'monto', width: 25 }
+        { header: 'Monto', dataKey: 'monto', width: 20 }
       ],
       summary: [
         { label: 'Total de cobros:', value: formatCurrency(total) },
@@ -216,20 +213,19 @@ export function CashReportsOperator() {
               <TableHead>Cliente</TableHead>
               <TableHead>Membresía</TableHead>
               <TableHead>Cancha</TableHead>
-              <TableHead>Tipo</TableHead>
               <TableHead className="text-right">Monto</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={5} className="text-center py-8">
                   Cargando...
                 </TableCell>
               </TableRow>
             ) : bookings.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   No hay cobros en efectivo para la fecha seleccionada
                 </TableCell>
               </TableRow>
@@ -247,8 +243,14 @@ export function CashReportsOperator() {
                   </TableCell>
                   <TableCell>{booking.user?.full_name || 'N/A'}</TableCell>
                   <TableCell>{booking.user?.member_id || 'N/A'}</TableCell>
-                  <TableCell>{booking.court?.name || 'N/A'}</TableCell>
-                  <TableCell className="capitalize">{booking.court?.court_type || 'N/A'}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span>{booking.court?.name || 'N/A'}</span>
+                      <span className="text-sm text-muted-foreground capitalize">
+                        {booking.court?.court_type || 'N/A'}
+                      </span>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right font-medium">
                     ${booking.actual_amount_charged?.toFixed(2) || '0.00'}
                   </TableCell>
