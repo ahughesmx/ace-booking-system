@@ -181,7 +181,7 @@ export default function Index() {
       <div className="animate-fade-in">
         <div className="text-left mb-4">
           <h1 className="text-xl sm:text-2xl font-bold text-[#1e3a8a]">
-            Hola {userFullName?.split(' ').slice(0, 2).join(' ') || user?.email?.split('@')[0] || 'Usuario'}
+            Hola {userFullName?.split(' ')[0] || user?.email?.split('@')[0] || 'Usuario'}
             <span className="ml-2 text-[#1e3a8a]" role="img" aria-label="wave">👋</span>
           </h1>
         </div>
