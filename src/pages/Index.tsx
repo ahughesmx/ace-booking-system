@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useHomeCardPreferences } from "@/hooks/use-interface-preferences";
 import { HomeQuickActions } from "@/components/HomeQuickActions";
-import { TemporaryCleanupButton } from "@/components/booking/TemporaryCleanupButton";
+
 
 export default function Index() {
   const { user, loading } = useAuth();
@@ -295,9 +295,6 @@ export default function Index() {
           {!currentTab && renderHomeCards()}
         </div>
       </div>
-      
-      {/* Botón temporal para limpiar reservas expiradas */}
-      <TemporaryCleanupButton />
     </div>
   );
 }
