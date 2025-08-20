@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,9 +25,25 @@ interface MembershipGroup {
   }[];
 }
 
-export default function MembershipHolderManagement() {
+// Separar componente de búsqueda para evitar re-renders
+const SearchInput = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
+  return (
+    <div className="relative flex-1">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+      <Input
+        placeholder="Buscar por nombre o clave de socio..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="pl-10"
+      />
+    </div>
+  );
+};
+
+const MembershipHolderManagement = () => {
   const [inputValue, setInputValue] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const { updateMembershipHolder, reactivateMember, isUpdatingHolder, isReactivating } = useMembershipManagement();
   const { toast } = useToast();
 
@@ -96,16 +112,17 @@ export default function MembershipHolderManagement() {
     },
   });
 
-  const handleReactivateMember = async (memberId: string) => {
+  // Memorizar funciones para evitar re-renders
+  const handleReactivateMember = useCallback(async (memberId: string) => {
     try {
       await reactivateMember(memberId);
       refetch();
     } catch (error) {
       console.error('Error reactivating member:', error);
     }
-  };
+  }, [reactivateMember, refetch]);
 
-  const handleChangeHolder = async (newHolderId: string, membershipId: string) => {
+  const handleChangeHolder = useCallback(async (newHolderId: string, membershipId: string) => {
     try {
       await updateMembershipHolder({
         newHolderId,
@@ -115,7 +132,17 @@ export default function MembershipHolderManagement() {
     } catch (error) {
       console.error('Error changing membership holder:', error);
     }
-  };
+  }, [updateMembershipHolder, refetch]);
+
+  // Memorizar el cambio de input para evitar re-renders
+  const handleInputChange = useCallback((value: string) => {
+    setInputValue(value);
+  }, []);
+
+  // Memorizar el procesamiento de grupos para optimizar renders
+  const processedGroups = useMemo(() => {
+    return membershipGroups || [];
+  }, [membershipGroups]);
 
   if (isLoading) {
     return <div className="text-center py-8">Cargando membresías...</div>;
@@ -124,19 +151,11 @@ export default function MembershipHolderManagement() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Buscar por nombre o clave de socio..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+        <SearchInput value={inputValue} onChange={handleInputChange} />
       </div>
 
       <div className="space-y-4">
-        {membershipGroups?.map((group) => {
+        {processedGroups.map((group) => {
           const currentHolder = group.members.find(m => m.is_membership_holder);
           
           return (
@@ -284,7 +303,7 @@ export default function MembershipHolderManagement() {
           );
         })}
 
-        {membershipGroups?.length === 0 && (
+        {processedGroups.length === 0 && (
           <div className="text-center py-8">
             <p className="text-muted-foreground">
               {debouncedSearchTerm ? "No se encontraron membresías" : "No hay membresías registradas"}
@@ -294,4 +313,7 @@ export default function MembershipHolderManagement() {
       </div>
     </div>
   );
-}
+};
+
+// Usar React.memo para evitar re-renders innecesarios
+export default React.memo(MembershipHolderManagement);
