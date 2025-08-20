@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import Index from "./pages/Index";
 import AdminIndex from "./pages/admin/Index";
 import OperatorIndex from "./pages/operator/Index";
+import OperatorReports from "./pages/operator/Reports";
 import Login from "./pages/auth/Login";
 import Courses from "./pages/Courses";
 import Display from "./pages/Display";
@@ -62,6 +63,7 @@ const AppContent = () => {
         <Route path="/ticket-reprint" element={<TicketReprint />} />
         <Route path="/admin" element={<AdminRoute />} />
         <Route path="/operator" element={<OperatorIndex />} />
+        <Route path="/operator/reports" element={<OperatorReports />} />
         <Route path="/display" element={<Display />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

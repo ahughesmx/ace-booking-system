@@ -78,6 +78,14 @@ const MainNav = () => {
         navigate("/operator");
       },
     });
+    navigationItems.push({
+      label: "Reportes",
+      icon: Trophy,
+      onClick: () => {
+        setMobileOpen(false);
+        navigate("/operator/reports");
+      },
+    });
   }
 
   return (
