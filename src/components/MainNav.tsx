@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
-import { Home, Calendar, Trophy, Settings } from "lucide-react";
+import { Home, Calendar, Trophy, Settings, ClipboardList } from "lucide-react";
 import { MatchInvitationNotification } from "./match/MatchInvitationNotification";
 import { NavItems } from "./nav/NavItems";
 import { MobileNav } from "./nav/MobileNav";
@@ -71,8 +71,8 @@ const MainNav = () => {
   // Panel de Operador para operadores
   if (user && !roleLoading && userRole?.role === "operador") {
     navigationItems.push({
-      label: "Gestionar Solicitudes",
-      icon: Settings,
+      label: "Solicitudes",
+      icon: ClipboardList,
       onClick: () => {
         setMobileOpen(false);
         navigate("/operator");
