@@ -112,16 +112,27 @@ export function DailyReportsOperator() {
       setBookings(bookingsWithDetails);
       // Calculate summaries
       const cashTotal = bookingsWithDetails
-        .filter(booking => booking.payment_method === 'cash')
+        .filter(booking => booking.payment_method === 'cash' && booking.actual_amount_charged)
         .reduce((sum, booking) => sum + (booking.actual_amount_charged || 0), 0);
       
       const onlineTotal = bookingsWithDetails
-        .filter(booking => booking.payment_method === 'online')
+        .filter(booking => booking.payment_method === 'online' && booking.actual_amount_charged)
         .reduce((sum, booking) => sum + (booking.actual_amount_charged || 0), 0);
       
-      const total = bookingsWithDetails.reduce((sum, booking) => 
-        sum + (booking.actual_amount_charged || 0), 0
-      );
+      const total = bookingsWithDetails
+        .filter(booking => booking.actual_amount_charged)
+        .reduce((sum, booking) => sum + (booking.actual_amount_charged || 0), 0);
+
+      console.log('Cálculo de totales:', {
+        bookingsWithDetails: bookingsWithDetails.map(b => ({
+          id: b.id,
+          payment_method: b.payment_method,
+          actual_amount_charged: b.actual_amount_charged
+        })),
+        cashTotal,
+        onlineTotal,
+        total
+      });
 
       setSummary({
         cashTotal: cashTotal,
