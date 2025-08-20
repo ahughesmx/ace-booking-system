@@ -103,18 +103,23 @@ export function exportToPDF(options: PDFExportOptions) {
       })
     ),
     styles: {
-      fontSize: 10,
-      cellPadding: 5,
+      fontSize: 8,
+      cellPadding: 2,
+      lineWidth: 0.1,
+      lineColor: [200, 200, 200],
     },
     headStyles: {
       fillColor: [41, 128, 185],
       textColor: 255,
       fontStyle: 'bold',
+      fontSize: 9,
+      cellPadding: 3,
     },
     alternateRowStyles: {
-      fillColor: [245, 245, 245],
+      fillColor: [248, 248, 248],
     },
-    margin: { left: margin, right: margin },
+    margin: { left: 10, right: 10 },
+    tableWidth: 'auto',
     columnStyles: tableColumns.reduce((acc, col, index) => {
       if (col.width) {
         acc[index] = { cellWidth: col.width };
