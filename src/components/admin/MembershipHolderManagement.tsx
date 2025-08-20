@@ -25,15 +25,34 @@ interface MembershipGroup {
   }[];
 }
 
-// Separar componente de búsqueda para evitar re-renders
+// Separar componente de búsqueda con manejo de foco
 const SearchInput = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [wasFocused, setWasFocused] = useState(false);
+
+  // Mantener el foco después de re-renders
+  useEffect(() => {
+    if (wasFocused && inputRef.current) {
+      inputRef.current.focus();
+      // Mantener la posición del cursor al final
+      const length = inputRef.current.value.length;
+      inputRef.current.setSelectionRange(length, length);
+    }
+  }, [value, wasFocused]);
+
+  const handleFocus = () => setWasFocused(true);
+  const handleBlur = () => setWasFocused(false);
+
   return (
     <div className="relative flex-1">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
       <Input
+        ref={inputRef}
         placeholder="Buscar por nombre o clave de socio..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         className="pl-10"
       />
     </div>
@@ -43,7 +62,6 @@ const SearchInput = ({ value, onChange }: { value: string; onChange: (value: str
 const MembershipHolderManagement = () => {
   const [inputValue, setInputValue] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
   const { updateMembershipHolder, reactivateMember, isUpdatingHolder, isReactivating } = useMembershipManagement();
   const { toast } = useToast();
 
