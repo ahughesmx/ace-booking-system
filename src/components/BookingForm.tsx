@@ -43,12 +43,14 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [processingPayment, setProcessingPayment] = useState<string | null>(null);
   const { handleBooking } = useBookingSubmit(onBookingSuccess);
-  const { 
-    createPendingBooking, 
-    processPayment, 
-    cancelPendingBooking, 
-    pendingBooking, 
-    isCreatingBooking 
+  const {
+    createPendingBooking,
+    processPayment,
+    cancelPendingBooking,
+    confirmPaymentSuccess,
+    pendingBooking,
+    isCreatingBooking,
+    clientSecret
   } = useBookingPayment();
 
   // Verificar si el usuario es operador
@@ -279,6 +281,23 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     setShowSummary(false);
   };
 
+  const handlePaymentSuccess = async () => {
+    console.log('🎉 Payment success callback triggered');
+    const success = await confirmPaymentSuccess();
+    if (success) {
+      onBookingSuccess();
+    }
+  };
+
+  const handlePaymentError = (error: string) => {
+    console.error('💳 Payment error:', error);
+    toast({
+      title: "Error en el pago",
+      description: error,
+      variant: "destructive",
+    });
+  };
+
   const handleCourtTypeSelectWithCallback = (type: string) => {
     handleCourtTypeSelect(type);
     onCourtTypeChange?.(type);
@@ -344,18 +363,21 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     const court = courts.find(c => c.id === selectedCourt);
     return (
       <div className="flex justify-center">
-        <BookingSummary
-          date={selectedDate!}
-          time={selectedTime!}
-          courtType={selectedCourtType!}
-          courtName={court?.name || 'Cancha'}
-          onConfirm={handleConfirmPayment}
-          onCancel={handleCancelPayment}
-          isLoading={isSubmitting}
-          isOperator={isOperator}
-          selectedUserName={selectedUserName}
-          processingPayment={processingPayment}
-        />
+          <BookingSummary
+            date={selectedDate!}
+            time={selectedTime!}
+            courtType={selectedCourtType!}
+            courtName={court?.name || 'Cancha'}
+            onConfirm={handleConfirmPayment}
+            onCancel={handleCancelPayment}
+            isLoading={isSubmitting}
+            isOperator={isOperator}
+            selectedUserName={selectedUserName}
+            processingPayment={processingPayment}
+            clientSecret={clientSecret}
+            onPaymentSuccess={handlePaymentSuccess}
+            onPaymentError={handlePaymentError}
+          />
       </div>
     );
   }

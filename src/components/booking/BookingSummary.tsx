@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { format, addHours } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,18 +9,22 @@ import { Clock, MapPin, CreditCard, Timer, Loader2, AlertTriangle } from "lucide
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { useEnabledPaymentGateways } from "@/hooks/use-payment-settings";
+import { PaymentModal } from "./PaymentModal";
 
 interface BookingSummaryProps {
   date: Date;
   time: string;
   courtType: string;
   courtName: string;
-  onConfirm: (paymentGateway: string) => void;
+  onConfirm: (paymentGateway: string) => Promise<any>;
   onCancel: () => void;
   isLoading?: boolean;
   isOperator?: boolean;
   selectedUserName?: string;
-  processingPayment?: string | null; // Gateway que se está procesando
+  processingPayment?: string | null;
+  clientSecret?: string;
+  onPaymentSuccess?: () => void;
+  onPaymentError?: (error: string) => void;
 }
 
 export function BookingSummary({
@@ -32,8 +37,12 @@ export function BookingSummary({
   isLoading = false,
   isOperator = false,
   selectedUserName,
-  processingPayment = null
+  processingPayment = null,
+  clientSecret = "",
+  onPaymentSuccess,
+  onPaymentError
 }: BookingSummaryProps) {
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { data: courtSettings } = useCourtTypeSettings(courtType);
   const { data: allPaymentGateways = [], isLoading: isLoadingGateways } = useEnabledPaymentGateways();
   
@@ -185,16 +194,17 @@ export function BookingSummary({
                     variant="outline"
                     className="w-full justify-start"
                     disabled={isDisabled}
-                    onClick={() => {
-                      console.log(`🎯 CLICKED: Payment button for ${gateway.name}`, { 
-                        isLoading, 
-                        gateway,
-                        onConfirm: typeof onConfirm,
-                        gatewayId: gateway.id,
-                        gatewayName: gateway.name,
-                        processingPayment
-                      });
-                      onConfirm(gateway.name);
+                    onClick={async () => {
+                      console.log(`🎯 CLICKED: Payment button for ${gateway.name}`);
+                      
+                      if (gateway.name === 'stripe') {
+                        const result = await onConfirm(gateway.name);
+                        if (result?.useModal && result?.clientSecret) {
+                          setShowPaymentModal(true);
+                        }
+                      } else {
+                        onConfirm(gateway.name);
+                      }
                     }}
                   >
                     <div className="flex items-center gap-2 w-full">
@@ -258,6 +268,31 @@ export function BookingSummary({
             </Button>
           )}
         </div>
+
+        {/* Payment Modal */}
+        {showPaymentModal && clientSecret && (
+          <PaymentModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            clientSecret={clientSecret}
+            bookingData={{
+              date,
+              time,
+              courtType,
+              courtName,
+              amount: total,
+              selectedUserName,
+            }}
+            onSuccess={() => {
+              setShowPaymentModal(false);
+              onPaymentSuccess?.();
+            }}
+            onError={(error) => {
+              setShowPaymentModal(false);
+              onPaymentError?.(error);
+            }}
+          />
+        )}
       </CardContent>
     </Card>
   );

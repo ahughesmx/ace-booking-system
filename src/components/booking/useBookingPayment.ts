@@ -16,6 +16,8 @@ interface BookingData {
 export function useBookingPayment() {
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
   const [pendingBooking, setPendingBooking] = useState<any>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'modal' | 'redirect'>('modal');
+  const [clientSecret, setClientSecret] = useState<string>("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -142,7 +144,7 @@ export function useBookingPayment() {
     }
   };
 
-  const processPayment = async (paymentGateway: string) => {
+  const processPayment = async (paymentGateway: string): Promise<any> => {
     console.log(`🔄 processPayment started for ${paymentGateway}`, { 
       pendingBooking: !!pendingBooking,
       pendingBookingId: pendingBooking?.id,
@@ -163,7 +165,39 @@ export function useBookingPayment() {
 
     try {
       if (paymentGateway === 'stripe') {
-        // Procesar pago con Stripe
+        // First try modal method, fallback to redirect if fails
+        if (paymentMethod === 'modal') {
+          try {
+            console.log('💳 STRIPE: Trying modal method first');
+            const bookingData = {
+              selectedDate: new Date(pendingBooking.start_time),
+              selectedTime: new Date(pendingBooking.start_time).toLocaleTimeString('es-ES', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                hour12: false 
+              }),
+              selectedCourt: pendingBooking.court.name,
+              selectedCourtType: pendingBooking.court.court_type,
+              amount: pendingBooking.amount
+            };
+
+            const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+              body: { bookingData }
+            });
+
+            if (error) throw error;
+            if (!data?.clientSecret) throw new Error("No client secret received");
+
+            setClientSecret(data.clientSecret);
+            return { useModal: true, clientSecret: data.clientSecret };
+          } catch (modalError) {
+            console.warn('💳 STRIPE: Modal method failed, falling back to redirect:', modalError);
+            setPaymentMethod('redirect');
+          }
+        }
+
+        // Fallback to redirect method
+        console.log('💳 STRIPE: Using redirect method');
         const bookingData = {
           selectedDate: new Date(pendingBooking.start_time),
           selectedTime: new Date(pendingBooking.start_time).toLocaleTimeString('es-ES', { 
@@ -176,34 +210,31 @@ export function useBookingPayment() {
           amount: pendingBooking.amount
         };
 
-        console.log('💳 STRIPE: Invocando edge function create-payment con datos:', { bookingData });
-        
         const { data, error } = await supabase.functions.invoke('create-payment', {
           body: { bookingData }
         });
 
-        console.log('💳 STRIPE: Respuesta del edge function:', { data, error });
-
         if (error) {
-          console.error('💳 STRIPE: Error del edge function:', error);
           throw new Error(`Error al crear sesión de pago: ${error.message}`);
         }
         if (!data?.url) {
-          console.error('💳 STRIPE: No se recibió URL en la respuesta:', data);
           throw new Error("No se recibió URL de pago");
         }
 
-        console.log('💳 STRIPE: Abriendo sesión de pago, el webhook se ejecutará cuando Stripe confirme el pago');
-        
-        // Abrir Stripe Checkout en nueva pestaña
-        window.open(data.url, '_blank');
+        // Try same-tab redirect first, then new tab as fallback
+        try {
+          window.location.href = data.url;
+        } catch (redirectError) {
+          console.warn('Same-tab redirect failed, using new tab:', redirectError);
+          window.open(data.url, '_blank');
+        }
         
         toast({
           title: "Redirigiendo a Stripe",
-          description: "Se abrió una nueva pestaña para completar el pago.",
+          description: "Serás redirigido para completar el pago.",
         });
         
-        return true;
+        return { useModal: false };
       } else {
         // Para otros métodos de pago (incluyendo efectivo)
         console.log(`🔄 INICIANDO PAGO ${paymentGateway.toUpperCase()} para reserva ${pendingBooking.id}`);
@@ -401,11 +432,58 @@ export function useBookingPayment() {
     }
   };
 
+  const confirmPaymentSuccess = async () => {
+    try {
+      if (!pendingBooking) return;
+
+      // Update booking status to paid
+      const { error } = await supabase
+        .from("bookings")
+        .update({
+          status: 'paid',
+          payment_gateway: 'stripe',
+          payment_method: 'stripe',
+          payment_completed_at: new Date().toISOString(),
+          payment_id: `stripe_${Date.now()}`,
+          actual_amount_charged: pendingBooking.amount,
+          expires_at: null,
+        })
+        .eq("id", pendingBooking.id);
+
+      if (error) throw error;
+
+      // Trigger webhooks and cleanup
+      await queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
+      
+      toast({
+        title: "¡Pago exitoso!",
+        description: "Tu reserva ha sido confirmada correctamente.",
+      });
+
+      setPendingBooking(null);
+      setClientSecret("");
+      return true;
+    } catch (error) {
+      console.error("Error confirming payment:", error);
+      toast({
+        title: "Error",
+        description: "Error al confirmar el pago. Contacta soporte.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   return {
     createPendingBooking,
     processPayment,
     cancelPendingBooking,
+    confirmPaymentSuccess,
     pendingBooking,
-    isCreatingBooking
+    isCreatingBooking,
+    paymentMethod,
+    clientSecret,
+    setPaymentMethod
   };
 }
