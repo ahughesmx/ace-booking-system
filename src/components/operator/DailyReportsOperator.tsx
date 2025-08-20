@@ -207,14 +207,14 @@ export function DailyReportsOperator() {
       subtitle: `Fecha: ${format(new Date(selectedDate), 'dd/MM/yyyy', { locale: es })}`,
       data: pdfData,
       columns: [
-        { header: 'Fecha', dataKey: 'fecha', width: 22 },
-        { header: 'Hora', dataKey: 'hora', width: 28 },
-        { header: 'Cliente', dataKey: 'cliente', width: 35 },
-        { header: 'Membresía', dataKey: 'membresia', width: 25 },
-        { header: 'Cancha', dataKey: 'cancha', width: 25 },
-        { header: 'Método', dataKey: 'metodo_pago', width: 25 },
-        { header: 'Procesado Por', dataKey: 'procesado_por', width: 30 },
-        { header: 'Monto', dataKey: 'monto', width: 25 }
+        { header: 'Fecha', dataKey: 'fecha', width: 18 },
+        { header: 'Hora', dataKey: 'hora', width: 24 },
+        { header: 'Cliente', dataKey: 'cliente', width: 40 },
+        { header: 'Membresía', dataKey: 'membresia', width: 18 },
+        { header: 'Cancha', dataKey: 'cancha', width: 20 },
+        { header: 'Método', dataKey: 'metodo_pago', width: 18 },
+        { header: 'Procesado Por', dataKey: 'procesado_por', width: 32 },
+        { header: 'Monto', dataKey: 'monto', width: 18 }
       ],
       summary: [
         { label: 'Total efectivo:', value: formatCurrency(summary.cashTotal) },
