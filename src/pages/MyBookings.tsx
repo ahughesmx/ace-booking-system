@@ -3,7 +3,8 @@ import { useAuth } from "@/components/AuthProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CalendarDays, History } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ArrowLeft, CalendarDays, History, Receipt } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import MainNav from "@/components/MainNav";
 import { useUserBookings } from "@/hooks/use-user-bookings";
@@ -17,8 +18,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { format } from "date-fns";
+import { format, differenceInHours } from "date-fns";
 import { es } from "date-fns/locale";
+import { TicketReceipt } from "@/components/booking/TicketReceipt";
+import type { Booking } from "@/types/booking";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -27,6 +30,8 @@ export default function MyBookings() {
   const navigate = useNavigate();
   const [upcomingPage, setUpcomingPage] = useState(1);
   const [pastPage, setPastPage] = useState(1);
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [selectedTicketData, setSelectedTicketData] = useState<any>(null);
 
   const {
     upcomingBookings,
@@ -47,6 +52,28 @@ export default function MyBookings() {
   const pastEndIndex = pastStartIndex + ITEMS_PER_PAGE;
   const paginatedPastBookings = pastBookings?.slice(pastStartIndex, pastEndIndex) || [];
   const pastTotalPages = Math.ceil((pastBookings?.length || 0) / ITEMS_PER_PAGE);
+
+  const handleReprintTicket = (booking: Booking) => {
+    const startTime = new Date(booking.start_time);
+    const endTime = new Date(booking.end_time);
+    const duration = differenceInHours(endTime, startTime);
+    
+    const ticketData = {
+      courtName: booking.court?.name || "Cancha no disponible",
+      courtType: booking.court?.court_type || "N/A",
+      date: startTime,
+      time: format(startTime, "HH:mm"),
+      duration: duration,
+      amount: booking.actual_amount_charged || booking.amount || 0,
+      paymentMethod: booking.payment_method || "efectivo",
+      userName: booking.user?.full_name || "Usuario no disponible",
+      operatorName: "Sistema",
+      receiptNumber: booking.payment_id || booking.id.toString().slice(-8)
+    };
+    
+    setSelectedTicketData(ticketData);
+    setShowTicketModal(true);
+  };
 
   if (!user) {
     return (
@@ -144,16 +171,27 @@ export default function MyBookings() {
                               )}
                             </TableCell>
                             <TableCell>
-                              {!booking.isSpecial && (
+                              <div className="flex gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => cancelBooking(booking.id)}
-                                  className="text-destructive hover:text-destructive-foreground hover:bg-destructive"
+                                  onClick={() => handleReprintTicket(booking)}
+                                  className="flex items-center gap-1"
                                 >
-                                  Cancelar
+                                  <Receipt className="h-3 w-3" />
+                                  Ticket
                                 </Button>
-                              )}
+                                {!booking.isSpecial && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => cancelBooking(booking.id)}
+                                    className="text-destructive hover:text-destructive-foreground hover:bg-destructive"
+                                  >
+                                    Cancelar
+                                  </Button>
+                                )}
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -217,15 +255,16 @@ export default function MyBookings() {
                 ) : (
                   <div className="space-y-4">
                     <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Fecha</TableHead>
-                          <TableHead>Hora</TableHead>
-                          <TableHead>Cancha</TableHead>
-                          <TableHead>Usuario</TableHead>
-                          <TableHead>Tipo</TableHead>
-                        </TableRow>
-                      </TableHeader>
+                       <TableHeader>
+                         <TableRow>
+                           <TableHead>Fecha</TableHead>
+                           <TableHead>Hora</TableHead>
+                           <TableHead>Cancha</TableHead>
+                           <TableHead>Usuario</TableHead>
+                           <TableHead>Tipo</TableHead>
+                           <TableHead>Acciones</TableHead>
+                         </TableRow>
+                       </TableHeader>
                       <TableBody>
                         {paginatedPastBookings.map((booking) => (
                           <TableRow key={booking.id}>
@@ -244,18 +283,29 @@ export default function MyBookings() {
                                 (booking.user?.full_name || "Usuario no disponible")
                               }
                             </TableCell>
-                            <TableCell>
-                              {booking.isSpecial ? (
-                                <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                                  {booking.event_type || "Evento"}
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700/10">
-                                  Reservación
-                                </span>
-                              )}
-                            </TableCell>
-                          </TableRow>
+                             <TableCell>
+                               {booking.isSpecial ? (
+                                 <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                   {booking.event_type || "Evento"}
+                                 </span>
+                               ) : (
+                                 <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700/10">
+                                   Reservación
+                                 </span>
+                               )}
+                             </TableCell>
+                             <TableCell>
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 onClick={() => handleReprintTicket(booking)}
+                                 className="flex items-center gap-1"
+                               >
+                                 <Receipt className="h-3 w-3" />
+                                 Ticket
+                               </Button>
+                             </TableCell>
+                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
@@ -298,6 +348,19 @@ export default function MyBookings() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal para mostrar ticket */}
+      <Dialog open={showTicketModal} onOpenChange={setShowTicketModal}>
+        <DialogContent className="max-w-md">
+          {selectedTicketData && (
+            <TicketReceipt
+              bookingData={selectedTicketData}
+              onClose={() => setShowTicketModal(false)}
+              onPrint={() => setShowTicketModal(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
