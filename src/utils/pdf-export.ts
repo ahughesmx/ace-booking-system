@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -85,7 +85,7 @@ export function exportToPDF(options: PDFExportOptions) {
     width: col.width
   }));
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: yPosition,
     head: [tableColumns.map(col => col.header)],
     body: data.map(row => 
