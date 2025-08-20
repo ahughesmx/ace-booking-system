@@ -7,6 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Force function restart - v2.0
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -35,13 +37,21 @@ serve(async (req) => {
 
     console.log("Creating Payment Intent for booking:", bookingData);
 
-    // Debug: Check if Stripe key is available
+    // Enhanced debugging for Stripe configuration
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    console.log("🔑 Environment variables available:", Object.keys(Deno.env.toObject()));
     console.log("🔑 Stripe key available:", !!stripeKey);
-    console.log("🔑 Stripe key prefix:", stripeKey?.substring(0, 12) + "...");
+    console.log("🔑 Stripe key length:", stripeKey ? stripeKey.length : 0);
+    console.log("🔑 Stripe key starts with sk_:", stripeKey ? stripeKey.startsWith('sk_') : false);
 
     if (!stripeKey) {
-      throw new Error("STRIPE_SECRET_KEY not configured");
+      console.error("❌ STRIPE_SECRET_KEY is not available in environment variables");
+      throw new Error("STRIPE_SECRET_KEY not configured. Please check Supabase Edge Function secrets.");
+    }
+
+    if (!stripeKey.startsWith('sk_')) {
+      console.error("❌ STRIPE_SECRET_KEY appears to be invalid (should start with sk_)");
+      throw new Error("Invalid STRIPE_SECRET_KEY format");
     }
 
     // Initialize Stripe
