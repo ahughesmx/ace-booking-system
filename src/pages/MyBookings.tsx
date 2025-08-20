@@ -58,6 +58,11 @@ export default function MyBookings() {
     const endTime = new Date(booking.end_time);
     const duration = differenceInHours(endTime, startTime);
     
+    // Determinar quién atendió basado en el método de pago
+    const operatorName = booking.payment_method === 'efectivo' 
+      ? booking.user?.full_name || "Usuario no disponible"
+      : "Sistema";
+    
     const ticketData = {
       courtName: booking.court?.name || "Cancha no disponible",
       courtType: booking.court?.court_type || "N/A",
@@ -67,7 +72,7 @@ export default function MyBookings() {
       amount: booking.actual_amount_charged || booking.amount || 0,
       paymentMethod: booking.payment_method || "efectivo",
       userName: booking.user?.full_name || "Usuario no disponible",
-      operatorName: "Sistema",
+      operatorName: operatorName,
       receiptNumber: booking.payment_id || booking.id.toString().slice(-8)
     };
     
