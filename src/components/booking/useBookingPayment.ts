@@ -196,49 +196,38 @@ export function useBookingPayment() {
             return { useModal: true, clientSecret: data.clientSecret };
           } catch (modalError) {
             console.warn('💳 STRIPE: Modal method failed, falling back to redirect:', modalError);
-            setPaymentMethod('redirect');
+            // Continue to redirect method below
           }
         }
 
         // Fallback to redirect method
         console.log('💳 STRIPE: Using redirect method');
-        const bookingData = {
-          selectedDate: new Date(pendingBooking.start_time),
-          selectedTime: new Date(pendingBooking.start_time).toLocaleTimeString('es-ES', { 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            hour12: false 
-          }),
-          selectedCourt: pendingBooking.court.name,
-          selectedCourtType: pendingBooking.court.court_type,
-          amount: pendingBooking.amount
-        };
-
-        const { data, error } = await supabase.functions.invoke('create-payment', {
-          body: { bookingData }
-        });
-
-        if (error) {
-          throw new Error(`Error al crear sesión de pago: ${error.message}`);
-        }
-        if (!data?.url) {
-          throw new Error("No se recibió URL de pago");
-        }
-
-        // Try same-tab redirect first, then new tab as fallback
         try {
-          window.location.href = data.url;
+          const bookingData = {
+            selectedDate: new Date(pendingBooking.start_time),
+            selectedTime: new Date(pendingBooking.start_time).toLocaleTimeString('es-ES', { 
+              hour: '2-digit', 
+              minute: '2-digit', 
+              hour12: false 
+            }),
+            selectedCourt: pendingBooking.court.name,
+            selectedCourtType: pendingBooking.court.court_type,
+            amount: pendingBooking.amount
+          };
+
+          const { data, error } = await supabase.functions.invoke('create-payment', {
+            body: { bookingData }
+          });
+
+          if (error) throw error;
+          if (!data?.url) throw new Error("No checkout URL received");
+
+          console.log('🚀 Returning redirect URL for checkout');
+          return { redirectUrl: data.url };
         } catch (redirectError) {
-          console.warn('Same-tab redirect failed, using new tab:', redirectError);
-          window.open(data.url, '_blank');
+          console.error('❌ Redirect payment also failed:', redirectError);
+          throw new Error('No se pudo procesar el pago con Stripe. Intente más tarde.');
         }
-        
-        toast({
-          title: "Redirigiendo a Stripe",
-          description: "Serás redirigido para completar el pago.",
-        });
-        
-        return { useModal: false };
       } else {
         // Para otros métodos de pago (incluyendo efectivo)
         console.log(`🔄 INICIANDO PAGO ${paymentGateway.toUpperCase()} para reserva ${pendingBooking.id}`);

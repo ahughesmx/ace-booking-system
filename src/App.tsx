@@ -16,6 +16,7 @@ import Display from "./pages/Display";
 import MyBookings from "./pages/MyBookings";
 import Membership from "./pages/Membership";
 import TicketReprint from "./pages/TicketReprint";
+import BookingSuccess from "./pages/BookingSuccess";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,6 +62,7 @@ const AppContent = () => {
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/membership" element={<Membership />} />
         <Route path="/ticket-reprint" element={<TicketReprint />} />
+        <Route path="/booking-success" element={<BookingSuccess />} />
         <Route path="/admin" element={<AdminRoute />} />
         <Route path="/operator" element={<OperatorIndex />} />
         <Route path="/operator/reports" element={<OperatorReports />} />

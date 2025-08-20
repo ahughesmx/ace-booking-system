@@ -43,6 +43,7 @@ export function BookingSummary({
   onPaymentError
 }: BookingSummaryProps) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [localClientSecret, setLocalClientSecret] = useState<string>("");
   const { data: courtSettings } = useCourtTypeSettings(courtType);
   const { data: allPaymentGateways = [], isLoading: isLoadingGateways } = useEnabledPaymentGateways();
   
@@ -198,9 +199,22 @@ export function BookingSummary({
                       console.log(`🎯 CLICKED: Payment button for ${gateway.name}`);
                       
                       if (gateway.name === 'stripe') {
-                        const result = await onConfirm(gateway.name);
-                        if (result?.useModal && result?.clientSecret) {
-                          setShowPaymentModal(true);
+                        try {
+                          console.log('🚀 Starting Stripe payment...');
+                          const result = await onConfirm(gateway.name);
+                          console.log('📋 Payment result:', result);
+                          
+                          if (result?.useModal && result?.clientSecret) {
+                            console.log('✅ Using modal with clientSecret:', result.clientSecret);
+                            setLocalClientSecret(result.clientSecret);
+                            setShowPaymentModal(true);
+                          } else if (result?.redirectUrl) {
+                            console.log('🔄 Redirecting to Stripe checkout:', result.redirectUrl);
+                            window.location.href = result.redirectUrl;
+                          }
+                        } catch (error) {
+                          console.error('❌ Stripe payment error:', error);
+                          onPaymentError?.(`Error al procesar el pago: ${error}`);
                         }
                       } else {
                         onConfirm(gateway.name);
@@ -270,11 +284,14 @@ export function BookingSummary({
         </div>
 
         {/* Payment Modal */}
-        {showPaymentModal && clientSecret && (
+        {showPaymentModal && localClientSecret && (
           <PaymentModal
             isOpen={showPaymentModal}
-            onClose={() => setShowPaymentModal(false)}
-            clientSecret={clientSecret}
+            onClose={() => {
+              setShowPaymentModal(false);
+              setLocalClientSecret("");
+            }}
+            clientSecret={localClientSecret}
             bookingData={{
               date,
               time,
@@ -285,10 +302,12 @@ export function BookingSummary({
             }}
             onSuccess={() => {
               setShowPaymentModal(false);
+              setLocalClientSecret("");
               onPaymentSuccess?.();
             }}
             onError={(error) => {
               setShowPaymentModal(false);
+              setLocalClientSecret("");
               onPaymentError?.(error);
             }}
           />

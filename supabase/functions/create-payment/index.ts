@@ -13,85 +13,98 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Create Supabase client using the anon key for user authentication
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-  );
-
   try {
-    // Retrieve authenticated user
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Usuario no autenticado");
-    
+    // Create Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
+
+    // Authenticate user
+    const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
     const { data } = await supabaseClient.auth.getUser(token);
     const user = data.user;
-    if (!user?.email) throw new Error("Usuario no autenticado o email no disponible");
+    if (!user?.email) throw new Error("User not authenticated");
 
     // Parse request body
     const { bookingData } = await req.json();
-    if (!bookingData) throw new Error("Datos de reserva no proporcionados");
+    if (!bookingData) {
+      throw new Error("Booking data is required");
+    }
 
-    const { selectedDate, selectedTime, selectedCourt, selectedCourtType, amount } = bookingData;
-    
-    // Format date for display (DD-MM-YYYY)
-    const formattedDate = new Date(selectedDate).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+    console.log("Creating Stripe Checkout Session for booking:", bookingData);
 
     // Initialize Stripe
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeSecretKey) throw new Error("Clave secreta de Stripe no configurada");
-
-    const stripe = new Stripe(stripeSecretKey, {
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",
     });
 
-    // Check if a Stripe customer record exists for this user
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    // Check if customer exists or create new one
+    const customers = await stripe.customers.list({ 
+      email: user.email, 
+      limit: 1 
+    });
+    
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
+    } else {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: user.user_metadata?.full_name || user.email,
+      });
+      customerId = customer.id;
     }
 
-    // Create a one-time payment session
+    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
       line_items: [
         {
           price_data: {
-            currency: "mxn",
-            product_data: { 
-              name: `Reserva de cancha - ${selectedCourtType}`,
-              description: `Cancha: ${selectedCourt}, Fecha: ${formattedDate}, Hora: ${selectedTime}`
+            currency: "usd",
+            product_data: {
+              name: `Reserva de cancha - ${bookingData.selectedCourt}`,
+              description: `${bookingData.selectedDate} ${bookingData.selectedTime}`,
             },
-            unit_amount: Math.round(amount * 100), // Convertir a centavos
+            unit_amount: Math.round(bookingData.amount * 100), // Convert to cents
           },
           quantity: 1,
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/?payment=cancelled`,
+      success_url: `${req.headers.get("origin")}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.get("origin")}/`,
       metadata: {
-        booking_data: JSON.stringify(bookingData),
         user_id: user.id,
+        booking_date: bookingData.selectedDate,
+        booking_time: bookingData.selectedTime,
+        court_name: bookingData.selectedCourt,
+        court_type: bookingData.selectedCourtType,
       },
     });
 
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    console.log("Checkout Session created:", session.id);
+
+    return new Response(
+      JSON.stringify({
+        url: session.url,
+        sessionId: session.id,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
   } catch (error) {
-    console.error("Error creating payment session:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    console.error("Error creating checkout session:", error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
   }
 });
