@@ -90,6 +90,13 @@ export function BookingSummary({
   startTime.setHours(hours, minutes, 0, 0);
   const endTime = addHours(startTime, duration);
 
+  // DEBUG: Modal render check
+  console.log('🔍 MODAL RENDER CHECK:', {
+    showPaymentModal,
+    localClientSecret: localClientSecret ? 'EXISTS' : 'NONE',
+    shouldRender: showPaymentModal && localClientSecret
+  });
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
@@ -288,6 +295,7 @@ export function BookingSummary({
           <PaymentModal
             isOpen={showPaymentModal}
             onClose={() => {
+              console.log('🚪 Closing payment modal');
               setShowPaymentModal(false);
               setLocalClientSecret("");
             }}
@@ -301,11 +309,13 @@ export function BookingSummary({
               selectedUserName,
             }}
             onSuccess={() => {
+              console.log('✅ Payment modal success');
               setShowPaymentModal(false);
               setLocalClientSecret("");
               onPaymentSuccess?.();
             }}
             onError={(error) => {
+              console.error('❌ Payment modal error:', error);
               setShowPaymentModal(false);
               setLocalClientSecret("");
               onPaymentError?.(error);
