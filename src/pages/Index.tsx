@@ -9,7 +9,7 @@ import MainNav from "@/components/MainNav";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { useUserRole } from "@/hooks/use-user-role";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -24,6 +24,7 @@ export default function Index() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { isCardEnabled, isLoading: cardsLoading } = useHomeCardPreferences();
+  const [userFullName, setUserFullName] = useState<string | null>(null);
   
   // Type the location state
   const locationState = location.state as { defaultTab?: string; selectedDate?: string } | null;
@@ -35,6 +36,34 @@ export default function Index() {
   const sessionId = urlParams.get('session_id');
   const isProcessingPayment = paymentStatus === 'success' && sessionId;
   const [paymentProcessed, setPaymentProcessed] = React.useState(false);
+
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user?.id) {
+        try {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .single();
+
+          if (error) {
+            console.error('Error fetching user profile:', error);
+            return;
+          }
+
+          if (profile?.full_name) {
+            setUserFullName(profile.full_name);
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [user?.id]);
 
   // Handle payment success/failure immediately
   useEffect(() => {
@@ -152,7 +181,7 @@ export default function Index() {
       <div className="animate-fade-in">
         <div className="text-left mb-4">
           <h1 className="text-xl sm:text-2xl font-bold text-[#1e3a8a]">
-            Hola {user?.email?.split('@')[0] || 'Usuario'}
+            Hola {userFullName || user?.email?.split('@')[0] || 'Usuario'}
             <span className="ml-2 text-[#1e3a8a]" role="img" aria-label="wave">👋</span>
           </h1>
         </div>
