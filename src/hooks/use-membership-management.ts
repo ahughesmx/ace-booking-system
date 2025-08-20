@@ -26,7 +26,7 @@ export function useMembershipManagement() {
       });
       
       // Invalidar queries relacionadas
-      queryClient.invalidateQueries({ queryKey: ["familyMembers"] });
+      queryClient.invalidateQueries({ queryKey: ["membershipGroups"] });
     },
     onError: (error: any) => {
       console.error('Error deactivating member:', error);
@@ -65,7 +65,7 @@ export function useMembershipManagement() {
         description: "El titular de la membresía ha sido cambiado exitosamente.",
       });
       
-      queryClient.invalidateQueries({ queryKey: ["familyMembers"] });
+      queryClient.invalidateQueries({ queryKey: ["membershipGroups"] });
     },
     onError: (error: any) => {
       console.error('Error updating membership holder:', error);
@@ -95,8 +95,7 @@ export function useMembershipManagement() {
         description: "El miembro ha sido reactivado exitosamente.",
       });
       
-      queryClient.invalidateQueries({ queryKey: ["familyMembers"] });
-      queryClient.invalidateQueries({ queryKey: ["inactiveMembers"] });
+      queryClient.invalidateQueries({ queryKey: ["membershipGroups"] });
     },
     onError: (error: any) => {
       console.error('Error reactivating member:', error);

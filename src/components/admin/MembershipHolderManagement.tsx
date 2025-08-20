@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useDeferredValue } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,19 +26,21 @@ interface MembershipGroup {
 }
 
 const MembershipHolderManagement = () => {
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const deferredSearchTerm = useDeferredValue(searchTerm);
   const { updateMembershipHolder, reactivateMember, isUpdatingHolder, isReactivating } = useMembershipManagement();
   const { toast } = useToast();
 
-  // Callback para manejar cambios del SearchInput
-  const handleSearchChange = useCallback((searchTerm: string) => {
-    setDebouncedSearchTerm(searchTerm);
+  // Callback estable para manejar cambios del SearchInput
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value);
   }, []);
 
-  const { data: membershipGroups, isLoading, refetch } = useQuery({
-    queryKey: ["membershipGroups", debouncedSearchTerm],
+  // Query con clave estable (sin search term)
+  const { data: allMembershipGroups, isLoading } = useQuery({
+    queryKey: ["membershipGroups"],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select(`
           id,
@@ -55,11 +57,6 @@ const MembershipHolderManagement = () => {
         .order("member_id")
         .order("created_at");
 
-      if (debouncedSearchTerm) {
-        query = query.or(`full_name.ilike.%${debouncedSearchTerm}%,member_id.ilike.%${debouncedSearchTerm}%`);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
 
       // Agrupar por member_id
@@ -91,15 +88,29 @@ const MembershipHolderManagement = () => {
     },
   });
 
-  // Memorizar funciones para evitar re-renders
+  // Filtrado client-side con useMemo para optimización
+  const membershipGroups = useMemo(() => {
+    if (!allMembershipGroups) return [];
+    if (!deferredSearchTerm.trim()) return allMembershipGroups;
+
+    const searchLower = deferredSearchTerm.toLowerCase();
+    return allMembershipGroups.filter(group => 
+      group.member_id.toLowerCase().includes(searchLower) ||
+      group.members.some(member => 
+        member.full_name?.toLowerCase().includes(searchLower)
+      )
+    );
+  }, [allMembershipGroups, deferredSearchTerm]);
+
+  // Funciones optimizadas sin refetch manual
   const handleReactivateMember = useCallback(async (memberId: string) => {
     try {
       await reactivateMember(memberId);
-      refetch();
+      // El hook ya maneja la invalidación automáticamente
     } catch (error) {
       console.error('Error reactivating member:', error);
     }
-  }, [reactivateMember, refetch]);
+  }, [reactivateMember]);
 
   const handleChangeHolder = useCallback(async (newHolderId: string, membershipId: string) => {
     try {
@@ -107,11 +118,11 @@ const MembershipHolderManagement = () => {
         newHolderId,
         currentMemberId: membershipId
       });
-      refetch();
+      // El hook ya maneja la invalidación automáticamente
     } catch (error) {
       console.error('Error changing membership holder:', error);
     }
-  }, [updateMembershipHolder, refetch]);
+  }, [updateMembershipHolder]);
 
   if (isLoading) {
     return <div className="text-center py-8">Cargando membresías...</div>;
@@ -121,6 +132,7 @@ const MembershipHolderManagement = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <SearchInput 
+          key="membership-search"
           placeholder="Buscar por nombre o clave de socio..."
           onDebouncedChange={handleSearchChange}
         />
@@ -278,7 +290,7 @@ const MembershipHolderManagement = () => {
         {membershipGroups?.length === 0 && (
           <div className="text-center py-8">
             <p className="text-muted-foreground">
-              {debouncedSearchTerm ? "No se encontraron membresías" : "No hay membresías registradas"}
+              {searchTerm ? "No se encontraron membresías" : "No hay membresías registradas"}
             </p>
           </div>
         )}
