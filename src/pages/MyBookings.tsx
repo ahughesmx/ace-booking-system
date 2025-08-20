@@ -58,9 +58,9 @@ export default function MyBookings() {
     const endTime = new Date(booking.end_time);
     const duration = differenceInHours(endTime, startTime);
     
-    // Determinar quién atendió basado en el método de pago
+    // Determinar quién atendió basado en el método de pago y operador
     const operatorName = (booking.payment_method === 'efectivo' || booking.payment_method === 'Cash') 
-      ? booking.user?.full_name || "Usuario no disponible"
+      ? booking.processed_by_user?.full_name || "Operador no identificado"
       : "Sistema";
     
     const ticketData = {

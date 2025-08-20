@@ -93,7 +93,7 @@ export function DisableCourtDialog({ court, isOpen, onClose, onSuccess }: Disabl
         .from("bookings")
         .select(`
           id, start_time, end_time,
-          user:profiles(full_name, member_id)
+          user:profiles!user_id(full_name, member_id)
         `)
         .eq("court_id", court.id)
         .gte("start_time", startTime.toISOString())

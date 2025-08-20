@@ -98,6 +98,7 @@ export type Database = {
           payment_gateway: string | null
           payment_id: string | null
           payment_method: string | null
+          processed_by: string | null
           start_time: string
           status: string
           user_id: string | null
@@ -116,6 +117,7 @@ export type Database = {
           payment_gateway?: string | null
           payment_id?: string | null
           payment_method?: string | null
+          processed_by?: string | null
           start_time: string
           status?: string
           user_id?: string | null
@@ -134,6 +136,7 @@ export type Database = {
           payment_gateway?: string | null
           payment_id?: string | null
           payment_method?: string | null
+          processed_by?: string | null
           start_time?: string
           status?: string
           user_id?: string | null
@@ -144,6 +147,13 @@ export type Database = {
             columns: ["court_id"]
             isOneToOne: false
             referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {

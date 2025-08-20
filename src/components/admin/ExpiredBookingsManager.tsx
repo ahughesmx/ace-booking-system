@@ -21,7 +21,7 @@ export function ExpiredBookingsManager() {
         .select(`
           *,
           court:courts(name, court_type),
-          user:profiles(full_name, member_id)
+          user:profiles!user_id(full_name, member_id)
         `)
         .eq("status", "pending_payment")
         .lt("expires_at", new Date().toISOString())

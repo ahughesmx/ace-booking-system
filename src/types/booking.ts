@@ -16,6 +16,7 @@ export interface BaseBooking {
   payment_completed_at?: string | null;
   expires_at?: string | null;
   status?: string;
+  processed_by?: string | null;
   user: {
     full_name: string;
     member_id: string;
@@ -25,6 +26,9 @@ export interface BaseBooking {
     name: string;
     court_type: string;
   };
+  processed_by_user?: {
+    full_name: string;
+  } | null;
 }
 
 export interface RegularBooking extends BaseBooking {

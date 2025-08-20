@@ -48,6 +48,9 @@ export function useUserBookings(userId?: string) {
             id,
             name,
             court_type
+          ),
+          processed_by_user:profiles!processed_by (
+            full_name
           )
         `)
         .in("user_id", familyUserIds)
@@ -149,6 +152,9 @@ export function useUserBookings(userId?: string) {
             id,
             name,
             court_type
+          ),
+          processed_by_user:profiles!processed_by (
+            full_name
           )
         `)
         .in("user_id", familyUserIds)

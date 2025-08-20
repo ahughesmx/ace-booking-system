@@ -34,7 +34,7 @@ export function useBookings(selectedDate?: Date) {
         .select(`
           *,
           court:courts(id, name, court_type),
-          user:profiles(full_name, member_id)
+          user:profiles!user_id(full_name, member_id)
         `)
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
