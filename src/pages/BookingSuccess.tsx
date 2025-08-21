@@ -176,28 +176,14 @@ export default function BookingSuccess() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              Error en el pago
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">{error}</p>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => navigate("/")}
-                className="flex-1"
-              >
-                Volver al calendario
-              </Button>
-              <Button 
-                onClick={() => navigate("/", { state: { defaultTab: "bookings" } })}
-                className="flex-1"
-              >
-                Ver mis reservas
-              </Button>
-            </div>
+          <CardContent className="flex flex-col items-center justify-center p-8">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <h2 className="text-xl font-semibold mb-2">
+              Procesando pago...
+            </h2>
+            <p className="text-muted-foreground text-center">
+              Confirmando tu reserva, por favor espera...
+            </p>
           </CardContent>
         </Card>
       </div>
