@@ -147,10 +147,17 @@ serve(async (req) => {
     
     // Format date and time for Mexico timezone
     const mexicoTimeZone = 'America/Mexico_City';
-    const bookingDateTime = new Date(`${bookingData.selectedDate}T${bookingData.selectedTime}`);
+    
+    // Parse the selected date (which is an ISO string) and selected time properly
+    const selectedDate = new Date(bookingData.selectedDate);
+    const [hours, minutes] = bookingData.selectedTime.split(':').map(Number);
+    
+    // Create a new date with the selected date and time
+    const bookingDateTime = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hours, minutes);
+    
     const mexicoDateTime = toZonedTime(bookingDateTime, mexicoTimeZone);
-    const formattedDate = format(mexicoDateTime, 'dd/MM/yyyy', { timeZone: mexicoTimeZone });
-    const formattedTime = format(mexicoDateTime, 'HH:mm', { timeZone: mexicoTimeZone });
+    const formattedDate = format(mexicoDateTime, 'dd/MM/yyyy');
+    const formattedTime = format(mexicoDateTime, 'HH:mm');
     const formattedDateTime = `${formattedDate} ${formattedTime} (México)`;
     
     const sessionData = {
