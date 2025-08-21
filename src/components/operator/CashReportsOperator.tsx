@@ -127,10 +127,12 @@ export function CashReportsOperator() {
   }, [selectedDate, user]);
 
   const exportToCSV = () => {
-    const headers = ['Fecha', 'Hora', 'Cliente', 'Membresía', 'Cancha', 'Monto'];
+    const headers = ['Fecha Cobro', 'Hora Cobro', 'Fecha Reservación', 'Hora Reservación', 'Cliente', 'Membresía', 'Cancha', 'Monto'];
     const csvData = bookings.map(booking => {
       const amount = booking.actual_amount_charged || booking.amount || 0;
       return [
+        format(new Date(booking.booking_made_at), 'dd/MM/yyyy', { locale: es }),
+        format(new Date(booking.booking_made_at), 'HH:mm', { locale: es }),
         format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es }),
         format(new Date(booking.start_time), 'HH:mm', { locale: es }),
         booking.user?.full_name || 'N/A',
@@ -157,8 +159,10 @@ export function CashReportsOperator() {
 
   const exportToPDFReport = () => {
     const pdfData = bookings.map(booking => ({
-      fecha: format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es }),
-      hora: `${format(new Date(booking.start_time), 'HH:mm', { locale: es })} - ${format(new Date(booking.end_time), 'HH:mm', { locale: es })}`,
+      fecha_cobro: format(new Date(booking.booking_made_at), 'dd/MM/yyyy', { locale: es }),
+      hora_cobro: format(new Date(booking.booking_made_at), 'HH:mm', { locale: es }),
+      fecha_reservacion: format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es }),
+      hora_reservacion: `${format(new Date(booking.start_time), 'HH:mm', { locale: es })} - ${format(new Date(booking.end_time), 'HH:mm', { locale: es })}`,
       cliente: booking.user?.full_name || 'N/A',
       membresia: booking.user?.member_id || 'N/A',
       cancha: booking.court?.name || 'N/A',
@@ -167,15 +171,17 @@ export function CashReportsOperator() {
 
     exportToPDF({
       title: 'Reporte de Cobros en Efectivo',
-      subtitle: `Fecha: ${format(new Date(selectedDate), 'dd/MM/yyyy', { locale: es })}`,
+      subtitle: `Fecha de Cobro: ${format(new Date(selectedDate), 'dd/MM/yyyy', { locale: es })}`,
       data: pdfData,
       columns: [
-        { header: 'Fecha', dataKey: 'fecha', width: 18 },
-        { header: 'Hora', dataKey: 'hora', width: 24 },
-        { header: 'Cliente', dataKey: 'cliente', width: 45 },
-        { header: 'Membresía', dataKey: 'membresia', width: 20 },
-        { header: 'Cancha', dataKey: 'cancha', width: 25 },
-        { header: 'Monto', dataKey: 'monto', width: 20 }
+        { header: 'Fecha Cobro', dataKey: 'fecha_cobro', width: 18 },
+        { header: 'Hora Cobro', dataKey: 'hora_cobro', width: 16 },
+        { header: 'Fecha Reservación', dataKey: 'fecha_reservacion', width: 18 },
+        { header: 'Hora Reservación', dataKey: 'hora_reservacion', width: 24 },
+        { header: 'Cliente', dataKey: 'cliente', width: 35 },
+        { header: 'Membresía', dataKey: 'membresia', width: 18 },
+        { header: 'Cancha', dataKey: 'cancha', width: 20 },
+        { header: 'Monto', dataKey: 'monto', width: 18 }
       ],
       summary: [
         { label: 'Total de cobros:', value: formatCurrency(total) },
@@ -226,7 +232,8 @@ export function CashReportsOperator() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Fecha/Hora</TableHead>
+              <TableHead>Fecha Cobro</TableHead>
+              <TableHead>Fecha Reservación</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Membresía</TableHead>
               <TableHead>Cancha</TableHead>
@@ -236,19 +243,27 @@ export function CashReportsOperator() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   Cargando...
                 </TableCell>
               </TableRow>
             ) : bookings.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No hay cobros en efectivo para la fecha seleccionada
                 </TableCell>
               </TableRow>
             ) : (
               bookings.map((booking) => (
                 <TableRow key={booking.id}>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span>{format(new Date(booking.booking_made_at), 'dd/MM/yyyy', { locale: es })}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {format(new Date(booking.booking_made_at), 'HH:mm', { locale: es })}
+                      </span>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <span>{format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es })}</span>
