@@ -3,72 +3,135 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useBookingPayment } from "@/components/booking/useBookingPayment";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function BookingSuccess() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const sessionId = searchParams.get("session_id");
   const paypalPaymentId = searchParams.get("paymentId");
   const paypalPayerId = searchParams.get("PayerID");
   const paypalToken = searchParams.get("token");
+  
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string>("");
-  const { confirmPaymentSuccess, confirmPayPalPayment } = useBookingPayment();
+  const [paymentType, setPaymentType] = useState<"stripe" | "paypal" | null>(null);
+
+  // NEW: Direct Stripe payment verification - NO HOOKS
+  const verifyStripePayment = async (stripeSessionId: string) => {
+    try {
+      console.log("🔥 NEW STRIPE PROCESS: Verifying payment directly:", stripeSessionId);
+      
+      if (!user) {
+        throw new Error("Usuario no autenticado");
+      }
+
+      // Call verify-payment function directly
+      const { data, error } = await supabase.functions.invoke('verify-payment', {
+        body: { sessionId: stripeSessionId }
+      });
+
+      if (error) {
+        console.error('❌ NEW STRIPE: Error from verify-payment:', error);
+        throw new Error('Error al verificar el pago con Stripe');
+      }
+
+      if (data?.success) {
+        console.log('✅ NEW STRIPE: Payment verified successfully');
+        
+        // Invalidate queries to refresh data
+        await queryClient.invalidateQueries({ queryKey: ["bookings"] });
+        await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user.id] });
+        
+        // Show success toast
+        toast({
+          title: "¡Pago exitoso!",
+          description: "Tu reserva ha sido confirmada correctamente.",
+        });
+
+        // Redirect to Reservas page
+        console.log('🎯 NEW STRIPE: Redirecting to Reservas page');
+        navigate("/", { state: { defaultTab: "bookings" }, replace: true });
+        
+        return true;
+      } else {
+        throw new Error(data?.message || 'No se pudo verificar el pago');
+      }
+    } catch (err) {
+      console.error("❌ NEW STRIPE: Error in direct verification:", err);
+      throw err;
+    }
+  };
+
+  // PayPal verification (keeping existing for now)
+  const verifyPayPalPayment = async (paymentId: string, payerId: string) => {
+    try {
+      console.log("🟡 PAYPAL: Processing payment:", { paymentId, payerId });
+      
+      if (!user) {
+        throw new Error("Usuario no autenticado");
+      }
+
+      const { data, error } = await supabase.functions.invoke('verify-paypal-payment', {
+        body: { paymentId, payerId }
+      });
+
+      if (error) {
+        throw new Error('Error al verificar el pago con PayPal');
+      }
+
+      if (data?.success) {
+        await queryClient.invalidateQueries({ queryKey: ["bookings"] });
+        await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user.id] });
+        
+        toast({
+          title: "¡Pago exitoso!",
+          description: "Tu reserva ha sido confirmada correctamente.",
+        });
+
+        navigate("/", { state: { defaultTab: "bookings" }, replace: true });
+        return true;
+      }
+      
+      return false;
+    } catch (err) {
+      console.error("❌ PAYPAL: Error:", err);
+      throw err;
+    }
+  };
 
   useEffect(() => {
-    const processPaymentSuccess = async () => {
-      // Check if it's a PayPal return
-      if (paypalPaymentId && paypalPayerId && paypalToken) {
-        console.log("🎉 Processing PayPal payment success:", { paypalPaymentId, paypalPayerId, paypalToken });
-        
-        try {
-          const success = await confirmPayPalPayment(paypalPaymentId, paypalPayerId);
-          
-          if (success) {
-            console.log("✅ PayPal payment confirmed successfully - redirecting to Reservas");
-            // Redirect to "Reservas" page (bookings tab)
-            navigate("/", { state: { defaultTab: "bookings" }, replace: true });
-          } else {
-            setError("Error al confirmar el pago de PayPal");
-          }
-        } catch (err) {
-          console.error("❌ Error processing PayPal payment:", err);
-          setError("Error al procesar la confirmación del pago de PayPal");
-        } finally {
-          setIsProcessing(false);
-        }
-        return;
-      }
-
-      // Handle Stripe payment - NEW: also redirect to Reservas
-      if (!sessionId) {
-        setError("No se encontró información de la sesión de pago");
-        setIsProcessing(false);
-        return;
-      }
-
+    const processPaymentReturn = async () => {
       try {
-        console.log("🎉 Processing Stripe payment success for session:", sessionId);
-        const success = await confirmPaymentSuccess(sessionId);
-        
-        if (success) {
-          console.log("✅ Stripe payment confirmed successfully - redirecting to Reservas");
-          // NEW: For Stripe, redirect to "Reservas" page (bookings tab)
-          navigate("/", { state: { defaultTab: "bookings" }, replace: true });
+        // Determine payment type and process accordingly
+        if (paypalPaymentId && paypalPayerId && paypalToken) {
+          console.log("🟡 Detected PayPal return");
+          setPaymentType("paypal");
+          await verifyPayPalPayment(paypalPaymentId, paypalPayerId);
+        } else if (sessionId) {
+          console.log("🔥 Detected Stripe return - using NEW process");
+          setPaymentType("stripe");
+          await verifyStripePayment(sessionId);
         } else {
-          setError("Error al confirmar el pago de Stripe");
+          setError("No se encontró información válida del pago");
         }
-      } catch (err) {
-        console.error("❌ Error processing Stripe payment:", err);
-        setError("Error al procesar la confirmación del pago de Stripe");
+      } catch (err: any) {
+        console.error("❌ Payment processing failed:", err);
+        setError(err.message || "Error al procesar el pago");
       } finally {
         setIsProcessing(false);
       }
     };
 
-    processPaymentSuccess();
-  }, [sessionId, paypalPaymentId, paypalPayerId, paypalToken, confirmPaymentSuccess, confirmPayPalPayment, navigate]);
+    processPaymentReturn();
+  }, [sessionId, paypalPaymentId, paypalPayerId, paypalToken, user?.id]);
 
   if (isProcessing) {
     return (
@@ -76,7 +139,11 @@ export default function BookingSuccess() {
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center justify-center p-8">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Procesando pago...</h2>
+            <h2 className="text-xl font-semibold mb-2">
+              {paymentType === "stripe" ? "Verificando pago con Stripe..." : 
+               paymentType === "paypal" ? "Verificando pago con PayPal..." : 
+               "Procesando pago..."}
+            </h2>
             <p className="text-muted-foreground text-center">
               Confirmando tu reserva, por favor espera...
             </p>
@@ -118,6 +185,7 @@ export default function BookingSuccess() {
     );
   }
 
+  // This should never render because we redirect immediately on success
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <Card className="w-full max-w-md">
