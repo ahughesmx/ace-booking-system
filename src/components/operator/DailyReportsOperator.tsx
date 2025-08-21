@@ -82,7 +82,7 @@ export function DailyReportsOperator() {
           payment_method,
           booking_made_at,
           status,
-          profiles!bookings_user_id_fkey (
+          profiles:user_id (
             full_name,
             member_id
           ),
@@ -90,7 +90,7 @@ export function DailyReportsOperator() {
             name,
             court_type
           ),
-          processed_by_profiles:profiles!bookings_processed_by_fkey (
+          processed_by_profiles:profiles!processed_by (
             full_name
           )
         `)

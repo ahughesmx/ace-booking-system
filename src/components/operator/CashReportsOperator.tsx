@@ -72,7 +72,7 @@ export function CashReportsOperator() {
           booking_made_at,
           payment_method,
           status,
-          profiles!bookings_user_id_fkey (
+          profiles:user_id (
             full_name,
             member_id
           ),
