@@ -227,8 +227,17 @@ export function useUserBookings(userId?: string) {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalidate user-specific booking queries
       queryClient.invalidateQueries({ queryKey: ["userUpcomingBookings", userId] });
       queryClient.invalidateQueries({ queryKey: ["userPastBookings", userId] });
+      
+      // Invalidate general booking queries that determine slot availability
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["all-bookings-including-pending"] });
+      queryClient.invalidateQueries({ queryKey: ["userActiveBookings", userId] });
+      queryClient.invalidateQueries({ queryKey: ["active-bookings", userId] });
+      queryClient.invalidateQueries({ queryKey: ["active-bookings-count", userId] });
+      
       toast({
         title: "Éxito",
         description: "Reservación cancelada correctamente",

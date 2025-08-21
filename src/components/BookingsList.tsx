@@ -212,6 +212,10 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
       });
       
       await queryClient.invalidateQueries({ 
+        queryKey: ["all-bookings-including-pending"] 
+      });
+      
+      await queryClient.invalidateQueries({ 
         queryKey: ["userActiveBookings", user?.id] 
       });
 
