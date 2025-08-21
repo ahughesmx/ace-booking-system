@@ -147,7 +147,7 @@ serve(async (req) => {
       line_items: [
         {
           price_data: {
-            currency: "usd",
+            currency: "mxn",
             product_data: {
               name: `Reserva de cancha - ${bookingData.selectedCourt}`,
               description: `${bookingData.selectedDate} ${bookingData.selectedTime}`,
@@ -172,7 +172,7 @@ serve(async (req) => {
     console.log("💳 Session configuration:", {
       customer: customerId,
       amount: Math.round(bookingData.amount * 100),
-      currency: "usd",
+      currency: "mxn",
       success_url: sessionData.success_url,
       cancel_url: sessionData.cancel_url
     });

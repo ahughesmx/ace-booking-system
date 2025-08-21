@@ -108,7 +108,7 @@ serve(async (req) => {
       transactions: [{
         amount: {
           total: amount,
-          currency: "USD"
+          currency: "MXN"
         },
         description: description,
         item_list: {
@@ -116,7 +116,7 @@ serve(async (req) => {
             name: description,
             quantity: "1",
             price: amount,
-            currency: "USD"
+            currency: "MXN"
           }]
         }
       }],
