@@ -132,7 +132,30 @@ export function useBookingPayment() {
 
       if (error) {
         console.error('❌ Error inserting booking:', error);
-        throw error;
+        
+        // Parsear el mensaje de error para mostrar mensajes más específicos
+        let errorMessage = error.message;
+        
+        // Si es un error de la función de validación, el mensaje ya viene en español
+        if (error.message && (
+          error.message.includes("No se permiten reservas consecutivas") ||
+          error.message.includes("Debe esperar al menos") ||
+          error.message.includes("Ya tienes el máximo de") ||
+          error.message.includes("La reserva debe hacerse con al menos") ||
+          error.message.includes("No puedes reservar más de") ||
+          error.message.includes("Ya tienes una reserva") ||
+          error.message.includes("La cancha no está disponible")
+        )) {
+          errorMessage = error.message;
+        } else if (error.code === '23505') {
+          errorMessage = "Ya existe una reserva para este horario y cancha";
+        } else if (error.code === '23503') {
+          errorMessage = "Datos de reserva inválidos";
+        } else if (error.code === '42P01') {
+          errorMessage = "Error de configuración del sistema";
+        }
+        
+        throw new Error(errorMessage);
       }
 
       console.log('✅ Booking created successfully:', booking);
@@ -140,6 +163,7 @@ export function useBookingPayment() {
       return booking;
     } catch (error) {
       console.error("❌ Error creating pending booking:", error);
+      // Re-throw the error so it can be handled by the calling component
       throw error;
     } finally {
       setIsCreatingBooking(false);

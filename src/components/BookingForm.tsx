@@ -198,8 +198,39 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
       });
       console.log('✅ Pending booking created, showing summary');
       setShowSummary(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Error creating pending booking:", error);
+      
+      // Parsear mensajes de error específicos de las reglas de reserva
+      let errorMessage = "Hubo un error al crear la reserva";
+      
+      if (error.message) {
+        // Errores específicos de las reglas de reserva
+        if (error.message.includes("No se permiten reservas consecutivas")) {
+          errorMessage = error.message;
+        } else if (error.message.includes("Debe esperar al menos")) {
+          errorMessage = error.message;
+        } else if (error.message.includes("Ya tienes el máximo de")) {
+          errorMessage = error.message;
+        } else if (error.message.includes("La reserva debe hacerse con al menos")) {
+          errorMessage = error.message;
+        } else if (error.message.includes("No puedes reservar más de")) {
+          errorMessage = error.message;
+        } else if (error.message.includes("Ya tienes una reserva")) {
+          errorMessage = error.message;
+        } else if (error.message.includes("La cancha no está disponible")) {
+          errorMessage = error.message;
+        } else {
+          // Para otros errores, usar el mensaje tal como viene
+          errorMessage = error.message;
+        }
+      }
+      
+      toast({
+        title: "Reserva no permitida",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
