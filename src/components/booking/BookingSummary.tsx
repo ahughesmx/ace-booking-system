@@ -197,7 +197,7 @@ export function BookingSummary({
                         <>
                           {gateway.name === 'stripe' && (
                             <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">
-                              S
+                              $
                             </div>
                           )}
                           {gateway.name === 'paypal' && (
@@ -216,7 +216,7 @@ export function BookingSummary({
                         {isProcessing ? (
                           gateway.name === 'efectivo' ? 'Procesando pago en efectivo...' : 'Procesando...'
                         ) : (
-                          gateway.name
+                          gateway.name === 'stripe' ? 'Pagar' : gateway.name
                         )}
                       </span>
                       {gateway.test_mode && !isProcessing && (
