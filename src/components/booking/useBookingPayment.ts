@@ -168,6 +168,26 @@ export function useBookingPayment() {
       if (paymentGateway === 'stripe') {
         console.log('💳 STRIPE: Starting Stripe redirect payment process');
         
+        // Get current session and validate authentication
+        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+        console.log('🔑 Session validation:', {
+          hasSession: !!currentSession,
+          hasAccessToken: !!currentSession?.access_token,
+          tokenLength: currentSession?.access_token?.length || 0,
+          sessionError: sessionError?.message
+        });
+
+        if (sessionError || !currentSession?.access_token) {
+          console.error('❌ Session validation failed:', sessionError);
+          throw new Error('Error de autenticación. Por favor, inicie sesión nuevamente.');
+        }
+        
+        // Validate booking data structure
+        if (!pendingBooking.court || !pendingBooking.court.name || !pendingBooking.court.court_type) {
+          console.error('❌ Invalid booking court data:', pendingBooking.court);
+          throw new Error('Datos de cancha incompletos');
+        }
+
         const bookingData = {
           selectedDate: new Date(pendingBooking.start_time),
           selectedTime: new Date(pendingBooking.start_time).toLocaleTimeString('es-ES', { 
@@ -180,14 +200,21 @@ export function useBookingPayment() {
           amount: pendingBooking.amount
         };
 
-        console.log('📤 Calling create-payment with:', bookingData);
-        console.log('🔑 Session status:', {
-          hasSession: !!session,
-          hasAccessToken: !!session?.access_token,
-          tokenLength: session?.access_token?.length || 0,
-        });
+        // Validate all required fields are present
+        const requiredFields = ['selectedDate', 'selectedTime', 'selectedCourt', 'selectedCourtType', 'amount'];
+        const missingFields = requiredFields.filter(field => !bookingData[field]);
+        if (missingFields.length > 0) {
+          console.error('❌ Missing booking data fields:', missingFields, bookingData);
+          throw new Error(`Datos de reserva incompletos: ${missingFields.join(', ')}`);
+        }
+
+        console.log('📤 Calling create-payment with validated data:', bookingData);
         
         const { data, error } = await supabase.functions.invoke('create-payment', {
+          headers: {
+            'Authorization': `Bearer ${currentSession.access_token}`,
+            'Content-Type': 'application/json'
+          },
           body: { bookingData }
         });
 
@@ -195,12 +222,26 @@ export function useBookingPayment() {
         
         if (error) {
           console.error('❌ Stripe payment failed:', error);
-          throw new Error('Error al crear sesión de pago con Stripe');
+          console.error('❌ Full error details:', {
+            message: error.message,
+            details: error.details,
+            context: error.context,
+            stack: error.stack
+          });
+          
+          // More specific error messages based on error type
+          if (error.message?.includes('Authentication')) {
+            throw new Error('Error de autenticación. Por favor, inicie sesión nuevamente.');
+          } else if (error.message?.includes('Stripe')) {
+            throw new Error('Error del servicio de pago. Inténtelo más tarde.');
+          } else {
+            throw new Error(`Error de pago: ${error.message || 'Error desconocido'}`);
+          }
         }
         
         if (!data?.url) {
-          console.error('❌ No checkout URL received');
-          throw new Error("No se recibió URL de checkout");
+          console.error('❌ No checkout URL received. Full response:', data);
+          throw new Error('No se recibió URL de checkout de Stripe');
         }
 
         console.log('🚀 Redirecting to Stripe checkout:', data.url);
