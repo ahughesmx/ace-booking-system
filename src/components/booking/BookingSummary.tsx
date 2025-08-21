@@ -216,7 +216,7 @@ export function BookingSummary({
                         {isProcessing ? (
                           gateway.name === 'efectivo' ? 'Procesando pago en efectivo...' : 'Procesando...'
                         ) : (
-                          gateway.name === 'stripe' ? 'Pagar' : gateway.name
+                          gateway.name === 'stripe' ? 'Pagar con tarjeta' : gateway.name
                         )}
                       </span>
                       {gateway.test_mode && !isProcessing && (
