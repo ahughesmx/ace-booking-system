@@ -210,9 +210,11 @@ serve(async (req) => {
       }
     }
 
+    // If we reach here, payment was not successful in Stripe
     return new Response(JSON.stringify({ 
       success: false, 
-      message: "Pago no completado o reserva no encontrada" 
+      message: "El pago no fue completado exitosamente en Stripe",
+      payment_status: session.payment_status
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
