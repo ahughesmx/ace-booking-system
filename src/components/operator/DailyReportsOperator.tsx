@@ -22,6 +22,7 @@ interface DailyBooking {
   currency: string;
   payment_method: string;
   booking_made_at: string;
+  status: string;
   user: {
     full_name: string;
     member_id: string;
@@ -40,6 +41,8 @@ interface PaymentSummary {
   onlineTotal: number;
   total: number;
   count: number;
+  paidCount: number;
+  cancelledCount: number;
 }
 
 export function DailyReportsOperator() {
@@ -47,7 +50,14 @@ export function DailyReportsOperator() {
   const [bookings, setBookings] = useState<DailyBooking[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [summary, setSummary] = useState<PaymentSummary>({ cashTotal: 0, onlineTotal: 0, total: 0, count: 0 });
+  const [summary, setSummary] = useState<PaymentSummary>({ 
+    cashTotal: 0, 
+    onlineTotal: 0, 
+    total: 0, 
+    count: 0, 
+    paidCount: 0, 
+    cancelledCount: 0 
+  });
 
   const fetchDailyBookings = async () => {
     setLoading(true);
@@ -142,21 +152,38 @@ export function DailyReportsOperator() {
           return sum + amount;
         }, 0);
 
+      // Contar reservas por status
+      const paidCount = bookingsWithDetails.filter(booking => booking.status === 'paid').length;
+      const cancelledCount = bookingsWithDetails.filter(booking => booking.status === 'cancelled').length;
+
       console.log('💸 DailyReports - Cálculo de totales:', {
         totalBookings: bookingsWithDetails.length,
+        paidBookings: paidCount,
+        cancelledBookings: cancelledCount,
         efectivoBookings: bookingsWithDetails.filter(b => b.payment_method === 'efectivo').length,
         onlineBookings: bookingsWithDetails.filter(b => b.payment_method === 'online').length,
         paymentMethods: [...new Set(bookingsWithDetails.map(b => b.payment_method))],
+        statuses: [...new Set(bookingsWithDetails.map(b => b.status))],
         cashTotal,
         onlineTotal,
-        total
+        total,
+        bookingsWithAmounts: bookingsWithDetails.map(b => ({
+          id: b.id,
+          status: b.status,
+          payment_method: b.payment_method,
+          actual_amount_charged: b.actual_amount_charged,
+          amount: b.amount,
+          finalAmount: b.actual_amount_charged || b.amount || 0
+        }))
       });
 
       setSummary({
         cashTotal: cashTotal,
         onlineTotal: onlineTotal,
         total: total,
-        count: bookingsWithDetails.length
+        count: bookingsWithDetails.length,
+        paidCount: paidCount,
+        cancelledCount: cancelledCount
       });
 
     } catch (error) {
@@ -271,7 +298,7 @@ export function DailyReportsOperator() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Efectivo</CardTitle>
@@ -296,22 +323,42 @@ export function DailyReportsOperator() {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Ingresos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
               ${summary.total.toFixed(2)}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Vigentes + Canceladas
             </div>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Reservas</CardTitle>
+            <CardTitle className="text-sm font-medium">Vigentes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {summary.count}
+            <div className="text-2xl font-bold text-emerald-600">
+              {summary.paidCount}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Reservas activas
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Canceladas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">
+              {summary.cancelledCount}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Sin devolución
             </div>
           </CardContent>
         </Card>
@@ -326,6 +373,7 @@ export function DailyReportsOperator() {
               <TableHead>Membresía</TableHead>
               <TableHead>Cancha</TableHead>
               <TableHead>Método</TableHead>
+              <TableHead>Estado</TableHead>
               <TableHead>Procesado Por</TableHead>
               <TableHead className="text-right">Monto</TableHead>
             </TableRow>
@@ -333,13 +381,13 @@ export function DailyReportsOperator() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   Cargando...
                 </TableCell>
               </TableRow>
             ) : bookings.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No hay cobros para la fecha seleccionada
                 </TableCell>
               </TableRow>
@@ -366,6 +414,11 @@ export function DailyReportsOperator() {
                     </div>
                   </TableCell>
                   <TableCell>{getPaymentMethodBadge(booking.payment_method)}</TableCell>
+                  <TableCell>
+                    <Badge variant={booking.status === 'paid' ? 'default' : 'secondary'}>
+                      {booking.status === 'paid' ? 'Vigente' : 'Cancelada'}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-sm">
                     {booking.processed_by_user?.full_name || 'Sistema'}
                   </TableCell>
