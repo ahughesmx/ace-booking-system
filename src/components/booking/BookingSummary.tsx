@@ -157,9 +157,9 @@ export function BookingSummary({
 
         {/* Aviso sobre reglas de reserva */}
         <BookingRulesModal>
-          <Button variant="link" className="p-0 h-auto text-sm text-primary hover:underline">
-            <Info className="h-4 w-4 mr-1" />
-            Aviso: Antes de realizar un pago asegúrate de leer las reglas de reserva.
+          <Button variant="link" className="p-0 h-auto text-sm text-primary hover:underline justify-start text-left whitespace-normal">
+            <Info className="h-4 w-4 mr-1 flex-shrink-0 mt-0.5" />
+            <span>Aviso: Antes de realizar un pago asegúrate de leer las reglas de reserva.</span>
           </Button>
         </BookingRulesModal>
 
