@@ -281,13 +281,11 @@ export function useBookingPayment() {
         }
 
         console.log('🚀 Redirecting to Stripe checkout:', data.url);
-        // Abrir Stripe checkout en nueva pestaña
-        window.open(data.url, '_blank');
+        // Redirigir a Stripe checkout en la misma pestaña
+        window.location.href = data.url;
         
-        return { 
-          redirectUrl: data.url,
-          success: true
-        };
+        // No retornamos nada porque estamos redirigiendo
+        return;
       } else {
         // Para otros métodos de pago (incluyendo efectivo)
         console.log(`🔄 INICIANDO PAGO ${paymentGateway.toUpperCase()} para reserva ${pendingBooking.id}`);
