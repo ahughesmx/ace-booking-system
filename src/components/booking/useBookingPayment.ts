@@ -287,6 +287,66 @@ export function useBookingPayment() {
         
         // No retornamos nada porque estamos redirigiendo
         return;
+      } else if (paymentGateway === 'paypal') {
+        console.log('💳 PAYPAL: Starting PayPal redirect payment process');
+        
+        // Get current session and validate authentication
+        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+        console.log('🔑 Session validation:', {
+          hasSession: !!currentSession,
+          hasAccessToken: !!currentSession?.access_token,
+          tokenLength: currentSession?.access_token?.length || 0,
+          sessionError: sessionError?.message
+        });
+
+        if (sessionError || !currentSession?.access_token) {
+          console.error('❌ Session validation failed:', sessionError);
+          throw new Error('Error de autenticación. Por favor, inicie sesión nuevamente.');
+        }
+        
+        // Validate booking data structure
+        if (!pendingBooking.court || !pendingBooking.court.name || !pendingBooking.court.court_type) {
+          console.error('❌ Invalid booking court data:', pendingBooking.court);
+          throw new Error('Datos de cancha incompletos');
+        }
+
+        const bookingData = {
+          selectedDate: new Date(pendingBooking.start_time),
+          selectedTime: new Date(pendingBooking.start_time).toLocaleTimeString('es-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: false 
+          }),
+          selectedCourt: pendingBooking.court.name,
+          selectedCourtType: pendingBooking.court.court_type,
+          amount: pendingBooking.amount
+        };
+
+        console.log('📤 Calling create-paypal-payment with validated data:', bookingData);
+        
+        // Call PayPal payment creation function
+        const { data, error } = await supabase.functions.invoke('create-paypal-payment', {
+          body: { bookingData }
+        });
+
+        console.log('📥 create-paypal-payment response:', { data, error });
+        
+        if (error) {
+          console.error('❌ PayPal payment failed:', error);
+          throw new Error(`Error de pago PayPal: ${error.message || 'Error desconocido'}`);
+        }
+        
+        if (!data?.approvalUrl) {
+          console.error('❌ No PayPal approval URL received. Full response:', data);
+          throw new Error('No se recibió URL de aprobación de PayPal');
+        }
+
+        console.log('🚀 Redirecting to PayPal approval:', data.approvalUrl);
+        // Redirect to PayPal approval URL
+        window.location.href = data.approvalUrl;
+        
+        // No retornamos nada porque estamos redirigiendo
+        return;
       } else {
         // Para otros métodos de pago (incluyendo efectivo)
         console.log(`🔄 INICIANDO PAGO ${paymentGateway.toUpperCase()} para reserva ${pendingBooking.id}`);
@@ -438,6 +498,48 @@ export function useBookingPayment() {
     }
   };
 
+  const confirmPayPalPayment = async (paymentId: string, payerId: string) => {
+    if (isConfirmingPayment) {
+      console.log('⚠️ confirmPayPalPayment already running, skipping duplicate call');
+      return false;
+    }
+    
+    setIsConfirmingPayment(true);
+    
+    try {
+      if (!user) return false;
+      console.log('🎯 Confirmando pago PayPal para usuario:', user.id, 'paymentId:', paymentId, 'payerId:', payerId);
+
+      // Call PayPal verification function
+      const { data: verifyResult, error: verifyError } = await supabase.functions.invoke('verify-paypal-payment', {
+        body: { paymentId, payerId }
+      });
+
+      if (verifyError) {
+        console.error('❌ Error en verify-paypal-payment:', verifyError);
+        throw new Error('Error al verificar el pago con PayPal');
+      }
+
+      if (verifyResult?.success) {
+        console.log('✅ Pago PayPal confirmado exitosamente');
+        
+        // Invalidate queries and clear state
+        await queryClient.invalidateQueries({ queryKey: ["bookings"] });
+        await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
+        setPendingBooking(null);
+        
+        return true;
+      } else {
+        throw new Error(verifyResult?.message || 'No se pudo verificar el pago de PayPal');
+      }
+    } catch (error) {
+      console.error("❌ Error confirmando pago PayPal:", error);
+      throw error;
+    } finally {
+      setIsConfirmingPayment(false);
+    }
+  };
+
   const confirmPaymentSuccess = async (sessionId?: string) => {
     // Prevent multiple simultaneous calls
     if (isConfirmingPayment) {
@@ -490,6 +592,7 @@ export function useBookingPayment() {
     processPayment,
     cancelPendingBooking,
     confirmPaymentSuccess,
+    confirmPayPalPayment,
     pendingBooking,
     isCreatingBooking,
     // Removed clientSecret and paymentMethod states for simplicity
