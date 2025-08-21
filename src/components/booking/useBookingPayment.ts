@@ -210,13 +210,49 @@ export function useBookingPayment() {
 
         console.log('📤 Calling create-payment with validated data:', bookingData);
         
-        const { data, error } = await supabase.functions.invoke('create-payment', {
+        // Use direct fetch call instead of supabase.functions.invoke to ensure body is sent correctly
+        const functionUrl = `https://bpjinatcgdmxqetfxjji.supabase.co/functions/v1/create-payment`;
+        
+        console.log('🌐 Making direct HTTP call to:', functionUrl);
+        console.log('📤 Request body:', JSON.stringify({ bookingData }));
+        console.log('🔑 Authorization header length:', currentSession.access_token.length);
+        
+        const response = await fetch(functionUrl, {
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${currentSession.access_token}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwamluYXRjZ2RteHFldGZ4amppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5NDU1NTgsImV4cCI6MjA1MTUyMTU1OH0.79yLPqxNagQqouMrbfCyfLeaEeg3TesEqQsrR9H_ZvQ'
           },
-          body: { bookingData }
+          body: JSON.stringify({ bookingData })
         });
+        
+        console.log('📥 Raw response status:', response.status);
+        console.log('📥 Raw response headers:', Object.fromEntries(response.headers.entries()));
+        
+        const responseText = await response.text();
+        console.log('📥 Raw response text:', responseText);
+        
+        let data, error;
+        
+        if (!response.ok) {
+          console.error('❌ HTTP error:', response.status, response.statusText);
+          try {
+            const errorData = JSON.parse(responseText);
+            error = new Error(errorData.error || `HTTP ${response.status}`);
+            console.error('❌ Parsed error:', errorData);
+          } catch {
+            error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+        } else {
+          try {
+            data = JSON.parse(responseText);
+            console.log('✅ Parsed success response:', data);
+          } catch (parseError) {
+            console.error('❌ Failed to parse success response:', parseError);
+            error = new Error('Invalid response format from payment service');
+          }
+        }
 
         console.log('📥 create-payment response:', { data, error });
         
