@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { format, addHours } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,6 @@ import { Clock, MapPin, CreditCard, Timer, Loader2, AlertTriangle } from "lucide
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { useEnabledPaymentGateways } from "@/hooks/use-payment-settings";
-import { PaymentModal } from "./PaymentModal";
 
 interface BookingSummaryProps {
   date: Date;
@@ -22,9 +20,6 @@ interface BookingSummaryProps {
   isOperator?: boolean;
   selectedUserName?: string;
   processingPayment?: string | null;
-  clientSecret?: string;
-  onPaymentSuccess?: () => void;
-  onPaymentError?: (error: string) => void;
 }
 
 export function BookingSummary({
@@ -37,22 +32,17 @@ export function BookingSummary({
   isLoading = false,
   isOperator = false,
   selectedUserName,
-  processingPayment = null,
-  clientSecret = "",
-  onPaymentSuccess,
-  onPaymentError
+  processingPayment
 }: BookingSummaryProps) {
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [localClientSecret, setLocalClientSecret] = useState<string>("");
   const { data: courtSettings } = useCourtTypeSettings(courtType);
   const { data: allPaymentGateways = [], isLoading: isLoadingGateways } = useEnabledPaymentGateways();
   
-  // DEBUG: Log para diagnóstico
   console.log('🔍 BookingSummary DEBUG:', {
     isOperator,
     allPaymentGateways,
     isLoadingGateways,
-    gatewaysLength: allPaymentGateways.length
+    gatewaysLength: allPaymentGateways.length,
+    processingPayment
   });
   
   // Usar precio de operador si es una reserva hecha por operador
@@ -67,7 +57,7 @@ export function BookingSummary({
   const duration = 1; // 1 hora por defecto
   const total = pricePerHour * duration;
 
-  // ARREGLO: Lógica corregida para métodos de pago
+  // Simplified payment gateways logic
   const paymentGateways = isOperator 
     ? [
         // Solo efectivo para operadores
@@ -81,7 +71,7 @@ export function BookingSummary({
           updated_at: ''
         }
       ]
-    : allPaymentGateways.filter(gateway => gateway.enabled && gateway.name !== 'efectivo'); // Para usuarios normales, solo métodos online
+    : allPaymentGateways.filter(gateway => gateway.enabled && gateway.name !== 'efectivo');
   
   console.log('🎯 Final paymentGateways:', paymentGateways);
 
@@ -89,13 +79,6 @@ export function BookingSummary({
   const [hours, minutes] = time.split(':').map(Number);
   startTime.setHours(hours, minutes, 0, 0);
   const endTime = addHours(startTime, duration);
-
-  // DEBUG: Modal render check
-  console.log('🔍 MODAL RENDER CHECK:', {
-    showPaymentModal,
-    localClientSecret: localClientSecret ? 'EXISTS' : 'NONE',
-    shouldRender: showPaymentModal && localClientSecret
-  });
 
   return (
     <Card className="w-full max-w-md">
@@ -202,36 +185,9 @@ export function BookingSummary({
                     variant="outline"
                     className="w-full justify-start"
                     disabled={isDisabled}
-                    onClick={async () => {
+                    onClick={() => {
                       console.log(`🎯 CLICKED: Payment button for ${gateway.name}`);
-                      
-                      if (gateway.name === 'stripe') {
-                        try {
-                          console.log('🚀 Starting Stripe payment...');
-                          const result = await onConfirm(gateway.name);
-                          console.log('📋 Payment result:', result);
-                          
-                          if (result?.useModal && result?.clientSecret) {
-                            console.log('✅ Using modal with clientSecret:', result.clientSecret.substring(0, 20) + '...');
-                            setLocalClientSecret(result.clientSecret);
-                            setTimeout(() => {
-                              console.log('🎯 Setting modal to true after clientSecret');
-                              setShowPaymentModal(true);
-                            }, 100);
-                          } else if (result?.redirectUrl) {
-                            console.log('🔄 Redirecting to Stripe checkout:', result.redirectUrl);
-                            window.location.href = result.redirectUrl;
-                          } else {
-                            console.error('❌ Unexpected payment result structure:', result);
-                            throw new Error('Respuesta inesperada del servidor');
-                          }
-                        } catch (error) {
-                          console.error('❌ Stripe payment error:', error);
-                          onPaymentError?.(`Error al procesar el pago: ${error}`);
-                        }
-                      } else {
-                        onConfirm(gateway.name);
-                      }
+                      onConfirm(gateway.name);
                     }}
                   >
                     <div className="flex items-center gap-2 w-full">
@@ -284,7 +240,7 @@ export function BookingSummary({
             onClick={onCancel}
             disabled={isLoading}
           >
-            Salir
+            Cancelar
           </Button>
           {paymentGateways.length === 0 && (
             <Button
@@ -295,39 +251,6 @@ export function BookingSummary({
             </Button>
           )}
         </div>
-
-        {/* Payment Modal */}
-        {showPaymentModal && localClientSecret && (
-          <PaymentModal
-            isOpen={showPaymentModal}
-            onClose={() => {
-              console.log('🚪 Closing payment modal');
-              setShowPaymentModal(false);
-              setLocalClientSecret("");
-            }}
-            clientSecret={localClientSecret}
-            bookingData={{
-              date,
-              time,
-              courtType,
-              courtName,
-              amount: total,
-              selectedUserName,
-            }}
-            onSuccess={() => {
-              console.log('✅ Payment modal success');
-              setShowPaymentModal(false);
-              setLocalClientSecret("");
-              onPaymentSuccess?.();
-            }}
-            onError={(error) => {
-              console.error('❌ Payment modal error:', error);
-              setShowPaymentModal(false);
-              setLocalClientSecret("");
-              onPaymentError?.(error);
-            }}
-          />
-        )}
       </CardContent>
     </Card>
   );

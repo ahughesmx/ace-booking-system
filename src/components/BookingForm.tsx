@@ -20,7 +20,7 @@ import { TicketReceipt } from "./booking/TicketReceipt";
 import { useAuth } from "@/components/AuthProvider";
 import { useGlobalRole } from "@/hooks/use-global-role";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase-client";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BookingFormProps {
   selectedDate?: Date;
@@ -49,8 +49,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     cancelPendingBooking,
     confirmPaymentSuccess,
     pendingBooking,
-    isCreatingBooking,
-    clientSecret
+    isCreatingBooking
   } = useBookingPayment();
 
   // Verificar si el usuario es operador
@@ -374,9 +373,6 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
             isOperator={isOperator}
             selectedUserName={selectedUserName}
             processingPayment={processingPayment}
-            clientSecret={clientSecret}
-            onPaymentSuccess={handlePaymentSuccess}
-            onPaymentError={handlePaymentError}
           />
       </div>
     );

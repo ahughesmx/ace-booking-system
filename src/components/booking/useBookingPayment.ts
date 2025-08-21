@@ -3,7 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/AuthProvider";
-import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 
 interface BookingData {
   selectedDate: Date;
@@ -16,15 +15,12 @@ interface BookingData {
 export function useBookingPayment() {
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
   const [pendingBooking, setPendingBooking] = useState<any>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'modal' | 'redirect'>('modal');
-  const [clientSecret, setClientSecret] = useState<string>("");
 
-  // DEBUG: Log hook state
   console.log('🔄 useBookingPayment state:', {
-    paymentMethod,
     pendingBooking: !!pendingBooking,
-    clientSecret: clientSecret ? 'SET' : 'NONE'
+    pendingBookingId: pendingBooking?.id
   });
+
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user, session } = useAuth();
@@ -112,7 +108,7 @@ export function useBookingPayment() {
 
       const bookingPayload = {
         court_id: selectedCourt,
-        user_id: forUserId || user.id, // Usar forUserId si es una reserva de operador
+        user_id: forUserId || user.id,
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
         status: 'pending_payment',
@@ -140,13 +136,11 @@ export function useBookingPayment() {
 
       console.log('✅ Booking created successfully:', booking);
       setPendingBooking(booking);
-      console.log('✅ Pending booking state set');
       return booking;
     } catch (error) {
       console.error("❌ Error creating pending booking:", error);
       throw error;
     } finally {
-      console.log('🔄 Setting isCreatingBooking to false');
       setIsCreatingBooking(false);
     }
   };
@@ -157,11 +151,9 @@ export function useBookingPayment() {
       pendingBookingId: pendingBooking?.id,
       user: user?.id,
       session: !!session,
-      sessionAccessToken: session?.access_token ? 'PRESENT' : 'MISSING',
       timestamp: new Date().toISOString()
     });
     
-    // ARREGLO: Validación mejorada de datos requeridos
     if (!pendingBooking) {
       console.error('❌ No pending booking found');
       throw new Error('No hay reserva pendiente para procesar');
@@ -174,88 +166,58 @@ export function useBookingPayment() {
 
     try {
       if (paymentGateway === 'stripe') {
-        console.log('💳 STRIPE: Starting Stripe payment process, paymentMethod:', paymentMethod);
-        // Always try modal method first, fallback to redirect if fails
-        try {
-          console.log('💳 STRIPE: Trying modal method first');
-            const bookingData = {
-              selectedDate: new Date(pendingBooking.start_time),
-              selectedTime: new Date(pendingBooking.start_time).toLocaleTimeString('es-ES', { 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                hour12: false 
-              }),
-              selectedCourt: pendingBooking.court.name,
-              selectedCourtType: pendingBooking.court.court_type,
-              amount: pendingBooking.amount
-            };
+        console.log('💳 STRIPE: Starting Stripe redirect payment process');
+        
+        const bookingData = {
+          selectedDate: new Date(pendingBooking.start_time),
+          selectedTime: new Date(pendingBooking.start_time).toLocaleTimeString('es-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: false 
+          }),
+          selectedCourt: pendingBooking.court.name,
+          selectedCourtType: pendingBooking.court.court_type,
+          amount: pendingBooking.amount
+        };
 
-            console.log('📤 Calling create-payment-intent with:', bookingData);
-            console.log('🔑 JWT Token status:', {
-              hasSession: !!session,
-              hasAccessToken: !!session?.access_token,
-              tokenLength: session?.access_token?.length || 0,
-              expiresAt: session?.expires_at || 'unknown'
-            });
-            
-            const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-              body: { bookingData }
-            });
+        console.log('📤 Calling create-payment with:', bookingData);
+        console.log('🔑 Session status:', {
+          hasSession: !!session,
+          hasAccessToken: !!session?.access_token,
+          tokenLength: session?.access_token?.length || 0,
+        });
+        
+        const { data, error } = await supabase.functions.invoke('create-payment', {
+          body: { bookingData }
+        });
 
-            console.log('📥 create-payment-intent response:', { data, error });
-            if (error) throw error;
-            if (!data?.clientSecret) throw new Error("No client secret received");
-
-          console.log('✅ Setting clientSecret for modal');
-          setClientSecret(data.clientSecret);
-          return { useModal: true, clientSecret: data.clientSecret };
-        } catch (modalError) {
-          console.warn('💳 STRIPE: Modal method failed, falling back to redirect:', modalError);
-          // Continue to redirect method below
+        console.log('📥 create-payment response:', { data, error });
+        
+        if (error) {
+          console.error('❌ Stripe payment failed:', error);
+          throw new Error('Error al crear sesión de pago con Stripe');
+        }
+        
+        if (!data?.url) {
+          console.error('❌ No checkout URL received');
+          throw new Error("No se recibió URL de checkout");
         }
 
-        // Fallback to redirect method
-        console.log('💳 STRIPE: Using redirect method');
-        try {
-          const bookingData = {
-            selectedDate: new Date(pendingBooking.start_time),
-            selectedTime: new Date(pendingBooking.start_time).toLocaleTimeString('es-ES', { 
-              hour: '2-digit', 
-              minute: '2-digit', 
-              hour12: false 
-            }),
-            selectedCourt: pendingBooking.court.name,
-            selectedCourtType: pendingBooking.court.court_type,
-            amount: pendingBooking.amount
-          };
-
-          const { data, error } = await supabase.functions.invoke('create-payment', {
-            body: { bookingData }
-          });
-
-          if (error) throw error;
-          if (!data?.url) throw new Error("No checkout URL received");
-
-          console.log('🚀 Returning redirect URL for checkout');
-          return { redirectUrl: data.url };
-        } catch (redirectError) {
-          console.error('❌ Redirect payment also failed:', redirectError);
-          throw new Error('No se pudo procesar el pago con Stripe. Intente más tarde.');
-        }
+        console.log('🚀 Redirecting to Stripe checkout:', data.url);
+        // Abrir Stripe checkout en nueva pestaña
+        window.open(data.url, '_blank');
+        
+        return { 
+          redirectUrl: data.url,
+          success: true
+        };
       } else {
         // Para otros métodos de pago (incluyendo efectivo)
         console.log(`🔄 INICIANDO PAGO ${paymentGateway.toUpperCase()} para reserva ${pendingBooking.id}`);
-        console.log('📋 Datos de la reserva pendiente:', pendingBooking);
         
         await new Promise(resolve => setTimeout(resolve, 1000)); // Simular procesamiento
         
         console.log('💳 ACTUALIZANDO STATUS DE RESERVA A PAID');
-        console.log('💳 DATOS DE ACTUALIZACIÓN:', {
-          bookingId: pendingBooking.id,
-          gateway: paymentGateway,
-          timestamp: new Date().toISOString(),
-          amount: pendingBooking.amount
-        });
         
         const updateResult = await supabase
           .from("bookings")
@@ -266,37 +228,19 @@ export function useBookingPayment() {
             payment_completed_at: new Date().toISOString(),
             payment_id: `${paymentGateway}_${Date.now()}`,
             actual_amount_charged: pendingBooking.amount,
-            expires_at: null, // Limpiar fecha de expiración al marcar como pagado
+            expires_at: null,
             processed_by: paymentGateway === 'efectivo' ? user.id : null
           })
           .eq("id", pendingBooking.id);
 
         console.log('💳 RESULTADO DE ACTUALIZACIÓN:', updateResult.error ? 'ERROR: ' + updateResult.error.message : 'ÉXITO');
-        console.log('💳 UPDATE RESPONSE COMPLETA:', updateResult);
 
         if (updateResult.error) {
           console.error('💳 ERROR DETALLADO EN UPDATE:', updateResult.error);
           throw updateResult.error;
         }
 
-        // Verificar que la reserva se actualizó correctamente
-        const { data: verifyBooking, error: verifyError } = await supabase
-          .from("bookings")
-          .select("*")
-          .eq("id", pendingBooking.id)
-          .single();
-          
-        console.log('🔍 VERIFICACIÓN POST-UPDATE:', { verifyBooking, verifyError });
-        
-        if (verifyError) {
-          console.error('❌ Error verificando reserva:', verifyError);
-        } else {
-          console.log('✅ Reserva verificada - Status:', verifyBooking.status);
-        }
-
-        console.log('💳 ✅ RESERVA ACTUALIZADA CORRECTAMENTE, PROCEDEMOA WEBHOOKS...');
-        
-        // Disparar webhooks para booking_created
+        // Trigger webhooks for booking_created
         console.log('🎯 INICIANDO PROCESO DE WEBHOOKS DESPUÉS DEL PAGO');
         try {
           const { data: profile } = await supabase
@@ -332,21 +276,16 @@ export function useBookingPayment() {
             })
           };
 
-          console.log('📋 Datos del webhook preparados:', webhookData);
-
           // Obtener webhooks activos para booking_created
-          const { data: webhooks, error: webhooksError } = await supabase
+          const { data: webhooks } = await supabase
             .from("webhooks")
             .select("*")
             .eq("event_type", "booking_created")
             .eq("is_active", true);
 
-          console.log('🔍 Webhooks encontrados:', webhooks, 'Error:', webhooksError);
-
           if (webhooks && webhooks.length > 0) {
             console.log(`🚀 Disparando ${webhooks.length} webhooks`);
             for (const webhook of webhooks) {
-              console.log(`📡 Procesando webhook: ${webhook.name} -> ${webhook.url}`);
               try {
                 const customHeaders = webhook.headers as Record<string, string> || {};
                 const headers: Record<string, string> = {
@@ -354,18 +293,7 @@ export function useBookingPayment() {
                   ...customHeaders,
                 };
 
-                console.log('📤 Enviando webhook:', {
-                  url: webhook.url,
-                  headers,
-                  payload: {
-                    event: "booking_created",
-                    timestamp: new Date().toISOString(),
-                    data: webhookData,
-                    webhook_name: webhook.name
-                  }
-                });
-
-                const response = await fetch(webhook.url, {
+                await fetch(webhook.url, {
                   method: "POST",
                   headers,
                   body: JSON.stringify({
@@ -376,18 +304,14 @@ export function useBookingPayment() {
                   }),
                 });
 
-                console.log(`✅ Webhook ${webhook.name} response status:`, response.status);
                 console.log(`✅ Webhook ${webhook.name} disparado exitosamente`);
               } catch (webhookError) {
                 console.error(`❌ Error disparando webhook ${webhook.name}:`, webhookError);
               }
             }
-          } else {
-            console.log('⚠️ No se encontraron webhooks activos para booking_created');
           }
         } catch (webhookError) {
           console.error("❌ Error procesando webhooks:", webhookError);
-          // No fallar la reserva por errores de webhook
         }
 
         await queryClient.invalidateQueries({ queryKey: ["bookings"] });
@@ -407,7 +331,7 @@ export function useBookingPayment() {
         };
       }
     } catch (error) {
-      console.error("Error processing payment:", error);
+      console.error("❌ Error processing payment:", error);
       toast({
         title: "Error en el pago",
         description: "No se pudo procesar el pago. Inténtalo de nuevo.",
@@ -431,7 +355,6 @@ export function useBookingPayment() {
 
       setPendingBooking(null);
       
-      // Invalidar queries para actualizar la UI
       await queryClient.invalidateQueries({ queryKey: ["bookings"] });
       await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
     } catch (error) {
@@ -441,7 +364,7 @@ export function useBookingPayment() {
 
   const confirmPaymentSuccess = async () => {
     try {
-      if (!pendingBooking) return;
+      if (!pendingBooking) return false;
 
       // Update booking status to paid
       const { error } = await supabase
@@ -459,7 +382,6 @@ export function useBookingPayment() {
 
       if (error) throw error;
 
-      // Trigger webhooks and cleanup
       await queryClient.invalidateQueries({ queryKey: ["bookings"] });
       await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
       
@@ -469,13 +391,12 @@ export function useBookingPayment() {
       });
 
       setPendingBooking(null);
-      setClientSecret("");
       return true;
     } catch (error) {
       console.error("Error confirming payment:", error);
       toast({
-        title: "Error",
-        description: "Error al confirmar el pago. Contacta soporte.",
+        title: "Error confirmando pago",
+        description: "No se pudo confirmar el pago. Contacta soporte.",
         variant: "destructive",
       });
       return false;
@@ -489,8 +410,6 @@ export function useBookingPayment() {
     confirmPaymentSuccess,
     pendingBooking,
     isCreatingBooking,
-    paymentMethod,
-    clientSecret,
-    setPaymentMethod
+    // Removed clientSecret and paymentMethod states for simplicity
   };
 }

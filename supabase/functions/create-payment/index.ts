@@ -14,18 +14,37 @@ serve(async (req) => {
   }
 
   try {
-    // Create Supabase client
+    console.log("🚀 create-payment function started");
+    
+    // Create Supabase client with anon key for manual auth
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
 
-    // Authenticate user
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-    if (!user?.email) throw new Error("User not authenticated");
+    // Manual user authentication - since verify_jwt = false
+    let user = null;
+    const authHeader = req.headers.get("Authorization");
+    console.log("🔑 Auth header present:", !!authHeader);
+    
+    if (authHeader) {
+      try {
+        const token = authHeader.replace("Bearer ", "");
+        const { data, error } = await supabaseClient.auth.getUser(token);
+        console.log("👤 User auth result:", { hasUser: !!data.user, error: error?.message });
+        user = data.user;
+        if (!user?.email) {
+          console.error("❌ No user email found");
+          throw new Error("User not authenticated");
+        }
+      } catch (authError) {
+        console.error("❌ Authentication failed:", authError);
+        throw new Error("Authentication failed");
+      }
+    } else {
+      console.error("❌ No authorization header");
+      throw new Error("No authorization header");
+    }
 
     // Parse request body
     const { bookingData } = await req.json();

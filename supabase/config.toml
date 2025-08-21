@@ -70,10 +70,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.create-payment]
-verify_jwt = true
-
-[functions.create-payment-intent]
-verify_jwt = true
+verify_jwt = false
 
 [functions.verify-payment]
 verify_jwt = false
