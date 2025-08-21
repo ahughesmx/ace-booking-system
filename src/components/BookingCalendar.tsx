@@ -147,8 +147,8 @@ function BookingCalendar({ selectedCourtType: initialCourtType, selectedDate: in
         onCourtTypeSelect={handleCourtTypeSelect}
       />
       
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="md:sticky md:top-4 h-fit border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5">
+      <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6">
+        <Card className="lg:sticky lg:top-4 h-fit border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 w-full">
           <CardHeader className="bg-gradient-to-r from-[#6898FE]/10 to-transparent">
             <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#6898FE] to-[#0FA0CE]">
               Reserva tu Cancha
@@ -164,13 +164,13 @@ function BookingCalendar({ selectedCourtType: initialCourtType, selectedDate: in
             )}
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="rounded-lg border border-[#6898FE]/20 p-3">
+            <div className="rounded-lg border border-[#6898FE]/20 p-1 sm:p-3 w-full overflow-hidden">
               <Calendar
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
                 disabled={isDayDisabled}
-                className="w-full"
+                className="w-full mx-auto"
                 initialFocus
               />
             </div>
