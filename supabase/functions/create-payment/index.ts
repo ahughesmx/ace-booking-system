@@ -148,17 +148,33 @@ serve(async (req) => {
     // Format date and time for Mexico timezone
     const mexicoTimeZone = 'America/Mexico_City';
     
-    // Parse the selected date (which is an ISO string) and selected time properly
+    // Parse the selected date and extract just the date part
     const selectedDate = new Date(bookingData.selectedDate);
     const [hours, minutes] = bookingData.selectedTime.split(':').map(Number);
     
-    // Create a new date with the selected date and time
-    const bookingDateTime = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hours, minutes);
+    // Create the booking date in Mexico timezone directly
+    // Get the date components in Mexico timezone
+    const mexicoDate = toZonedTime(selectedDate, mexicoTimeZone);
+    const bookingYear = mexicoDate.getFullYear();
+    const bookingMonth = mexicoDate.getMonth();
+    const bookingDay = mexicoDate.getDate();
     
-    const mexicoDateTime = toZonedTime(bookingDateTime, mexicoTimeZone);
-    const formattedDate = format(mexicoDateTime, 'dd/MM/yyyy');
-    const formattedTime = format(mexicoDateTime, 'HH:mm');
+    // Create the final datetime with the selected time in Mexico timezone
+    const bookingDateTime = new Date(bookingYear, bookingMonth, bookingDay, hours, minutes);
+    
+    // Format for display - no need to convert to zoned time again since we already created it correctly
+    const formattedDate = format(bookingDateTime, 'dd/MM/yyyy');
+    const formattedTime = format(bookingDateTime, 'HH:mm');
     const formattedDateTime = `${formattedDate} ${formattedTime} (México)`;
+    
+    console.log("📅 Booking datetime info:", {
+      originalDate: bookingData.selectedDate,
+      selectedTime: bookingData.selectedTime,
+      finalDateTime: bookingDateTime.toISOString(),
+      formattedDate,
+      formattedTime,
+      formattedDateTime
+    });
     
     const sessionData = {
       customer: customerId,
