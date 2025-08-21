@@ -129,16 +129,18 @@ export function DoublesMatchCard({
       <CardHeader className="p-4 bg-gradient-to-r from-[#6898FE]/10 to-transparent">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4 flex-grow">
-            <div className="grid grid-cols-3 gap-4 items-center w-full">
+            <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 items-center w-full">
               {/* Equipo 1 */}
-              {renderTeam(
-                "Equipo 1",
-                match.player1?.full_name,
-                match.player1_partner?.full_name
-              )}
+              <div className="order-1 lg:order-1 w-full">
+                {renderTeam(
+                  "Equipo 1",
+                  match.player1?.full_name,
+                  match.player1_partner?.full_name
+                )}
+              </div>
               
               {/* VS + Marcador */}
-              <div className="flex flex-col items-center">
+              <div className="order-3 lg:order-2 flex flex-col items-center">
                 <span className="text-muted-foreground font-semibold text-lg">VS</span>
                 <MatchScore 
                   player1Sets={match.player1_sets} 
@@ -152,12 +154,14 @@ export function DoublesMatchCard({
               </div>
               
               {/* Equipo 2 */}
-              {renderTeam(
-                "Equipo 2",
-                match.player2?.full_name,
-                match.player2_partner?.full_name,
-                match.is_confirmed_player2
-              )}
+              <div className="order-2 lg:order-3 w-full">
+                {renderTeam(
+                  "Equipo 2",
+                  match.player2?.full_name,
+                  match.player2_partner?.full_name,
+                  match.is_confirmed_player2
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -141,36 +141,91 @@ export default function MyBookings() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Fecha</TableHead>
-                          <TableHead>Hora</TableHead>
-                          <TableHead>Cancha</TableHead>
-                          <TableHead>Usuario</TableHead>
-                          <TableHead>Tipo</TableHead>
-                          <TableHead>Acciones</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedUpcomingBookings.map((booking) => (
-                          <TableRow key={booking.id}>
-                            <TableCell className="font-medium">
-                              {format(new Date(booking.start_time), "dd/MM/yyyy", { locale: es })}
-                            </TableCell>
-                            <TableCell>
-                              {format(new Date(booking.start_time), "HH:mm", { locale: es })} - {format(new Date(booking.end_time), "HH:mm", { locale: es })}
-                            </TableCell>
-                            <TableCell>
-                              {booking.court?.name} ({booking.court?.court_type})
-                            </TableCell>
-                            <TableCell>
-                              {booking.isSpecial ? 
-                                (booking.title || "Evento especial") : 
-                                (booking.user?.full_name || "Usuario no disponible")
-                              }
-                            </TableCell>
-                            <TableCell>
+                    {/* Desktop Table */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Fecha</TableHead>
+                            <TableHead>Hora</TableHead>
+                            <TableHead>Cancha</TableHead>
+                            <TableHead>Usuario</TableHead>
+                            <TableHead>Tipo</TableHead>
+                            <TableHead>Acciones</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedUpcomingBookings.map((booking) => (
+                            <TableRow key={booking.id}>
+                              <TableCell className="font-medium">
+                                {format(new Date(booking.start_time), "dd/MM/yyyy", { locale: es })}
+                              </TableCell>
+                              <TableCell>
+                                {format(new Date(booking.start_time), "HH:mm", { locale: es })} - {format(new Date(booking.end_time), "HH:mm", { locale: es })}
+                              </TableCell>
+                              <TableCell>
+                                {booking.court?.name} ({booking.court?.court_type})
+                              </TableCell>
+                              <TableCell>
+                                {booking.isSpecial ? 
+                                  (booking.title || "Evento especial") : 
+                                  (booking.user?.full_name || "Usuario no disponible")
+                                }
+                              </TableCell>
+                              <TableCell>
+                                {booking.isSpecial ? (
+                                  <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                    {booking.event_type || "Evento"}
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700/10">
+                                    Reservación
+                                  </span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleReprintTicket(booking)}
+                                    className="flex items-center gap-1"
+                                  >
+                                    <Receipt className="h-3 w-3" />
+                                    Ticket
+                                  </Button>
+                                  {!booking.isSpecial && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => cancelBooking(booking.id)}
+                                      className="text-destructive hover:text-destructive-foreground hover:bg-destructive"
+                                    >
+                                      Cancelar
+                                    </Button>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Mobile Cards */}
+                    <div className="md:hidden space-y-3">
+                      {paginatedUpcomingBookings.map((booking) => (
+                        <Card key={booking.id} className="p-4">
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="font-medium">
+                                  {format(new Date(booking.start_time), "dd/MM/yyyy", { locale: es })}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {format(new Date(booking.start_time), "HH:mm", { locale: es })} - {format(new Date(booking.end_time), "HH:mm", { locale: es })}
+                                </div>
+                              </div>
                               {booking.isSpecial ? (
                                 <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
                                   {booking.event_type || "Evento"}
@@ -180,34 +235,39 @@ export default function MyBookings() {
                                   Reservación
                                 </span>
                               )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
+                            </div>
+                            <div className="text-sm">
+                              <div><strong>Cancha:</strong> {booking.court?.name} ({booking.court?.court_type})</div>
+                              <div><strong>Usuario:</strong> {booking.isSpecial ? 
+                                (booking.title || "Evento especial") : 
+                                (booking.user?.full_name || "Usuario no disponible")
+                              }</div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleReprintTicket(booking)}
+                                className="flex items-center gap-1 flex-1"
+                              >
+                                <Receipt className="h-3 w-3" />
+                                Ticket
+                              </Button>
+                              {!booking.isSpecial && (
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => handleReprintTicket(booking)}
-                                  className="flex items-center gap-1"
+                                  onClick={() => cancelBooking(booking.id)}
+                                  className="text-destructive hover:text-destructive-foreground hover:bg-destructive flex-1"
                                 >
-                                  <Receipt className="h-3 w-3" />
-                                  Ticket
+                                  Cancelar
                                 </Button>
-                                {!booking.isSpecial && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => cancelBooking(booking.id)}
-                                    className="text-destructive hover:text-destructive-foreground hover:bg-destructive"
-                                  >
-                                    Cancelar
-                                  </Button>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                              )}
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
                     
                     {upcomingTotalPages > 1 && (
                       <div className="mt-6">
@@ -265,61 +325,109 @@ export default function MyBookings() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <Table>
-                       <TableHeader>
-                         <TableRow>
-                           <TableHead>Fecha</TableHead>
-                           <TableHead>Hora</TableHead>
-                           <TableHead>Cancha</TableHead>
-                           <TableHead>Usuario</TableHead>
-                           <TableHead>Tipo</TableHead>
-                           <TableHead>Acciones</TableHead>
-                         </TableRow>
-                       </TableHeader>
-                      <TableBody>
-                        {paginatedPastBookings.map((booking) => (
-                          <TableRow key={booking.id}>
-                            <TableCell className="font-medium">
-                              {format(new Date(booking.start_time), "dd/MM/yyyy", { locale: es })}
-                            </TableCell>
-                            <TableCell>
-                              {format(new Date(booking.start_time), "HH:mm", { locale: es })} - {format(new Date(booking.end_time), "HH:mm", { locale: es })}
-                            </TableCell>
-                            <TableCell>
-                              {booking.court?.name} ({booking.court?.court_type})
-                            </TableCell>
-                            <TableCell>
-                              {booking.isSpecial ? 
+                    {/* Desktop Table */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <Table>
+                         <TableHeader>
+                           <TableRow>
+                             <TableHead>Fecha</TableHead>
+                             <TableHead>Hora</TableHead>
+                             <TableHead>Cancha</TableHead>
+                             <TableHead>Usuario</TableHead>
+                             <TableHead>Tipo</TableHead>
+                             <TableHead>Acciones</TableHead>
+                           </TableRow>
+                         </TableHeader>
+                        <TableBody>
+                          {paginatedPastBookings.map((booking) => (
+                            <TableRow key={booking.id}>
+                              <TableCell className="font-medium">
+                                {format(new Date(booking.start_time), "dd/MM/yyyy", { locale: es })}
+                              </TableCell>
+                              <TableCell>
+                                {format(new Date(booking.start_time), "HH:mm", { locale: es })} - {format(new Date(booking.end_time), "HH:mm", { locale: es })}
+                              </TableCell>
+                              <TableCell>
+                                {booking.court?.name} ({booking.court?.court_type})
+                              </TableCell>
+                              <TableCell>
+                                {booking.isSpecial ? 
+                                  (booking.title || "Evento especial") : 
+                                  (booking.user?.full_name || "Usuario no disponible")
+                                }
+                              </TableCell>
+                               <TableCell>
+                                 {booking.isSpecial ? (
+                                   <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                     {booking.event_type || "Evento"}
+                                   </span>
+                                 ) : (
+                                   <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700/10">
+                                     Reservación
+                                   </span>
+                                 )}
+                               </TableCell>
+                               <TableCell>
+                                 <Button
+                                   variant="outline"
+                                   size="sm"
+                                   onClick={() => handleReprintTicket(booking)}
+                                   className="flex items-center gap-1"
+                                 >
+                                   <Receipt className="h-3 w-3" />
+                                   Ticket
+                                 </Button>
+                               </TableCell>
+                             </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Mobile Cards */}
+                    <div className="md:hidden space-y-3">
+                      {paginatedPastBookings.map((booking) => (
+                        <Card key={booking.id} className="p-4">
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="font-medium">
+                                  {format(new Date(booking.start_time), "dd/MM/yyyy", { locale: es })}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {format(new Date(booking.start_time), "HH:mm", { locale: es })} - {format(new Date(booking.end_time), "HH:mm", { locale: es })}
+                                </div>
+                              </div>
+                              {booking.isSpecial ? (
+                                <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                  {booking.event_type || "Evento"}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700/10">
+                                  Reservación
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-sm">
+                              <div><strong>Cancha:</strong> {booking.court?.name} ({booking.court?.court_type})</div>
+                              <div><strong>Usuario:</strong> {booking.isSpecial ? 
                                 (booking.title || "Evento especial") : 
                                 (booking.user?.full_name || "Usuario no disponible")
-                              }
-                            </TableCell>
-                             <TableCell>
-                               {booking.isSpecial ? (
-                                 <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                                   {booking.event_type || "Evento"}
-                                 </span>
-                               ) : (
-                                 <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700/10">
-                                   Reservación
-                                 </span>
-                               )}
-                             </TableCell>
-                             <TableCell>
-                               <Button
-                                 variant="outline"
-                                 size="sm"
-                                 onClick={() => handleReprintTicket(booking)}
-                                 className="flex items-center gap-1"
-                               >
-                                 <Receipt className="h-3 w-3" />
-                                 Ticket
-                               </Button>
-                             </TableCell>
-                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                              }</div>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleReprintTicket(booking)}
+                              className="flex items-center gap-1 w-full"
+                            >
+                              <Receipt className="h-3 w-3" />
+                              Ticket
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
                     
                     {pastTotalPages > 1 && (
                       <div className="mt-6">

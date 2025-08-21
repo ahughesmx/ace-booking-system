@@ -44,15 +44,15 @@ export function SinglesMatchCard({
   return (
     <Card className="overflow-hidden border-[#6898FE]/20 bg-gradient-to-br from-white to-[#6898FE]/5 hover:shadow-lg transition-all duration-300">
       <CardHeader className="p-4 bg-gradient-to-r from-[#6898FE]/10 to-transparent">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col space-y-2 flex-grow">
-            <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
               <MatchTeam 
                 playerName={match.player1?.full_name}
                 isDoubles={false}
                 showConfirmation={false}
               />
-              <span className="text-muted-foreground font-semibold">vs</span>
+              <span className="text-muted-foreground font-semibold text-center">vs</span>
               <MatchTeam 
                 playerName={match.player2?.full_name}
                 isDoubles={false}
@@ -61,7 +61,7 @@ export function SinglesMatchCard({
               />
             </div>
           </div>
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-end sm:items-end">
             <MatchScore 
               player1Sets={match.player1_sets} 
               player2Sets={match.player2_sets} 

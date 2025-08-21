@@ -56,9 +56,28 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
           <p className="text-gray-600">Gestiona todos los aspectos del sistema</p>
         </div>
 
-        <div className="flex gap-6">
-          {/* Sidebar */}
-          <div className="w-64 flex-shrink-0">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Mobile Tabs */}
+          <div className="lg:hidden">
+            <Card>
+              <CardContent className="p-4">
+                <select
+                  value={activeTab}
+                  onChange={(e) => onTabChange(e.target.value)}
+                  className="w-full p-2 border rounded-md bg-white"
+                >
+                  {tabs.map((tab) => (
+                    <option key={tab.id} value={tab.id}>
+                      {tab.label}
+                    </option>
+                  ))}
+                </select>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:block w-64 flex-shrink-0">
             <Card>
               <CardContent className="p-4">
                 <nav className="space-y-2">
@@ -68,7 +87,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
                       <Button
                         key={tab.id}
                         variant={activeTab === tab.id ? "default" : "ghost"}
-                        className={`w-full justify-start ${
+                        className={`w-full justify-start text-sm ${
                           activeTab === tab.id
                             ? "bg-blue-600 text-white"
                             : "text-gray-700 hover:bg-gray-100"
@@ -86,7 +105,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <Card>
               <CardContent className="p-6">
                 {children}

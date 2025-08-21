@@ -34,7 +34,7 @@ export function CourtTypeSelector({ selectedType, onTypeSelect }: CourtTypeSelec
         </p>
       </div>
       
-      <div className={`grid gap-4 ${availableTypes.length === 2 ? 'grid-cols-2' : availableTypes.length === 3 ? 'grid-cols-3' : 'grid-cols-1'}`}>
+      <div className={`grid gap-3 sm:gap-4 ${availableTypes.length === 1 ? 'grid-cols-1 max-w-sm mx-auto' : availableTypes.length === 2 ? 'grid-cols-1 sm:grid-cols-2' : availableTypes.length === 3 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
         {availableTypes.map((type) => (
           <Card
             key={type.id}

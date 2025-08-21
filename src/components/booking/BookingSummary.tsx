@@ -82,7 +82,7 @@ export function BookingSummary({
   const endTime = addHours(startTime, duration);
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-sm sm:max-w-md">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
