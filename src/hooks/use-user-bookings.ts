@@ -54,7 +54,7 @@ export function useUserBookings(userId?: string) {
           )
         `)
         .in("user_id", familyUserIds)
-        .eq("status", "paid")
+        .in("status", ["paid", "cancelled"])
         .gte("start_time", getCurrentMexicoCityTimeISO())
         .order("start_time", { ascending: true });
 
@@ -158,7 +158,7 @@ export function useUserBookings(userId?: string) {
           )
         `)
         .in("user_id", familyUserIds)
-        .eq("status", "paid")
+        .in("status", ["paid", "cancelled"])
         .lt("end_time", getCurrentMexicoCityTimeISO())
         .order("start_time", { ascending: false });
 
@@ -221,7 +221,7 @@ export function useUserBookings(userId?: string) {
     mutationFn: async (bookingId: string) => {
       const { error } = await supabase
         .from("bookings")
-        .delete()
+        .update({ status: "cancelled" })
         .eq("id", bookingId);
 
       if (error) throw error;

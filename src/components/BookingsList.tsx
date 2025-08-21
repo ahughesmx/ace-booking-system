@@ -123,7 +123,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
 
         const { error } = await supabase
           .from("bookings")
-          .delete()
+          .update({ status: "cancelled" })
           .eq("id", bookingId);
 
         if (error) throw error;

@@ -506,7 +506,7 @@ export function useBookingPayment() {
     try {
       const { error } = await supabase
         .from("bookings")
-        .delete()
+        .update({ status: "cancelled" })
         .eq("id", pendingBooking.id)
         .eq("status", "pending_payment");
 
