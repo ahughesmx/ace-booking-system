@@ -93,7 +93,7 @@ export function exportToPDF(options: PDFExportOptions) {
         const value = row[col.dataKey];
         // Format currency values
         if (col.dataKey.includes('amount') || col.dataKey.includes('total')) {
-          return typeof value === 'number' ? `$${value.toFixed(2)}` : value || 'N/A';
+          return typeof value === 'number' ? formatCurrency(value) : value || 'N/A';
         }
         // Format dates
         if (col.dataKey.includes('date') || col.dataKey.includes('time')) {

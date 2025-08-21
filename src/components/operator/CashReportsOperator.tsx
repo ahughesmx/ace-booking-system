@@ -9,7 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Download, Calendar, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { exportToPDF, formatCurrency } from "@/utils/pdf-export";
+import { exportToPDF } from "@/utils/pdf-export";
+import { formatCurrency } from "@/lib/utils";
 import { getStartOfTodayMexicoCityISO, getEndOfTodayMexicoCityISO, toMexicoCityTime, fromMexicoCityTimeToUTC } from "@/utils/timezone";
 
 interface CashBooking {
@@ -135,7 +136,7 @@ export function CashReportsOperator() {
         booking.user?.full_name || 'N/A',
         booking.user?.member_id || 'N/A',
         booking.court?.name || 'N/A',
-        `$${amount.toFixed(2)}`
+        formatCurrency(amount)
       ];
     });
 
@@ -215,7 +216,7 @@ export function CashReportsOperator() {
           <CardTitle className="flex items-center justify-between">
             <span>Total de Cobros en Efectivo</span>
             <span className="text-2xl font-bold text-primary">
-              ${total.toFixed(2)}
+              {formatCurrency(total)}
             </span>
           </CardTitle>
         </CardHeader>
@@ -268,7 +269,7 @@ export function CashReportsOperator() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    ${(booking.actual_amount_charged || booking.amount || 0).toFixed(2)}
+                    {formatCurrency(booking.actual_amount_charged || booking.amount || 0)}
                   </TableCell>
                 </TableRow>
               ))

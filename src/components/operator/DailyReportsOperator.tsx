@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Download, Calendar, DollarSign, CreditCard, Hash, TrendingUp, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { exportToPDF, formatCurrency } from "@/utils/pdf-export";
+import { exportToPDF } from "@/utils/pdf-export";
+import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/components/AuthProvider";
 import { getStartOfTodayMexicoCityISO, getEndOfTodayMexicoCityISO, toMexicoCityTime, fromMexicoCityTimeToUTC } from "@/utils/timezone";
 
@@ -209,7 +210,7 @@ export function DailyReportsOperator() {
         booking.court?.name || 'N/A',
         booking.payment_method === 'efectivo' ? 'Efectivo' : 'En Línea',
         booking.processed_by_user?.full_name || 'Sistema',
-        `$${amount.toFixed(2)}`
+        formatCurrency(amount)
       ];
     });
 
@@ -305,7 +306,7 @@ export function DailyReportsOperator() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              ${summary.cashTotal.toFixed(2)}
+              {formatCurrency(summary.cashTotal)}
             </div>
           </CardContent>
         </Card>
@@ -316,7 +317,7 @@ export function DailyReportsOperator() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              ${summary.onlineTotal.toFixed(2)}
+              {formatCurrency(summary.onlineTotal)}
             </div>
           </CardContent>
         </Card>
@@ -327,7 +328,7 @@ export function DailyReportsOperator() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
-              ${summary.total.toFixed(2)}
+              {formatCurrency(summary.total)}
             </div>
             <div className="text-xs text-muted-foreground mt-1">
               Vigentes + Canceladas
@@ -423,7 +424,7 @@ export function DailyReportsOperator() {
                     {booking.processed_by_user?.full_name || 'Sistema'}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    ${(booking.actual_amount_charged || booking.amount || 0).toFixed(2)}
+                    {formatCurrency(booking.actual_amount_charged || booking.amount || 0)}
                   </TableCell>
                 </TableRow>
               ))
