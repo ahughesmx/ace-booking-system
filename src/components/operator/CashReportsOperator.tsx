@@ -84,8 +84,8 @@ export function CashReportsOperator() {
         `)
         .eq('payment_method', 'efectivo')
         .in('status', ['paid', 'cancelled'])
-        .gte('start_time', startOfDayUTC)
-        .lte('start_time', endOfDayUTC)
+        .gte('booking_made_at', startOfDayUTC)
+        .lte('booking_made_at', endOfDayUTC)
         .order('start_time', { ascending: false });
 
       if (error) throw error;
