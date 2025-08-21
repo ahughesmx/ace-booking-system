@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { format } from "https://esm.sh/date-fns@3.6.0";
+import { toZonedTime } from "https://esm.sh/date-fns-tz@3.2.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -142,6 +144,15 @@ serve(async (req) => {
 
     // Create checkout session
     console.log("💳 Creating Stripe checkout session...");
+    
+    // Format date and time for Mexico timezone
+    const mexicoTimeZone = 'America/Mexico_City';
+    const bookingDateTime = new Date(`${bookingData.selectedDate}T${bookingData.selectedTime}`);
+    const mexicoDateTime = toZonedTime(bookingDateTime, mexicoTimeZone);
+    const formattedDate = format(mexicoDateTime, 'dd/MM/yyyy', { timeZone: mexicoTimeZone });
+    const formattedTime = format(mexicoDateTime, 'HH:mm', { timeZone: mexicoTimeZone });
+    const formattedDateTime = `${formattedDate} ${formattedTime} (México)`;
+    
     const sessionData = {
       customer: customerId,
       line_items: [
@@ -150,7 +161,7 @@ serve(async (req) => {
             currency: "mxn",
             product_data: {
               name: `Reserva de cancha - ${bookingData.selectedCourt}`,
-              description: `${bookingData.selectedDate} ${bookingData.selectedTime}`,
+              description: formattedDateTime,
             },
             unit_amount: Math.round(bookingData.amount * 100), // Convert to cents
           },
@@ -162,8 +173,8 @@ serve(async (req) => {
       cancel_url: `${req.headers.get("origin")}/`,
       metadata: {
         user_id: user.id,
-        booking_date: bookingData.selectedDate,
-        booking_time: bookingData.selectedTime,
+        booking_date: formattedDate,
+        booking_time: formattedTime,
         court_name: bookingData.selectedCourt,
         court_type: bookingData.selectedCourtType,
       },

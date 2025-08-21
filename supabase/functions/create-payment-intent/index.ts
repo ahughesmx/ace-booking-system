@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { format } from "https://esm.sh/date-fns@3.6.0";
+import { toZonedTime } from "https://esm.sh/date-fns-tz@3.2.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -76,6 +78,14 @@ serve(async (req) => {
       customerId = customer.id;
     }
 
+    // Format date and time for Mexico timezone
+    const mexicoTimeZone = 'America/Mexico_City';
+    const bookingDateTime = new Date(`${bookingData.selectedDate}T${bookingData.selectedTime}`);
+    const mexicoDateTime = toZonedTime(bookingDateTime, mexicoTimeZone);
+    const formattedDate = format(mexicoDateTime, 'dd/MM/yyyy', { timeZone: mexicoTimeZone });
+    const formattedTime = format(mexicoDateTime, 'HH:mm', { timeZone: mexicoTimeZone });
+    const formattedDateTime = `${formattedDate} ${formattedTime} (México)`;
+
     // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(bookingData.amount * 100), // Convert to cents
@@ -83,12 +93,12 @@ serve(async (req) => {
       customer: customerId,
       metadata: {
         user_id: user.id,
-        booking_date: bookingData.selectedDate,
-        booking_time: bookingData.selectedTime,
+        booking_date: formattedDate,
+        booking_time: formattedTime,
         court_name: bookingData.selectedCourt,
         court_type: bookingData.selectedCourtType,
       },
-      description: `Reserva de cancha - ${bookingData.selectedCourt} - ${bookingData.selectedDate} ${bookingData.selectedTime}`,
+      description: `Reserva de cancha - ${bookingData.selectedCourt} - ${formattedDateTime}`,
     });
 
     console.log("Payment Intent created:", paymentIntent.id);
