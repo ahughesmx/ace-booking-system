@@ -62,23 +62,22 @@ export function useBookingPayment() {
       throw new Error("Usuario no autenticado");
     }
 
-    // Limpiar reservas expiradas primero
-    console.log('🧹 Limpiando reservas expiradas antes de crear nueva...');
+    // NUEVA FUNCIONALIDAD: Cancelar TODAS las reservas pendientes anteriores del usuario (no solo expiradas)
+    console.log('🧹 Cancelando todas las reservas pendientes anteriores del usuario...');
     try {
       const { error: cleanupError } = await supabase
         .from("bookings")
         .delete()
         .eq("user_id", user.id)
-        .eq("status", "pending_payment")
-        .lt("expires_at", new Date().toISOString());
+        .eq("status", "pending_payment");
         
       if (cleanupError) {
-        console.warn('⚠️ Error en limpieza de reservas expiradas:', cleanupError);
+        console.warn('⚠️ Error al cancelar reservas pendientes anteriores:', cleanupError);
       } else {
-        console.log('✅ Reservas expiradas limpiadas');
+        console.log('✅ Todas las reservas pendientes anteriores han sido canceladas automáticamente');
       }
     } catch (error) {
-      console.warn('⚠️ Error durante limpieza:', error);
+      console.warn('⚠️ Error durante cancelación de reservas pendientes:', error);
     }
 
     setIsCreatingBooking(true);
