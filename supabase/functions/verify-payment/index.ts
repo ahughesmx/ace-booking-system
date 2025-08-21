@@ -37,18 +37,46 @@ serve(async (req) => {
         { auth: { persistSession: false } }
       );
 
-      // Parse booking data from metadata
-      const bookingData = JSON.parse(session.metadata?.booking_data || "{}");
-      
-      // Find the pending booking and update it
-      const { data: existingBooking } = await supabaseService
-        .from("bookings")
-        .select("*")
-        .eq("user_id", session.metadata?.user_id)
-        .eq("status", "pending_payment")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+  // Parse booking data from metadata
+  const bookingData = JSON.parse(session.metadata?.booking_data || "{}");
+  
+  // First try to find pending booking
+  let { data: existingBooking } = await supabaseService
+    .from("bookings")
+    .select("*")
+    .eq("user_id", session.metadata?.user_id)
+    .eq("status", "pending_payment")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  // If no pending booking found, search for recently paid bookings with matching payment_id
+  if (!existingBooking && session.payment_intent) {
+    console.log('🔍 No pending booking found, searching for recently paid booking with payment_id:', session.payment_intent);
+    
+    const { data: paidBooking } = await supabaseService
+      .from("bookings")
+      .select("*")
+      .eq("payment_id", session.payment_intent)
+      .eq("status", "paid")
+      .gte("payment_completed_at", new Date(Date.now() - 5 * 60 * 1000).toISOString()) // Last 5 minutes
+      .order("payment_completed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (paidBooking) {
+      console.log('✅ Found recently paid booking:', paidBooking.id);
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: "Pago ya confirmado anteriormente",
+        booking: paidBooking,
+        bookingData: bookingData
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+  }
 
       if (existingBooking) {
         // Update booking status to paid

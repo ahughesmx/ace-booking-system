@@ -27,10 +27,8 @@ export default function BookingSuccess() {
         
         if (success) {
           console.log("✅ Payment confirmed successfully");
-          // Redirigir automáticamente a mis reservas después del éxito
-          setTimeout(() => {
-            navigate("/my-bookings", { replace: true });
-          }, 2000);
+          // Redirect immediately to main calendar
+          navigate("/", { replace: true });
         } else {
           setError("Error al confirmar el pago");
         }
@@ -108,7 +106,7 @@ export default function BookingSuccess() {
               Tu reserva ha sido confirmada
             </p>
             <p className="text-muted-foreground">
-              Serás redirigido al calendario en unos segundos...
+              Redirigiendo al calendario...
             </p>
           </div>
           

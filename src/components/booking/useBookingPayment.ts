@@ -15,6 +15,7 @@ interface BookingData {
 export function useBookingPayment() {
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
   const [pendingBooking, setPendingBooking] = useState<any>(null);
+  const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
 
   console.log('🔄 useBookingPayment state:', {
     pendingBooking: !!pendingBooking,
@@ -438,106 +439,49 @@ export function useBookingPayment() {
   };
 
   const confirmPaymentSuccess = async (sessionId?: string) => {
+    // Prevent multiple simultaneous calls
+    if (isConfirmingPayment) {
+      console.log('⚠️ confirmPaymentSuccess already running, skipping duplicate call');
+      return false;
+    }
+    
+    setIsConfirmingPayment(true);
+    
     try {
       if (!user) return false;
+      console.log('🎯 Confirmando pago para usuario:', user.id, 'sessionId:', sessionId);
 
-      // Si tenemos sessionId de Stripe, usar verify-payment para obtener datos exactos
+      // Always use verify-payment for Stripe payments with sessionId
       if (sessionId) {
-        console.log('🎯 Verificando pago con Stripe usando sessionId:', sessionId);
-        
         const { data: verifyResult, error: verifyError } = await supabase.functions.invoke('verify-payment', {
           body: { sessionId }
         });
 
         if (verifyError) {
-          console.error('❌ ERROR en verify-payment:', verifyError);
-          throw verifyError;
+          console.error('❌ Error en verify-payment:', verifyError);
+          throw new Error('Error al verificar el pago con Stripe');
         }
 
         if (verifyResult?.success) {
-          console.log('✅ Pago verificado exitosamente con Stripe');
+          console.log('✅ Pago confirmado exitosamente');
           
-          // Invalidar queries para refrescar datos
+          // Invalidate queries and clear state
           await queryClient.invalidateQueries({ queryKey: ["bookings"] });
           await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
-          
-          toast({
-            title: "¡Pago exitoso!",
-            description: "Tu reserva ha sido confirmada correctamente.",
-          });
-
           setPendingBooking(null);
+          
           return true;
         } else {
-          console.error('❌ Verificación de pago falló:', verifyResult);
-          throw new Error(verifyResult?.message || 'Error al verificar el pago');
+          throw new Error(verifyResult?.message || 'No se pudo verificar el pago');
         }
+      } else {
+        throw new Error('ID de sesión requerido para confirmar pago');
       }
-
-      // Fallback: buscar reservas pendientes para pagos no-Stripe
-      console.log('🔍 BUSCANDO RESERVA PENDIENTE para confirmar pago...');
-      const { data: bookings, error: searchError } = await supabase
-        .from("bookings")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("status", "pending_payment")
-        .gte("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      if (searchError) {
-        console.error('❌ ERROR buscando reserva pendiente:', searchError);
-        throw searchError;
-      }
-
-      if (!bookings || bookings.length === 0) {
-        console.error('❌ NO SE ENCONTRÓ reserva pendiente válida');
-        throw new Error('No se encontró una reserva pendiente válida para confirmar');
-      }
-
-      const bookingToConfirm = bookings[0];
-      console.log('✅ ENCONTRADA reserva pendiente para actualizar:', bookingToConfirm.id);
-
-      // Update booking status to paid
-      const { error } = await supabase
-        .from("bookings")
-        .update({
-          status: 'paid',
-          payment_gateway: 'stripe',
-          payment_method: 'stripe',
-          payment_completed_at: new Date().toISOString(),
-          payment_id: `stripe_${Date.now()}`,
-          actual_amount_charged: bookingToConfirm.amount,
-          expires_at: null,
-        })
-        .eq("id", bookingToConfirm.id);
-
-      if (error) {
-        console.error('❌ ERROR actualizando reserva:', error);
-        throw error;
-      }
-
-      console.log('✅ RESERVA CONFIRMADA exitosamente:', bookingToConfirm.id);
-
-      await queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
-      
-      toast({
-        title: "¡Pago exitoso!",
-        description: "Tu reserva ha sido confirmada correctamente.",
-      });
-
-      // Limpiar el estado local si existe
-      setPendingBooking(null);
-      return true;
     } catch (error) {
-      console.error("Error confirming payment:", error);
-      toast({
-        title: "Error confirmando pago",
-        description: error instanceof Error ? error.message : "No se pudo confirmar el pago. Contacta soporte.",
-        variant: "destructive",
-      });
-      return false;
+      console.error("❌ Error confirmando pago:", error);
+      throw error;
+    } finally {
+      setIsConfirmingPayment(false);
     }
   };
 
