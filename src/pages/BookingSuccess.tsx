@@ -26,7 +26,7 @@ export default function BookingSuccess() {
           const success = await confirmPayPalPayment(paypalPaymentId, paypalPayerId);
           
           if (success) {
-            console.log("✅ PayPal payment confirmed successfully");
+            console.log("✅ PayPal payment confirmed successfully - redirecting to Reservas");
             // Redirect to "Reservas" page (bookings tab)
             navigate("/", { state: { defaultTab: "bookings" }, replace: true });
           } else {
@@ -41,7 +41,7 @@ export default function BookingSuccess() {
         return;
       }
 
-      // Handle Stripe payment (existing logic)
+      // Handle Stripe payment - NEW: also redirect to Reservas
       if (!sessionId) {
         setError("No se encontró información de la sesión de pago");
         setIsProcessing(false);
@@ -53,15 +53,15 @@ export default function BookingSuccess() {
         const success = await confirmPaymentSuccess(sessionId);
         
         if (success) {
-          console.log("✅ Stripe payment confirmed successfully");
-          // For Stripe, redirect to main calendar
-          navigate("/", { replace: true });
+          console.log("✅ Stripe payment confirmed successfully - redirecting to Reservas");
+          // NEW: For Stripe, redirect to "Reservas" page (bookings tab)
+          navigate("/", { state: { defaultTab: "bookings" }, replace: true });
         } else {
-          setError("Error al confirmar el pago");
+          setError("Error al confirmar el pago de Stripe");
         }
       } catch (err) {
         console.error("❌ Error processing Stripe payment:", err);
-        setError("Error al procesar la confirmación del pago");
+        setError("Error al procesar la confirmación del pago de Stripe");
       } finally {
         setIsProcessing(false);
       }
@@ -106,7 +106,7 @@ export default function BookingSuccess() {
                 Volver al inicio
               </Button>
               <Button 
-                onClick={() => navigate("/my-bookings")}
+                onClick={() => navigate("/", { state: { defaultTab: "bookings" } })}
                 className="flex-1"
               >
                 Ver mis reservas
@@ -133,7 +133,7 @@ export default function BookingSuccess() {
               Tu reserva ha sido confirmada
             </p>
             <p className="text-muted-foreground">
-              {paypalPaymentId ? "Redirigiendo a tus reservas..." : "Redirigiendo al calendario..."}
+              Redirigiendo a tus reservas...
             </p>
           </div>
           
