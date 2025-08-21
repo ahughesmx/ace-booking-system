@@ -18,6 +18,7 @@ import MatchManagementSettings from "@/components/admin/MatchManagementSettings"
 import AcademicManagement from "@/components/admin/AcademicManagement";
 import { ExpiredBookingsManager } from "@/components/admin/ExpiredBookingsManager";
 import InterfacePreferencesManagement from "@/components/admin/InterfacePreferencesManagement";
+import { LegalTextsManagement } from "@/components/admin/LegalTextsManagement";
 
 const AdminPage = () => {
   const { isAdmin, isLoading } = useAdminAuth();
@@ -55,6 +56,8 @@ const AdminPage = () => {
         return <ExpiredBookingsManager />;
       case "interface-preferences":
         return <InterfacePreferencesManagement />;
+      case "legal-texts":
+        return <LegalTextsManagement />;
       default:
         return <UserManagement />;
     }

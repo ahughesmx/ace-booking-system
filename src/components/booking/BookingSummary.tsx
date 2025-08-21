@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Clock, MapPin, CreditCard, Timer, Loader2, AlertTriangle } from "lucide-react";
+import { Clock, MapPin, CreditCard, Timer, Loader2, AlertTriangle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { useEnabledPaymentGateways } from "@/hooks/use-payment-settings";
+import { BookingRulesModal } from "./BookingRulesModal";
 
 interface BookingSummaryProps {
   date: Date;
@@ -153,6 +154,14 @@ export function BookingSummary({
             <strong>Importante:</strong> Las reservaciones realizadas no son reembolsables por cancelación o falta de uso.
           </AlertDescription>
         </Alert>
+
+        {/* Aviso sobre reglas de reserva */}
+        <BookingRulesModal>
+          <Button variant="link" className="p-0 h-auto text-sm text-primary hover:underline">
+            <Info className="h-4 w-4 mr-1" />
+            Aviso: Antes de realizar un pago asegúrate de leer las reglas de reserva.
+          </Button>
+        </BookingRulesModal>
 
         {/* Métodos de pago */}
         <div className="space-y-3">

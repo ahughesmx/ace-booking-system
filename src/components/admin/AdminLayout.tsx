@@ -17,6 +17,7 @@ import {
   GraduationCap,
   Clock,
   Eye,
+  FileText,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -42,6 +43,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
     { id: "payment-gateways", label: "Pasarelas de Pago", icon: CreditCard },
     { id: "expired-bookings", label: "Reservas Expiradas", icon: Clock },
     { id: "interface-preferences", label: "Preferencias de Interfaz", icon: Eye },
+    { id: "legal-texts", label: "Textos Legales", icon: FileText },
   ];
 
   return (
