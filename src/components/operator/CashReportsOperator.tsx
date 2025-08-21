@@ -41,20 +41,24 @@ export function CashReportsOperator() {
     
     setLoading(true);
     try {
-      // Crear fechas usando timezone de México correctamente
-      const selectedMexicoDate = new Date(selectedDate + 'T00:00:00');
-      
-      // Crear inicio y fin del día en tiempo de México
-      const startOfDayMexico = new Date(selectedMexicoDate);
-      startOfDayMexico.setHours(0, 0, 0, 0);
-      
-      const endOfDayMexico = new Date(selectedMexicoDate);
-      endOfDayMexico.setHours(23, 59, 59, 999);
-      
-      // Convertir a UTC usando las utilidades de timezone
-      const startOfDayUTC = fromMexicoCityTimeToUTC(startOfDayMexico).toISOString();
-      const endOfDayUTC = fromMexicoCityTimeToUTC(endOfDayMexico).toISOString();
+      // Crear rango de fechas para México (UTC-6)
+      const selectedDateStr = selectedDate;
+      const startOfDayMexico = new Date(`${selectedDateStr}T06:00:00.000Z`); // Inicio del día en México = 6 AM UTC
+      const endOfDayMexico = new Date(`${selectedDateStr}T05:59:59.999Z`); // Fin del día en México = 5:59 AM UTC del día siguiente
+      endOfDayMexico.setDate(endOfDayMexico.getDate() + 1);
 
+      const startOfDayUTC = startOfDayMexico.toISOString();
+      const endOfDayUTC = endOfDayMexico.toISOString();
+
+      console.log('🔍 CashReports - Filtro de fechas:', {
+        selectedDate: selectedDateStr,
+        startOfDayUTC,
+        endOfDayUTC,
+        startOfDayMexico: startOfDayMexico.toString(),
+        endOfDayMexico: endOfDayMexico.toString()
+      });
+
+      // Usar JOIN para obtener datos de usuario y cancha en una consulta
       const { data, error } = await supabase
         .from('bookings')
         .select(`
@@ -64,10 +68,17 @@ export function CashReportsOperator() {
           actual_amount_charged,
           currency,
           booking_made_at,
-          user_id,
-          court_id
+          payment_method,
+          profiles!bookings_user_id_fkey (
+            full_name,
+            member_id
+          ),
+          courts (
+            name,
+            court_type
+          )
         `)
-        .in('payment_method', ['cash', 'efectivo'])
+        .eq('payment_method', 'efectivo')
         .eq('status', 'paid')
         .gte('start_time', startOfDayUTC)
         .lte('start_time', endOfDayUTC)
@@ -76,25 +87,22 @@ export function CashReportsOperator() {
 
       if (error) throw error;
 
-      // Get user and court information separately
-      const bookingsWithDetails = await Promise.all(
-        (data || []).map(async (booking) => {
-          const [userResponse, courtResponse] = await Promise.all([
-            booking.user_id 
-              ? supabase.from('profiles').select('full_name, member_id').eq('id', booking.user_id).single()
-              : Promise.resolve({ data: null }),
-            booking.court_id
-              ? supabase.from('courts').select('name, court_type').eq('id', booking.court_id).single()
-              : Promise.resolve({ data: null })
-          ]);
+      console.log('💰 CashReports - Datos encontrados:', {
+        count: data?.length || 0,
+        firstBooking: data?.[0] ? {
+          id: data[0].id,
+          start_time: data[0].start_time,
+          payment_method: data[0].payment_method,
+          amount: data[0].actual_amount_charged
+        } : null
+      });
 
-          return {
-            ...booking,
-            user: userResponse.data,
-            court: courtResponse.data
-          };
-        })
-      );
+      // Mapear datos con estructura consistente
+      const bookingsWithDetails = (data || []).map((booking) => ({
+        ...booking,
+        user: Array.isArray(booking.profiles) ? booking.profiles[0] : booking.profiles,
+        court: Array.isArray(booking.courts) ? booking.courts[0] : booking.courts
+      }));
 
       setBookings(bookingsWithDetails);
       

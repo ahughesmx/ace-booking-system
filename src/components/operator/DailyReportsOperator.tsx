@@ -51,28 +51,24 @@ export function DailyReportsOperator() {
   const fetchDailyBookings = async () => {
     setLoading(true);
     try {
-      // Crear fechas usando timezone de México correctamente
-      const selectedMexicoDate = new Date(selectedDate + 'T00:00:00');
-      
-      // Crear inicio y fin del día en tiempo de México
-      const startOfDayMexico = new Date(selectedMexicoDate);
-      startOfDayMexico.setHours(0, 0, 0, 0);
-      
-      const endOfDayMexico = new Date(selectedMexicoDate);
-      endOfDayMexico.setHours(23, 59, 59, 999);
-      
-      // Convertir a UTC usando las utilidades de timezone
-      const startOfDayUTC = fromMexicoCityTimeToUTC(startOfDayMexico).toISOString();
-      const endOfDayUTC = fromMexicoCityTimeToUTC(endOfDayMexico).toISOString();
+      // Crear rango de fechas para México (UTC-6)
+      const selectedDateStr = selectedDate;
+      const startOfDayMexico = new Date(`${selectedDateStr}T06:00:00.000Z`); // Inicio del día en México = 6 AM UTC
+      const endOfDayMexico = new Date(`${selectedDateStr}T05:59:59.999Z`); // Fin del día en México = 5:59 AM UTC del día siguiente
+      endOfDayMexico.setDate(endOfDayMexico.getDate() + 1);
 
-      console.log('Filtro de fechas corregido:', {
-        selectedDate,
-        startOfDayMexico: startOfDayMexico.toISOString(),
-        endOfDayMexico: endOfDayMexico.toISOString(),
+      const startOfDayUTC = startOfDayMexico.toISOString();
+      const endOfDayUTC = endOfDayMexico.toISOString();
+
+      console.log('🔍 DailyReports - Filtro de fechas:', {
+        selectedDate: selectedDateStr,
         startOfDayUTC,
-        endOfDayUTC
+        endOfDayUTC,
+        startOfDayMexico: startOfDayMexico.toString(),
+        endOfDayMexico: endOfDayMexico.toString()
       });
 
+      // Usar JOIN para obtener datos en una consulta optimizada
       const { data, error } = await supabase
         .from('bookings')
         .select(`
@@ -83,9 +79,17 @@ export function DailyReportsOperator() {
           currency,
           payment_method,
           booking_made_at,
-          user_id,
-          court_id,
-          processed_by
+          profiles!bookings_user_id_fkey (
+            full_name,
+            member_id
+          ),
+          courts (
+            name,
+            court_type
+          ),
+          processed_by_profiles:profiles!bookings_processed_by_fkey (
+            full_name
+          )
         `)
         .eq('status', 'paid')
         .gte('start_time', startOfDayUTC)
@@ -95,50 +99,44 @@ export function DailyReportsOperator() {
 
       if (error) throw error;
 
-      // Get user and court information separately
-      const bookingsWithDetails = await Promise.all(
-        (data || []).map(async (booking) => {
-          const [userResponse, courtResponse, processedByResponse] = await Promise.all([
-            booking.user_id 
-              ? supabase.from('profiles').select('full_name, member_id').eq('id', booking.user_id).single()
-              : Promise.resolve({ data: null }),
-            booking.court_id
-              ? supabase.from('courts').select('name, court_type').eq('id', booking.court_id).single()
-              : Promise.resolve({ data: null }),
-            booking.processed_by
-              ? supabase.from('profiles').select('full_name').eq('id', booking.processed_by).single()
-              : Promise.resolve({ data: null })
-          ]);
+      console.log('📊 DailyReports - Datos encontrados:', {
+        count: data?.length || 0,
+        firstBooking: data?.[0] ? {
+          id: data[0].id,
+          start_time: data[0].start_time,
+          payment_method: data[0].payment_method,
+          amount: data[0].actual_amount_charged
+        } : null
+      });
 
-          return {
-            ...booking,
-            user: userResponse.data,
-            court: courtResponse.data,
-            processed_by_user: processedByResponse.data
-          };
-        })
-      );
+      // Mapear datos con estructura consistente
+      const bookingsWithDetails = (data || []).map((booking) => ({
+        ...booking,
+        user: Array.isArray(booking.profiles) ? booking.profiles[0] : booking.profiles,
+        court: Array.isArray(booking.courts) ? booking.courts[0] : booking.courts,
+        processed_by_user: Array.isArray(booking.processed_by_profiles) ? booking.processed_by_profiles[0] : booking.processed_by_profiles
+      }));
 
       setBookings(bookingsWithDetails);
-      // Calculate summaries
+      
+      // Calcular resúmenes con métodos de pago estandarizados
       const cashTotal = bookingsWithDetails
-        .filter(booking => (booking.payment_method === 'cash' || booking.payment_method === 'efectivo') && booking.actual_amount_charged)
+        .filter(booking => booking.payment_method === 'efectivo' && booking.actual_amount_charged)
         .reduce((sum, booking) => sum + (booking.actual_amount_charged || 0), 0);
       
       const onlineTotal = bookingsWithDetails
-        .filter(booking => (booking.payment_method === 'online' || booking.payment_method === 'en_linea') && booking.actual_amount_charged)
+        .filter(booking => booking.payment_method === 'online' && booking.actual_amount_charged)
         .reduce((sum, booking) => sum + (booking.actual_amount_charged || 0), 0);
       
       const total = bookingsWithDetails
         .filter(booking => booking.actual_amount_charged)
         .reduce((sum, booking) => sum + (booking.actual_amount_charged || 0), 0);
 
-      console.log('Cálculo de totales:', {
-        bookingsWithDetails: bookingsWithDetails.map(b => ({
-          id: b.id,
-          payment_method: b.payment_method,
-          actual_amount_charged: b.actual_amount_charged
-        })),
+      console.log('💸 DailyReports - Cálculo de totales:', {
+        totalBookings: bookingsWithDetails.length,
+        efectivoBookings: bookingsWithDetails.filter(b => b.payment_method === 'efectivo').length,
+        onlineBookings: bookingsWithDetails.filter(b => b.payment_method === 'online').length,
+        paymentMethods: [...new Set(bookingsWithDetails.map(b => b.payment_method))],
         cashTotal,
         onlineTotal,
         total
@@ -170,7 +168,7 @@ export function DailyReportsOperator() {
       booking.user?.full_name || 'N/A',
       booking.user?.member_id || 'N/A',
       booking.court?.name || 'N/A',
-      booking.payment_method === 'cash' || booking.payment_method === 'efectivo' ? 'Efectivo' : 'En Línea',
+      booking.payment_method === 'efectivo' ? 'Efectivo' : 'En Línea',
       booking.processed_by_user?.full_name || 'Sistema',
       `$${booking.actual_amount_charged?.toFixed(2) || '0.00'}`
     ]);
@@ -197,7 +195,7 @@ export function DailyReportsOperator() {
       cliente: booking.user?.full_name || 'N/A',
       membresia: booking.user?.member_id || 'N/A',
       cancha: booking.court?.name || 'N/A',
-      metodo_pago: booking.payment_method === 'cash' || booking.payment_method === 'efectivo' ? 'Efectivo' : 'En línea',
+      metodo_pago: booking.payment_method === 'efectivo' ? 'Efectivo' : 'En línea',
       procesado_por: booking.processed_by_user?.full_name || 'Sistema',
       monto: booking.actual_amount_charged || 0
     }));
@@ -228,7 +226,7 @@ export function DailyReportsOperator() {
   };
 
   const getPaymentMethodBadge = (method: string) => {
-    return (method === 'cash' || method === 'efectivo') ? (
+    return method === 'efectivo' ? (
       <Badge variant="secondary">Efectivo</Badge>
     ) : (
       <Badge variant="default">En Línea</Badge>
