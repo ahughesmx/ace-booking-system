@@ -437,46 +437,27 @@ export function useBookingPayment() {
     }
   };
 
-  const confirmPaymentSuccess = async () => {
+  const confirmPaymentSuccess = async (sessionId?: string) => {
     try {
       if (!user) return false;
 
-      console.log('🔍 BUSCANDO RESERVA para confirmar pago...');
-
-      // Primero buscar reservas pendientes, luego reservas recientes ya pagadas
-      let { data: bookings, error: searchError } = await supabase
-        .from("bookings")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("status", "pending_payment")
-        .gte("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      // Si no hay reservas pendientes, buscar reservas recientes ya pagadas (últimos 5 minutos)
-      if (!bookings || bookings.length === 0) {
-        console.log('🔍 No hay reservas pendientes, buscando reservas recientes ya pagadas...');
-        const fiveMinutesAgo = new Date();
-        fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
+      // Si tenemos sessionId de Stripe, usar verify-payment para obtener datos exactos
+      if (sessionId) {
+        console.log('🎯 Verificando pago con Stripe usando sessionId:', sessionId);
         
-        const { data: paidBookings, error: paidError } = await supabase
-          .from("bookings")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("status", "paid")
-          .eq("payment_gateway", "stripe")
-          .gte("created_at", fiveMinutesAgo.toISOString())
-          .order("created_at", { ascending: false })
-          .limit(1);
-          
-        if (paidError) {
-          console.error('❌ ERROR buscando reservas pagadas:', paidError);
-          throw paidError;
+        const { data: verifyResult, error: verifyError } = await supabase.functions.invoke('verify-payment', {
+          body: { sessionId }
+        });
+
+        if (verifyError) {
+          console.error('❌ ERROR en verify-payment:', verifyError);
+          throw verifyError;
         }
-        
-        if (paidBookings && paidBookings.length > 0) {
-          console.log('✅ ENCONTRADA reserva reciente ya pagada:', paidBookings[0].id);
-          // Ya está pagada, solo confirmar éxito
+
+        if (verifyResult?.success) {
+          console.log('✅ Pago verificado exitosamente con Stripe');
+          
+          // Invalidar queries para refrescar datos
           await queryClient.invalidateQueries({ queryKey: ["bookings"] });
           await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
           
@@ -487,8 +468,22 @@ export function useBookingPayment() {
 
           setPendingBooking(null);
           return true;
+        } else {
+          console.error('❌ Verificación de pago falló:', verifyResult);
+          throw new Error(verifyResult?.message || 'Error al verificar el pago');
         }
       }
+
+      // Fallback: buscar reservas pendientes para pagos no-Stripe
+      console.log('🔍 BUSCANDO RESERVA PENDIENTE para confirmar pago...');
+      const { data: bookings, error: searchError } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("status", "pending_payment")
+        .gte("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1);
 
       if (searchError) {
         console.error('❌ ERROR buscando reserva pendiente:', searchError);
@@ -496,8 +491,8 @@ export function useBookingPayment() {
       }
 
       if (!bookings || bookings.length === 0) {
-        console.error('❌ NO SE ENCONTRÓ ninguna reserva para confirmar');
-        throw new Error('No se encontró una reserva para confirmar. El pago puede haberse procesado correctamente.');
+        console.error('❌ NO SE ENCONTRÓ reserva pendiente válida');
+        throw new Error('No se encontró una reserva pendiente válida para confirmar');
       }
 
       const bookingToConfirm = bookings[0];

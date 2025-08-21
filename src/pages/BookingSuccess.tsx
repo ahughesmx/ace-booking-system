@@ -23,13 +23,13 @@ export default function BookingSuccess() {
 
       try {
         console.log("🎉 Processing payment success for session:", sessionId);
-        const success = await confirmPaymentSuccess();
+        const success = await confirmPaymentSuccess(sessionId);
         
         if (success) {
           console.log("✅ Payment confirmed successfully");
-          // Redirigir automáticamente al calendario después del éxito
+          // Redirigir automáticamente a mis reservas después del éxito
           setTimeout(() => {
-            navigate("/", { replace: true });
+            navigate("/my-bookings", { replace: true });
           }, 2000);
         } else {
           setError("Error al confirmar el pago");
