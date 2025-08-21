@@ -18,6 +18,7 @@ interface DailyBooking {
   start_time: string;
   end_time: string;
   actual_amount_charged: number;
+  amount: number;
   currency: string;
   payment_method: string;
   booking_made_at: string;
@@ -76,9 +77,11 @@ export function DailyReportsOperator() {
           start_time,
           end_time,
           actual_amount_charged,
+          amount,
           currency,
           payment_method,
           booking_made_at,
+          status,
           profiles!bookings_user_id_fkey (
             full_name,
             member_id
@@ -91,10 +94,9 @@ export function DailyReportsOperator() {
             full_name
           )
         `)
-        .eq('status', 'paid')
+        .in('status', ['paid', 'cancelled'])
         .gte('start_time', startOfDayUTC)
         .lte('start_time', endOfDayUTC)
-        .not('actual_amount_charged', 'is', null)
         .order('start_time', { ascending: false });
 
       if (error) throw error;
@@ -121,16 +123,24 @@ export function DailyReportsOperator() {
       
       // Calcular resúmenes con métodos de pago estandarizados
       const cashTotal = bookingsWithDetails
-        .filter(booking => booking.payment_method === 'efectivo' && booking.actual_amount_charged)
-        .reduce((sum, booking) => sum + (booking.actual_amount_charged || 0), 0);
+        .filter(booking => booking.payment_method === 'efectivo')
+        .reduce((sum, booking) => {
+          const amount = booking.actual_amount_charged || booking.amount || 0;
+          return sum + amount;
+        }, 0);
       
       const onlineTotal = bookingsWithDetails
-        .filter(booking => booking.payment_method === 'online' && booking.actual_amount_charged)
-        .reduce((sum, booking) => sum + (booking.actual_amount_charged || 0), 0);
+        .filter(booking => booking.payment_method === 'online')
+        .reduce((sum, booking) => {
+          const amount = booking.actual_amount_charged || booking.amount || 0;
+          return sum + amount;
+        }, 0);
       
       const total = bookingsWithDetails
-        .filter(booking => booking.actual_amount_charged)
-        .reduce((sum, booking) => sum + (booking.actual_amount_charged || 0), 0);
+        .reduce((sum, booking) => {
+          const amount = booking.actual_amount_charged || booking.amount || 0;
+          return sum + amount;
+        }, 0);
 
       console.log('💸 DailyReports - Cálculo de totales:', {
         totalBookings: bookingsWithDetails.length,
@@ -162,16 +172,19 @@ export function DailyReportsOperator() {
 
   const exportToCSV = () => {
     const headers = ['Fecha', 'Hora', 'Cliente', 'Membresía', 'Cancha', 'Método Pago', 'Procesado Por', 'Monto'];
-    const csvData = bookings.map(booking => [
-      format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es }),
-      format(new Date(booking.start_time), 'HH:mm', { locale: es }),
-      booking.user?.full_name || 'N/A',
-      booking.user?.member_id || 'N/A',
-      booking.court?.name || 'N/A',
-      booking.payment_method === 'efectivo' ? 'Efectivo' : 'En Línea',
-      booking.processed_by_user?.full_name || 'Sistema',
-      `$${booking.actual_amount_charged?.toFixed(2) || '0.00'}`
-    ]);
+    const csvData = bookings.map(booking => {
+      const amount = booking.actual_amount_charged || booking.amount || 0;
+      return [
+        format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es }),
+        format(new Date(booking.start_time), 'HH:mm', { locale: es }),
+        booking.user?.full_name || 'N/A',
+        booking.user?.member_id || 'N/A',
+        booking.court?.name || 'N/A',
+        booking.payment_method === 'efectivo' ? 'Efectivo' : 'En Línea',
+        booking.processed_by_user?.full_name || 'Sistema',
+        `$${amount.toFixed(2)}`
+      ];
+    });
 
     const csvContent = [headers, ...csvData]
       .map(row => row.join(','))
@@ -197,7 +210,7 @@ export function DailyReportsOperator() {
       cancha: booking.court?.name || 'N/A',
       metodo_pago: booking.payment_method === 'efectivo' ? 'Efectivo' : 'En línea',
       procesado_por: booking.processed_by_user?.full_name || 'Sistema',
-      monto: booking.actual_amount_charged || 0
+      monto: booking.actual_amount_charged || booking.amount || 0
     }));
 
     exportToPDF({
@@ -357,7 +370,7 @@ export function DailyReportsOperator() {
                     {booking.processed_by_user?.full_name || 'Sistema'}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    ${booking.actual_amount_charged?.toFixed(2) || '0.00'}
+                    ${(booking.actual_amount_charged || booking.amount || 0).toFixed(2)}
                   </TableCell>
                 </TableRow>
               ))

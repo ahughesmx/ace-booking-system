@@ -17,6 +17,7 @@ interface CashBooking {
   start_time: string;
   end_time: string;
   actual_amount_charged: number;
+  amount: number;
   currency: string;
   booking_made_at: string;
   user: {
@@ -66,9 +67,11 @@ export function CashReportsOperator() {
           start_time,
           end_time,
           actual_amount_charged,
+          amount,
           currency,
           booking_made_at,
           payment_method,
+          status,
           profiles!bookings_user_id_fkey (
             full_name,
             member_id
@@ -79,10 +82,9 @@ export function CashReportsOperator() {
           )
         `)
         .eq('payment_method', 'efectivo')
-        .eq('status', 'paid')
+        .in('status', ['paid', 'cancelled'])
         .gte('start_time', startOfDayUTC)
         .lte('start_time', endOfDayUTC)
-        .not('actual_amount_charged', 'is', null)
         .order('start_time', { ascending: false });
 
       if (error) throw error;
@@ -106,9 +108,10 @@ export function CashReportsOperator() {
 
       setBookings(bookingsWithDetails);
       
-      const totalAmount = bookingsWithDetails.reduce((sum, booking) => 
-        sum + (booking.actual_amount_charged || 0), 0
-      );
+      const totalAmount = bookingsWithDetails.reduce((sum, booking) => {
+        const amount = booking.actual_amount_charged || booking.amount || 0;
+        return sum + amount;
+      }, 0);
       setTotal(totalAmount);
 
     } catch (error) {
@@ -124,14 +127,17 @@ export function CashReportsOperator() {
 
   const exportToCSV = () => {
     const headers = ['Fecha', 'Hora', 'Cliente', 'Membresía', 'Cancha', 'Monto'];
-    const csvData = bookings.map(booking => [
-      format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es }),
-      format(new Date(booking.start_time), 'HH:mm', { locale: es }),
-      booking.user?.full_name || 'N/A',
-      booking.user?.member_id || 'N/A',
-      booking.court?.name || 'N/A',
-      `$${booking.actual_amount_charged?.toFixed(2) || '0.00'}`
-    ]);
+    const csvData = bookings.map(booking => {
+      const amount = booking.actual_amount_charged || booking.amount || 0;
+      return [
+        format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es }),
+        format(new Date(booking.start_time), 'HH:mm', { locale: es }),
+        booking.user?.full_name || 'N/A',
+        booking.user?.member_id || 'N/A',
+        booking.court?.name || 'N/A',
+        `$${amount.toFixed(2)}`
+      ];
+    });
 
     const csvContent = [headers, ...csvData]
       .map(row => row.join(','))
@@ -155,7 +161,7 @@ export function CashReportsOperator() {
       cliente: booking.user?.full_name || 'N/A',
       membresia: booking.user?.member_id || 'N/A',
       cancha: booking.court?.name || 'N/A',
-      monto: booking.actual_amount_charged || 0
+      monto: booking.actual_amount_charged || booking.amount || 0
     }));
 
     exportToPDF({
@@ -262,7 +268,7 @@ export function CashReportsOperator() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    ${booking.actual_amount_charged?.toFixed(2) || '0.00'}
+                    ${(booking.actual_amount_charged || booking.amount || 0).toFixed(2)}
                   </TableCell>
                 </TableRow>
               ))
