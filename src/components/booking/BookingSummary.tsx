@@ -156,13 +156,13 @@ export function BookingSummary({
         </Alert>
 
         {/* Aviso sobre reglas de reserva */}
-        <Alert className="border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer">
-          <Info className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
+        <Alert className="border-blue-200 bg-blue-50">
+          <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
+          <AlertDescription className="text-blue-800 ml-2">
             <BookingRulesModal>
-              <Button variant="link" className="p-0 h-auto text-blue-700 hover:text-blue-900 font-medium underline-offset-2">
+              <button className="text-left hover:underline font-medium text-blue-700 hover:text-blue-900 transition-colors">
                 <strong>Aviso:</strong> Antes de realizar un pago asegúrate de leer las reglas de reserva.
-              </Button>
+              </button>
             </BookingRulesModal>
           </AlertDescription>
         </Alert>
