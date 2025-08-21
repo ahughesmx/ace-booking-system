@@ -439,7 +439,32 @@ export function useBookingPayment() {
 
   const confirmPaymentSuccess = async () => {
     try {
-      if (!pendingBooking) return false;
+      if (!user) return false;
+
+      console.log('🔍 BUSCANDO RESERVA PENDIENTE para confirmar pago...');
+
+      // Buscar la reserva pendiente más reciente del usuario
+      const { data: pendingBookings, error: searchError } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("status", "pending_payment")
+        .gte("expires_at", new Date().toISOString()) // Solo reservas no expiradas
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (searchError) {
+        console.error('❌ ERROR buscando reserva pendiente:', searchError);
+        throw searchError;
+      }
+
+      if (!pendingBookings || pendingBookings.length === 0) {
+        console.error('❌ NO SE ENCONTRÓ reserva pendiente válida');
+        throw new Error('No se encontró una reserva pendiente válida para confirmar');
+      }
+
+      const bookingToConfirm = pendingBookings[0];
+      console.log('✅ ENCONTRADA reserva pendiente:', bookingToConfirm.id);
 
       // Update booking status to paid
       const { error } = await supabase
@@ -450,12 +475,17 @@ export function useBookingPayment() {
           payment_method: 'stripe',
           payment_completed_at: new Date().toISOString(),
           payment_id: `stripe_${Date.now()}`,
-          actual_amount_charged: pendingBooking.amount,
+          actual_amount_charged: bookingToConfirm.amount,
           expires_at: null,
         })
-        .eq("id", pendingBooking.id);
+        .eq("id", bookingToConfirm.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ERROR actualizando reserva:', error);
+        throw error;
+      }
+
+      console.log('✅ RESERVA CONFIRMADA exitosamente:', bookingToConfirm.id);
 
       await queryClient.invalidateQueries({ queryKey: ["bookings"] });
       await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
@@ -465,13 +495,14 @@ export function useBookingPayment() {
         description: "Tu reserva ha sido confirmada correctamente.",
       });
 
+      // Limpiar el estado local si existe
       setPendingBooking(null);
       return true;
     } catch (error) {
       console.error("Error confirming payment:", error);
       toast({
         title: "Error confirmando pago",
-        description: "No se pudo confirmar el pago. Contacta soporte.",
+        description: error instanceof Error ? error.message : "No se pudo confirmar el pago. Contacta soporte.",
         variant: "destructive",
       });
       return false;
