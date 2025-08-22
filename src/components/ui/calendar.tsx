@@ -1,12 +1,25 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, CaptionProps } from "react-day-picker";
 import { es } from "date-fns/locale";
+import { format } from "date-fns";
+import { formatWithCapitalization } from "@/lib/date-utils";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+
+// Componente personalizado para el caption con capitalización
+function CustomCaption({ displayMonth }: CaptionProps) {
+  return (
+    <div className="flex justify-center pt-1 relative items-center">
+      <span className="text-sm font-medium">
+        {formatWithCapitalization(displayMonth, "MMMM yyyy")}
+      </span>
+    </div>
+  );
+}
 
 function Calendar({
   className,
@@ -14,11 +27,19 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
+  const formatters = {
+    formatWeekdayName: (date: Date) => {
+      const dayName = format(date, "EEEEEE", { locale: es }); // Formato corto (2 letras)
+      return dayName.charAt(0).toUpperCase() + dayName.slice(1);
+    }
+  };
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn("p-3 pointer-events-auto", className)}
       locale={es}
+      formatters={formatters}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4 w-full",
@@ -56,6 +77,7 @@ function Calendar({
       components={{
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
+        Caption: CustomCaption,
       }}
       {...props}
     />
