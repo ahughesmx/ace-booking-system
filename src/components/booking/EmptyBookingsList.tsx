@@ -20,16 +20,21 @@ export function EmptyBookingsList({
 }: EmptyBookingsListProps) {
   if (!isAuthenticated) {
     return (
-      <Card>
+      <Card className="w-full max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle className="text-[#1e3a8a]">Horarios disponibles</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {selectedDate ? format(selectedDate, "EEEE, d 'de' MMMM") : "Hoy"}
+          </p>
         </CardHeader>
         <CardContent>
-          <TimeSlotsGrid 
-            bookedSlots={bookedSlots}
-            businessHours={businessHours}
-            selectedDate={selectedDate}
-          />
+          <div className="max-w-2xl mx-auto">
+            <TimeSlotsGrid 
+              bookedSlots={bookedSlots}
+              businessHours={businessHours}
+              selectedDate={selectedDate}
+            />
+          </div>
         </CardContent>
       </Card>
     );
