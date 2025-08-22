@@ -160,10 +160,11 @@ export function BookingSummary({
         </Alert>
 
         {/* Checkbox de aceptación de reglas */}
-        <div className="flex items-center space-x-2 p-3 border border-blue-200 bg-blue-50 rounded-lg">
+        <div className="flex items-start space-x-3 p-4 border border-blue-200 bg-blue-50 rounded-lg">
           <Checkbox 
             id="rules-acceptance"
             checked={rulesAccepted}
+            className="mt-0.5"
             onCheckedChange={(checked) => {
               setRulesAccepted(!!checked);
               if (checked) {
@@ -173,16 +174,12 @@ export function BookingSummary({
               }
             }}
           />
-          <label htmlFor="rules-acceptance" className="text-sm text-blue-800">
+          <label htmlFor="rules-acceptance" className="text-sm text-blue-800 leading-relaxed cursor-pointer">
             He leído y acepto las{' '}
             <BookingRulesModal>
-              <button 
-                type="button"
-                className="text-blue-700 hover:text-blue-900 underline font-medium"
-                onClick={(e) => e.preventDefault()}
-              >
+              <span className="text-blue-700 hover:text-blue-900 underline font-medium cursor-pointer">
                 reglas de reserva aquí descritas
-              </button>
+              </span>
             </BookingRulesModal>
             .
           </label>
