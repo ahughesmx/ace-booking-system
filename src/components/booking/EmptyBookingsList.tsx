@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatFullDate } from "@/lib/date-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TimeSlotsGrid } from "@/components/TimeSlotsGrid";
 
@@ -25,7 +26,7 @@ export function EmptyBookingsList({
         <CardHeader>
           <CardTitle className="text-[#1e3a8a]">Horarios disponibles</CardTitle>
           <p className="text-sm text-muted-foreground">
-            {selectedDate ? format(selectedDate, "EEEE, d 'de' MMMM", { locale: es }) : "Hoy"}
+            {selectedDate ? formatFullDate(selectedDate) : "Hoy"}
           </p>
         </CardHeader>
         <CardContent>

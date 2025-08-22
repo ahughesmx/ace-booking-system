@@ -1,5 +1,6 @@
 import { format, addHours } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatFullDate } from "@/lib/date-utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Receipt, MapPin, Clock, Timer, User, CreditCard } from "lucide-react";
@@ -151,7 +152,7 @@ export function TicketReceipt({ bookingData, onClose, onPrint }: TicketReceiptPr
 
             <div class="print-row">
               <span>🕐</span>
-              <span>${format(date, "EEEE, d 'de' MMMM", { locale: es })}</span>
+              <span>${formatFullDate(date)}</span>
             </div>
 
             <div class="print-row">
@@ -281,7 +282,7 @@ export function TicketReceipt({ bookingData, onClose, onPrint }: TicketReceiptPr
           {/* Fecha */}
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-gray-600" />
-            <span>{format(date, "EEEE, d 'de' MMMM", { locale: es })}</span>
+            <span>{formatFullDate(date)}</span>
           </div>
 
           {/* Horario */}

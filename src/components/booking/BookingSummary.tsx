@@ -1,5 +1,6 @@
 import { format, addHours } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatFullDate } from "@/lib/date-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -118,7 +119,7 @@ export function BookingSummary({
           
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>{format(date, "EEEE, d 'de' MMMM", { locale: es })}</span>
+            <span>{formatFullDate(date)}</span>
           </div>
           
           <div className="flex items-center gap-2">

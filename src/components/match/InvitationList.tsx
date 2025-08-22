@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatWithCapitalization } from "@/lib/date-utils";
 import { Button } from "@/components/ui/button";
 import { MatchInvitation } from "@/types/match-invitation";
 
@@ -24,10 +25,9 @@ export const InvitationList = ({ invitations, onAccept, onReject }: InvitationLi
             </span>{" "}
             el{" "}
             {invitation.match?.booking?.start_time && 
-              format(
-                new Date(invitation.match.booking.start_time),
-                "EEEE d 'de' MMMM 'a las' HH:mm",
-                { locale: es }
+              formatWithCapitalization(
+                invitation.match.booking.start_time,
+                "EEEE d 'de' MMMM 'a las' HH:mm"
               )}
           </div>
           <div className="flex gap-2">

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { format, addHours, isToday, isBefore } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatShortDate } from "@/lib/date-utils";
 import { Monitor, Building2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAllBookings } from "@/hooks/use-bookings";
@@ -328,7 +329,7 @@ export default function Display() {
             />
             <div className="text-center">
               <h1 className="text-2xl font-bold text-gray-800 mb-1">
-                {format(currentTime, "EEEE d 'de' MMMM", { locale: es })}
+                {formatShortDate(currentTime)}
               </h1>
               <p className="text-lg text-blue-600 font-semibold flex items-center justify-center gap-2">
                 <Clock className="w-4 h-4" />
@@ -488,7 +489,7 @@ export default function Display() {
           />
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-800">
-              {format(currentTime, "EEEE d 'de' MMMM", { locale: es })} - {format(currentTime, "h:mm a")}
+              {formatShortDate(currentTime)} - {format(currentTime, "h:mm a")}
             </h1>
           </div>
           <div className="flex gap-2">

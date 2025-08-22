@@ -9,6 +9,7 @@ import { useEnrollInCourse } from "@/hooks/use-course-enrollments";
 import { useAuth } from "@/components/AuthProvider";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatFullDate } from "@/lib/date-utils";
 
 interface Course {
   id: string;
@@ -324,7 +325,7 @@ export function CourseCard({ course, isEnrolled = false, onEnroll }: CourseCardP
                         <div>
                           <div className="font-medium">{classItem.title}</div>
                           <div className="text-sm text-muted-foreground">
-                            {format(new Date(classItem.class_date), "EEEE, d 'de' MMMM", { locale: es })} - {classItem.start_time} a {classItem.end_time}
+                            {formatFullDate(classItem.class_date)} - {classItem.start_time} a {classItem.end_time}
                           </div>
                         </div>
                       </div>
