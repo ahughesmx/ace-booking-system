@@ -33,6 +33,7 @@ export function EmptyBookingsList({
               bookedSlots={bookedSlots}
               businessHours={businessHours}
               selectedDate={selectedDate}
+              showCourtCount={false}
             />
           </div>
         </CardContent>

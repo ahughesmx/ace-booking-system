@@ -8,9 +8,10 @@ interface TimeSlotProps {
   availableCount?: number;
   specialEvents?: SpecialBooking[];
   bookedUser?: string;
+  showCourtCount?: boolean;
 }
 
-export function TimeSlot({ start, end, isAvailable, availableCount = 0, specialEvents = [], bookedUser }: TimeSlotProps) {
+export function TimeSlot({ start, end, isAvailable, availableCount = 0, specialEvents = [], bookedUser, showCourtCount = true }: TimeSlotProps) {
   const hasSpecialEvents = specialEvents.length > 0;
   
   return (
@@ -48,7 +49,9 @@ export function TimeSlot({ start, end, isAvailable, availableCount = 0, specialE
         <div className="space-y-1">
           <p className={`text-xs ${isAvailable ? "text-[#6898FE]" : "text-gray-500"}`}>
             {isAvailable 
-              ? `${availableCount} ${availableCount === 1 ? 'cancha disponible' : 'canchas disponibles'}`
+              ? (showCourtCount 
+                  ? `${availableCount} ${availableCount === 1 ? 'cancha disponible' : 'canchas disponibles'}`
+                  : "Disponible")
               : "Reservado"}
           </p>
           {!isAvailable && bookedUser && (

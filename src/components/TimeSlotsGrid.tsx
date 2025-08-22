@@ -19,6 +19,7 @@ interface TimeSlotsGridProps {
   };
   selectedDate?: Date;
   courtType?: 'tennis' | 'padel' | null;
+  showCourtCount?: boolean;
 }
 
 function generateTimeSlots(businessHours: { start: number; end: number }, selectedDate: Date = new Date()) {
@@ -41,7 +42,7 @@ function generateTimeSlots(businessHours: { start: number; end: number }, select
   return slots;
 }
 
-export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtType }: TimeSlotsGridProps) {
+export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtType, showCourtCount = true }: TimeSlotsGridProps) {
   const timeSlots = generateTimeSlots(businessHours, selectedDate);
   // Obtener canchas filtradas por tipo cuando se haya seleccionado un tipo
   const { data: courts = [] } = useCourts(courtType);
@@ -134,6 +135,7 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
               isAvailable={false}
               availableCount={0}
               specialEvents={specialEvents}
+              showCourtCount={showCourtCount}
             />
           );
         }
@@ -153,6 +155,7 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
             availableCount={availableSlots}
             specialEvents={specialEvents}
             bookedUser={bookedUser}
+            showCourtCount={showCourtCount}
           />
         );
       })}
