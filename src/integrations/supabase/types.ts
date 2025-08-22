@@ -99,6 +99,7 @@ export type Database = {
           payment_id: string | null
           payment_method: string | null
           processed_by: string | null
+          rules_accepted_at: string | null
           start_time: string
           status: string
           user_id: string | null
@@ -118,6 +119,7 @@ export type Database = {
           payment_id?: string | null
           payment_method?: string | null
           processed_by?: string | null
+          rules_accepted_at?: string | null
           start_time: string
           status?: string
           user_id?: string | null
@@ -137,6 +139,7 @@ export type Database = {
           payment_id?: string | null
           payment_method?: string | null
           processed_by?: string | null
+          rules_accepted_at?: string | null
           start_time?: string
           status?: string
           user_id?: string | null

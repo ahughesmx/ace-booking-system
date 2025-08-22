@@ -10,6 +10,7 @@ interface BookingData {
   selectedCourt: string;
   selectedCourtType: string;
   forUserId?: string; // Para reservas de operadores
+  rulesAcceptedAt?: Date | null;
 }
 
 export function useBookingPayment() {
@@ -113,7 +114,8 @@ export function useBookingPayment() {
         end_time: endTime.toISOString(),
         status: 'pending_payment',
         amount: amount,
-        currency: 'USD'
+        currency: 'USD',
+        rules_accepted_at: bookingData.rulesAcceptedAt?.toISOString() || null
       };
 
       console.log('💰 Booking payload to insert:', bookingPayload);
@@ -169,7 +171,7 @@ export function useBookingPayment() {
     }
   };
 
-  const processPayment = async (paymentGateway: string): Promise<any> => {
+  const processPayment = async (paymentGateway: string, rulesAcceptedAt?: Date | null): Promise<any> => {
     console.log(`🔄 processPayment started for ${paymentGateway}`, { 
       pendingBooking: !!pendingBooking,
       pendingBookingId: pendingBooking?.id,
@@ -388,7 +390,8 @@ export function useBookingPayment() {
             payment_id: `${paymentGateway}_${Date.now()}`,
             actual_amount_charged: pendingBooking.amount,
             expires_at: null,
-            processed_by: paymentGateway === 'efectivo' ? user.id : null
+            processed_by: paymentGateway === 'efectivo' ? user.id : null,
+            rules_accepted_at: rulesAcceptedAt?.toISOString() || pendingBooking.rules_accepted_at
           })
           .eq("id", pendingBooking.id);
 

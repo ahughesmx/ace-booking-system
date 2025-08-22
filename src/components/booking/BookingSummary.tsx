@@ -9,13 +9,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { useEnabledPaymentGateways } from "@/hooks/use-payment-settings";
 import { BookingRulesModal } from "./BookingRulesModal";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useState } from "react";
 
 interface BookingSummaryProps {
   date: Date;
   time: string;
   courtType: string;
   courtName: string;
-  onConfirm: (paymentGateway: string) => Promise<any>;
+  onConfirm: (paymentGateway: string, rulesAcceptedAt?: Date | null) => Promise<any>;
   onCancel: () => void;
   isLoading?: boolean;
   isOperator?: boolean;
@@ -35,6 +37,8 @@ export function BookingSummary({
   selectedUserName,
   processingPayment
 }: BookingSummaryProps) {
+  const [rulesAccepted, setRulesAccepted] = useState(false);
+  const [acceptanceTimestamp, setAcceptanceTimestamp] = useState<Date | null>(null);
   const { data: courtSettings } = useCourtTypeSettings(courtType);
   const { data: allPaymentGateways = [], isLoading: isLoadingGateways } = useEnabledPaymentGateways();
   
@@ -155,17 +159,34 @@ export function BookingSummary({
           </AlertDescription>
         </Alert>
 
-        {/* Aviso sobre reglas de reserva */}
-        <Alert className="border-blue-200 bg-blue-50">
-          <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
-          <AlertDescription className="text-blue-800 ml-2">
+        {/* Checkbox de aceptación de reglas */}
+        <div className="flex items-center space-x-2 p-3 border border-blue-200 bg-blue-50 rounded-lg">
+          <Checkbox 
+            id="rules-acceptance"
+            checked={rulesAccepted}
+            onCheckedChange={(checked) => {
+              setRulesAccepted(!!checked);
+              if (checked) {
+                setAcceptanceTimestamp(new Date());
+              } else {
+                setAcceptanceTimestamp(null);
+              }
+            }}
+          />
+          <label htmlFor="rules-acceptance" className="text-sm text-blue-800">
+            He leído y acepto las{' '}
             <BookingRulesModal>
-              <button className="text-left hover:underline font-medium text-blue-700 hover:text-blue-900 transition-colors">
-                <strong>Aviso:</strong> Antes de realizar un pago asegúrate de leer las reglas de reserva.
+              <button 
+                type="button"
+                className="text-blue-700 hover:text-blue-900 underline font-medium"
+                onClick={(e) => e.preventDefault()}
+              >
+                reglas de reserva aquí descritas
               </button>
             </BookingRulesModal>
-          </AlertDescription>
-        </Alert>
+            .
+          </label>
+        </div>
 
         {/* Métodos de pago */}
         <div className="space-y-3">
@@ -190,7 +211,7 @@ export function BookingSummary({
             <div className="space-y-2">
               {paymentGateways.map((gateway) => {
                 const isProcessing = processingPayment === gateway.name;
-                const isDisabled = isLoading || !!processingPayment;
+                const isDisabled = isLoading || !!processingPayment || !rulesAccepted;
                 
                 return (
                   <Button
@@ -198,10 +219,10 @@ export function BookingSummary({
                     variant="outline"
                     className="w-full justify-start"
                     disabled={isDisabled}
-                    onClick={() => {
-                      console.log(`🎯 CLICKED: Payment button for ${gateway.name}`);
-                      onConfirm(gateway.name);
-                    }}
+                  onClick={() => {
+                    console.log(`🎯 CLICKED: Payment button for ${gateway.name}`);
+                    onConfirm(gateway.name, acceptanceTimestamp);
+                  }}
                   >
                     <div className="flex items-center gap-2 w-full">
                       {isProcessing ? (

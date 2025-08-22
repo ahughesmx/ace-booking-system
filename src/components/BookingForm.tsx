@@ -234,7 +234,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     }
   };
 
-  const handleConfirmPayment = async (paymentGateway: string) => {
+  const handleConfirmPayment = async (paymentGateway: string, rulesAcceptedAt?: Date | null) => {
     console.log(`🔄 handleConfirmPayment called with ${paymentGateway}`, { 
       pendingBooking: !!pendingBooking, 
       pendingBookingId: pendingBooking?.id,
@@ -247,7 +247,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
       setIsSubmitting(true);
       setProcessingPayment(paymentGateway);
       console.log(`💳 Iniciando processPayment para ${paymentGateway}...`);
-      const result = await processPayment(paymentGateway);
+      const result = await processPayment(paymentGateway, rulesAcceptedAt);
       console.log(`✅ Payment processed successfully for ${paymentGateway}`, result);
       
       // Si es pago en efectivo (operador), generar ticket con folio real

@@ -17,6 +17,7 @@ export interface BaseBooking {
   expires_at?: string | null;
   status?: string;
   processed_by?: string | null;
+  rules_accepted_at?: string | null;
   user: {
     full_name: string;
     member_id: string;
