@@ -1,6 +1,7 @@
 
 import { TimeSlot } from "./TimeSlot";
 import { format, addHours, isBefore, isToday } from "date-fns";
+import { es } from "date-fns/locale";
 import { useCourts } from "@/hooks/use-courts";
 import { useAllBookings } from "@/hooks/use-bookings";
 import { Booking, SpecialBooking } from "@/types/booking";

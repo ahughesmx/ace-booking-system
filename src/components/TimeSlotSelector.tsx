@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format, addHours, isBefore, isToday } from "date-fns";
+import { es } from "date-fns/locale";
 import { useCourts } from "@/hooks/use-courts";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { useActiveMaintenancePeriods } from "@/hooks/use-court-maintenance";

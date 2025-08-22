@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase-client";
 import { useAllBookings, useActiveBookingsCount } from "@/hooks/use-bookings";
 import { useBookingRules } from "@/hooks/use-booking-rules";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 // Hook para obtener todas las reservas incluyendo pending_payment
 function useAllBookingsIncludingPending(selectedDate?: Date) {

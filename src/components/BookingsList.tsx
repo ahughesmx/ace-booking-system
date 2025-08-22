@@ -7,6 +7,7 @@ import { useBookingRules } from "@/hooks/use-booking-rules";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import type { Booking } from "@/types/booking";
 import { EmptyBookingsList } from "./booking/EmptyBookingsList";
 import { BookingsListContent } from "./booking/BookingsListContent";
