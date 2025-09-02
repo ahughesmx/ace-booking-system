@@ -78,8 +78,12 @@ serve(async (req) => {
       });
     }
 
-    const paypalClientId = paypalConfig.configuration?.client_id;
-    const paypalClientSecret = paypalConfig.configuration?.client_secret;
+    const paypalClientId = paypalConfig.test_mode 
+      ? paypalConfig.configuration?.clientIdTest 
+      : paypalConfig.configuration?.clientIdLive;
+    const paypalClientSecret = paypalConfig.test_mode 
+      ? paypalConfig.configuration?.clientSecretTest 
+      : paypalConfig.configuration?.clientSecretLive;
     const paypalBaseUrl = paypalConfig.test_mode 
       ? "https://api.sandbox.paypal.com" 
       : "https://api.paypal.com";
