@@ -138,19 +138,18 @@ serve(async (req) => {
           value: amount
         }
       }],
-      payment_source: {
-        paypal: {
-          experience_context: {
-            payment_method_preference: "UNRESTRICTED", // Allows both PayPal and card payments
-            brand_name: "Reservas CDV",
-            locale: "es-MX",
-            landing_page: "GUEST_CHECKOUT", // Skip login page, go directly to payment
-            shipping_preference: "NO_SHIPPING",
-            user_action: "PAY_NOW",
-            return_url: `${currentOrigin}/booking-success`,
-            cancel_url: `${currentOrigin}/`
-          }
-        }
+      application_context: {
+        brand_name: "Reservas CDV",
+        locale: "es-MX",
+        landing_page: "NO_PREFERENCE", // Permite tanto login como guest checkout
+        shipping_preference: "NO_SHIPPING",
+        user_action: "PAY_NOW",
+        payment_method: {
+          payee_preferred: "UNRESTRICTED", // Permite pagos con tarjeta sin cuenta PayPal
+          payer_selected: "PAYPAL"
+        },
+        return_url: `${currentOrigin}/booking-success`,
+        cancel_url: `${currentOrigin}/`
       }
     };
 
