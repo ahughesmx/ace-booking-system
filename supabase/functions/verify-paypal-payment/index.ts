@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🟢 PAYPAL VERIFY-PAYMENT: Starting PayPal payment verification');
+    console.log('🟢 PAYPAL VERIFY-PAYMENT: Starting PayPal order verification');
 
     // Create Supabase client
     const supabaseClient = createClient(
@@ -35,13 +35,13 @@ serve(async (req) => {
       });
     }
 
-    // Get request body
-    const { paymentId, payerId } = await req.json();
-    console.log('📋 PAYPAL VERIFY-PAYMENT: PayPal parameters:', { paymentId, payerId, userId: user.id });
+    // Get request body - expecting orderId from PayPal v2 API
+    const { paymentId: orderId } = await req.json();
+    console.log('📋 PAYPAL VERIFY-PAYMENT: PayPal order ID:', orderId, 'User ID:', user.id);
 
-    if (!paymentId || !payerId) {
-      console.error('❌ PAYPAL VERIFY-PAYMENT: Missing PayPal parameters');
-      return new Response(JSON.stringify({ error: "Faltan parámetros de PayPal" }), {
+    if (!orderId) {
+      console.error('❌ PAYPAL VERIFY-PAYMENT: Missing PayPal order ID');
+      return new Response(JSON.stringify({ error: "Falta el ID de la orden de PayPal" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -53,6 +53,94 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
+
+    // Get PayPal configuration from payment_gateways table
+    const { data: paypalConfig, error: configError } = await supabaseService
+      .from("payment_gateways")
+      .select("*")
+      .eq("name", "paypal")
+      .eq("enabled", true)
+      .single();
+
+    if (configError || !paypalConfig) {
+      console.error('❌ PAYPAL VERIFY-PAYMENT: PayPal gateway not configured:', configError);
+      return new Response(JSON.stringify({ error: "PayPal no está configurado" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const paypalClientId = paypalConfig.test_mode 
+      ? paypalConfig.configuration?.clientIdTest 
+      : paypalConfig.configuration?.clientIdLive;
+    const paypalClientSecret = paypalConfig.test_mode 
+      ? paypalConfig.configuration?.clientSecretTest 
+      : paypalConfig.configuration?.clientSecretLive;
+    const paypalBaseUrl = paypalConfig.test_mode 
+      ? "https://api.sandbox.paypal.com" 
+      : "https://api.paypal.com";
+
+    if (!paypalClientId || !paypalClientSecret) {
+      console.error('❌ PAYPAL VERIFY-PAYMENT: PayPal credentials not configured');
+      return new Response(JSON.stringify({ error: "Credenciales de PayPal no configuradas" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Get PayPal access token
+    const tokenResponse = await fetch(`${paypalBaseUrl}/v1/oauth2/token`, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Accept-Language": "en_US",
+        "Authorization": `Basic ${btoa(`${paypalClientId}:${paypalClientSecret}`)}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials",
+    });
+
+    if (!tokenResponse.ok) {
+      console.error('❌ PAYPAL VERIFY-PAYMENT: Failed to get PayPal token');
+      return new Response(JSON.stringify({ error: "Error de autenticación con PayPal" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const tokenData = await tokenResponse.json();
+    const accessToken = tokenData.access_token;
+
+    // Verify and capture the PayPal order
+    const captureResponse = await fetch(`${paypalBaseUrl}/v2/checkout/orders/${orderId}/capture`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`,
+        "PayPal-Request-Id": `capture_${Date.now()}`,
+      },
+    });
+
+    if (!captureResponse.ok) {
+      const errorText = await captureResponse.text();
+      console.error('❌ PAYPAL VERIFY-PAYMENT: Failed to capture PayPal order:', captureResponse.status, errorText);
+      return new Response(JSON.stringify({ error: "Error al capturar el pago de PayPal" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const captureResult = await captureResponse.json();
+    console.log('✅ PAYPAL VERIFY-PAYMENT: PayPal order captured successfully:', captureResult.id);
+
+    // Verify capture was successful
+    if (captureResult.status !== "COMPLETED") {
+      console.error('❌ PAYPAL VERIFY-PAYMENT: PayPal capture not completed:', captureResult.status);
+      return new Response(JSON.stringify({ error: "El pago de PayPal no se completó" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     console.log('🔍 PAYPAL VERIFY-PAYMENT: Searching for user booking...');
     
@@ -121,7 +209,7 @@ serve(async (req) => {
         status: "paid",
         payment_gateway: "paypal",
         payment_method: "paypal",
-        payment_id: paymentId,
+        payment_id: orderId,
         payment_completed_at: new Date().toISOString(),
         actual_amount_charged: booking.amount,
         expires_at: null

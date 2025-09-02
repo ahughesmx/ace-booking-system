@@ -123,63 +123,64 @@ serve(async (req) => {
 
     console.log('✅ CREATE-PAYPAL-PAYMENT: PayPal access token obtained');
 
-    // Prepare payment data
+    // Prepare payment data for API v2 (allows card payments without PayPal account)
     const amount = (bookingData.amount / 100).toFixed(2); // Convert from cents to pesos
     const description = `Reserva de ${bookingData.selectedCourtType} - ${bookingData.selectedCourt}`;
     const currentOrigin = req.headers.get("origin") || "https://reservascdv.com";
 
-    const paymentData = {
-      intent: "sale",
-      payer: {
-        payment_method: "paypal"
-      },
-      transactions: [{
-        amount: {
-          total: amount,
-          currency: "MXN"
-        },
+    const orderData = {
+      intent: "CAPTURE",
+      purchase_units: [{
+        reference_id: `booking_${Date.now()}`,
         description: description,
-        item_list: {
-          items: [{
-            name: description,
-            quantity: "1",
-            price: amount,
-            currency: "MXN"
-          }]
+        amount: {
+          currency_code: "MXN",
+          value: amount
         }
       }],
-      redirect_urls: {
-        return_url: `${currentOrigin}/booking-success`,
-        cancel_url: `${currentOrigin}/`
+      payment_source: {
+        paypal: {
+          experience_context: {
+            payment_method_preference: "UNRESTRICTED", // Allows both PayPal and card payments
+            brand_name: "Reservas CDV",
+            locale: "es-MX",
+            landing_page: "GUEST_CHECKOUT", // Skip login page, go directly to payment
+            shipping_preference: "NO_SHIPPING",
+            user_action: "PAY_NOW",
+            return_url: `${currentOrigin}/booking-success`,
+            cancel_url: `${currentOrigin}/`
+          }
+        }
       }
     };
 
-    console.log('📤 CREATE-PAYPAL-PAYMENT: Creating PayPal payment with data:', paymentData);
+    console.log('📤 CREATE-PAYPAL-PAYMENT: Creating PayPal order with data:', orderData);
 
-    // Create PayPal payment
-    const paymentResponse = await fetch(`${paypalBaseUrl}/v1/payments/payment`, {
+    // Create PayPal order using v2 API
+    const orderResponse = await fetch(`${paypalBaseUrl}/v2/checkout/orders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${accessToken}`,
+        "PayPal-Request-Id": `booking_${Date.now()}`, // Idempotency key
       },
-      body: JSON.stringify(paymentData),
+      body: JSON.stringify(orderData),
     });
 
-    if (!paymentResponse.ok) {
-      const errorText = await paymentResponse.text();
-      console.error('❌ CREATE-PAYPAL-PAYMENT: PayPal payment creation failed:', paymentResponse.status, errorText);
-      return new Response(JSON.stringify({ error: "Error al crear el pago en PayPal" }), {
+    if (!orderResponse.ok) {
+      const errorText = await orderResponse.text();
+      console.error('❌ CREATE-PAYPAL-PAYMENT: PayPal order creation failed:', orderResponse.status, errorText);
+      return new Response(JSON.stringify({ error: "Error al crear la orden en PayPal" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const paymentResult = await paymentResponse.json();
-    console.log('✅ CREATE-PAYPAL-PAYMENT: PayPal payment created:', paymentResult.id);
+    const orderResult = await orderResponse.json();
+    console.log('✅ CREATE-PAYPAL-PAYMENT: PayPal order created:', orderResult.id);
 
     // Find the approval URL
-    const approvalUrl = paymentResult.links?.find((link: any) => link.rel === "approval_url")?.href;
+    const approvalUrl = orderResult.links?.find((link: any) => link.rel === "payer-action")?.href;
 
     if (!approvalUrl) {
       console.error('❌ CREATE-PAYPAL-PAYMENT: No approval URL found in PayPal response');
@@ -193,7 +194,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       approvalUrl,
-      paymentId: paymentResult.id
+      paymentId: orderResult.id
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

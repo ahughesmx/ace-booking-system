@@ -16,9 +16,9 @@ export default function BookingSuccess() {
   const queryClient = useQueryClient();
   
   const sessionId = searchParams.get("session_id");
-  const paypalPaymentId = searchParams.get("paymentId");
-  const paypalPayerId = searchParams.get("PayerID");
-  const paypalToken = searchParams.get("token");
+  const paypalToken = searchParams.get("token"); // PayPal v2 uses "token" parameter for order ID
+  const paypalPaymentId = paypalToken; // For backward compatibility
+  const paypalPayerId = searchParams.get("PayerID"); // Not used in v2 but keeping for fallback
   
   const [isProcessing, setIsProcessing] = useState(true);
   const [success, setSuccess] = useState(false);
@@ -67,16 +67,16 @@ export default function BookingSuccess() {
   };
 
   // PayPal verification
-  const verifyPayPalPayment = async (paymentId: string, payerId: string) => {
+  const verifyPayPalPayment = async (orderId: string) => {
     try {
-      console.log("🟡 Processing PayPal payment:", { paymentId, payerId });
+      console.log("🟡 Processing PayPal payment with order ID:", orderId);
       
       if (!user) {
         throw new Error("Usuario no autenticado");
       }
 
       const { data, error } = await supabase.functions.invoke('verify-paypal-payment', {
-        body: { paymentId, payerId }
+        body: { paymentId: orderId }
       });
 
       if (error) {
@@ -105,10 +105,10 @@ export default function BookingSuccess() {
   useEffect(() => {
     const processPaymentReturn = async () => {
       try {
-        if (paypalPaymentId && paypalPayerId && paypalToken) {
-          console.log("🟡 Detected PayPal return");
+        if (paypalToken) {
+          console.log("🟡 Detected PayPal return with token:", paypalToken);
           setPaymentType("paypal");
-          await verifyPayPalPayment(paypalPaymentId, paypalPayerId);
+          await verifyPayPalPayment(paypalToken);
         } else if (sessionId) {
           console.log("🔥 Detected Stripe return");
           setPaymentType("stripe");
@@ -125,7 +125,7 @@ export default function BookingSuccess() {
     };
 
     processPaymentReturn();
-  }, [sessionId, paypalPaymentId, paypalPayerId, paypalToken, user?.id]);
+  }, [sessionId, paypalToken, user?.id]);
 
   if (isProcessing) {
     return (
@@ -177,13 +177,20 @@ export default function BookingSuccess() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center justify-center p-8">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <h2 className="text-xl font-semibold mb-2">
-              Procesando pago...
-            </h2>
-            <p className="text-muted-foreground text-center">
-              Confirmando tu reserva, por favor espera...
-            </p>
+            <div className="text-center space-y-4">
+              <h2 className="text-xl font-semibold text-destructive mb-2">
+                Error en el pago
+              </h2>
+              <p className="text-muted-foreground">
+                {error}
+              </p>
+              <Button 
+                onClick={() => navigate('/')} 
+                className="mt-4"
+              >
+                Volver al inicio
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
