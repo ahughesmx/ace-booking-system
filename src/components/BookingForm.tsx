@@ -248,6 +248,13 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
       setProcessingPayment(paymentGateway);
       console.log(`💳 Iniciando processPayment para ${paymentGateway}...`);
       const result = await processPayment(paymentGateway, rulesAcceptedAt);
+      
+      // Para PayPal, processPayment redirige y no retorna nada útil
+      if (paymentGateway === 'paypal') {
+        // No hacer nada aquí, el pago se verificará en BookingSuccess
+        return;
+      }
+      
       console.log(`✅ Payment processed successfully for ${paymentGateway}`, result);
       
       // Si es pago en efectivo (operador), generar ticket con folio real
