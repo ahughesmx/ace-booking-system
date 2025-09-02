@@ -55,14 +55,38 @@ serve(async (req) => {
       });
     }
 
-    // PayPal API credentials (these should be set as edge function secrets)
-    const paypalClientId = Deno.env.get("PAYPAL_CLIENT_ID");
-    const paypalClientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
-    const paypalBaseUrl = Deno.env.get("PAYPAL_BASE_URL") || "https://api.paypal.com"; // production by default
+    // Create service role client to get PayPal credentials from database
+    const supabaseService = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    // Get PayPal configuration from payment_gateways table
+    const { data: paypalConfig, error: configError } = await supabaseService
+      .from("payment_gateways")
+      .select("*")
+      .eq("name", "paypal")
+      .eq("enabled", true)
+      .single();
+
+    if (configError || !paypalConfig) {
+      console.error('❌ CREATE-PAYPAL-PAYMENT: PayPal gateway not configured or disabled:', configError);
+      return new Response(JSON.stringify({ error: "PayPal no está configurado o está deshabilitado" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const paypalClientId = paypalConfig.configuration?.client_id;
+    const paypalClientSecret = paypalConfig.configuration?.client_secret;
+    const paypalBaseUrl = paypalConfig.test_mode 
+      ? "https://api.sandbox.paypal.com" 
+      : "https://api.paypal.com";
 
     if (!paypalClientId || !paypalClientSecret) {
-      console.error('❌ CREATE-PAYPAL-PAYMENT: PayPal credentials not configured');
-      return new Response(JSON.stringify({ error: "Configuración de PayPal no encontrada" }), {
+      console.error('❌ CREATE-PAYPAL-PAYMENT: PayPal credentials not configured in database');
+      return new Response(JSON.stringify({ error: "Credenciales de PayPal no configuradas" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
