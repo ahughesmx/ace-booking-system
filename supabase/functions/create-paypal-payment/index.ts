@@ -58,7 +58,7 @@ serve(async (req) => {
     // PayPal API credentials (these should be set as edge function secrets)
     const paypalClientId = Deno.env.get("PAYPAL_CLIENT_ID");
     const paypalClientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
-    const paypalBaseUrl = Deno.env.get("PAYPAL_BASE_URL") || "https://api.sandbox.paypal.com"; // sandbox by default
+    const paypalBaseUrl = Deno.env.get("PAYPAL_BASE_URL") || "https://api.paypal.com"; // production by default
 
     if (!paypalClientId || !paypalClientSecret) {
       console.error('❌ CREATE-PAYPAL-PAYMENT: PayPal credentials not configured');
@@ -96,9 +96,9 @@ serve(async (req) => {
     console.log('✅ CREATE-PAYPAL-PAYMENT: PayPal access token obtained');
 
     // Prepare payment data
-    const amount = bookingData.amount.toString();
+    const amount = (bookingData.amount / 100).toFixed(2); // Convert from cents to pesos
     const description = `Reserva de ${bookingData.selectedCourtType} - ${bookingData.selectedCourt}`;
-    const currentOrigin = req.headers.get("origin") || "http://localhost:3000";
+    const currentOrigin = req.headers.get("origin") || "https://reservascdv.com";
 
     const paymentData = {
       intent: "sale",
