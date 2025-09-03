@@ -11,7 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 export default function BookingSuccess() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -103,6 +103,11 @@ export default function BookingSuccess() {
   };
 
   useEffect(() => {
+    // No procesar pago hasta que la autenticación esté completa
+    if (authLoading) {
+      return;
+    }
+
     const processPaymentReturn = async () => {
       try {
         if (paypalToken) {
@@ -125,16 +130,17 @@ export default function BookingSuccess() {
     };
 
     processPaymentReturn();
-  }, [sessionId, paypalToken, user?.id]);
+  }, [sessionId, paypalToken, user?.id, authLoading]);
 
-  if (isProcessing) {
+  if (isProcessing || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center justify-center p-8">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
             <h2 className="text-xl font-semibold mb-2">
-              {paymentType === "stripe" ? "Verificando pago con Stripe..." : 
+              {authLoading ? "Procesando pago..." :
+               paymentType === "stripe" ? "Verificando pago con Stripe..." : 
                paymentType === "paypal" ? "Verificando pago con PayPal..." : 
                "Procesando pago..."}
             </h2>
