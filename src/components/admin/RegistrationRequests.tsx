@@ -119,9 +119,20 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
       
     } catch (error: any) {
       console.error(`Error ${action}ing request:`, error);
+      
+      // Determinar el mensaje de error apropiado
+      let errorMessage = error.message || `No se pudo ${action === 'approve' ? 'aprobar' : 'rechazar'} la solicitud.`;
+      
+      // Personalizar mensaje para errores específicos
+      if (error.message?.includes("Esta clave de socio no está disponible o no pertenece a su familia")) {
+        errorMessage = "Esta clave de socio ya está siendo utilizada por otra familia. El apellido del solicitante no coincide con los miembros existentes de esta membresía.";
+      } else if (error.message?.includes("Member ID not available")) {
+        errorMessage = "La clave de socio especificada no es válida o ya está en uso por otra familia.";
+      }
+      
       toast({
-        title: "Error",
-        description: error.message || `No se pudo ${action === 'approve' ? 'aprobar' : 'rechazar'} la solicitud.`,
+        title: "No se puede aprobar la solicitud",
+        description: errorMessage,
         variant: "destructive",
       });
     }
