@@ -4,6 +4,9 @@ import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/lib/supabase-client";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { RegisterForm } from "@/components/auth/RegisterForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { CheckCircle } from "lucide-react";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -21,6 +24,9 @@ export default function Login() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
+  // Estado para el modal de éxito
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -112,7 +118,7 @@ export default function Login() {
         setError("Error al enviar solicitud de registro");
       } else {
         setError(""); // Limpiar errores
-        alert("Solicitud de registro enviada. Un administrador revisará tu solicitud y te notificarán por WhatsApp.");
+        setShowSuccessModal(true);
         setShowRegister(false);
         // Limpiar campos
         setMemberId("");
@@ -157,6 +163,31 @@ export default function Login() {
           />
         )}
       </div>
+      
+      {/* Modal de éxito del registro */}
+      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center">
+            <div className="mx-auto mb-4">
+              <CheckCircle className="h-12 w-12 text-green-500" />
+            </div>
+            <DialogTitle className="text-xl font-semibold">
+              Solicitud de registro enviada
+            </DialogTitle>
+            <DialogDescription className="text-center mt-2">
+              Un administrador revisará tu solicitud y te notificarán por WhatsApp.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center mt-4">
+            <Button 
+              onClick={() => setShowSuccessModal(false)}
+              className="min-w-[100px]"
+            >
+              Aceptar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
