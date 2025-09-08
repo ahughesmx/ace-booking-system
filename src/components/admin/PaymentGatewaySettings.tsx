@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { usePaymentSettings, useUpdatePaymentSettings } from "@/hooks/use-payment-settings";
+import { usePaymentSettings, useUpdatePaymentSettings, usePaymentGateways, useUpdatePaymentGateway } from "@/hooks/use-payment-settings";
 import { CreditCard, Shield, AlertCircle, CheckCircle, Clock } from "lucide-react";
 
 export default function PaymentGatewaySettings() {
@@ -19,6 +19,8 @@ export default function PaymentGatewaySettings() {
   // Payment settings hooks
   const { data: paymentSettings } = usePaymentSettings();
   const updatePaymentSettings = useUpdatePaymentSettings();
+  const { data: paymentGateways } = usePaymentGateways();
+  const updatePaymentGateway = useUpdatePaymentGateway();
 
   // Stripe Configuration State
   const [stripeConfig, setStripeConfig] = useState({
@@ -64,66 +66,53 @@ export default function PaymentGatewaySettings() {
 
   // Cargar configuraciones existentes
   useEffect(() => {
-    const loadConfigurations = async () => {
-      try {
-        const { data: gateways, error } = await supabase
-          .from("payment_gateways")
-          .select("*");
-
-        if (error) throw error;
-
-        gateways?.forEach(gateway => {
-          const config = gateway.configuration as any;
-          if (gateway.name === 'stripe') {
-            setStripeConfig({
-              enabled: gateway.enabled,
-              testMode: gateway.test_mode,
-              publishableKeyTest: config?.publishableKeyTest || "",
-              secretKeyTest: config?.secretKeyTest || "",
-              publishableKeyLive: config?.publishableKeyLive || "",
-              secretKeyLive: config?.secretKeyLive || "",
-              webhookEndpointTest: config?.webhookEndpointTest || "",
-              webhookEndpointLive: config?.webhookEndpointLive || "",
-              webhookSecretTest: config?.webhookSecretTest || "",
-              webhookSecretLive: config?.webhookSecretLive || ""
-            });
-          } else if (gateway.name === 'paypal') {
-            setPaypalConfig({
-              enabled: gateway.enabled,
-              testMode: gateway.test_mode,
-              clientIdTest: config?.clientIdTest || "",
-              clientSecretTest: config?.clientSecretTest || "",
-              clientIdLive: config?.clientIdLive || "",
-              clientSecretLive: config?.clientSecretLive || "",
-              webhookId: config?.webhookId || "",
-              webhookUrl: config?.webhookUrl || "",
-              sandboxAccount: config?.sandboxAccount || ""
-            });
-          } else if (gateway.name === 'mercadopago') {
-            setMercadoPagoConfig({
-              enabled: gateway.enabled,
-              testMode: gateway.test_mode,
-              publicKeyTest: config?.publicKeyTest || "",
-              accessTokenTest: config?.accessTokenTest || "",
-              publicKeyLive: config?.publicKeyLive || "",
-              accessTokenLive: config?.accessTokenLive || "",
-              clientIdTest: config?.clientIdTest || "",
-              clientSecretTest: config?.clientSecretTest || "",
-              clientIdLive: config?.clientIdLive || "",
-              clientSecretLive: config?.clientSecretLive || "",
-              webhookUrl: config?.webhookUrl || ""
-            });
-          }
-        });
-      } catch (error) {
-        console.error("Error loading payment configurations:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadConfigurations();
-  }, []);
+    if (paymentGateways) {
+      paymentGateways?.forEach(gateway => {
+        const config = gateway.configuration as any;
+        if (gateway.name === 'stripe') {
+          setStripeConfig({
+            enabled: gateway.enabled,
+            testMode: gateway.test_mode,
+            publishableKeyTest: config?.publishableKeyTest || "",
+            secretKeyTest: config?.secretKeyTest || "",
+            publishableKeyLive: config?.publishableKeyLive || "",
+            secretKeyLive: config?.secretKeyLive || "",
+            webhookEndpointTest: config?.webhookEndpointTest || "",
+            webhookEndpointLive: config?.webhookEndpointLive || "",
+            webhookSecretTest: config?.webhookSecretTest || "",
+            webhookSecretLive: config?.webhookSecretLive || ""
+          });
+        } else if (gateway.name === 'paypal') {
+          setPaypalConfig({
+            enabled: gateway.enabled,
+            testMode: gateway.test_mode,
+            clientIdTest: config?.clientIdTest || "",
+            clientSecretTest: config?.clientSecretTest || "",
+            clientIdLive: config?.clientIdLive || "",
+            clientSecretLive: config?.clientSecretLive || "",
+            webhookId: config?.webhookId || "",
+            webhookUrl: config?.webhookUrl || "",
+            sandboxAccount: config?.sandboxAccount || ""
+          });
+        } else if (gateway.name === 'mercadopago') {
+          setMercadoPagoConfig({
+            enabled: gateway.enabled,
+            testMode: gateway.test_mode,
+            publicKeyTest: config?.publicKeyTest || "",
+            accessTokenTest: config?.accessTokenTest || "",
+            publicKeyLive: config?.publicKeyLive || "",
+            accessTokenLive: config?.accessTokenLive || "",
+            clientIdTest: config?.clientIdTest || "",
+            clientSecretTest: config?.clientSecretTest || "",
+            clientIdLive: config?.clientIdLive || "",
+            clientSecretLive: config?.clientSecretLive || "",
+            webhookUrl: config?.webhookUrl || ""
+          });
+        }
+      });
+      setIsLoading(false);
+    }
+  }, [paymentGateways]);
 
   const handleSaveStripe = async () => {
     setIsSaving(true);
@@ -201,11 +190,23 @@ export default function PaymentGatewaySettings() {
   };
 
   const handleSaveMercadoPago = async () => {
+    if (!paymentGateways) return;
+    
+    const mercadoPagoGateway = paymentGateways.find(g => g.name === 'mercadopago');
+    if (!mercadoPagoGateway) {
+      toast({
+        title: "Error",
+        description: "No se encontró la configuración de Mercado Pago.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from("payment_gateways")
-        .update({
+      await updatePaymentGateway.mutateAsync({
+        id: mercadoPagoGateway.id,
+        updates: {
           enabled: mercadoPagoConfig.enabled,
           test_mode: mercadoPagoConfig.testMode,
           configuration: {
@@ -219,21 +220,11 @@ export default function PaymentGatewaySettings() {
             clientSecretLive: mercadoPagoConfig.clientSecretLive,
             webhookUrl: mercadoPagoConfig.webhookUrl
           }
-        })
-        .eq("name", "mercadopago");
-
-      if (error) throw error;
-
-      toast({
-        title: "Configuración de Mercado Pago guardada",
-        description: "La configuración de Mercado Pago se ha actualizado correctamente.",
+        }
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo guardar la configuración de Mercado Pago.",
-        variant: "destructive",
-      });
+      // Error handled by the mutation
+      console.error("Error saving MercadoPago configuration:", error);
     } finally {
       setIsSaving(false);
     }
