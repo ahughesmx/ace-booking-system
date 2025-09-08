@@ -123,7 +123,7 @@ serve(async (req) => {
         user_email: user.email,
         court: bookingData.selectedCourt,
         court_type: bookingData.selectedCourtType,
-        date: bookingData.selectedDate.toISOString(),
+        date: startDate.toISOString(),
         time: bookingData.selectedTime,
         amount: bookingData.amount
       }
