@@ -152,6 +152,15 @@ export default function BookingSuccess() {
 
     const processPaymentReturn = async () => {
       try {
+        // Log all URL parameters for debugging
+        console.log("🔍 All URL parameters:", Object.fromEntries(searchParams));
+        console.log("🔍 MercadoPago params:", {
+          paymentId: mercadoPagoPaymentId,
+          preferenceId: mercadoPagoPreferenceId,
+          status: mercadoPagoStatus,
+          gateway: gateway
+        });
+
         if (mercadoPagoPaymentId || gateway === 'mercadopago') {
           console.log("🟢 Detected MercadoPago return with payment ID:", mercadoPagoPaymentId);
           setPaymentType("mercadopago");
@@ -160,6 +169,7 @@ export default function BookingSuccess() {
           if (mercadoPagoStatus === 'approved' && mercadoPagoPaymentId) {
             await verifyMercadoPagoPayment(mercadoPagoPaymentId, mercadoPagoPreferenceId || undefined);
           } else {
+            console.log("❌ Payment not approved or pending. Status:", mercadoPagoStatus, "PaymentId:", mercadoPagoPaymentId);
             setError("El pago con MercadoPago no fue aprobado o está pendiente");
           }
         } else if (paypalToken) {
