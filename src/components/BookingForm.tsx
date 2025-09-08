@@ -296,9 +296,10 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
       
       setShowSummary(false);
       
-      // Solo resetear el estado si no es pago en efectivo con ticket
-      if (!(paymentGateway === 'efectivo' && isOperator)) {
-        onBookingSuccess(); // Llamar el callback de éxito
+      // Solo resetear el estado y mostrar éxito para pagos en efectivo
+      // Para otros métodos de pago, el éxito se muestra cuando se verifica el pago
+      if (paymentGateway === 'efectivo') {
+        onBookingSuccess(); // Solo para efectivo, ya que se procesa inmediatamente
       }
     } catch (error) {
       console.error(`❌ Error in handleConfirmPayment for ${paymentGateway}:`, error);
