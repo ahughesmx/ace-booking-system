@@ -20,11 +20,31 @@ export default function BookingSuccess() {
   const paypalPaymentId = paypalToken; // For backward compatibility
   const paypalPayerId = searchParams.get("PayerID"); // Not used in v2 but keeping for fallback
   
-  // MercadoPago parameters
+  // MercadoPago parameters - capturar TODOS los parámetros posibles
   const mercadoPagoPaymentId = searchParams.get("payment_id");
   const mercadoPagoPreferenceId = searchParams.get("preference_id");
   const mercadoPagoStatus = searchParams.get("status");
   const gateway = searchParams.get("gateway"); // Custom parameter to identify the gateway
+  
+  // Otros parámetros que MercadoPago puede enviar
+  const mpCollectionId = searchParams.get("collection_id");
+  const mpCollectionStatus = searchParams.get("collection_status");
+  const mpPaymentType = searchParams.get("payment_type");
+  const mpMerchantOrderId = searchParams.get("merchant_order_id");
+  const mpExternalReference = searchParams.get("external_reference");
+  
+  console.log("🔍 ALL MercadoPago URL Parameters:", {
+    payment_id: mercadoPagoPaymentId,
+    preference_id: mercadoPagoPreferenceId,
+    status: mercadoPagoStatus,
+    gateway: gateway,
+    collection_id: mpCollectionId,
+    collection_status: mpCollectionStatus,
+    payment_type: mpPaymentType,
+    merchant_order_id: mpMerchantOrderId,
+    external_reference: mpExternalReference,
+    allParams: Object.fromEntries(searchParams)
+  });
   
   const [isProcessing, setIsProcessing] = useState(true);
   const [success, setSuccess] = useState(false);
@@ -158,19 +178,30 @@ export default function BookingSuccess() {
           paymentId: mercadoPagoPaymentId,
           preferenceId: mercadoPagoPreferenceId,
           status: mercadoPagoStatus,
-          gateway: gateway
+          gateway: gateway,
+          collection_id: mpCollectionId,
+          collection_status: mpCollectionStatus,
+          payment_type: mpPaymentType,
+          merchant_order_id: mpMerchantOrderId,
+          external_reference: mpExternalReference
         });
 
-        if (mercadoPagoPaymentId || gateway === 'mercadopago') {
-          console.log("🟢 Detected MercadoPago return with payment ID:", mercadoPagoPaymentId);
+        if (mercadoPagoPaymentId || mpCollectionId || gateway === 'mercadopago') {
+          console.log("🟢 Detected MercadoPago return");
           setPaymentType("mercadopago");
           
+          // Usar collection_id si payment_id no está disponible (MercadoPago a veces usa collection_id)
+          const actualPaymentId = mercadoPagoPaymentId || mpCollectionId;
+          const actualStatus = mercadoPagoStatus || mpCollectionStatus;
+          
+          console.log("🔍 Using payment ID:", actualPaymentId, "with status:", actualStatus);
+          
           // Check if payment was approved
-          if (mercadoPagoStatus === 'approved' && mercadoPagoPaymentId) {
-            await verifyMercadoPagoPayment(mercadoPagoPaymentId, mercadoPagoPreferenceId || undefined);
+          if (actualStatus === 'approved' && actualPaymentId) {
+            await verifyMercadoPagoPayment(actualPaymentId, mercadoPagoPreferenceId || undefined);
           } else {
-            console.log("❌ Payment not approved or pending. Status:", mercadoPagoStatus, "PaymentId:", mercadoPagoPaymentId);
-            setError("El pago con MercadoPago no fue aprobado o está pendiente");
+            console.log("❌ Payment not approved or pending. Status:", actualStatus, "PaymentId:", actualPaymentId);
+            setError(`El pago con MercadoPago no fue aprobado. Estado: ${actualStatus || 'desconocido'}`);
           }
         } else if (paypalToken) {
           console.log("🟡 Detected PayPal return with token:", paypalToken);

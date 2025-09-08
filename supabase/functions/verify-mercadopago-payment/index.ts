@@ -66,12 +66,14 @@ serve(async (req) => {
     
     console.log('📤 Calling MercadoPago API to verify payment:', mpApiUrl);
     console.log('🔧 Using test mode:', isTestMode);
+    console.log('🔍 Payment ID received:', paymentId);
+    console.log('🔍 Preference ID received:', preferenceId);
 
     // Retry mechanism for payment verification (MercadoPago may need time to process)
     let paymentData;
     let response;
-    const maxRetries = 5; // Increased from 3 to 5
-    const retryDelay = 3000; // Increased from 2 to 3 seconds
+    const maxRetries = 3; // Reducido de 5 a 3 para no esperar tanto
+    const retryDelay = 2000; // Reducido de 3 a 2 segundos
 
     console.log('🔍 Starting payment verification process...');
     console.log('🔍 Payment ID to verify:', paymentId);
@@ -96,14 +98,63 @@ serve(async (req) => {
 
       paymentData = await response.json();
       console.log(`📋 Attempt ${attempt} response status:`, response.status);
+      console.log(`📋 Attempt ${attempt} response data:`, JSON.stringify(paymentData, null, 2));
       
       if (response.ok) {
         console.log('✅ Payment found on attempt', attempt);
         break;
       } else if (response.status === 404 && attempt < maxRetries) {
         console.log(`⏱️ Payment not found yet (404), retrying... (attempt ${attempt}/${maxRetries})`);
-        console.log('🔍 Error details:', JSON.stringify(paymentData));
         continue;
+      } else if (response.status === 404) {
+        // Si después de todos los intentos sigue siendo 404, intentar con merchant order
+        console.log('🔄 Payment ID not found, trying to find payment via merchant order...');
+        
+        if (preferenceId) {
+          try {
+            // Intentar buscar el pago usando la preference
+            const merchantOrderUrl = `https://api.mercadopago.com/merchant_orders`;
+            const merchantResponse = await fetch(`${merchantOrderUrl}?preference_id=${preferenceId}`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              }
+            });
+            
+            const merchantData = await merchantResponse.json();
+            console.log('🔍 Merchant order search response:', JSON.stringify(merchantData, null, 2));
+            
+            if (merchantResponse.ok && merchantData.results && merchantData.results.length > 0) {
+              const merchantOrder = merchantData.results[0];
+              if (merchantOrder.payments && merchantOrder.payments.length > 0) {
+                const actualPaymentId = merchantOrder.payments[0].id;
+                console.log('✅ Found actual payment ID via merchant order:', actualPaymentId);
+                
+                // Reintentar con el ID correcto
+                const correctPaymentUrl = `https://api.mercadopago.com/v1/payments/${actualPaymentId}`;
+                const correctResponse = await fetch(correctPaymentUrl, {
+                  method: 'GET',
+                  headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                  }
+                });
+                
+                if (correctResponse.ok) {
+                  paymentData = await correctResponse.json();
+                  response = correctResponse;
+                  console.log('✅ Payment found with correct ID:', actualPaymentId);
+                  break;
+                }
+              }
+            }
+          } catch (merchantError) {
+            console.log('❌ Error searching merchant orders:', merchantError);
+          }
+        }
+        
+        console.log(`❌ Failed on attempt ${attempt} with status ${response.status}`);
       } else {
         console.log(`❌ Failed on attempt ${attempt} with status ${response.status}`);
       }
