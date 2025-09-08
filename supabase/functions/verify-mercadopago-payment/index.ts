@@ -61,19 +61,53 @@ serve(async (req) => {
     }
 
     // Verify payment with MercadoPago API
+    // Use the same base URL for both test and production, but different access tokens
     const mpApiUrl = `https://api.mercadopago.com/v1/payments/${paymentId}`;
     
     console.log('📤 Calling MercadoPago API to verify payment:', mpApiUrl);
+    console.log('🔧 Using test mode:', isTestMode);
 
-    const response = await fetch(mpApiUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
+    // Retry mechanism for payment verification (MercadoPago may need time to process)
+    let paymentData;
+    let response;
+    const maxRetries = 5; // Increased from 3 to 5
+    const retryDelay = 3000; // Increased from 2 to 3 seconds
+
+    console.log('🔍 Starting payment verification process...');
+    console.log('🔍 Payment ID to verify:', paymentId);
+    console.log('🔍 Access Token (first 10 chars):', accessToken.substring(0, 10) + '...');
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      console.log(`🔄 Payment verification attempt ${attempt}/${maxRetries}`);
+      
+      if (attempt > 1) {
+        // Wait before retrying
+        console.log(`⏱️ Waiting ${retryDelay}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
-    });
 
-    const paymentData = await response.json();
+      response = await fetch(mpApiUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        }
+      });
+
+      paymentData = await response.json();
+      console.log(`📋 Attempt ${attempt} response status:`, response.status);
+      
+      if (response.ok) {
+        console.log('✅ Payment found on attempt', attempt);
+        break;
+      } else if (response.status === 404 && attempt < maxRetries) {
+        console.log(`⏱️ Payment not found yet (404), retrying... (attempt ${attempt}/${maxRetries})`);
+        console.log('🔍 Error details:', JSON.stringify(paymentData));
+        continue;
+      } else {
+        console.log(`❌ Failed on attempt ${attempt} with status ${response.status}`);
+      }
+    }
     console.log('📥 MercadoPago payment verification response:', paymentData);
 
     if (!response.ok) {
