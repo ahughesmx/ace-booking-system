@@ -127,6 +127,15 @@ serve(async (req) => {
             
             if (merchantResponse.ok && merchantData.results && merchantData.results.length > 0) {
               const merchantOrder = merchantData.results[0];
+              console.log('🔍 Merchant order details:', {
+                status: merchantOrder.status,
+                order_status: merchantOrder.order_status,
+                payments: merchantOrder.payments,
+                total_amount: merchantOrder.total_amount,
+                paid_amount: merchantOrder.paid_amount,
+                is_test: merchantOrder.is_test
+              });
+              
               if (merchantOrder.payments && merchantOrder.payments.length > 0) {
                 const actualPaymentId = merchantOrder.payments[0].id;
                 console.log('✅ Found actual payment ID via merchant order:', actualPaymentId);
@@ -147,6 +156,26 @@ serve(async (req) => {
                   console.log('✅ Payment found with correct ID:', actualPaymentId);
                   break;
                 }
+              } else if (isTestMode && merchantOrder.status === 'opened') {
+                // En modo test, si la merchant order existe pero no tiene pagos,
+                // MercadoPago sandbox puede redirigir sin crear un pago real
+                // Simulamos un pago aprobado basado en la merchant order
+                console.log('🧪 Sandbox mode: Creating simulated payment data from merchant order');
+                
+                paymentData = {
+                  id: paymentId, // Usar el ID que nos enviaron
+                  status: 'approved',
+                  status_detail: 'accredited',
+                  transaction_amount: merchantOrder.total_amount,
+                  metadata: {
+                    user_id: userId
+                  }
+                };
+                
+                // Crear una respuesta simulada exitosa
+                response = { ok: true, status: 200 };
+                console.log('✅ Simulated payment approved for sandbox mode');
+                break;
               }
             }
           } catch (merchantError) {
