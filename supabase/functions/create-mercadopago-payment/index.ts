@@ -166,11 +166,16 @@ serve(async (req) => {
 
     console.log('✅ MercadoPago preference created successfully');
     
+    // Use the correct URL based on test mode
+    const checkoutUrl = isTestMode ? responseData.sandbox_init_point : responseData.init_point;
+    
+    console.log(`🔗 Using ${isTestMode ? 'SANDBOX' : 'PRODUCTION'} URL:`, checkoutUrl);
+    
     return new Response(
       JSON.stringify({
         preferenceId: responseData.id,
-        initPoint: responseData.init_point,
-        sandboxInitPoint: responseData.sandbox_init_point
+        initPoint: checkoutUrl,
+        isTestMode: isTestMode
       }),
       { 
         status: 200, 
