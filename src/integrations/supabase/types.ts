@@ -45,6 +45,7 @@ export type Database = {
         Row: {
           allow_cancellation: boolean
           allow_consecutive_bookings: boolean
+          allow_rescheduling: boolean
           court_type: string
           created_at: string | null
           id: string
@@ -52,12 +53,14 @@ export type Database = {
           max_days_ahead: number
           min_advance_booking_time: unknown
           min_cancellation_time: unknown
+          min_rescheduling_time: unknown
           time_between_bookings: unknown
           updated_at: string | null
         }
         Insert: {
           allow_cancellation?: boolean
           allow_consecutive_bookings?: boolean
+          allow_rescheduling?: boolean
           court_type: string
           created_at?: string | null
           id?: string
@@ -65,12 +68,14 @@ export type Database = {
           max_days_ahead?: number
           min_advance_booking_time?: unknown
           min_cancellation_time?: unknown
+          min_rescheduling_time?: unknown
           time_between_bookings?: unknown
           updated_at?: string | null
         }
         Update: {
           allow_cancellation?: boolean
           allow_consecutive_bookings?: boolean
+          allow_rescheduling?: boolean
           court_type?: string
           created_at?: string | null
           id?: string
@@ -78,6 +83,7 @@ export type Database = {
           max_days_ahead?: number
           min_advance_booking_time?: unknown
           min_cancellation_time?: unknown
+          min_rescheduling_time?: unknown
           time_between_bookings?: unknown
           updated_at?: string | null
         }

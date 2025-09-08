@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 
@@ -14,6 +13,8 @@ type BookingRules = {
   max_days_ahead: number;
   created_at: string;
   updated_at: string;
+  allow_rescheduling?: boolean;
+  min_rescheduling_time?: string;
 };
 
 // Overload signatures for better type inference

@@ -19,6 +19,7 @@ import AcademicManagement from "@/components/admin/AcademicManagement";
 import { ExpiredBookingsManager } from "@/components/admin/ExpiredBookingsManager";
 import InterfacePreferencesManagement from "@/components/admin/InterfacePreferencesManagement";
 import { LegalTextsManagement } from "@/components/admin/LegalTextsManagement";
+import { ReschedulingRulesManagement } from "@/components/admin/ReschedulingRulesManagement";
 
 const AdminPage = () => {
   const { isAdmin, isLoading } = useAdminAuth();
@@ -40,6 +41,8 @@ const AdminPage = () => {
         return <MemberIdTabs />;
       case "booking-rules":
         return <BookingRulesManagement />;
+      case "rescheduling-rules":
+        return <ReschedulingRulesManagement />;
       case "webhooks":
         return <WebhookManagement />;
       case "display":

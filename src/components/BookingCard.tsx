@@ -4,9 +4,12 @@ import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin, User, Calendar, Trophy, GraduationCap, Star, Zap } from "lucide-react";
+import { Clock, MapPin, User, Calendar, Trophy, GraduationCap, Star, Zap, CalendarClock } from "lucide-react";
 import type { Booking } from "@/types/booking";
 import { useCancellationRules } from "@/hooks/use-cancellation-rules";
+import { useReschedulingRules } from "@/hooks/use-rescheduling-rules";
+import { RescheduleBookingModal } from "@/components/booking/RescheduleBookingModal";
+import { useState } from "react";
 
 interface BookingCardProps {
   booking: Booking & { isSpecial?: boolean; event_type?: string; title?: string; description?: string };
@@ -15,11 +18,14 @@ interface BookingCardProps {
 }
 
 export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
   const startTime = new Date(booking.start_time);
   const endTime = new Date(booking.end_time);
   const { getCancellationAllowed } = useCancellationRules();
+  const { canReschedule } = useReschedulingRules();
 
   const isCancellationAllowed = getCancellationAllowed(booking.court?.court_type);
+  const isReschedulingAllowed = canReschedule(booking.start_time, booking.court?.court_type);
 
   const getEventIcon = (eventType?: string) => {
     switch (eventType) {
@@ -105,23 +111,47 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
             </div>
           </div>
           
-          {isOwner && !booking.isSpecial && isCancellationAllowed && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onCancel(booking.id)}
-              className="text-red-600 border-red-200 hover:bg-red-50"
-            >
-              Cancelar
-            </Button>
-          )}
-          
-          {isOwner && !booking.isSpecial && !isCancellationAllowed && (
-            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
-              <Zap className="w-5 h-5 text-gray-400" />
+          {isOwner && !booking.isSpecial && (
+            <div className="flex gap-2">
+              {isReschedulingAllowed && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsRescheduleModalOpen(true)}
+                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                >
+                  <CalendarClock className="w-4 h-4 mr-1" />
+                  Reagendar
+                </Button>
+              )}
+              
+              {isCancellationAllowed && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onCancel(booking.id)}
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  Cancelar
+                </Button>
+              )}
+              
+              {!isCancellationAllowed && !isReschedulingAllowed && (
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
+                  <Zap className="w-5 h-5 text-gray-400" />
+                </div>
+              )}
             </div>
           )}
         </div>
+
+        {isRescheduleModalOpen && (
+          <RescheduleBookingModal
+            isOpen={isRescheduleModalOpen}
+            onClose={() => setIsRescheduleModalOpen(false)}
+            booking={booking}
+          />
+        )}
       </CardContent>
     </Card>
   );

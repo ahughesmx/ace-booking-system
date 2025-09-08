@@ -18,6 +18,7 @@ import {
   Clock,
   Eye,
   FileText,
+  CalendarClock,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -34,6 +35,7 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
     { id: "court-settings", label: "Configuración Canchas", icon: Wrench },
     { id: "member-ids", label: "Membresías", icon: CreditCard },
     { id: "booking-rules", label: "Reglas de Reserva", icon: Calendar },
+    { id: "rescheduling-rules", label: "Reagendamiento", icon: CalendarClock },
     { id: "special-bookings", label: "Reservas Especiales", icon: CalendarCheck },
     { id: "matches", label: "Partidos", icon: Trophy },
     { id: "academic", label: "Gestión Académica", icon: GraduationCap },
