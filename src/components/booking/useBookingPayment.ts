@@ -372,7 +372,67 @@ export function useBookingPayment() {
         
         // No retornamos nada porque estamos redirigiendo
         return;
-      } else {
+      } else if (paymentGateway === 'mercadopago') {
+        console.log('💳 MERCADOPAGO: Starting MercadoPago redirect payment process');
+        
+        // Get current session and validate authentication
+        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+        console.log('🔑 Session validation:', {
+          hasSession: !!currentSession,
+          hasAccessToken: !!currentSession?.access_token,
+          tokenLength: currentSession?.access_token?.length || 0,
+          sessionError: sessionError?.message
+        });
+
+        if (sessionError || !currentSession?.access_token) {
+          console.error('❌ Session validation failed:', sessionError);
+          throw new Error('Error de autenticación. Por favor, inicie sesión nuevamente.');
+        }
+        
+        // Validate booking data structure
+        if (!pendingBooking.court || !pendingBooking.court.name || !pendingBooking.court.court_type) {
+          console.error('❌ Invalid booking court data:', pendingBooking.court);
+          throw new Error('Datos de cancha incompletos');
+        }
+
+        const bookingData = {
+          selectedDate: new Date(pendingBooking.start_time),
+          selectedTime: new Date(pendingBooking.start_time).toLocaleTimeString('es-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: false 
+          }),
+          selectedCourt: pendingBooking.court.name,
+          selectedCourtType: pendingBooking.court.court_type,
+          amount: pendingBooking.amount
+        };
+
+        console.log('📤 Calling create-mercadopago-payment with validated data:', bookingData);
+        
+        // Call MercadoPago payment creation function
+        const { data, error } = await supabase.functions.invoke('create-mercadopago-payment', {
+          body: { bookingData }
+        });
+
+        console.log('📥 create-mercadopago-payment response:', { data, error });
+        
+        if (error) {
+          console.error('❌ MercadoPago payment failed:', error);
+          throw new Error(`Error de pago MercadoPago: ${error.message || 'Error desconocido'}`);
+        }
+        
+        if (!data?.initPoint) {
+          console.error('❌ No MercadoPago init_point received. Full response:', data);
+          throw new Error('No se recibió URL de pago de MercadoPago');
+        }
+
+        console.log('🚀 Redirecting to MercadoPago checkout:', data.initPoint);
+        // Redirect to MercadoPago checkout
+        window.location.href = data.initPoint;
+        
+        // No retornamos nada porque estamos redirigiendo
+        return;
+      } else if (paymentGateway === 'efectivo') {
         // Para otros métodos de pago (incluyendo efectivo)
         console.log(`🔄 INICIANDO PAGO ${paymentGateway.toUpperCase()} para reserva ${pendingBooking.id}`);
         

@@ -20,10 +20,16 @@ export default function BookingSuccess() {
   const paypalPaymentId = paypalToken; // For backward compatibility
   const paypalPayerId = searchParams.get("PayerID"); // Not used in v2 but keeping for fallback
   
+  // MercadoPago parameters
+  const mercadoPagoPaymentId = searchParams.get("payment_id");
+  const mercadoPagoPreferenceId = searchParams.get("preference_id");
+  const mercadoPagoStatus = searchParams.get("status");
+  const gateway = searchParams.get("gateway"); // Custom parameter to identify the gateway
+  
   const [isProcessing, setIsProcessing] = useState(true);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string>("");
-  const [paymentType, setPaymentType] = useState<"stripe" | "paypal" | null>(null);
+  const [paymentType, setPaymentType] = useState<"stripe" | "paypal" | "mercadopago" | null>(null);
 
   // Simplified Stripe payment verification
   const verifyStripePayment = async (stripeSessionId: string) => {
@@ -102,6 +108,42 @@ export default function BookingSuccess() {
     }
   };
 
+  // MercadoPago verification
+  const verifyMercadoPagoPayment = async (paymentId: string, preferenceId?: string) => {
+    try {
+      console.log("🟢 Processing MercadoPago payment with ID:", paymentId);
+      
+      if (!user) {
+        throw new Error("Usuario no autenticado");
+      }
+
+      const { data, error } = await supabase.functions.invoke('verify-mercadopago-payment', {
+        body: { paymentId, preferenceId }
+      });
+
+      if (error) {
+        throw new Error('El pago no se pudo completar. Por favor, intenta nuevamente.');
+      }
+
+      if (data?.success) {
+        setSuccess(true);
+        await queryClient.invalidateQueries({ queryKey: ["bookings"] });
+        await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user.id] });
+        
+        setTimeout(() => {
+          navigate("/", { state: { defaultTab: "bookings" }, replace: true });
+        }, 1500);
+        
+        return true;
+      }
+      
+      throw new Error('El pago no se pudo completar. Por favor, intenta nuevamente.');
+    } catch (err) {
+      console.error("❌ MercadoPago Error:", err);
+      throw err;
+    }
+  };
+
   useEffect(() => {
     // No procesar pago hasta que la autenticación esté completa
     if (authLoading) {
@@ -110,7 +152,17 @@ export default function BookingSuccess() {
 
     const processPaymentReturn = async () => {
       try {
-        if (paypalToken) {
+        if (mercadoPagoPaymentId || gateway === 'mercadopago') {
+          console.log("🟢 Detected MercadoPago return with payment ID:", mercadoPagoPaymentId);
+          setPaymentType("mercadopago");
+          
+          // Check if payment was approved
+          if (mercadoPagoStatus === 'approved' && mercadoPagoPaymentId) {
+            await verifyMercadoPagoPayment(mercadoPagoPaymentId, mercadoPagoPreferenceId || undefined);
+          } else {
+            setError("El pago con MercadoPago no fue aprobado o está pendiente");
+          }
+        } else if (paypalToken) {
           console.log("🟡 Detected PayPal return with token:", paypalToken);
           setPaymentType("paypal");
           await verifyPayPalPayment(paypalToken);
@@ -130,7 +182,7 @@ export default function BookingSuccess() {
     };
 
     processPaymentReturn();
-  }, [sessionId, paypalToken, user?.id, authLoading]);
+  }, [sessionId, paypalToken, mercadoPagoPaymentId, gateway, user?.id, authLoading]);
 
   if (isProcessing || authLoading) {
     return (
@@ -141,7 +193,8 @@ export default function BookingSuccess() {
             <h2 className="text-xl font-semibold mb-2">
               {authLoading ? "Procesando pago..." :
                paymentType === "stripe" ? "Verificando pago con Stripe..." : 
-               paymentType === "paypal" ? "Verificando pago con PayPal..." : 
+               paymentType === "paypal" ? "Verificando pago con PayPal..." :
+               paymentType === "mercadopago" ? "Verificando pago con MercadoPago..." : 
                "Procesando pago..."}
             </h2>
             <p className="text-muted-foreground text-center">
