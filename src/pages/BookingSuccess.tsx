@@ -20,7 +20,7 @@ export default function BookingSuccess() {
   const paypalPaymentId = paypalToken; // For backward compatibility
   const paypalPayerId = searchParams.get("PayerID"); // Not used in v2 but keeping for fallback
   
-  // MercadoPago parameters - capturar TODOS los parámetros posibles
+        // MercadoPago parameters - capturar TODOS los parámetros posibles
   const mercadoPagoPaymentId = searchParams.get("payment_id");
   const mercadoPagoPreferenceId = searchParams.get("preference_id");
   const mercadoPagoStatus = searchParams.get("status");
@@ -50,6 +50,7 @@ export default function BookingSuccess() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string>("");
   const [paymentType, setPaymentType] = useState<"stripe" | "paypal" | "mercadopago" | null>(null);
+  const [isTestMode, setIsTestMode] = useState<boolean>(false);
 
   // Simplified Stripe payment verification
   const verifyStripePayment = async (stripeSessionId: string) => {
@@ -149,6 +150,12 @@ export default function BookingSuccess() {
         setSuccess(true);
         await queryClient.invalidateQueries({ queryKey: ["bookings"] });
         await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user.id] });
+        
+        // Show different message for test mode
+        if (data.testMode) {
+          console.log('✅ Test payment completed successfully (MercadoPago Sandbox)');
+          setIsTestMode(true);
+        }
         
         setTimeout(() => {
           navigate("/", { state: { defaultTab: "bookings" }, replace: true });
@@ -265,6 +272,11 @@ export default function BookingSuccess() {
               <p className="text-muted-foreground">
                 Redirigiendo a tus reservas...
               </p>
+              {isTestMode && (
+                <p className="text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-md border border-amber-200">
+                  ⚠️ Pago procesado en modo sandbox (prueba)
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
