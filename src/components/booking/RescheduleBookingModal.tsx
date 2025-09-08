@@ -7,8 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Booking } from "@/types/booking";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
+import { useBookingRules } from "@/hooks/use-booking-rules";
 
 interface RescheduleBookingModalProps {
   isOpen: boolean;
@@ -26,6 +27,28 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
   const [selectedTime, setSelectedTime] = useState<string>(format(new Date(booking.start_time), "HH:mm"));
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Get booking rules for the court type
+  const { data: bookingRules } = useBookingRules(booking.court?.court_type as 'tennis' | 'padel');
+
+  const getDisabledDates = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Don't allow dates in the past
+    if (date < today) return true;
+    
+    // Apply booking rules if available
+    if (bookingRules) {
+      // Check max_days_ahead
+      if (bookingRules.max_days_ahead) {
+        const maxDate = addDays(today, bookingRules.max_days_ahead);
+        if (date > maxDate) return true;
+      }
+    }
+    
+    return false;
+  };
 
   const rescheduleMutation = useMutation({
     mutationFn: async ({ date, time }: { date: Date; time: string }) => {
@@ -87,6 +110,45 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
       return;
     }
 
+    // Additional validation with booking rules
+    if (bookingRules) {
+      const selectedDateTime = new Date(selectedDate);
+      selectedDateTime.setHours(parseInt(selectedTime.split(':')[0]), parseInt(selectedTime.split(':')[1]));
+      
+      // Check minimum advance time
+      if (bookingRules.min_advance_booking_time) {
+        const [hours, minutes] = bookingRules.min_advance_booking_time.split(':').map(Number);
+        const minAdvanceHours = hours + (minutes / 60);
+        const minDate = new Date();
+        minDate.setHours(minDate.getHours() + minAdvanceHours);
+        
+        if (selectedDateTime <= minDate) {
+          toast({
+            title: "Error",
+            description: `La reserva debe hacerse con al menos ${bookingRules.min_advance_booking_time} horas de anticipación`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
+      // Check max days ahead
+      if (bookingRules.max_days_ahead) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const maxDate = addDays(today, bookingRules.max_days_ahead);
+        
+        if (selectedDate > maxDate) {
+          toast({
+            title: "Error",
+            description: `Solo puedes reagendar hasta ${bookingRules.max_days_ahead} días de anticipación`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+    }
+
     rescheduleMutation.mutate({ date: selectedDate, time: selectedTime });
   };
 
@@ -112,7 +174,7 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
               mode="single"
               selected={selectedDate}
               onSelect={setSelectedDate}
-              disabled={(date) => date < new Date()}
+              disabled={getDisabledDates}
               className="rounded-md border"
             />
           </div>
