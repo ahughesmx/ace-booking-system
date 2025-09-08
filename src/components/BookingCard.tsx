@@ -56,103 +56,102 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
   return (
     <Card className="w-full">
       <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2 min-w-0">
-              {booking.isSpecial ? (
-                <>
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {getEventIcon(booking.event_type)}
-                    <h3 className="font-semibold text-lg truncate">{booking.title || 'Evento Especial'}</h3>
-                  </div>
-                  <Badge className={`${getEventColor(booking.event_type)} flex-shrink-0`}>
-                    {booking.event_type?.charAt(0).toUpperCase() + booking.event_type?.slice(1) || 'Evento'}
-                  </Badge>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <User className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                    <h3 className="font-semibold text-lg truncate">
-                      {booking.user?.full_name || "Reserva Regular"}
-                    </h3>
-                  </div>
-                  <Badge variant="outline" className="flex-shrink-0">Reserva Regular</Badge>
-                </>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Clock className="w-4 h-4" />
-                <span>
-                  {format(startTime, "HH:mm")} - {format(endTime, "HH:mm")}
-                </span>
+        {/* Header con nombre y badge */}
+        <div className="flex items-start justify-between gap-2 mb-3">
+          {booking.isSpecial ? (
+            <>
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                {getEventIcon(booking.event_type)}
+                <h3 className="font-semibold text-lg">{booking.title || 'Evento Especial'}</h3>
               </div>
-              
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <MapPin className="w-4 h-4" />
-                <span>{booking.court?.name}</span>
-                <Badge variant="secondary" className="text-xs">
-                  {booking.court?.court_type === 'tennis' ? 'Tenis' : 'Pádel'}
-                </Badge>
+              <Badge className={`${getEventColor(booking.event_type)} flex-shrink-0`}>
+                {booking.event_type?.charAt(0).toUpperCase() + booking.event_type?.slice(1) || 'Evento'}
+              </Badge>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <User className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                <h3 className="font-semibold text-lg">
+                  {booking.user?.full_name || "Reserva Regular"}
+                </h3>
               </div>
+              <Badge variant="outline" className="flex-shrink-0">Reserva Regular</Badge>
+            </>
+          )}
+        </div>
 
-              {booking.isSpecial && booking.description && (
-                <p className="text-sm text-gray-600 mt-2">{booking.description}</p>
-              )}
-
-              {!booking.isSpecial && booking.user?.member_id && (
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <User className="w-3 h-3" />
-                  <span>Socio: {booking.user.member_id}</span>
-                </div>
-              )}
-            </div>
+        {/* Información de la reserva */}
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Clock className="w-4 h-4" />
+            <span>
+              {format(startTime, "HH:mm")} - {format(endTime, "HH:mm")}
+            </span>
           </div>
           
-          {isOwner && !booking.isSpecial && (
-            <div className="flex gap-2">
-              {isReschedulingAllowed && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsRescheduleModalOpen(true)}
-                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                >
-                  <CalendarClock className="w-4 h-4 mr-1" />
-                  Reagendar
-                </Button>
-              )}
-              
-              {isCancellationAllowed && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onCancel(booking.id)}
-                  className="text-red-600 border-red-200 hover:bg-red-50"
-                >
-                  Cancelar
-                </Button>
-              )}
-              
-              {!isCancellationAllowed && !isReschedulingAllowed && (
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
-                  <Zap className="w-5 h-5 text-gray-400" />
-                </div>
-              )}
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <MapPin className="w-4 h-4" />
+            <span>{booking.court?.name}</span>
+            <Badge variant="secondary" className="text-xs">
+              {booking.court?.court_type === 'tennis' ? 'Tenis' : 'Pádel'}
+            </Badge>
+          </div>
+
+          {booking.isSpecial && booking.description && (
+            <p className="text-sm text-gray-600">{booking.description}</p>
+          )}
+
+          {!booking.isSpecial && booking.user?.member_id && (
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <User className="w-3 h-3" />
+              <span>Socio: {booking.user.member_id}</span>
             </div>
           )}
         </div>
 
-        {isRescheduleModalOpen && (
-          <RescheduleBookingModal
-            isOpen={isRescheduleModalOpen}
-            onClose={() => setIsRescheduleModalOpen(false)}
-            booking={booking}
-          />
+        {/* Botones de acción */}
+        {isOwner && !booking.isSpecial && (
+          <div className="flex gap-2 justify-end">
+            {isReschedulingAllowed && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsRescheduleModalOpen(true)}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+              >
+                <CalendarClock className="w-4 h-4 mr-1" />
+                Reagendar
+              </Button>
+            )}
+            
+            {isCancellationAllowed && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onCancel(booking.id)}
+                className="text-red-600 border-red-200 hover:bg-red-50"
+              >
+                Cancelar
+              </Button>
+            )}
+            
+            {!isCancellationAllowed && !isReschedulingAllowed && (
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
+                <Zap className="w-5 h-5 text-gray-400" />
+              </div>
+            )}
+          </div>
         )}
       </CardContent>
+
+      {isRescheduleModalOpen && (
+        <RescheduleBookingModal
+          isOpen={isRescheduleModalOpen}
+          onClose={() => setIsRescheduleModalOpen(false)}
+          booking={booking}
+        />
+      )}
     </Card>
   );
 }
