@@ -12,9 +12,9 @@ import BookingRulesManagement from "@/components/admin/BookingRulesManagement";
 import DisplayManagement from "@/components/admin/DisplayManagement";
 import WebhookManagement from "@/components/admin/WebhookManagement";
 import SpecialBookingManagement from "@/components/admin/SpecialBookingManagement";
-import UserRegistrationForm from "@/components/admin/UserRegistrationForm";
 import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
 import MatchManagementSettings from "@/components/admin/MatchManagementSettings";
+import { BookingReminderSettings } from "@/components/admin/BookingReminderSettings";
 import AcademicManagement from "@/components/admin/AcademicManagement";
 import { ExpiredBookingsManager } from "@/components/admin/ExpiredBookingsManager";
 import InterfacePreferencesManagement from "@/components/admin/InterfacePreferencesManagement";
@@ -44,7 +44,14 @@ const AdminPage = () => {
       case "rescheduling-rules":
         return <ReschedulingRulesManagement />;
       case "webhooks":
-        return <WebhookManagement />;
+        return (
+          <>
+            <WebhookManagement />
+            <div className="mt-6">
+              <BookingReminderSettings />
+            </div>
+          </>
+        );
       case "display":
         return <DisplayManagement />;
       case "special-bookings":
