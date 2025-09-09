@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
-import { Clock, Bell, Settings, Play } from "lucide-react";
+import { Clock, Bell, Settings, Play, Power, PowerOff, Zap } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface BookingReminderSettings {
@@ -16,6 +17,19 @@ interface BookingReminderSettings {
   hours_before_booking: number;
   is_enabled: boolean;
 }
+
+interface CronjobStatus {
+  exists: boolean;
+  schedule?: string;
+}
+
+const FREQUENCY_OPTIONS = [
+  { value: '*/15 * * * *', label: 'Cada 15 minutos' },
+  { value: '*/30 * * * *', label: 'Cada 30 minutos' },
+  { value: '0 * * * *', label: 'Cada hora' },
+  { value: '0 */2 * * *', label: 'Cada 2 horas' },
+  { value: '0 */6 * * *', label: 'Cada 6 horas' },
+];
 
 export function BookingReminderSettings() {
   const { toast } = useToast();
@@ -25,6 +39,7 @@ export function BookingReminderSettings() {
   const [hoursBeforeBooking, setHoursBeforeBooking] = useState(2);
   const [isEnabled, setIsEnabled] = useState(true);
   const [isTestingReminders, setIsTestingReminders] = useState(false);
+  const [selectedFrequency, setSelectedFrequency] = useState('*/30 * * * *');
 
   // Fetch current settings
   const { data: settings, isLoading } = useQuery({
@@ -40,6 +55,21 @@ export function BookingReminderSettings() {
       return data as BookingReminderSettings;
     },
     enabled: !authLoading,
+  });
+
+  // Fetch cronjob status
+  const { data: cronjobStatus, isLoading: cronjobLoading } = useQuery({
+    queryKey: ['cronjob-status'],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('manage-booking-cronjob', {
+        body: { action: 'status' }
+      });
+      
+      if (error) throw error;
+      return data as CronjobStatus;
+    },
+    enabled: !authLoading,
+    refetchInterval: 30000, // Refetch every 30 seconds
   });
 
   // Update form when settings are loaded
@@ -102,6 +132,34 @@ export function BookingReminderSettings() {
     },
   });
 
+  // Manage cronjob (create/delete)
+  const manageCronjobMutation = useMutation({
+    mutationFn: async ({ action, frequency }: { action: 'create' | 'delete'; frequency?: string }) => {
+      const { data, error } = await supabase.functions.invoke('manage-booking-cronjob', {
+        body: { action, frequency }
+      });
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data, variables) => {
+      const actionText = variables.action === 'create' ? 'activado' : 'desactivado';
+      toast({
+        title: `Cronjob ${actionText}`,
+        description: data.message || `El cronjob se ha ${actionText} exitosamente`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['cronjob-status'] });
+    },
+    onError: (error: any, variables) => {
+      const actionText = variables.action === 'create' ? 'activar' : 'desactivar';
+      toast({
+        title: `Error al ${actionText} cronjob`,
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSave = () => {
     if (hoursBeforeBooking < 1 || hoursBeforeBooking > 72) {
       toast({
@@ -121,11 +179,21 @@ export function BookingReminderSettings() {
   const handleTestReminders = () => {
     setIsTestingReminders(true);
     testRemindersMutation.mutate();
-    // Stop loading state after 5 seconds regardless of response
     setTimeout(() => setIsTestingReminders(false), 5000);
   };
 
-  if (authLoading || isLoading) {
+  const handleActivateCronjob = () => {
+    manageCronjobMutation.mutate({ 
+      action: 'create', 
+      frequency: selectedFrequency 
+    });
+  };
+
+  const handleDeactivateCronjob = () => {
+    manageCronjobMutation.mutate({ action: 'delete' });
+  };
+
+  if (authLoading || isLoading || cronjobLoading) {
     return (
       <Card>
         <CardHeader>
@@ -154,50 +222,121 @@ export function BookingReminderSettings() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Cronjob Status Alert */}
+        <Alert className={cronjobStatus?.exists ? "border-green-200 bg-green-50" : "border-yellow-200 bg-yellow-50"}>
+          <Zap className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Estado del Cronjob:</strong> {cronjobStatus?.exists ? 
+              `✅ Activo (${cronjobStatus.schedule})` : 
+              '❌ Inactivo - Los recordatorios no se enviarán automáticamente'
+            }
+          </AlertDescription>
+        </Alert>
+
         <Alert>
           <Clock className="h-4 w-4" />
           <AlertDescription>
-            Los recordatorios se envían automáticamente cada hora a través de webhooks del tipo "booking_reminder". 
+            Los recordatorios se envían automáticamente a través de webhooks del tipo "booking_reminder". 
             Configura primero el webhook correspondiente en la sección de Webhooks.
           </AlertDescription>
         </Alert>
 
-        <div className="grid gap-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label htmlFor="enabled-switch">Habilitar recordatorios</Label>
+        <div className="grid gap-6">
+          {/* Settings Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Configuración de Recordatorios
+            </h3>
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label htmlFor="enabled-switch">Habilitar recordatorios</Label>
+                <p className="text-sm text-muted-foreground">
+                  Activar/desactivar el sistema de recordatorios automáticos
+                </p>
+              </div>
+              <Switch
+                id="enabled-switch"
+                checked={isEnabled}
+                onCheckedChange={setIsEnabled}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="hours-input">Horas antes de la reserva</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="hours-input"
+                  type="number"
+                  min="1"
+                  max="72"
+                  value={hoursBeforeBooking}
+                  onChange={(e) => setHoursBeforeBooking(parseInt(e.target.value) || 1)}
+                  className="w-24"
+                />
+                <span className="text-sm text-muted-foreground">horas</span>
+              </div>
               <p className="text-sm text-muted-foreground">
-                Activar/desactivar el sistema de recordatorios automáticos
+                Tiempo de anticipación para enviar el recordatorio (entre 1 y 72 horas)
               </p>
             </div>
-            <Switch
-              id="enabled-switch"
-              checked={isEnabled}
-              onCheckedChange={setIsEnabled}
-            />
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="hours-input">Horas antes de la reserva</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="hours-input"
-                type="number"
-                min="1"
-                max="72"
-                value={hoursBeforeBooking}
-                onChange={(e) => setHoursBeforeBooking(parseInt(e.target.value) || 1)}
-                className="w-24"
-              />
-              <span className="text-sm text-muted-foreground">horas</span>
+          {/* Cronjob Management Section */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+              <Power className="h-5 w-5" />
+              Automatización (Cronjob)
+            </h3>
+            
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="frequency-select">Frecuencia de ejecución</Label>
+                <Select value={selectedFrequency} onValueChange={setSelectedFrequency}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecciona la frecuencia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FREQUENCY_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  Define con qué frecuencia se ejecutará la verificación de recordatorios
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {!cronjobStatus?.exists ? (
+                  <Button 
+                    onClick={handleActivateCronjob}
+                    disabled={manageCronjobMutation.isPending}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                  >
+                    <Power className="h-4 w-4" />
+                    {manageCronjobMutation.isPending ? 'Activando...' : 'Activar Cronjob'}
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={handleDeactivateCronjob}
+                    disabled={manageCronjobMutation.isPending}
+                    variant="destructive"
+                    className="flex items-center gap-2"
+                  >
+                    <PowerOff className="h-4 w-4" />
+                    {manageCronjobMutation.isPending ? 'Desactivando...' : 'Desactivar Cronjob'}
+                  </Button>
+                )}
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Tiempo de anticipación para enviar el recordatorio (entre 1 y 72 horas)
-            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 border-t pt-4">
           <Button 
             onClick={handleSave} 
             disabled={saveSettingsMutation.isPending}
