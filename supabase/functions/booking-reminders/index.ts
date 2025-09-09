@@ -174,6 +174,27 @@ async function processBookingReminders() {
 
   for (const booking of bookings as BookingWithProfile[]) {
     try {
+      // Convert booking time to Mexico City timezone
+      const bookingStartMx = new Date(booking.start_time).toLocaleString('es-ES', {
+        timeZone: 'America/Mexico_City',
+        dateStyle: 'full',
+        timeStyle: 'short'
+      });
+      
+      const bookingDateMx = new Date(booking.start_time).toLocaleDateString('es-ES', {
+        timeZone: 'America/Mexico_City',
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      const bookingTimeMx = new Date(booking.start_time).toLocaleTimeString('es-ES', {
+        timeZone: 'America/Mexico_City',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
       const reminderData = {
         booking_id: booking.id,
         user_id: booking.user_id,
@@ -186,7 +207,16 @@ async function processBookingReminders() {
         end_time: booking.end_time,
         hours_before: settings.hours_before_booking,
         reminder_time: now.toISOString(),
-        message: `Recordatorio: Tienes una reserva en ${booking.courts.name} el ${new Date(booking.start_time).toLocaleDateString('es-ES')} a las ${new Date(booking.start_time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`
+        date: new Date(booking.start_time).toLocaleDateString('es-ES', {
+          timeZone: 'America/Mexico_City',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }),
+        time: bookingTimeMx,
+        date_formatted: bookingDateMx,
+        time_formatted: bookingTimeMx,
+        message: `Recordatorio: Tienes una reserva en ${booking.courts.name} el ${bookingDateMx} a las ${bookingTimeMx}`
       };
 
       await triggerWebhooks('booking_reminder', reminderData);
