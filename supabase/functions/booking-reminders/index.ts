@@ -195,6 +195,15 @@ async function processBookingReminders() {
         minute: '2-digit'
       });
       
+      // Format time range like the booking notification webhook
+      const endTimeMx = new Date(booking.end_time).toLocaleTimeString('es-ES', {
+        timeZone: 'America/Mexico_City',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      const timeRange = `${bookingTimeMx} - ${endTimeMx}`;
+      
       const reminderData = {
         booking_id: booking.id,
         user_id: booking.user_id,
@@ -213,7 +222,7 @@ async function processBookingReminders() {
           month: '2-digit',
           day: '2-digit'
         }),
-        time: bookingTimeMx,
+        time: timeRange,
         date_formatted: bookingDateMx,
         time_formatted: bookingTimeMx,
         message: `Recordatorio: Tienes una reserva en ${booking.courts.name} el ${bookingDateMx} a las ${bookingTimeMx}`
