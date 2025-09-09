@@ -20,6 +20,9 @@ const CRONJOB_NAME = 'booking-reminders-job';
 const FUNCTION_URL = `${supabaseUrl}/functions/v1/booking-reminders`;
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 
+// Global variable to store current user ID for RPC calls
+let currentUserId: string;
+
 interface CronjobRequest {
   action: 'create' | 'delete' | 'status';
   frequency?: string; // cron expression, default: '*/30 * * * *' (every 30 minutes)
@@ -29,52 +32,25 @@ async function checkCronjobStatus(): Promise<{ exists: boolean; schedule?: strin
   console.log('🔍 Checking cronjob status...');
   
   try {
-    // Query cronjobs directly using service role - bypass the problematic RPC function
-    const { data, error } = await supabase
-      .from('pg_cron.job')
-      .select('jobname, schedule')
-      .eq('jobname', CRONJOB_NAME)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error checking cronjob status via pg_cron.job:', error);
-      // Fallback to raw SQL if direct table access fails
-      return await checkCronjobStatusFallback();
-    }
-
-    if (data) {
-      console.log('✅ Cronjob exists:', data);
-      return { exists: true, schedule: data.schedule };
-    }
-
-    console.log('❌ Cronjob does not exist');
-    return { exists: false };
-  } catch (error) {
-    console.error('Exception checking cronjob, trying fallback:', error);
-    return await checkCronjobStatusFallback();
-  }
-}
-
-async function checkCronjobStatusFallback(): Promise<{ exists: boolean; schedule?: string }> {
-  try {
-    // Raw SQL query as fallback
-    const { data, error } = await supabase.rpc('sql', {
-      query: `SELECT jobname, schedule FROM cron.job WHERE jobname = '${CRONJOB_NAME}' LIMIT 1;`
+    // Use the new direct function that doesn't rely on auth context
+    const { data, error } = await supabase.rpc('manage_cronjob_direct', {
+      action_type: 'status',
+      user_id_param: currentUserId,
+      cronjob_name: CRONJOB_NAME
     });
 
     if (error) {
-      console.error('Fallback cronjob check also failed:', error);
+      console.error('Error checking cronjob status:', error);
       return { exists: false };
     }
 
-    if (data && data.length > 0) {
-      console.log('✅ Cronjob exists (fallback):', data[0]);
-      return { exists: true, schedule: data[0].schedule };
-    }
-
-    return { exists: false };
+    console.log('✅ Cronjob status result:', data);
+    return {
+      exists: data.exists || false,
+      schedule: data.schedule || undefined
+    };
   } catch (error) {
-    console.error('Fallback exception:', error);
+    console.error('Exception checking cronjob:', error);
     return { exists: false };
   }
 }
@@ -83,42 +59,24 @@ async function createCronjob(frequency: string = '*/30 * * * *'): Promise<{ succ
   console.log(`📅 Creating cronjob with frequency: ${frequency}`);
   
   try {
-    // First check if it already exists
-    const status = await checkCronjobStatus();
-    if (status.exists) {
-      return { success: false, message: 'Cronjob already exists' };
-    }
-
-    // Use service role to execute cronjob creation directly
-    console.log('🔧 Executing cronjob creation with service role...');
-    
-    const cronQuery = `
-      SELECT cron.schedule(
-        '${CRONJOB_NAME}',
-        '${frequency}',
-        $$
-        SELECT
-          net.http_post(
-              url:='${FUNCTION_URL}',
-              headers:='{"Content-Type": "application/json", "Authorization": "Bearer ${ANON_KEY}"}'::jsonb,
-              body:='{}'::jsonb
-          ) as request_id;
-        $$
-      );
-    `;
-
-    console.log('🚀 Executing SQL:', cronQuery);
-    
-    // Execute SQL directly with service role - bypass RPC function
-    const { error } = await supabase.rpc('sql', { query: cronQuery });
+    // Use the new direct function
+    const { data, error } = await supabase.rpc('manage_cronjob_direct', {
+      action_type: 'create',
+      user_id_param: currentUserId,
+      cronjob_name: CRONJOB_NAME,
+      frequency: frequency
+    });
 
     if (error) {
       console.error('Error creating cronjob:', error);
       return { success: false, message: `Error creating cronjob: ${error.message}` };
     }
 
-    console.log('✅ Cronjob created successfully');
-    return { success: true, message: 'Cronjob created successfully' };
+    console.log('✅ Cronjob creation result:', data);
+    return {
+      success: data.success || false,
+      message: data.message || 'Cronjob operation completed'
+    };
   } catch (error) {
     console.error('Exception creating cronjob:', error);
     return { success: false, message: `Exception: ${error.message}` };
@@ -129,11 +87,11 @@ async function deleteCronjob(): Promise<{ success: boolean; message: string }> {
   console.log('🗑️ Deleting cronjob...');
   
   try {
-    console.log('🔧 Executing cronjob deletion with service role...');
-    
-    // Execute SQL directly with service role - bypass RPC function
-    const { error } = await supabase.rpc('sql', {
-      query: `SELECT cron.unschedule('${CRONJOB_NAME}');`
+    // Use the new direct function
+    const { data, error } = await supabase.rpc('manage_cronjob_direct', {
+      action_type: 'delete',
+      user_id_param: currentUserId,
+      cronjob_name: CRONJOB_NAME
     });
 
     if (error) {
@@ -141,8 +99,11 @@ async function deleteCronjob(): Promise<{ success: boolean; message: string }> {
       return { success: false, message: `Error deleting cronjob: ${error.message}` };
     }
 
-    console.log('✅ Cronjob deleted successfully');
-    return { success: true, message: 'Cronjob deleted successfully' };
+    console.log('✅ Cronjob deletion result:', data);
+    return {
+      success: data.success || false,
+      message: data.message || 'Cronjob operation completed'
+    };
   } catch (error) {
     console.error('Exception deleting cronjob:', error);
     return { success: false, message: `Exception: ${error.message}` };
@@ -208,6 +169,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log('✅ Admin access verified for user:', user.id);
+    
+    // Store user ID for use in RPC calls
+    currentUserId = user.id;
 
     const requestData: CronjobRequest = await req.json();
     console.log('📋 Request data:', JSON.stringify(requestData));

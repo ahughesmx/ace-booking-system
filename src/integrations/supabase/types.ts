@@ -1337,6 +1337,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      manage_cronjob_direct: {
+        Args: {
+          action_type: string
+          cronjob_name?: string
+          frequency?: string
+          user_id_param: string
+        }
+        Returns: Json
+      }
       reactivate_family_member: {
         Args: { p_member_id_to_reactivate: string }
         Returns: boolean
