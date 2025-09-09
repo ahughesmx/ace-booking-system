@@ -41,6 +41,30 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_reminder_settings: {
+        Row: {
+          created_at: string
+          hours_before_booking: number
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hours_before_booking?: number
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hours_before_booking?: number
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       booking_rules: {
         Row: {
           allow_cancellation: boolean

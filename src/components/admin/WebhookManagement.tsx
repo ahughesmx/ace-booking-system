@@ -118,6 +118,28 @@ const WebhookManagement = () => {
   }
 }`
       },
+      booking_reminder: {
+        description: "Se dispara como recordatorio antes de una reserva (se ejecuta automáticamente cada hora)",
+        headerExample: '{"Content-Type": "application/json", "Authorization": "Bearer token"}',
+        headerPlaceholder: 'Headers para autenticación con tu sistema de mensajería',
+        payloadExample: `{
+  "event": "booking_reminder",
+  "data": {
+    "booking_id": "123",
+    "user_id": "user-uuid",
+    "user_name": "Juan Pérez",
+    "user_phone": "52123456789",
+    "remotejid": "52123456789",
+    "court_name": "Cancha 1",
+    "court_type": "tennis",
+    "start_time": "2025-08-15T18:30:00Z",
+    "end_time": "2025-08-15T20:00:00Z",
+    "hours_before": 2,
+    "reminder_time": "2025-08-15T16:30:00Z",
+    "message": "Recordatorio: Tienes una reserva en Cancha 1 el 15/8/2025 a las 18:30"
+  }
+}`
+      },
       match_completed: {
         description: "Se dispara cuando se completa un partido",
         headerExample: '{"Content-Type": "application/json"}',
