@@ -29,9 +29,11 @@ async function checkCronjobStatus(): Promise<{ exists: boolean; schedule?: strin
   console.log('🔍 Checking cronjob status...');
   
   try {
-    const { data, error } = await supabase.rpc('execute_cronjob_sql', {
-      sql_query: `SELECT jobname, schedule FROM cron.job WHERE jobname = '${CRONJOB_NAME}';`
-    });
+    // Query cronjobs directly using service role
+    const { data, error } = await supabase
+      .rpc('execute_cronjob_sql', {
+        sql_query: `SELECT jobname, schedule FROM cron.job WHERE jobname = '${CRONJOB_NAME}' LIMIT 1;`
+      });
 
     if (error) {
       console.error('Error checking cronjob status:', error);
@@ -121,7 +123,7 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     console.log('🚀 Booking cronjob management function called');
     
-    // Verify user is admin
+    // Verify user is admin - Check user role directly
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'No authorization header' }), {
@@ -135,27 +137,45 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
+      console.error('❌ Invalid token:', userError);
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
         status: 401,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    // Check if user is admin
+    console.log('👤 User authenticated:', user.id);
+
+    // Check if user is admin - Direct query to bypass RLS issues
     const { data: userRole, error: roleError } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .single();
+      .eq('role', 'admin')
+      .maybeSingle();
 
-    if (roleError || !userRole || userRole.role !== 'admin') {
+    console.log('🔍 Role check result:', { userRole, roleError });
+
+    if (roleError) {
+      console.error('❌ Error checking user role:', roleError);
+      return new Response(JSON.stringify({ error: 'Error checking permissions' }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if (!userRole) {
+      console.error('❌ User is not admin:', user.id);
       return new Response(JSON.stringify({ error: 'Admin access required' }), {
         status: 403,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
+    console.log('✅ Admin access verified for user:', user.id);
+
     const requestData: CronjobRequest = await req.json();
+    console.log('📋 Request data:', JSON.stringify(requestData));
     let result;
 
     switch (requestData.action) {
