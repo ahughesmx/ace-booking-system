@@ -109,22 +109,19 @@ async function processBookingReminders() {
     return { processed: 0, message: 'Reminders disabled' };
   }
 
-  // Calculate the target time for reminders (Mexico City timezone)
+  // Calculate the target time for reminders (UTC, but accounting for Mexico timezone logic)
   const now = new Date();
+  console.log(`⏰ Current UTC time: ${now.toISOString()}`);
   
-  // Convert current time to Mexico City timezone for accurate calculations
-  const mexicoCityTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Mexico_City"}));
-  console.log(`🇲🇽 Current Mexico City time: ${mexicoCityTime.toISOString()}`);
-  
-  // Calculate when bookings should start to trigger reminders
-  const targetBookingTime = new Date(mexicoCityTime.getTime() + (settings.hours_before_booking * 60 * 60 * 1000));
+  // Calculate target booking time: now + hours_before_booking
+  const targetBookingTime = new Date(now.getTime() + (settings.hours_before_booking * 60 * 60 * 1000));
+  console.log(`🎯 Target booking time (${settings.hours_before_booking}h from now): ${targetBookingTime.toISOString()}`);
   
   // Create a window of ±15 minutes around the target time for more precise matching
   const windowStart = new Date(targetBookingTime.getTime() - (15 * 60 * 1000)); // 15 minutes before
   const windowEnd = new Date(targetBookingTime.getTime() + (15 * 60 * 1000));   // 15 minutes after
 
   console.log(`🕐 Looking for bookings starting between ${windowStart.toISOString()} and ${windowEnd.toISOString()}`);
-  console.log(`⏰ Target booking time (${settings.hours_before_booking}h from now): ${targetBookingTime.toISOString()}`);
 
   // Check if there are active webhooks for booking reminders
   const { data: activeWebhooks, error: webhooksError } = await supabase
@@ -145,7 +142,7 @@ async function processBookingReminders() {
 
   console.log(`📡 Found ${activeWebhooks.length} active reminder webhook(s)`);
 
-  // Find bookings that need reminders - FIXED: use standard join syntax
+  // Find bookings that need reminders - FIXED: use correct foreign key names
   const { data: bookings, error: bookingsError } = await supabase
     .from('bookings')
     .select(`
@@ -154,8 +151,8 @@ async function processBookingReminders() {
       end_time,
       court_id,
       user_id,
-      profiles!user_id (full_name, phone),
-      courts!court_id (name, court_type)
+      profiles!bookings_user_id_fkey_profiles (full_name, phone),
+      courts!bookings_court_id_fkey (name, court_type)
     `)
     .eq('status', 'paid')
     .gte('start_time', windowStart.toISOString())
