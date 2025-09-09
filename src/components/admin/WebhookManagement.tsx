@@ -518,6 +518,7 @@ const WebhookManagement = () => {
   const eventTypes = [
     { value: "booking_created", label: "Reserva creada" },
     { value: "booking_cancelled", label: "Reserva cancelada" },
+    { value: "booking_reminder", label: "Recordatorio de reserva" },
     { value: "match_created", label: "Partido creado" },
     { value: "match_completed", label: "Partido completado" },
     { value: "match_invitation_sent", label: "Invitación de partido enviada" },
