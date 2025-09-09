@@ -109,15 +109,43 @@ async function processBookingReminders() {
     return { processed: 0, message: 'Reminders disabled' };
   }
 
-  // Calculate the time window for reminders
+  // Calculate the target time for reminders (Mexico City timezone)
   const now = new Date();
-  const reminderTime = new Date(now.getTime() + (settings.hours_before_booking * 60 * 60 * 1000));
-  const windowStart = new Date(reminderTime.getTime() - (30 * 60 * 1000)); // 30 minutes before
-  const windowEnd = new Date(reminderTime.getTime() + (30 * 60 * 1000));   // 30 minutes after
+  
+  // Convert current time to Mexico City timezone for accurate calculations
+  const mexicoCityTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Mexico_City"}));
+  console.log(`🇲🇽 Current Mexico City time: ${mexicoCityTime.toISOString()}`);
+  
+  // Calculate when bookings should start to trigger reminders
+  const targetBookingTime = new Date(mexicoCityTime.getTime() + (settings.hours_before_booking * 60 * 60 * 1000));
+  
+  // Create a window of ±15 minutes around the target time for more precise matching
+  const windowStart = new Date(targetBookingTime.getTime() - (15 * 60 * 1000)); // 15 minutes before
+  const windowEnd = new Date(targetBookingTime.getTime() + (15 * 60 * 1000));   // 15 minutes after
 
-  console.log(`🕐 Looking for bookings between ${windowStart.toISOString()} and ${windowEnd.toISOString()}`);
+  console.log(`🕐 Looking for bookings starting between ${windowStart.toISOString()} and ${windowEnd.toISOString()}`);
+  console.log(`⏰ Target booking time (${settings.hours_before_booking}h from now): ${targetBookingTime.toISOString()}`);
 
-  // Find bookings that need reminders
+  // Check if there are active webhooks for booking reminders
+  const { data: activeWebhooks, error: webhooksError } = await supabase
+    .from('webhooks')
+    .select('id')
+    .eq('event_type', 'booking_reminder')
+    .eq('is_active', true);
+
+  if (webhooksError) {
+    console.error('Error checking active webhooks:', webhooksError);
+    return { processed: 0, error: 'Failed to check webhooks' };
+  }
+
+  if (!activeWebhooks || activeWebhooks.length === 0) {
+    console.log('📭 No active webhooks found for booking_reminder event');
+    return { processed: 0, message: 'No active reminder webhooks configured' };
+  }
+
+  console.log(`📡 Found ${activeWebhooks.length} active reminder webhook(s)`);
+
+  // Find bookings that need reminders - FIXED: specify the correct relationship
   const { data: bookings, error: bookingsError } = await supabase
     .from('bookings')
     .select(`
@@ -126,7 +154,7 @@ async function processBookingReminders() {
       end_time,
       court_id,
       user_id,
-      profiles!inner (full_name, phone),
+      profiles!bookings_user_id_fkey_profiles (full_name, phone),
       courts!inner (name, court_type)
     `)
     .eq('status', 'paid')
