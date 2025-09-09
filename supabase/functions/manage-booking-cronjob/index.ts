@@ -29,8 +29,8 @@ async function checkCronjobStatus(): Promise<{ exists: boolean; schedule?: strin
   console.log('🔍 Checking cronjob status...');
   
   try {
-    const { data, error } = await supabase.rpc('sql', {
-      query: `SELECT jobname, schedule FROM cron.job WHERE jobname = '${CRONJOB_NAME}';`
+    const { data, error } = await supabase.rpc('execute_cronjob_sql', {
+      sql_query: `SELECT jobname, schedule FROM cron.job WHERE jobname = '${CRONJOB_NAME}';`
     });
 
     if (error) {
@@ -38,7 +38,7 @@ async function checkCronjobStatus(): Promise<{ exists: boolean; schedule?: strin
       return { exists: false };
     }
 
-    if (data && data.length > 0) {
+    if (data && Array.isArray(data) && data.length > 0) {
       console.log('✅ Cronjob exists:', data[0]);
       return { exists: true, schedule: data[0].schedule };
     }
@@ -76,7 +76,7 @@ async function createCronjob(frequency: string = '*/30 * * * *'): Promise<{ succ
       );
     `;
 
-    const { error } = await supabase.rpc('sql', { query: cronQuery });
+    const { error } = await supabase.rpc('execute_cronjob_sql', { sql_query: cronQuery });
 
     if (error) {
       console.error('Error creating cronjob:', error);
@@ -95,8 +95,8 @@ async function deleteCronjob(): Promise<{ success: boolean; message: string }> {
   console.log('🗑️ Deleting cronjob...');
   
   try {
-    const { error } = await supabase.rpc('sql', {
-      query: `SELECT cron.unschedule('${CRONJOB_NAME}');`
+    const { error } = await supabase.rpc('execute_cronjob_sql', {
+      sql_query: `SELECT cron.unschedule('${CRONJOB_NAME}');`
     });
 
     if (error) {

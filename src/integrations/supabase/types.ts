@@ -1321,6 +1321,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      execute_cronjob_sql: {
+        Args: { sql_query: string }
+        Returns: Json
+      }
       generate_receipt_number: {
         Args: Record<PropertyKey, never>
         Returns: string
