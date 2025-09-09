@@ -88,7 +88,13 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
         title: "Reserva reagendada",
         description: "La reserva se reagendó exitosamente",
       });
+      // Invalidate all booking-related queries to ensure UI updates immediately
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['all-bookings-including-pending'] });
+      queryClient.invalidateQueries({ queryKey: ['userActiveBookings'] });
+      queryClient.invalidateQueries({ queryKey: ['active-bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['active-bookings-count'] });
+      queryClient.invalidateQueries({ queryKey: ['userUpcomingBookings'] });
       onClose();
     },
     onError: (error: any) => {
