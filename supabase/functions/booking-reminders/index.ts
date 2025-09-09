@@ -145,7 +145,7 @@ async function processBookingReminders() {
 
   console.log(`📡 Found ${activeWebhooks.length} active reminder webhook(s)`);
 
-  // Find bookings that need reminders - FIXED: specify the correct relationship
+  // Find bookings that need reminders - FIXED: use standard join syntax
   const { data: bookings, error: bookingsError } = await supabase
     .from('bookings')
     .select(`
@@ -154,8 +154,8 @@ async function processBookingReminders() {
       end_time,
       court_id,
       user_id,
-      profiles!bookings_user_id_fkey_profiles (full_name, phone),
-      courts!inner (name, court_type)
+      profiles!user_id (full_name, phone),
+      courts!court_id (name, court_type)
     `)
     .eq('status', 'paid')
     .gte('start_time', windowStart.toISOString())
