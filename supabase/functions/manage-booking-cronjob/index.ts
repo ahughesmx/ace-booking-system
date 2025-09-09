@@ -29,26 +29,52 @@ async function checkCronjobStatus(): Promise<{ exists: boolean; schedule?: strin
   console.log('🔍 Checking cronjob status...');
   
   try {
-    // Query cronjobs directly using service role
+    // Query cronjobs directly using service role - bypass the problematic RPC function
     const { data, error } = await supabase
-      .rpc('execute_cronjob_sql', {
-        sql_query: `SELECT jobname, schedule FROM cron.job WHERE jobname = '${CRONJOB_NAME}' LIMIT 1;`
-      });
+      .from('pg_cron.job')
+      .select('jobname, schedule')
+      .eq('jobname', CRONJOB_NAME)
+      .maybeSingle();
 
     if (error) {
-      console.error('Error checking cronjob status:', error);
-      return { exists: false };
+      console.error('Error checking cronjob status via pg_cron.job:', error);
+      // Fallback to raw SQL if direct table access fails
+      return await checkCronjobStatusFallback();
     }
 
-    if (data && Array.isArray(data) && data.length > 0) {
-      console.log('✅ Cronjob exists:', data[0]);
-      return { exists: true, schedule: data[0].schedule };
+    if (data) {
+      console.log('✅ Cronjob exists:', data);
+      return { exists: true, schedule: data.schedule };
     }
 
     console.log('❌ Cronjob does not exist');
     return { exists: false };
   } catch (error) {
-    console.error('Exception checking cronjob:', error);
+    console.error('Exception checking cronjob, trying fallback:', error);
+    return await checkCronjobStatusFallback();
+  }
+}
+
+async function checkCronjobStatusFallback(): Promise<{ exists: boolean; schedule?: string }> {
+  try {
+    // Raw SQL query as fallback
+    const { data, error } = await supabase.rpc('sql', {
+      query: `SELECT jobname, schedule FROM cron.job WHERE jobname = '${CRONJOB_NAME}' LIMIT 1;`
+    });
+
+    if (error) {
+      console.error('Fallback cronjob check also failed:', error);
+      return { exists: false };
+    }
+
+    if (data && data.length > 0) {
+      console.log('✅ Cronjob exists (fallback):', data[0]);
+      return { exists: true, schedule: data[0].schedule };
+    }
+
+    return { exists: false };
+  } catch (error) {
+    console.error('Fallback exception:', error);
     return { exists: false };
   }
 }
@@ -63,6 +89,9 @@ async function createCronjob(frequency: string = '*/30 * * * *'): Promise<{ succ
       return { success: false, message: 'Cronjob already exists' };
     }
 
+    // Use service role to execute cronjob creation directly
+    console.log('🔧 Executing cronjob creation with service role...');
+    
     const cronQuery = `
       SELECT cron.schedule(
         '${CRONJOB_NAME}',
@@ -78,7 +107,10 @@ async function createCronjob(frequency: string = '*/30 * * * *'): Promise<{ succ
       );
     `;
 
-    const { error } = await supabase.rpc('execute_cronjob_sql', { sql_query: cronQuery });
+    console.log('🚀 Executing SQL:', cronQuery);
+    
+    // Execute SQL directly with service role - bypass RPC function
+    const { error } = await supabase.rpc('sql', { query: cronQuery });
 
     if (error) {
       console.error('Error creating cronjob:', error);
@@ -97,8 +129,11 @@ async function deleteCronjob(): Promise<{ success: boolean; message: string }> {
   console.log('🗑️ Deleting cronjob...');
   
   try {
-    const { error } = await supabase.rpc('execute_cronjob_sql', {
-      sql_query: `SELECT cron.unschedule('${CRONJOB_NAME}');`
+    console.log('🔧 Executing cronjob deletion with service role...');
+    
+    // Execute SQL directly with service role - bypass RPC function
+    const { error } = await supabase.rpc('sql', {
+      query: `SELECT cron.unschedule('${CRONJOB_NAME}');`
     });
 
     if (error) {
