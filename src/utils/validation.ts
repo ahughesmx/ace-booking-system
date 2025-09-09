@@ -80,7 +80,8 @@ export const sanitizeInput = (input: string, maxLength: number = 255): string =>
 export const validateEventType = (eventType: string): boolean => {
   const validEvents = [
     'booking_created',
-    'booking_cancelled', 
+    'booking_cancelled',
+    'booking_reminder',
     'match_created',
     'match_completed',
     'match_invitation_sent',
