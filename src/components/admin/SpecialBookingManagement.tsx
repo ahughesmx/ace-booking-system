@@ -492,7 +492,7 @@ export default function SpecialBookingManagement() {
                 />
               </div>
 
-              <div className="grid gap-4 grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-3 grid-cols-1">
                 <div className="col-span-1">
                   <Label>
                     {formData.is_date_range ? 'Rango de Fechas' : 'Fecha del Evento'}
@@ -533,7 +533,7 @@ export default function SpecialBookingManagement() {
                           )}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-fit p-0" align="start">
                         <Calendar
                           mode="single"
                           selected={formData.selected_date}
