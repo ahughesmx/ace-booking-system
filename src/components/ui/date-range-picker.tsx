@@ -12,6 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 interface DateRangePickerProps {
   value?: DateRange
@@ -29,6 +30,7 @@ export function DateRangePicker({
   disabled = false,
 }: DateRangePickerProps) {
   const [date, setDate] = React.useState<DateRange | undefined>(value)
+  const isMobile = useIsMobile()
 
   React.useEffect(() => {
     setDate(value)
@@ -67,16 +69,25 @@ export function DateRangePicker({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent 
+          className={cn(
+            "w-auto p-0",
+            isMobile ? "min-w-[320px]" : "min-w-[560px]"
+          )} 
+          align="start"
+        >
           <Calendar
             initialFocus
             mode="range"
             defaultMonth={date?.from}
             selected={date}
             onSelect={handleSelect}
-            numberOfMonths={2}
+            numberOfMonths={isMobile ? 1 : 2}
             locale={es}
-            className="pointer-events-auto"
+            className={cn(
+              "pointer-events-auto",
+              isMobile ? "min-w-[320px]" : "min-w-[560px]"
+            )}
           />
         </PopoverContent>
       </Popover>
