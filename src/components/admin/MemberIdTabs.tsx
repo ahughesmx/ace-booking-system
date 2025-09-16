@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import ValidMemberIdManagement from "./ValidMemberIdManagement";
 import UserRegistrationForm from "./UserRegistrationForm";
 import { BulkMemberIdUpload } from "./BulkMemberIdUpload";
+import { BulkUserUpload } from "./BulkUserUpload";
 import { MemberIdFormatSettings } from "./MemberIdFormatSettings";
 import MembershipHolderManagement from "./MembershipHolderManagement";
 import { Settings, Upload, List, UserPlus, Crown } from "lucide-react";
@@ -93,6 +94,18 @@ export default function MemberIdTabs() {
             </CardHeader>
             <CardContent>
               <UserRegistrationForm />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Carga Masiva de Usuarios</CardTitle>
+              <CardDescription>
+                Registra múltiples usuarios de una vez usando un archivo Excel. Ideal para membresías familiares.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BulkUserUpload onSuccess={() => {}} />
             </CardContent>
           </Card>
         </TabsContent>
