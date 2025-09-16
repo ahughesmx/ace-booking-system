@@ -533,13 +533,13 @@ export default function SpecialBookingManagement() {
                           )}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-fit p-0" align="start">
+                      <PopoverContent className="min-w-[320px] w-auto p-0" align="start">
                         <Calendar
                           mode="single"
                           selected={formData.selected_date}
                           onSelect={(date) => setFormData({...formData, selected_date: date})}
                           locale={es}
-                          className="pointer-events-auto"
+                          className="pointer-events-auto min-w-[320px]"
                           initialFocus
                         />
                       </PopoverContent>
