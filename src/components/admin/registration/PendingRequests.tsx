@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { 
   User,
@@ -16,7 +17,8 @@ import {
   UserCheck,
   UserX,
   Search,
-  Edit
+  Edit,
+  Database
 } from "lucide-react";
 
 interface RegistrationRequest {
@@ -31,6 +33,7 @@ interface RegistrationRequest {
   created_at: string;
   processed_at?: string;
   processed_by?: string;
+  is_migration?: boolean;
 }
 
 interface PendingRequestsProps {
@@ -65,9 +68,12 @@ export default function PendingRequests({
     password: '',
     is_membership_holder: false
   });
+  const [showMigrationRequests, setShowMigrationRequests] = useState(false);
   const { toast } = useToast();
   
-  const pendingRequests = requests.filter(request => request.status === 'pending');
+  const pendingRequests = requests
+    .filter(request => request.status === 'pending')
+    .filter(request => showMigrationRequests || !request.is_migration);
 
   const handleEditClick = (request: RegistrationRequest) => {
     setEditingRequest(request);
@@ -104,6 +110,17 @@ export default function PendingRequests({
             className="pl-10"
           />
         </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="show-migration"
+            checked={showMigrationRequests}
+            onCheckedChange={(checked) => setShowMigrationRequests(checked === true)}
+          />
+          <Label htmlFor="show-migration" className="flex items-center gap-2 text-sm">
+            <Database className="h-4 w-4" />
+            Mostrar solicitudes de migración
+          </Label>
+        </div>
       </div>
 
       {pendingRequests.length === 0 ? (
@@ -126,10 +143,18 @@ export default function PendingRequests({
                           <User className="h-4 w-4" />
                           {request.full_name}
                         </h3>
-                        <Badge variant="outline" className="text-yellow-600 border-yellow-600">
-                          <Clock className="w-3 h-3 mr-1" />
-                          Pendiente
-                        </Badge>
+                        <div className="flex gap-2">
+                          <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                            <Clock className="w-3 h-3 mr-1" />
+                            Pendiente
+                          </Badge>
+                          {request.is_migration && (
+                            <Badge variant="outline" className="text-blue-600 border-blue-600">
+                              <Database className="w-3 h-3 mr-1" />
+                              Migración
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">

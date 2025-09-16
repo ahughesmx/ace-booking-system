@@ -144,17 +144,21 @@ export function BulkUserUpload({ onSuccess }: BulkUserUploadProps) {
             throw new Error(`Fila ${i + 2}: La contraseña debe tener al menos 6 caracteres`);
           }
 
-          // Llamar a la edge function para crear el usuario
-          const { data: result, error } = await supabase.functions.invoke('manual-user-creation', {
-            body: userData
-          });
+          // Insertar directamente en user_registration_requests para crear solicitudes pendientes
+          const { error } = await supabase
+            .from('user_registration_requests')
+            .insert({
+              member_id: userData.member_id,
+              full_name: userData.full_name,
+              email: userData.email,
+              phone: userData.phone,
+              password: userData.password,
+              password_provided: true,
+              is_migration: true
+            });
 
           if (error) {
             throw new Error(`Fila ${i + 2}: ${error.message}`);
-          }
-
-          if (!result.success) {
-            throw new Error(`Fila ${i + 2}: ${result.error}`);
           }
 
           successCount++;
@@ -169,7 +173,7 @@ export function BulkUserUpload({ onSuccess }: BulkUserUploadProps) {
       if (successCount > 0) {
         toast({
           title: "Carga masiva completada",
-          description: `${successCount} usuarios creados exitosamente${errorCount > 0 ? `. ${errorCount} errores encontrados.` : '.'}`,
+          description: `${successCount} solicitudes de migración creadas exitosamente${errorCount > 0 ? `. ${errorCount} errores encontrados.` : '.'}`,
         });
       }
 
@@ -177,7 +181,7 @@ export function BulkUserUpload({ onSuccess }: BulkUserUploadProps) {
         console.log("Errores durante la carga:", errors);
         toast({
           title: "Errores durante la carga",
-          description: `${errorCount} usuarios no pudieron ser creados. Revisa la consola para más detalles.`,
+          description: `${errorCount} solicitudes no pudieron ser creadas. Revisa la consola para más detalles.`,
           variant: "destructive",
         });
       }
@@ -235,7 +239,7 @@ export function BulkUserUpload({ onSuccess }: BulkUserUploadProps) {
           className="w-full"
         >
           <Users className="h-4 w-4 mr-2" />
-          {isLoading ? 'Procesando usuarios...' : 'Subir Usuarios'}
+          {isLoading ? 'Procesando solicitudes...' : 'Crear Solicitudes de Migración'}
         </Button>
       </div>
 
@@ -248,6 +252,7 @@ export function BulkUserUpload({ onSuccess }: BulkUserUploadProps) {
           <li>Todos los campos son obligatorios excepto el teléfono</li>
           <li>Las contraseñas deben tener al menos 6 caracteres</li>
           <li>Los emails deben ser únicos en todo el sistema</li>
+          <li><strong>Las solicitudes se crearán como pendientes y deben ser aprobadas manualmente</strong></li>
         </ul>
       </div>
     </div>
