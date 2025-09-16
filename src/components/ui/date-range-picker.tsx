@@ -71,8 +71,8 @@ export function DateRangePicker({
         </PopoverTrigger>
         <PopoverContent 
           className={cn(
-            "w-auto p-0",
-            isMobile ? "min-w-[320px]" : "min-w-[560px]"
+            "p-0 w-fit",
+            isMobile ? "min-w-[336px]" : "min-w-[640px]"
           )} 
           align="start"
         >
@@ -86,7 +86,7 @@ export function DateRangePicker({
             locale={es}
             className={cn(
               "pointer-events-auto",
-              isMobile ? "min-w-[320px]" : "min-w-[560px]"
+              isMobile ? "min-w-[336px]" : "min-w-[640px]"
             )}
           />
         </PopoverContent>
