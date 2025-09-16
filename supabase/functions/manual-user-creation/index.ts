@@ -13,6 +13,8 @@ interface CreateUserRequest {
   full_name: string;
   member_id: string;
   phone?: string;
+  is_membership_holder?: boolean;
+  status?: string;
 }
 
 serve(async (req) => {
@@ -50,7 +52,7 @@ serve(async (req) => {
     }
 
     const body: CreateUserRequest = await req.json();
-    const { email, password, full_name, member_id, phone } = body;
+    const { email, password, full_name, member_id, phone, is_membership_holder, status } = body;
 
     console.log("📝 Creating user:", { email, full_name, member_id });
 
@@ -107,7 +109,8 @@ serve(async (req) => {
           id: authData.user.id,
           member_id,
           full_name,
-          phone
+          phone,
+          is_membership_holder: is_membership_holder || false
         });
 
       if (profileError) {
