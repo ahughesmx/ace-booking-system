@@ -14,7 +14,6 @@ interface CreateUserRequest {
   member_id: string;
   phone?: string;
   is_membership_holder?: boolean;
-  status?: string;
 }
 
 serve(async (req) => {
@@ -52,7 +51,7 @@ serve(async (req) => {
     }
 
     const body: CreateUserRequest = await req.json();
-    const { email, password, full_name, member_id, phone, is_membership_holder, status } = body;
+    const { email, password, full_name, member_id, phone, is_membership_holder } = body;
 
     console.log("📝 Creating user:", { email, full_name, member_id });
 

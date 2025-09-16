@@ -128,8 +128,7 @@ export function BulkUserUpload({ onSuccess }: BulkUserUploadProps) {
             email: row['Email']?.toString().trim().toLowerCase(),
             phone: row['Teléfono']?.toString().trim(),
             password: row['Contraseña']?.toString().trim(),
-            is_membership_holder: row['Es Titular de Membresía']?.toString().toUpperCase() === 'SI',
-            status: 'approved' // Usuarios de carga masiva son aprobados automáticamente
+            is_membership_holder: row['Es Titular de Membresía']?.toString().toUpperCase() === 'SI'
           };
 
           // Validaciones básicas

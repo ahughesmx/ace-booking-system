@@ -3,6 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { 
   User,
@@ -12,7 +15,8 @@ import {
   Clock,
   UserCheck,
   UserX,
-  Search
+  Search,
+  Edit
 } from "lucide-react";
 
 interface RegistrationRequest {
@@ -33,6 +37,7 @@ interface PendingRequestsProps {
   requests: RegistrationRequest[];
   onApprove: (requestId: string) => void;
   onReject: (requestId: string) => void;
+  onUpdate: (requestId: string, updatedData: any) => void;
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -44,13 +49,48 @@ export default function PendingRequests({
   requests,
   onApprove,
   onReject,
+  onUpdate,
   currentPage,
   totalPages,
   onPageChange,
   searchTerm,
   onSearchChange
 }: PendingRequestsProps) {
+  const [editingRequest, setEditingRequest] = useState<RegistrationRequest | null>(null);
+  const [editForm, setEditForm] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+    member_id: '',
+    password: '',
+    is_membership_holder: false
+  });
+  const { toast } = useToast();
+  
   const pendingRequests = requests.filter(request => request.status === 'pending');
+
+  const handleEditClick = (request: RegistrationRequest) => {
+    setEditingRequest(request);
+    setEditForm({
+      full_name: request.full_name,
+      email: request.email,
+      phone: request.phone,
+      member_id: request.member_id,
+      password: '',
+      is_membership_holder: false
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingRequest) return;
+    
+    onUpdate(editingRequest.id, editForm);
+    setEditingRequest(null);
+    toast({
+      title: "Solicitud actualizada",
+      description: "Los datos de la solicitud han sido actualizados correctamente.",
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -113,6 +153,81 @@ export default function PendingRequests({
                     </div>
 
                     <div className="flex gap-2 ml-4">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditClick(request)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Editar
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Editar Solicitud</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="full_name">Nombre Completo</Label>
+                              <Input
+                                id="full_name"
+                                value={editForm.full_name}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, full_name: e.target.value }))}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="email">Email</Label>
+                              <Input
+                                id="email"
+                                type="email"
+                                value={editForm.email}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="phone">Teléfono</Label>
+                              <Input
+                                id="phone"
+                                value={editForm.phone}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="member_id">Clave de Socio</Label>
+                              <Input
+                                id="member_id"
+                                value={editForm.member_id}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, member_id: e.target.value }))}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="password">Nueva Contraseña (opcional)</Label>
+                              <Input
+                                id="password"
+                                type="password"
+                                value={editForm.password}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, password: e.target.value }))}
+                                placeholder="Dejar vacío para mantener la actual"
+                              />
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                id="is_membership_holder"
+                                checked={editForm.is_membership_holder}
+                                onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, is_membership_holder: checked }))}
+                              />
+                              <Label htmlFor="is_membership_holder">Es titular de membresía</Label>
+                            </div>
+                            <div className="flex gap-2 pt-4">
+                              <Button onClick={handleSaveEdit} className="flex-1">
+                                Guardar Cambios
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                       <Button
                         size="sm"
                         onClick={() => onApprove(request.id)}

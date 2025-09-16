@@ -163,6 +163,48 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
     setSelectedRequest("");
   };
 
+  const handleUpdate = async (requestId: string, updatedData: any) => {
+    try {
+      const updatePayload: any = {
+        full_name: updatedData.full_name,
+        email: updatedData.email,
+        phone: updatedData.phone,
+        member_id: updatedData.member_id,
+        updated_at: new Date().toISOString()
+      };
+
+      // Only include password if provided
+      if (updatedData.password && updatedData.password.trim()) {
+        updatePayload.password = updatedData.password;
+      }
+
+      const { error } = await supabase
+        .from('user_registration_requests')
+        .update(updatePayload)
+        .eq('id', requestId);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Solicitud actualizada",
+        description: "Los datos de la solicitud han sido actualizados correctamente.",
+      });
+
+      // Refresh the requests list
+      await fetchRequests();
+
+    } catch (error: any) {
+      console.error('Error updating request:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la solicitud.",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   // Filter and paginate functions
   const filterRequests = (requests: RegistrationRequest[], searchTerm: string) => {
@@ -261,6 +303,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
               requests={paginatedPendingRequests}
               onApprove={handleApprove}
               onReject={handleReject}
+              onUpdate={handleUpdate}
               currentPage={pendingCurrentPage}
               totalPages={pendingTotalPages}
               onPageChange={setPendingCurrentPage}
@@ -332,6 +375,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
             requests={paginatedPendingRequests}
             onApprove={handleApprove}
             onReject={handleReject}
+            onUpdate={handleUpdate}
             currentPage={pendingCurrentPage}
             totalPages={pendingTotalPages}
             onPageChange={setPendingCurrentPage}
