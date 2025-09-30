@@ -1464,26 +1464,20 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
-          full_name: string | null
           id: string | null
           is_active: boolean | null
-          member_id: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
-          full_name?: string | null
           id?: string | null
           is_active?: boolean | null
-          member_id?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
-          full_name?: string | null
           id?: string | null
           is_active?: boolean | null
-          member_id?: string | null
         }
         Relationships: []
       }
@@ -1576,6 +1570,10 @@ export type Database = {
       }
       generate_receipt_number: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_user_display_name: {
+        Args: { user_id: string }
         Returns: string
       }
       is_admin: {
