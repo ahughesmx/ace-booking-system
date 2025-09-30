@@ -916,13 +916,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "matches_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "public_bookings_display"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "matches_player1_id_fkey_profiles"
             columns: ["player1_id"]
             isOneToOne: false
@@ -1152,13 +1145,6 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "receipt_numbers_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "public_bookings_display"
             referencedColumns: ["id"]
           },
         ]
@@ -1397,6 +1383,29 @@ export type Database = {
       }
     }
     Views: {
+      display_bookings_combined: {
+        Row: {
+          actual_amount_charged: number | null
+          booking_made_at: string | null
+          court_id: string | null
+          court_name: string | null
+          court_type: string | null
+          created_at: string | null
+          description: string | null
+          end_time: string | null
+          event_type: string | null
+          id: string | null
+          is_special: boolean | null
+          member_id: string | null
+          payment_method: string | null
+          start_time: string | null
+          status: string | null
+          title: string | null
+          user_full_name: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       instructor_public_info: {
         Row: {
           avatar_url: string | null
@@ -1447,15 +1456,7 @@ export type Database = {
           status: string | null
           user_display_name: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "bookings_court_id_fkey"
-            columns: ["court_id"]
-            isOneToOne: false
-            referencedRelation: "courts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       public_profiles: {
         Row: {
