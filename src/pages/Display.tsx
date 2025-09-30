@@ -55,8 +55,8 @@ export default function Display() {
   const currentDate = new Date();
   console.log("🖥️ Display component - Current date:", currentDate.toISOString());
 
-  // Use the combined bookings hook with real-time updates already built-in
-  const { data: allBookings = [], isLoading } = useAllBookings(currentDate);
+  // Use the combined bookings hook with public view for unauthenticated display access
+  const { data: allBookings = [], isLoading } = useAllBookings(currentDate, true);
   
   // Get active court types
   const { data: availableCourtTypes = [] } = useAvailableCourtTypes(true);

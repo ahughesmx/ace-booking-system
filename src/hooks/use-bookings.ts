@@ -102,14 +102,127 @@ export function useSpecialBookings(selectedDate?: Date) {
   });
 }
 
-export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoading: boolean } {
+export function useAllBookings(selectedDate?: Date, usePublicView: boolean = false): { data: Booking[], isLoading: boolean } {
   const queryClient = useQueryClient();
+  
+  // Use public view for unauthenticated access (display page)
+  const { data: publicBookingsData, isLoading: loadingPublic } = useQuery({
+    queryKey: ["display-bookings-combined", selectedDate?.toDateString()],
+    queryFn: async () => {
+      if (!selectedDate) {
+        console.log("🚫 No selected date provided for public bookings");
+        return [];
+      }
+
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      console.log("🌐 Fetching public display bookings for:", {
+        selectedDate: selectedDate.toISOString(),
+        startOfDay: startOfDay.toISOString(),
+        endOfDay: endOfDay.toISOString()
+      });
+
+      const now = new Date().toISOString();
+      
+      const { data, error } = await supabase
+        .from("display_bookings_combined")
+        .select("*")
+        .gte("start_time", startOfDay.toISOString())
+        .lte("start_time", endOfDay.toISOString())
+        .gte("end_time", now)
+        .order("start_time");
+
+      if (error) {
+        console.error("❌ Error fetching public bookings:", error);
+        return [];
+      }
+
+      console.log("✅ Public bookings fetched:", data?.length || 0, data);
+      return data || [];
+    },
+    enabled: !!selectedDate && usePublicView,
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+  });
+  
   const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate);
   const { data: specialBookings = [], isLoading: loadingSpecial } = useSpecialBookings(selectedDate);
 
-  // Setup realtime subscriptions
+  // If using public view, transform and return early
+  if (usePublicView && publicBookingsData) {
+    const transformedPublicBookings: Booking[] = publicBookingsData.map(booking => {
+      if (booking.is_special) {
+        return {
+          id: `special-${booking.id}`,
+          court_id: booking.court_id,
+          user_id: booking.user_id,
+          start_time: booking.start_time,
+          end_time: booking.end_time,
+          created_at: booking.created_at,
+          booking_made_at: booking.booking_made_at,
+          payment_method: booking.payment_method || 'admin',
+          actual_amount_charged: booking.actual_amount_charged,
+          user: booking.user_full_name ? {
+            full_name: booking.user_full_name,
+            member_id: booking.member_id || ''
+          } : null,
+          court: {
+            id: booking.court_id,
+            name: booking.court_name || '',
+            court_type: booking.court_type || ''
+          },
+          isSpecial: true,
+          event_type: booking.event_type || '',
+          title: booking.title || '',
+          description: booking.description || '',
+          reference_user_id: booking.user_id
+        } as SpecialBooking;
+      } else {
+        return {
+          id: booking.id,
+          court_id: booking.court_id,
+          user_id: booking.user_id,
+          start_time: booking.start_time,
+          end_time: booking.end_time,
+          created_at: booking.created_at,
+          booking_made_at: booking.booking_made_at,
+          payment_method: booking.payment_method || 'online',
+          actual_amount_charged: booking.actual_amount_charged,
+          user: booking.user_full_name ? {
+            full_name: booking.user_full_name,
+            member_id: booking.member_id || ''
+          } : null,
+          court: {
+            id: booking.court_id,
+            name: booking.court_name || '',
+            court_type: booking.court_type || ''
+          },
+          isSpecial: false
+        } as RegularBooking;
+      }
+    });
+
+    console.log("📊 Public bookings transformed:", {
+      total: transformedPublicBookings.length,
+      regular: transformedPublicBookings.filter(b => !b.isSpecial).length,
+      special: transformedPublicBookings.filter(b => b.isSpecial).length
+    });
+
+    return {
+      data: transformedPublicBookings,
+      isLoading: loadingPublic
+    };
+  }
+
+  // Setup realtime subscriptions (only for authenticated queries)
   useEffect(() => {
-    console.log("🔄 Setting up realtime subscriptions for Display", {
+    if (usePublicView) return; // Skip subscriptions for public view
+    
+    console.log("🔄 Setting up realtime subscriptions", {
       hasSelectedDate: !!selectedDate,
       date: selectedDate?.toISOString()
     });
@@ -155,7 +268,7 @@ export function useAllBookings(selectedDate?: Date): { data: Booking[], isLoadin
       supabase.removeChannel(bookingsChannel);
       supabase.removeChannel(specialBookingsChannel);
     };
-  }, [selectedDate, queryClient]);
+  }, [selectedDate, queryClient, usePublicView]);
 
   const transformedRegularBookings: RegularBooking[] = regularBookings.map(booking => ({
     id: booking.id,
