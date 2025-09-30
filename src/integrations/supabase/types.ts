@@ -1569,6 +1569,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_instructor_contact: {
+        Args: { instructor_id: string }
+        Returns: {
+          email: string
+          phone: string
+        }[]
+      }
       get_user_display_name: {
         Args: { user_id: string }
         Returns: string
