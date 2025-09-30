@@ -190,10 +190,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookings_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_user_id_fkey_profiles"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_user_id_fkey_profiles"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -652,6 +666,30 @@ export type Database = {
         }
         Relationships: []
       }
+      failed_login_attempts: {
+        Row: {
+          attempt_time: string | null
+          email: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          attempt_time?: string | null
+          email: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          attempt_time?: string | null
+          email?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       instructors: {
         Row: {
           avatar_url: string | null
@@ -777,10 +815,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "match_invitations_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "match_invitations_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_invitations_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -864,10 +916,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "matches_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "public_bookings_display"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "matches_player1_id_fkey_profiles"
             columns: ["player1_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_player1_id_fkey_profiles"
+            columns: ["player1_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -878,8 +944,29 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "matches_player1_partner_id_fkey_profiles"
+            columns: ["player1_partner_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "matches_player2_id_fkey_profiles"
             columns: ["player2_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_player2_id_fkey_profiles"
+            columns: ["player2_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_player2_partner_id_fkey_profiles"
+            columns: ["player2_partner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -888,7 +975,7 @@ export type Database = {
             foreignKeyName: "matches_player2_partner_id_fkey_profiles"
             columns: ["player2_partner_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1025,6 +1112,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "rankings_user_id_fkey_profiles"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       receipt_numbers: {
@@ -1060,7 +1154,50 @@ export type Database = {
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "receipt_numbers_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "public_bookings_display"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      security_audit_log: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: string | null
+          record_id: string | null
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          record_id?: string | null
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          record_id?: string | null
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       special_bookings: {
         Row: {
@@ -1124,6 +1261,13 @@ export type Database = {
             columns: ["reference_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "special_bookings_reference_user_id_fkey"
+            columns: ["reference_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1295,8 +1439,106 @@ export type Database = {
         }
         Relationships: []
       }
+      public_bookings_display: {
+        Row: {
+          court_id: string | null
+          court_name: string | null
+          court_type: string | null
+          end_time: string | null
+          id: string | null
+          start_time: string | null
+          status: string | null
+          user_display_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          member_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          member_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          member_id?: string | null
+        }
+        Relationships: []
+      }
+      public_special_bookings_display: {
+        Row: {
+          court_id: string | null
+          created_at: string | null
+          description: string | null
+          end_time: string | null
+          event_type: string | null
+          id: string | null
+          start_time: string | null
+          title: string | null
+        }
+        Insert: {
+          court_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_type?: string | null
+          id?: string | null
+          start_time?: string | null
+          title?: string | null
+        }
+        Update: {
+          court_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_type?: string | null
+          id?: string | null
+          start_time?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "special_bookings_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      audit_security_action: {
+        Args: {
+          p_action_type: string
+          p_details?: Json
+          p_record_id?: string
+          p_table_name: string
+        }
+        Returns: undefined
+      }
       calculate_booking_expiration: {
         Args: { booking_time: string }
         Returns: string
@@ -1306,6 +1548,10 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_bookings: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      cleanup_failed_login_attempts: {
         Args: Record<PropertyKey, never>
         Returns: number
       }
@@ -1364,6 +1610,14 @@ export type Database = {
           id: string
           member_id: string
         }[]
+      }
+      verify_rate_limit: {
+        Args: {
+          p_email: string
+          p_max_attempts?: number
+          p_window_minutes?: number
+        }
+        Returns: boolean
       }
     }
     Enums: {
