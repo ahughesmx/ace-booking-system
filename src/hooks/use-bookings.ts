@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase-client";
 import { Booking, RegularBooking, SpecialBooking } from "@/types/booking";
 import { useEffect } from "react";
 
-export function useBookings(selectedDate?: Date) {
+export function useBookings(selectedDate?: Date, enabled: boolean = true) {
   return useQuery({
     queryKey: ["bookings", selectedDate?.toDateString()],
     queryFn: async () => {
@@ -50,13 +50,13 @@ export function useBookings(selectedDate?: Date) {
       console.log("✅ Regular bookings fetched:", data?.length || 0, data);
       return data || [];
     },
-    enabled: !!selectedDate,
+    enabled: !!selectedDate && enabled,
     staleTime: 1000 * 60 * 2, // 2 minutos de cache
     gcTime: 1000 * 60 * 10,  // 10 minutos en memoria
   });
 }
 
-export function useSpecialBookings(selectedDate?: Date) {
+export function useSpecialBookings(selectedDate?: Date, enabled: boolean = true) {
   return useQuery({
     queryKey: ["special-bookings", selectedDate?.toDateString()],
     queryFn: async () => {
@@ -96,7 +96,7 @@ export function useSpecialBookings(selectedDate?: Date) {
       console.log("✅ Special bookings fetched:", data?.length || 0, data);
       return data || [];
     },
-    enabled: !!selectedDate,
+    enabled: !!selectedDate && enabled,
     staleTime: 1000 * 60 * 5, // 5 minutos de cache para special bookings
     gcTime: 1000 * 60 * 15,   // 15 minutos en memoria
   });
@@ -149,12 +149,13 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
     gcTime: 1000 * 60 * 10,
   });
   
-  const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate);
-  const { data: specialBookings = [], isLoading: loadingSpecial } = useSpecialBookings(selectedDate);
+  // Use regular authenticated queries only when NOT using public view
+  const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate, !usePublicView);
+  const { data: specialBookings = [], isLoading: loadingSpecial } = useSpecialBookings(selectedDate, !usePublicView);
 
-  // If using public view, transform and return early
-  if (usePublicView && publicBookingsData) {
-    const transformedPublicBookings: Booking[] = publicBookingsData.map(booking => {
+  // If using public view, transform and return
+  if (usePublicView) {
+    const transformedPublicBookings: Booking[] = (publicBookingsData || []).map(booking => {
       if (booking.is_special) {
         return {
           id: `special-${booking.id}`,
