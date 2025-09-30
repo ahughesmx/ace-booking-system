@@ -18,12 +18,11 @@ export default function Login() {
   const [loginPassword, setLoginPassword] = useState("");
   const [error, setError] = useState<string>("");
 
-  // Estado para el registro
+  // Estado para el registro (password removed for security)
   const [memberId, setMemberId] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   
   // Estado para el modal de éxito
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -101,7 +100,7 @@ export default function Login() {
         return;
       }
 
-      // Crear solicitud de registro usando el nuevo modelo seguro
+      // Create registration request - user will set password via email
       const { error } = await supabase
         .from('user_registration_requests')
         .insert({
@@ -109,7 +108,7 @@ export default function Login() {
           full_name: fullName,
           phone: phone,
           email: email,
-          password_provided: true, // Usar el nuevo campo boolean
+          send_password_reset: true,
           status: 'pending'
         });
 
@@ -125,7 +124,6 @@ export default function Login() {
         setFullName("");
         setPhone("");
         setEmail("");
-        setPassword("");
       }
     } catch (err) {
       console.error("Registration error:", err);
@@ -146,8 +144,6 @@ export default function Login() {
             setPhone={setPhone}
             email={email}
             setEmail={setEmail}
-            password={password}
-            setPassword={setPassword}
             onSubmit={handleRegisterSubmit}
             onShowLogin={() => setShowRegister(false)}
           />
@@ -175,7 +171,7 @@ export default function Login() {
               Solicitud de registro enviada
             </DialogTitle>
             <DialogDescription className="text-center mt-2">
-              Un administrador revisará tu solicitud y te notificarán por WhatsApp.
+              Un administrador revisará tu solicitud. Una vez aprobada, recibirás un correo electrónico para establecer tu contraseña de forma segura.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-center mt-4">

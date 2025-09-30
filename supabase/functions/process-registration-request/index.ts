@@ -146,15 +146,13 @@ serve(async (req) => {
         authData = { user: existingUser };
         console.log(`User with email ${request.email} already exists, using existing user`);
       } else {
-        // Crear nuevo usuario
-        // Si la solicitud tiene contraseña, usarla; si no, generar una temporal
-        const userPassword = request.password_provided && request.password 
-          ? request.password 
-          : crypto.randomUUID() + "!Temp123";
+        // Create new user with secure random password
+        // User will receive password reset email to set their own password
+        const temporaryPassword = crypto.randomUUID() + "!Secure" + Math.random().toString(36);
         
         const { data: newAuthData, error: createUserError } = await supabase.auth.admin.createUser({
           email: request.email,
-          password: userPassword,
+          password: temporaryPassword,
           email_confirm: true,
           user_metadata: {
             member_id: request.member_id,
@@ -169,8 +167,9 @@ serve(async (req) => {
 
         authData = newAuthData;
 
-        // Solo enviar email de reset si no se proporcionó contraseña
-        if (!request.password_provided || !request.password) {
+        // Always send password reset email for security
+        // User will set their own password securely
+        if (request.send_password_reset !== false) {
           const { error: resetError } = await supabase.auth.admin.generateLink({
             type: 'recovery',
             email: request.email,
@@ -181,6 +180,8 @@ serve(async (req) => {
 
           if (resetError) {
             console.error("Error sending password reset email:", resetError);
+          } else {
+            console.log("✅ Password reset email sent to:", request.email);
           }
         }
       }

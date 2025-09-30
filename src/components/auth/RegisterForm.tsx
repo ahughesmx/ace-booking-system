@@ -1,4 +1,4 @@
-import { Mail, Lock, UserPlus, User, Phone } from "lucide-react";
+import { Mail, UserPlus, User, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,6 @@ interface RegisterFormProps {
   setPhone: (value: string) => void;
   email: string;
   setEmail: (value: string) => void;
-  password: string;
-  setPassword: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onShowLogin: () => void;
 }
@@ -27,8 +25,6 @@ export function RegisterForm({
   setPhone,
   email,
   setEmail,
-  password,
-  setPassword,
   onSubmit,
   onShowLogin,
 }: RegisterFormProps) {
@@ -99,20 +95,10 @@ export function RegisterForm({
           />
         </div>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Contraseña</Label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Tu contraseña"
-            className="pl-10"
-            required
-          />
-        </div>
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <p className="text-sm text-blue-800">
+          <strong>Nota:</strong> Después de que tu solicitud sea aprobada, recibirás un correo electrónico para establecer tu contraseña de forma segura.
+        </p>
       </div>
       <Button type="submit" className="w-full">
         <UserPlus className="mr-2 h-4 w-4" /> Registrarse

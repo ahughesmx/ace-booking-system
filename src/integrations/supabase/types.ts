@@ -1280,12 +1280,11 @@ export type Database = {
           id: string
           is_migration: boolean
           member_id: string
-          password: string | null
-          password_provided: boolean | null
           phone: string
           processed_at: string | null
           processed_by: string | null
           rejection_reason: string | null
+          send_password_reset: boolean | null
           status: string
           updated_at: string
         }
@@ -1296,12 +1295,11 @@ export type Database = {
           id?: string
           is_migration?: boolean
           member_id: string
-          password?: string | null
-          password_provided?: boolean | null
           phone: string
           processed_at?: string | null
           processed_by?: string | null
           rejection_reason?: string | null
+          send_password_reset?: boolean | null
           status?: string
           updated_at?: string
         }
@@ -1312,12 +1310,11 @@ export type Database = {
           id?: string
           is_migration?: boolean
           member_id?: string
-          password?: string | null
-          password_provided?: boolean | null
           phone?: string
           processed_at?: string | null
           processed_by?: string | null
           rejection_reason?: string | null
+          send_password_reset?: boolean | null
           status?: string
           updated_at?: string
         }

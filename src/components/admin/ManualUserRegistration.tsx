@@ -18,7 +18,6 @@ type UserRegistrationData = {
   full_name: string;
   member_id: string;
   email: string;
-  password: string;
   phone: string;
 };
 
@@ -41,10 +40,9 @@ export default function ManualUserRegistration({ onSuccess }: ManualUserRegistra
       full_name: "",
       member_id: "",
       email: "",
-      password: "",
       phone: ""
     },
-    shouldUnregister: true, // Esto limpia completamente el estado al desmontar
+    shouldUnregister: true,
   });
   
   const { register, handleSubmit, reset, watch, formState: { errors } } = form;
@@ -157,7 +155,7 @@ export default function ManualUserRegistration({ onSuccess }: ManualUserRegistra
         return;
       }
 
-      // Create registration request with password
+      // Create registration request - password will be set during approval
       const { data: requestData, error: registrationError } = await supabase
         .from("user_registration_requests")
         .insert({
@@ -165,8 +163,7 @@ export default function ManualUserRegistration({ onSuccess }: ManualUserRegistra
           member_id: data.member_id,
           email: data.email,
           phone: data.phone,
-          password: data.password,
-          password_provided: true,
+          send_password_reset: true,
           status: "pending"
         })
         .select()
@@ -227,12 +224,10 @@ export default function ManualUserRegistration({ onSuccess }: ManualUserRegistra
   };
 
   const resetForm = () => {
-    // Resetear completamente el formulario
     form.reset({
       full_name: "",
       member_id: "",
       email: "",
-      password: "",
       phone: ""
     });
     setMemberInfo(null);
@@ -332,23 +327,10 @@ export default function ManualUserRegistration({ onSuccess }: ManualUserRegistra
               )}
             </div>
 
-            <div>
-              <Label htmlFor="password">Contraseña *</Label>
-              <Input
-                id="password"
-                type="password"
-                {...register("password", { 
-                  required: "La contraseña es requerida",
-                  minLength: {
-                    value: 6,
-                    message: "La contraseña debe tener al menos 6 caracteres"
-                  }
-                })}
-                placeholder="••••••••"
-              />
-              {errors.password && (
-                <p className="text-sm text-red-600 mt-1">{errors.password.message}</p>
-              )}
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+              <p className="text-sm text-blue-800">
+                <strong>Nota de seguridad:</strong> El usuario recibirá un correo electrónico para establecer su propia contraseña de forma segura.
+              </p>
             </div>
 
             <div>
