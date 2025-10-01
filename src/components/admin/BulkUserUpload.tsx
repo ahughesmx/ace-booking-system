@@ -100,13 +100,13 @@ export function BulkUserUpload({ onSuccess }: BulkUserUploadProps) {
         throw new Error("El archivo Excel está vacío o no tiene datos válidos.");
       }
 
-      // Validar estructura del archivo
-      const requiredColumns = ['Clave de Socio', 'Nombre Completo', 'Email', 'Teléfono', 'Es Titular de Membresía'];
+      // Validar estructura del archivo - solo columnas obligatorias
+      const requiredColumns = ['Clave de Socio', 'Nombre Completo', 'Es Titular de Membresía'];
       const firstRow = data[0] as any;
       const missingColumns = requiredColumns.filter(col => !(col in firstRow));
       
       if (missingColumns.length > 0) {
-        throw new Error(`Faltan las siguientes columnas: ${missingColumns.join(', ')}`);
+        throw new Error(`Faltan las siguientes columnas obligatorias: ${missingColumns.join(', ')}`);
       }
 
       let successCount = 0;
