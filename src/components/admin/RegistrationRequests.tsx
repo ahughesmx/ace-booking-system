@@ -20,8 +20,8 @@ interface RegistrationRequest {
   id: string;
   member_id: string;
   full_name: string;
-  phone: string;
-  email: string;
+  phone: string | null;
+  email: string | null;
   password_provided?: boolean; // Nuevo campo para indicar si se proporcionó contraseña
   status: 'pending' | 'approved' | 'rejected';
   rejection_reason?: string;
@@ -209,10 +209,12 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   // Filter and paginate functions
   const filterRequests = (requests: RegistrationRequest[], searchTerm: string) => {
     if (!searchTerm) return requests;
+    const lowerSearchTerm = searchTerm.toLowerCase();
     return requests.filter(request => 
-      request.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.member_id.toLowerCase().includes(searchTerm.toLowerCase())
+      request.full_name.toLowerCase().includes(lowerSearchTerm) ||
+      (request.email?.toLowerCase() || '').includes(lowerSearchTerm) ||
+      request.member_id.toLowerCase().includes(lowerSearchTerm) ||
+      (request.phone?.toLowerCase() || '').includes(lowerSearchTerm)
     );
   };
 
