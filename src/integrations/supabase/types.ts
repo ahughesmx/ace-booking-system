@@ -1261,12 +1261,12 @@ export type Database = {
       user_registration_requests: {
         Row: {
           created_at: string
-          email: string
+          email: string | null
           full_name: string
           id: string
           is_migration: boolean
           member_id: string
-          phone: string
+          phone: string | null
           processed_at: string | null
           processed_by: string | null
           rejection_reason: string | null
@@ -1276,12 +1276,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          email: string
+          email?: string | null
           full_name: string
           id?: string
           is_migration?: boolean
           member_id: string
-          phone: string
+          phone?: string | null
           processed_at?: string | null
           processed_by?: string | null
           rejection_reason?: string | null
@@ -1291,12 +1291,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          email?: string
+          email?: string | null
           full_name?: string
           id?: string
           is_migration?: boolean
           member_id?: string
-          phone?: string
+          phone?: string | null
           processed_at?: string | null
           processed_by?: string | null
           rejection_reason?: string | null
