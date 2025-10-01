@@ -46,6 +46,8 @@ interface PendingRequestsProps {
   onPageChange: (page: number) => void;
   searchTerm: string;
   onSearchChange: (term: string) => void;
+  showMigrationRequests: boolean;
+  onToggleMigration: (checked: boolean) => void;
 }
 
 export default function PendingRequests({
@@ -57,7 +59,9 @@ export default function PendingRequests({
   totalPages,
   onPageChange,
   searchTerm,
-  onSearchChange
+  onSearchChange,
+  showMigrationRequests,
+  onToggleMigration
 }: PendingRequestsProps) {
   const [editingRequest, setEditingRequest] = useState<RegistrationRequest | null>(null);
   const [editForm, setEditForm] = useState({
@@ -68,12 +72,8 @@ export default function PendingRequests({
     password: '',
     is_membership_holder: false
   });
-  const [showMigrationRequests, setShowMigrationRequests] = useState(false);
-  const { toast } = useToast();
   
-  const pendingRequests = requests
-    .filter(request => request.status === 'pending')
-    .filter(request => showMigrationRequests || !request.is_migration);
+  const pendingRequests = requests;
 
   const handleEditClick = (request: RegistrationRequest) => {
     setEditingRequest(request);
@@ -114,7 +114,7 @@ export default function PendingRequests({
           <Checkbox
             id="show-migration"
             checked={showMigrationRequests}
-            onCheckedChange={(checked) => setShowMigrationRequests(checked === true)}
+            onCheckedChange={(checked) => onToggleMigration(checked === true)}
           />
           <Label htmlFor="show-migration" className="flex items-center gap-2 text-sm">
             <Database className="h-4 w-4" />

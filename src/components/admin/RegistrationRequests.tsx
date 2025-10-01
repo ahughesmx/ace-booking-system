@@ -28,6 +28,7 @@ interface RegistrationRequest {
   created_at: string;
   processed_at?: string;
   processed_by?: string;
+  is_migration?: boolean;
 }
 
 
@@ -49,6 +50,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   const [pendingSearchTerm, setPendingSearchTerm] = useState("");
   const [processedSearchTerm, setProcessedSearchTerm] = useState("");
   const itemsPerPage = 5;
+  const [showMigrationPending, setShowMigrationPending] = useState(false);
   
   const { toast } = useToast();
 
@@ -239,17 +241,21 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
     return Math.ceil(totalItems / itemsPerPage);
   };
 
-  // Filtered requests
-  const pendingRequests = requests.filter(request => request.status === 'pending');
+// Filtered requests
+  const basePending = requests.filter(request => request.status === 'pending');
   const processedRequests = requests.filter(request => request.status !== 'pending');
   
-  const filteredPendingRequests = filterRequests(pendingRequests, pendingSearchTerm);
+  const searchedPending = filterRequests(basePending, pendingSearchTerm);
   const filteredProcessedRequests = filterRequests(processedRequests, processedSearchTerm);
   
-  const paginatedPendingRequests = getPaginatedRequests(filteredPendingRequests, pendingCurrentPage);
+  const visiblePending = showMigrationPending 
+    ? searchedPending 
+    : searchedPending.filter((r) => !r.is_migration);
+  
+  const paginatedPendingRequests = getPaginatedRequests(visiblePending, pendingCurrentPage);
   const paginatedProcessedRequests = getPaginatedRequests(filteredProcessedRequests, processedCurrentPage);
   
-  const pendingTotalPages = getTotalPages(filteredPendingRequests.length);
+  const pendingTotalPages = getTotalPages(visiblePending.length);
   const processedTotalPages = getTotalPages(filteredProcessedRequests.length);
 
   if (loading) {
@@ -304,7 +310,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
         <Tabs defaultValue="pending" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="pending">
-              Solicitudes Pendientes ({filteredPendingRequests.length})
+              Solicitudes Pendientes ({visiblePending.length})
             </TabsTrigger>
             <TabsTrigger value="processed">
               Solicitudes Procesadas ({filteredProcessedRequests.length})
@@ -322,6 +328,8 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
               onPageChange={setPendingCurrentPage}
               searchTerm={pendingSearchTerm}
               onSearchChange={handlePendingSearchChange}
+              showMigrationRequests={showMigrationPending}
+              onToggleMigration={setShowMigrationPending}
             />
           </TabsContent>
           
@@ -376,7 +384,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
       <Tabs defaultValue="pending" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="pending">
-            Solicitudes Pendientes ({filteredPendingRequests.length})
+            Solicitudes Pendientes ({visiblePending.length})
           </TabsTrigger>
           <TabsTrigger value="processed">
             Solicitudes Procesadas ({filteredProcessedRequests.length})
@@ -394,6 +402,8 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
             onPageChange={setPendingCurrentPage}
             searchTerm={pendingSearchTerm}
             onSearchChange={handlePendingSearchChange}
+            showMigrationRequests={showMigrationPending}
+            onToggleMigration={setShowMigrationPending}
           />
         </TabsContent>
         
