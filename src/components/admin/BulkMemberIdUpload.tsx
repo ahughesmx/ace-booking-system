@@ -58,8 +58,8 @@ export function BulkMemberIdUpload({ onSuccess }: BulkUploadProps) {
       const memberIds = jsonData
         .slice(1)
         .map((row: any) => row[0])
-        .filter((id: any) => id && typeof id === 'string' && id.trim())
-        .map((id: string) => id.trim());
+        .filter((id: any) => id !== null && id !== undefined && String(id).trim() !== '')
+        .map((id: any) => String(id).trim());
 
       if (memberIds.length === 0) {
         toast({
