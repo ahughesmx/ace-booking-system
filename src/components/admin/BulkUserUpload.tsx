@@ -127,11 +127,12 @@ export function BulkUserUpload({ onSuccess }: BulkUserUploadProps) {
           };
 
           // Validaciones básicas
-          if (!userData.member_id || !userData.full_name || !userData.email) {
-            throw new Error(`Fila ${i + 2}: Faltan datos obligatorios`);
+          if (!userData.member_id || !userData.full_name) {
+            throw new Error(`Fila ${i + 2}: Faltan datos obligatorios (Clave de Socio y Nombre Completo)`);
           }
 
-          if (!userData.email.includes('@')) {
+          // Validar email solo si está presente
+          if (userData.email && !userData.email.includes('@')) {
             throw new Error(`Fila ${i + 2}: Email inválido`);
           }
 
@@ -141,7 +142,7 @@ export function BulkUserUpload({ onSuccess }: BulkUserUploadProps) {
             .insert({
               member_id: userData.member_id,
               full_name: userData.full_name,
-              email: userData.email,
+              email: userData.email || null,
               phone: userData.phone || null,
               is_migration: true,
               status: 'pending'
@@ -239,10 +240,11 @@ export function BulkUserUpload({ onSuccess }: BulkUserUploadProps) {
           <li>Descarga la plantilla Excel y llénala con los datos de los usuarios</li>
           <li>Puedes agregar múltiples usuarios para la misma clave de socio (membresías familiares)</li>
           <li>Solo UN usuario por membresía puede ser marcado como "Titular" (SI en la columna correspondiente)</li>
-          <li>Todos los campos son obligatorios excepto el teléfono</li>
-          <li>Los emails deben ser únicos en todo el sistema</li>
+          <li><strong>Campos obligatorios:</strong> Clave de Socio, Nombre Completo, Es Titular de Membresía</li>
+          <li><strong>Campos opcionales:</strong> Email, Teléfono (pueden dejarse vacíos para migración)</li>
+          <li>Si se proporciona email, debe ser único en todo el sistema</li>
           <li><strong>Las solicitudes se crearán como pendientes y deben ser aprobadas manualmente</strong></li>
-          <li>Al aprobar la solicitud, se enviará un correo para establecer la contraseña</li>
+          <li>Al aprobar la solicitud, se enviará un correo para establecer la contraseña (si hay email)</li>
         </ul>
       </div>
     </div>
