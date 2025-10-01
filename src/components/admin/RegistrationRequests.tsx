@@ -206,6 +206,17 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   };
 
 
+  // Handle search term changes and reset pagination
+  const handlePendingSearchChange = (value: string) => {
+    setPendingSearchTerm(value);
+    setPendingCurrentPage(1); // Reset to first page when searching
+  };
+
+  const handleProcessedSearchChange = (value: string) => {
+    setProcessedSearchTerm(value);
+    setProcessedCurrentPage(1); // Reset to first page when searching
+  };
+
   // Filter and paginate functions
   const filterRequests = (requests: RegistrationRequest[], searchTerm: string) => {
     if (!searchTerm) return requests;
@@ -310,7 +321,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
               totalPages={pendingTotalPages}
               onPageChange={setPendingCurrentPage}
               searchTerm={pendingSearchTerm}
-              onSearchChange={setPendingSearchTerm}
+              onSearchChange={handlePendingSearchChange}
             />
           </TabsContent>
           
@@ -321,7 +332,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
               totalPages={processedTotalPages}
               onPageChange={setProcessedCurrentPage}
               searchTerm={processedSearchTerm}
-              onSearchChange={setProcessedSearchTerm}
+              onSearchChange={handleProcessedSearchChange}
             />
           </TabsContent>
         </Tabs>
@@ -382,7 +393,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
             totalPages={pendingTotalPages}
             onPageChange={setPendingCurrentPage}
             searchTerm={pendingSearchTerm}
-            onSearchChange={setPendingSearchTerm}
+            onSearchChange={handlePendingSearchChange}
           />
         </TabsContent>
         
@@ -393,7 +404,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
             totalPages={processedTotalPages}
             onPageChange={setProcessedCurrentPage}
             searchTerm={processedSearchTerm}
-            onSearchChange={setProcessedSearchTerm}
+            onSearchChange={handleProcessedSearchChange}
           />
         </TabsContent>
       </Tabs>
