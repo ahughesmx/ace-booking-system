@@ -34,6 +34,7 @@ interface RegistrationRequest {
   processed_at?: string;
   processed_by?: string;
   is_migration?: boolean;
+  is_membership_holder?: boolean;
 }
 
 interface PendingRequestsProps {
@@ -82,19 +83,27 @@ export default function PendingRequests({
       phone: request.phone,
       member_id: request.member_id,
       password: '',
-      is_membership_holder: false
+      is_membership_holder: request.is_membership_holder || false
     });
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingRequest) return;
     
-    onUpdate(editingRequest.id, editForm);
-    setEditingRequest(null);
-    toast({
-      title: "Solicitud actualizada",
-      description: "Los datos de la solicitud han sido actualizados correctamente.",
-    });
+    try {
+      await onUpdate(editingRequest.id, editForm);
+      setEditingRequest(null);
+      toast({
+        title: "Solicitud actualizada",
+        description: "Los datos de la solicitud han sido actualizados correctamente.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudieron guardar los cambios.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -177,7 +186,7 @@ export default function PendingRequests({
                     </div>
 
                     <div className="flex gap-2 ml-4">
-                      <Dialog>
+                      <Dialog open={editingRequest?.id === request.id} onOpenChange={(open) => !open && setEditingRequest(null)}>
                         <DialogTrigger asChild>
                           <Button
                             size="sm"
