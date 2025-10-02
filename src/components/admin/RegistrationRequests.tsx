@@ -272,10 +272,8 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
         updated_at: new Date().toISOString()
       };
 
-      // Only include password if provided
-      if (updatedData.password && updatedData.password.trim()) {
-        updatePayload.password = updatedData.password;
-      }
+      // Nota: No enviar contraseña; la tabla no tiene columna 'password'.
+      // Si se requiere manejar contraseñas, debe hacerse en el flujo de aprobación (edge function).
 
       const { error } = await supabase
         .from('user_registration_requests')
