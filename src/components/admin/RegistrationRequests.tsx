@@ -75,7 +75,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      console.log('📥 fetchRequests: Starting fetch...');
+      console.log('📥 fetchRequests: Starting fetch with limit 6000...');
       
       const { data: { session } } = await supabase.auth.getSession();
       console.log('📥 fetchRequests: Current session:', session ? `User ${session.user.id}` : 'No session');
