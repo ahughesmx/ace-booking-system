@@ -142,6 +142,52 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   };
 
   const handleApprove = (requestId: string) => {
+    // Buscar la solicitud para validar el teléfono
+    const request = requests.find(r => r.id === requestId);
+    
+    if (!request) {
+      toast({
+        title: "Error",
+        description: "No se encontró la solicitud.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar que exista el teléfono
+    if (!request.phone || request.phone.trim() === '') {
+      toast({
+        title: "Teléfono requerido",
+        description: "El usuario debe tener un número de teléfono registrado antes de aprobar la solicitud.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Limpiar el teléfono de espacios y validar
+    const cleanPhone = request.phone.replace(/\s/g, '');
+    
+    // Validar que solo contenga números
+    if (!/^\d+$/.test(cleanPhone)) {
+      toast({
+        title: "Teléfono inválido",
+        description: "El teléfono debe contener solo números, sin espacios, guiones o caracteres especiales. Por favor edita la solicitud antes de aprobarla.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar que tenga exactamente 10 dígitos
+    if (cleanPhone.length !== 10) {
+      toast({
+        title: "Teléfono inválido",
+        description: `El teléfono debe tener exactamente 10 dígitos. El teléfono actual tiene ${cleanPhone.length} dígitos. Por favor edita la solicitud antes de aprobarla.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Si todas las validaciones pasan, procesar la aprobación
     processRequest(requestId, 'approve');
   };
 
