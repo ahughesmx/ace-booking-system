@@ -573,71 +573,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
           </DialogContent>
         </Dialog>
 
-        <Dialog open={!!editingRequestId} onOpenChange={(open) => !open && setEditingRequestId(null)}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Editar Solicitud</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="full_name">Nombre Completo</Label>
-                <Input
-                  id="full_name"
-                  value={editForm.full_name}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, full_name: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone">Teléfono</Label>
-                <Input
-                  id="phone"
-                  value={editForm.phone}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="member_id">Clave de Socio</Label>
-                <Input
-                  id="member_id"
-                  value={editForm.member_id}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, member_id: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="password">Nueva Contraseña (opcional)</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={editForm.password}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="Dejar vacío para mantener la actual"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="is_membership_holder"
-                  checked={editForm.is_membership_holder}
-                  onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, is_membership_holder: checked }))}
-                />
-                <Label htmlFor="is_membership_holder">Es titular de membresía</Label>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button onClick={handleSaveEdit} className="flex-1">
-                  Guardar Cambios
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </>
     );
+  }
 }

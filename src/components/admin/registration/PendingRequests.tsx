@@ -148,7 +148,7 @@ export default function PendingRequests({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleEditClick(request)}
+                        onClick={() => onEdit(request.id)}
                       >
                         <Edit className="h-4 w-4 mr-1" />
                         Editar
