@@ -1264,6 +1264,7 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          is_membership_holder: boolean | null
           is_migration: boolean
           member_id: string
           phone: string | null
@@ -1279,6 +1280,7 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          is_membership_holder?: boolean | null
           is_migration?: boolean
           member_id: string
           phone?: string | null
@@ -1294,6 +1296,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          is_membership_holder?: boolean | null
           is_migration?: boolean
           member_id?: string
           phone?: string | null

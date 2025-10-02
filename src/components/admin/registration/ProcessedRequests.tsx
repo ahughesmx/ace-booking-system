@@ -25,6 +25,7 @@ interface RegistrationRequest {
   created_at: string;
   processed_at?: string;
   processed_by?: string;
+  is_membership_holder?: boolean;
 }
 
 interface ProcessedRequestsProps {
@@ -98,6 +99,11 @@ export default function ProcessedRequests({
                         <div className="flex items-center gap-2">
                           <CreditCard className="h-4 w-4" />
                           Socio: {request.member_id}
+                          {request.is_membership_holder && (
+                            <Badge variant="outline" className="ml-2 text-blue-600 border-blue-600">
+                              Titular
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           <Mail className="h-4 w-4" />

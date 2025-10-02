@@ -22,13 +22,14 @@ interface RegistrationRequest {
   full_name: string;
   phone: string | null;
   email: string | null;
-  password_provided?: boolean; // Nuevo campo para indicar si se proporcionó contraseña
+  password_provided?: boolean;
   status: 'pending' | 'approved' | 'rejected';
   rejection_reason?: string;
   created_at: string;
   processed_at?: string;
   processed_by?: string;
   is_migration?: boolean;
+  is_membership_holder?: boolean;
 }
 
 
@@ -172,6 +173,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
         email: updatedData.email,
         phone: updatedData.phone,
         member_id: updatedData.member_id,
+        is_membership_holder: updatedData.is_membership_holder || false,
         updated_at: new Date().toISOString()
       };
 
