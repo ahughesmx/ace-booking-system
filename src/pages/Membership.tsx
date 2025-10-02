@@ -4,13 +4,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { CalendarDays, Users, User, UserMinus, Crown } from "lucide-react";
+import { CalendarDays, Users, User, UserMinus, Crown, UserCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import MainNav from "@/components/MainNav";
 import { useFamilyMembers } from "@/hooks/use-family-members";
 import { useMembershipManagement } from "@/hooks/use-membership-management";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import ProfileForm from "@/components/ProfileForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Membership() {
   const { user } = useAuth();
@@ -70,32 +72,44 @@ export default function Membership() {
             <p className="text-destructive">Error al cargar la información de membresía</p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {/* Member ID Card */}
-            {memberInfo && (
-              <Card className="border-primary/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-primary">
-                    <Users className="h-5 w-5" />
-                    Clave de Socio: {memberInfo.member_id}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-4">
-                    <Badge variant="secondary" className="text-sm">
-                      {familyMembers?.length || 0} miembro(s) registrado(s)
-                    </Badge>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CalendarDays className="h-4 w-4" />
-                      Registrado: {format(new Date(memberInfo.created_at), "dd 'de' MMMM 'de' yyyy", { locale: es })}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+          <Tabs defaultValue="family" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="family">
+                <Users className="h-4 w-4 mr-2" />
+                Miembros de la familia
+              </TabsTrigger>
+              <TabsTrigger value="profile">
+                <UserCircle className="h-4 w-4 mr-2" />
+                Mi perfil
+              </TabsTrigger>
+            </TabsList>
 
-            {/* Family Members List */}
-            <Card>
+            <TabsContent value="family" className="space-y-6">
+              {/* Member ID Card */}
+              {memberInfo && (
+                <Card className="border-primary/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-primary">
+                      <Users className="h-5 w-5" />
+                      Clave de Socio: {memberInfo.member_id}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-4">
+                      <Badge variant="secondary" className="text-sm">
+                        {familyMembers?.length || 0} miembro(s) registrado(s)
+                      </Badge>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <CalendarDays className="h-4 w-4" />
+                        Registrado: {format(new Date(memberInfo.created_at), "dd 'de' MMMM 'de' yyyy", { locale: es })}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Family Members List */}
+              <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />
@@ -214,7 +228,12 @@ export default function Membership() {
                 )}
               </CardContent>
             </Card>
-          </div>
+            </TabsContent>
+
+            <TabsContent value="profile">
+              <ProfileForm userId={user.id} />
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </div>
