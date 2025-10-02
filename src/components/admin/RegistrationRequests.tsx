@@ -75,31 +75,58 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      console.log('📥 fetchRequests: Starting fetch with limit 6000...');
+      console.log('📥 fetchRequests: Starting batched fetch up to 6000 (batch 1000)...');
       
       const { data: { session } } = await supabase.auth.getSession();
       console.log('📥 fetchRequests: Current session:', session ? `User ${session.user.id}` : 'No session');
-      
-      const { data, error } = await supabase
-        .from("user_registration_requests")
-        .select("*", { count: 'exact' })
-        .order("created_at", { ascending: false })
-        .range(0, 5999);
 
-      if (error) {
-        console.error('❌ fetchRequests: Error from Supabase:', error);
-        throw error;
+      const limit = 6000;
+      const batchSize = 1000;
+
+      // Head request to get exact count
+      const { count, error: countError } = await supabase
+        .from('user_registration_requests')
+        .select('id', { count: 'exact', head: true });
+
+      if (countError) {
+        console.error('❌ fetchRequests: Count error from Supabase:', countError);
+        throw countError;
       }
 
-      console.log('✅ fetchRequests: Fetched', data?.length || 0, 'requests');
-      console.log('✅ fetchRequests: Sample data:', data?.slice(0, 2));
-      setRequests((data || []) as RegistrationRequest[]);
+      const totalToFetch = Math.min(count ?? 0, limit);
+      console.log(`📊 fetchRequests: total count=${count} -> fetching up to ${totalToFetch}`);
+
+      if (totalToFetch === 0) {
+        setRequests([]);
+        return;
+      }
+
+      const ranges: Array<[number, number]> = [];
+      for (let from = 0; from < totalToFetch; from += batchSize) {
+        const to = Math.min(from + batchSize - 1, totalToFetch - 1);
+        ranges.push([from, to]);
+      }
+
+      const promises = ranges.map(([from, to]) =>
+        supabase
+          .from('user_registration_requests')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(from, to)
+      );
+
+      const results = await Promise.all(promises);
+      const allData = results.flatMap(r => (r.data ?? []) as RegistrationRequest[]);
+      const totalFetched = allData.length;
+
+      console.log('✅ fetchRequests: Batched fetched', totalFetched, 'records in', ranges.length, 'requests');
+      setRequests(allData);
     } catch (error) {
-      console.error("❌ fetchRequests: Error fetching requests:", error);
+      console.error('❌ fetchRequests: Error fetching requests:', error);
       toast({
-        title: "Error",
-        description: "No se pudieron cargar las solicitudes de registro.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'No se pudieron cargar las solicitudes de registro.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
