@@ -73,13 +73,6 @@ export default function PendingRequests({
     password: '',
     is_membership_holder: false
   });
-  
-  // Sort requests by member_id in ascending order
-  const pendingRequests = [...requests].sort((a, b) => {
-    const memberIdA = a.member_id || '';
-    const memberIdB = b.member_id || '';
-    return memberIdA.localeCompare(memberIdB, undefined, { numeric: true, sensitivity: 'base' });
-  });
 
   const handleEditClick = (request: RegistrationRequest) => {
     setEditingRequest(request);
@@ -129,7 +122,7 @@ export default function PendingRequests({
         </div>
       </div>
 
-      {pendingRequests.length === 0 ? (
+      {requests.length === 0 ? (
         <div className="text-center py-8">
           <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground">
@@ -138,8 +131,8 @@ export default function PendingRequests({
         </div>
       ) : (
         <>
-          <div className="space-y-4">
-            {pendingRequests.map((request) => (
+      <div className="space-y-4">
+        {requests.map((request) => (
               <Card key={request.id} className="border">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">

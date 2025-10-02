@@ -241,6 +241,14 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
     return Math.ceil(totalItems / itemsPerPage);
   };
 
+  const sortByMemberId = (requests: RegistrationRequest[]) => {
+    return [...requests].sort((a, b) => {
+      const memberIdA = a.member_id || '';
+      const memberIdB = b.member_id || '';
+      return memberIdA.localeCompare(memberIdB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  };
+
 // Filtered requests
   const basePending = requests.filter(request => request.status === 'pending');
   const processedRequests = requests.filter(request => request.status !== 'pending');
@@ -252,11 +260,15 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
     ? searchedPending 
     : searchedPending.filter((r) => !r.is_migration);
   
-  const paginatedPendingRequests = getPaginatedRequests(visiblePending, pendingCurrentPage);
-  const paginatedProcessedRequests = getPaginatedRequests(filteredProcessedRequests, processedCurrentPage);
+  // Sort before pagination
+  const sortedPending = sortByMemberId(visiblePending);
+  const sortedProcessed = sortByMemberId(filteredProcessedRequests);
   
-  const pendingTotalPages = getTotalPages(visiblePending.length);
-  const processedTotalPages = getTotalPages(filteredProcessedRequests.length);
+  const paginatedPendingRequests = getPaginatedRequests(sortedPending, pendingCurrentPage);
+  const paginatedProcessedRequests = getPaginatedRequests(sortedProcessed, processedCurrentPage);
+  
+  const pendingTotalPages = getTotalPages(sortedPending.length);
+  const processedTotalPages = getTotalPages(sortedProcessed.length);
 
   if (loading) {
     return (
