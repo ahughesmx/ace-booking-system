@@ -169,9 +169,25 @@ serve(async (req) => {
       let authData;
       
       if (existingUser) {
-        // El usuario ya existe, usar el existente
+        // El usuario ya existe
         authData = { user: existingUser } as any;
         console.log(`User already exists, using existing user. Email: ${request.email ?? 'N/A'} Phone: ${phoneE164}`);
+        
+        // Si el admin proporcionó un password, actualizar el password del usuario existente
+        if (request.password && request.password.trim()) {
+          console.log(`🔑 Updating password for existing user`);
+          const { error: updateError } = await supabase.auth.admin.updateUserById(
+            existingUser.id,
+            { password: request.password }
+          );
+          
+          if (updateError) {
+            console.error("Error updating user password:", updateError);
+            throw new Error(`Failed to update user password: ${updateError.message}`);
+          }
+          
+          console.log(`✅ Password updated successfully for existing user`);
+        }
       } else {
         // Crear usuario con la contraseña de la solicitud o una temporal si no se proporcionó
         const userPassword = request.password && request.password.trim() 
