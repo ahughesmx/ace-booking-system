@@ -134,22 +134,22 @@ serve(async (req) => {
 
       console.log("✅ Phone validation passed:", cleanPhone);
 
-      // Validar member_id usando la función de negocio
-      const { data: canUseId, error: memberIdError } = await supabase
-        .rpc('can_use_member_id', {
-          p_member_id: request.member_id,
-          p_email: request.email,
-          p_full_name: request.full_name
-        });
+      // Cuando un admin/operador aprueba, solo verificar que el member_id sea válido
+      // Sin restricciones de familia (los admins pueden asignar cualquier member_id válido)
+      const { data: validMemberId, error: memberIdError } = await supabase
+        .from('valid_member_ids')
+        .select('member_id')
+        .eq('member_id', request.member_id)
+        .maybeSingle();
 
       if (memberIdError) {
         console.error("❌ Error validating member_id:", memberIdError);
         throw new Error("Error validando clave de socio");
       }
 
-      if (!canUseId) {
-        console.error("❌ Member ID not available:", request.member_id);
-        throw new Error("Esta clave de socio no está disponible o no pertenece a su familia");
+      if (!validMemberId) {
+        console.error("❌ Member ID not found in valid list:", request.member_id);
+        throw new Error("Esta clave de socio no está en la lista de claves válidas");
       }
 
       console.log("✅ Member ID validation passed for:", request.member_id);
