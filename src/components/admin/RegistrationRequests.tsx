@@ -612,4 +612,149 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
       </>
     );
   }
+
+  // Default render: Full view with button + tabs
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Solicitudes de Registro</h2>
+        <NewManualUserRegistration onSuccess={fetchRequests} />
+      </div>
+
+      <Tabs defaultValue="pending" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="pending">
+            Solicitudes Pendientes ({visiblePending.length})
+          </TabsTrigger>
+          <TabsTrigger value="processed">
+            Solicitudes Procesadas ({filteredProcessedRequests.length})
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="pending" className="space-y-4">
+          <PendingRequests
+            requests={paginatedPendingRequests}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onEdit={handleEdit}
+            currentPage={pendingCurrentPage}
+            totalPages={pendingTotalPages}
+            onPageChange={setPendingCurrentPage}
+            searchTerm={pendingSearchTerm}
+            onSearchChange={handlePendingSearchChange}
+            showMigrationRequests={showMigrationPending}
+            onToggleMigration={setShowMigrationPending}
+          />
+        </TabsContent>
+        
+        <TabsContent value="processed" className="space-y-4">
+          <ProcessedRequests
+            requests={paginatedProcessedRequests}
+            currentPage={processedCurrentPage}
+            totalPages={processedTotalPages}
+            onPageChange={setProcessedCurrentPage}
+            searchTerm={processedSearchTerm}
+            onSearchChange={handleProcessedSearchChange}
+          />
+        </TabsContent>
+      </Tabs>
+
+      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rechazar Solicitud de Registro</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="rejection-reason">Motivo del Rechazo</Label>
+              <Textarea
+                id="rejection-reason"
+                placeholder="Explica el motivo del rechazo..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmReject}>
+              Rechazar Solicitud
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingRequestId} onOpenChange={(open) => {
+        console.log('🔔 Dialog onOpenChange called with:', open);
+        if (!open) setEditingRequestId(null);
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Solicitud</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit_full_name">Nombre Completo</Label>
+              <Input
+                id="edit_full_name"
+                value={editForm.full_name}
+                onChange={(e) => setEditForm(prev => ({ ...prev, full_name: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit_email">Email</Label>
+              <Input
+                id="edit_email"
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit_phone">Teléfono</Label>
+              <Input
+                id="edit_phone"
+                value={editForm.phone}
+                onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit_member_id">Clave de Socio</Label>
+              <Input
+                id="edit_member_id"
+                value={editForm.member_id}
+                onChange={(e) => setEditForm(prev => ({ ...prev, member_id: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit_password">Nueva Contraseña (opcional)</Label>
+              <Input
+                id="edit_password"
+                type="password"
+                value={editForm.password}
+                onChange={(e) => setEditForm(prev => ({ ...prev, password: e.target.value }))}
+                placeholder="Dejar vacío para mantener la actual"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="edit_is_membership_holder"
+                checked={editForm.is_membership_holder}
+                onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, is_membership_holder: checked }))}
+              />
+              <Label htmlFor="edit_is_membership_holder">Es titular de membresía</Label>
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button onClick={handleSaveEdit} className="flex-1">
+                Guardar Cambios
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }
