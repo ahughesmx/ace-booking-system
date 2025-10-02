@@ -121,10 +121,7 @@ export default function DirectUserRegistration({ onSuccess }: DirectUserRegistra
     console.log("📝 Sending to manual-user-creation function:", JSON.stringify(requestBody, null, 2));
 
     const { data: result, error } = await supabase.functions.invoke('manual-user-creation', {
-      body: requestBody,
-      headers: {
-        Authorization: `Bearer ${session.access_token}`
-      },
+      body: requestBody
     });
 
     console.log("📡 Function response - data:", result);
