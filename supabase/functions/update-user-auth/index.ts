@@ -77,6 +77,7 @@ serve(async (req) => {
     
     if (email && email.trim() !== '') {
       updateData.email = email.trim()
+      updateData.email_confirm = true // Auto-confirm email when admin updates it
     }
     
     if (password && password.length >= 6) {
