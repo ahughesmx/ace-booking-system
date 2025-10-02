@@ -63,6 +63,7 @@ export default function PendingRequests({
   showMigrationRequests,
   onToggleMigration
 }: PendingRequestsProps) {
+  const { toast } = useToast();
   const [editingRequest, setEditingRequest] = useState<RegistrationRequest | null>(null);
   const [editForm, setEditForm] = useState({
     full_name: '',
@@ -73,7 +74,12 @@ export default function PendingRequests({
     is_membership_holder: false
   });
   
-  const pendingRequests = requests;
+  // Sort requests by member_id in ascending order
+  const pendingRequests = [...requests].sort((a, b) => {
+    const memberIdA = a.member_id || '';
+    const memberIdB = b.member_id || '';
+    return memberIdA.localeCompare(memberIdB, undefined, { numeric: true, sensitivity: 'base' });
+  });
 
   const handleEditClick = (request: RegistrationRequest) => {
     setEditingRequest(request);
