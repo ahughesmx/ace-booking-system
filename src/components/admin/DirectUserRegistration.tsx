@@ -123,8 +123,7 @@ export default function DirectUserRegistration({ onSuccess }: DirectUserRegistra
     const { data: result, error } = await supabase.functions.invoke('manual-user-creation', {
       body: requestBody,
       headers: {
-        Authorization: `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${session.access_token}`
       },
     });
 
