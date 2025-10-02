@@ -25,8 +25,8 @@ interface RegistrationRequest {
   id: string;
   member_id: string;
   full_name: string;
-  phone: string;
-  email: string;
+  phone: string | null;
+  email: string | null;
   password_provided?: boolean;
   status: 'pending' | 'approved' | 'rejected';
   rejection_reason?: string;
@@ -75,17 +75,18 @@ export default function PendingRequests({
     is_membership_holder: false
   });
 
-  const handleEditClick = (request: RegistrationRequest) => {
-    setEditingRequest(request);
-    setEditForm({
-      full_name: request.full_name,
-      email: request.email,
-      phone: request.phone,
-      member_id: request.member_id,
-      password: '',
-      is_membership_holder: request.is_membership_holder || false
-    });
-  };
+const handleEditClick = (request: RegistrationRequest) => {
+  console.log('[PendingRequests] Editar solicitud', { id: request.id, is_migration: request.is_migration });
+  setEditingRequest(request);
+  setEditForm({
+    full_name: request.full_name || '',
+    email: request.email || '',
+    phone: request.phone || '',
+    member_id: request.member_id || '',
+    password: '',
+    is_membership_holder: request.is_membership_holder || false
+  });
+};
 
   const handleSaveEdit = async () => {
     if (!editingRequest) return;
