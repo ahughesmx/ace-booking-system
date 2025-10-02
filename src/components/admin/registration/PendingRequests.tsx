@@ -1,13 +1,9 @@
-import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
 import { 
   User,
   CreditCard,
@@ -41,7 +37,7 @@ interface PendingRequestsProps {
   requests: RegistrationRequest[];
   onApprove: (requestId: string) => void;
   onReject: (requestId: string) => void;
-  onUpdate: (requestId: string, updatedData: any) => void;
+  onEdit: (requestId: string) => void;
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -55,7 +51,7 @@ export default function PendingRequests({
   requests,
   onApprove,
   onReject,
-  onUpdate,
+  onEdit,
   currentPage,
   totalPages,
   onPageChange,
@@ -64,49 +60,6 @@ export default function PendingRequests({
   showMigrationRequests,
   onToggleMigration
 }: PendingRequestsProps) {
-  const { toast } = useToast();
-  const [editingRequest, setEditingRequest] = useState<RegistrationRequest | null>(null);
-  const [editForm, setEditForm] = useState({
-    full_name: '',
-    email: '',
-    phone: '',
-    member_id: '',
-    password: '',
-    is_membership_holder: false
-  });
-
-const handleEditClick = (request: RegistrationRequest) => {
-  console.log('[PendingRequests] Editar solicitud', { id: request.id, is_migration: request.is_migration });
-  setEditingRequest(request);
-  setEditForm({
-    full_name: request.full_name || '',
-    email: request.email || '',
-    phone: request.phone || '',
-    member_id: request.member_id || '',
-    password: '',
-    is_membership_holder: request.is_membership_holder || false
-  });
-};
-
-  const handleSaveEdit = async () => {
-    if (!editingRequest) return;
-    
-    try {
-      await onUpdate(editingRequest.id, editForm);
-      setEditingRequest(null);
-      toast({
-        title: "Solicitud actualizada",
-        description: "Los datos de la solicitud han sido actualizados correctamente.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudieron guardar los cambios.",
-        variant: "destructive"
-      });
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -260,72 +213,6 @@ const handleEditClick = (request: RegistrationRequest) => {
         </>
       )}
 
-      {/* Dialog de edición fuera del map para evitar que desaparezca con el filtrado */}
-      <Dialog open={!!editingRequest} onOpenChange={(open) => !open && setEditingRequest(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Editar Solicitud</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="full_name">Nombre Completo</Label>
-              <Input
-                id="full_name"
-                value={editForm.full_name}
-                onChange={(e) => setEditForm(prev => ({ ...prev, full_name: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={editForm.email}
-                onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="phone">Teléfono</Label>
-              <Input
-                id="phone"
-                value={editForm.phone}
-                onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="member_id">Clave de Socio</Label>
-              <Input
-                id="member_id"
-                value={editForm.member_id}
-                onChange={(e) => setEditForm(prev => ({ ...prev, member_id: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="password">Nueva Contraseña (opcional)</Label>
-              <Input
-                id="password"
-                type="password"
-                value={editForm.password}
-                onChange={(e) => setEditForm(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="Dejar vacío para mantener la actual"
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="is_membership_holder"
-                checked={editForm.is_membership_holder}
-                onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, is_membership_holder: checked }))}
-              />
-              <Label htmlFor="is_membership_holder">Es titular de membresía</Label>
-            </div>
-            <div className="flex gap-2 pt-4">
-              <Button onClick={handleSaveEdit} className="flex-1">
-                Guardar Cambios
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
