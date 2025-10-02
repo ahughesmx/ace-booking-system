@@ -161,7 +161,7 @@ serve(async (req) => {
         throw new Error(`Error checking existing users: ${userCheckError.message}`);
       }
 
-      const phoneE164 = cleanPhone.startsWith('+') ? cleanPhone : `+52${cleanPhone}`;
+      const phoneE164 = `521${cleanPhone}`;
       const existingUser = existingUsers.users.find(u => 
         (request.email && u.email === request.email) || (u.phone && u.phone === phoneE164)
       );
