@@ -120,19 +120,25 @@ export default function DirectUserRegistration({ onSuccess }: DirectUserRegistra
     
     console.log("📝 Sending to manual-user-creation function:", JSON.stringify(requestBody, null, 2));
 
-    const { data: result, error } = await supabase.functions.invoke('manual-user-creation', {
-      body: requestBody
+    // Prefer direct fetch to avoid payload issues with invoke
+    const functionUrl = "https://bpjinatcgdmxqetfxjji.supabase.co/functions/v1/manual-user-creation";
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwamluYXRjZ2RteHFldGZ4amppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5NDU1NTgsImV4cCI6MjA1MTUyMTU1OH0.79yLPqxNagQqouMrbfCyfLeaEeg3TesEqQsrR9H_ZvQ"
+      },
+      body: JSON.stringify(requestBody)
     });
 
-    console.log("📡 Function response - data:", result);
-    console.log("📡 Function response - error:", error);
-
-    console.log("📡 Function response:", { result, error });
-
-    if (error) {
-      console.error("❌ Function invocation error:", error);
-      throw new Error(`Error creando usuario: ${error.message || 'Error desconocido'}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("❌ Function HTTP error:", response.status, errorText);
+      throw new Error(`Error creando usuario: ${errorText || response.statusText}`);
     }
+
+    const result = await response.json();
 
     if (!result || !result.success) {
       throw new Error(result?.error || 'Error desconocido al crear usuario');
