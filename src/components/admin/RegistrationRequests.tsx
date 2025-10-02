@@ -83,7 +83,8 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
       const { data, error } = await supabase
         .from("user_registration_requests")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(6000);
 
       if (error) {
         console.error('❌ fetchRequests: Error from Supabase:', error);
