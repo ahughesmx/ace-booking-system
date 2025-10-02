@@ -173,12 +173,16 @@ serve(async (req) => {
         authData = { user: existingUser } as any;
         console.log(`User already exists, using existing user. Email: ${request.email ?? 'N/A'} Phone: ${phoneE164}`);
       } else {
-        // Crear usuario con contraseña temporal segura
-        const temporaryPassword = crypto.randomUUID() + "!Secure" + Math.random().toString(36);
+        // Crear usuario con la contraseña de la solicitud o una temporal si no se proporcionó
+        const userPassword = request.password && request.password.trim() 
+          ? request.password 
+          : crypto.randomUUID() + "!Secure" + Math.random().toString(36);
+        
+        console.log(`🔑 Using ${request.password ? 'provided' : 'generated'} password for user creation`);
         
         // Construir payload según tengamos email o no
         const createPayload: any = {
-          password: temporaryPassword,
+          password: userPassword,
           user_metadata: {
             member_id: request.member_id,
             full_name: request.full_name,
@@ -201,9 +205,11 @@ serve(async (req) => {
         }
 
         authData = newAuthData;
+        console.log(`✅ User created successfully with ${request.password ? 'provided' : 'temporary'} password`);
 
-        // Enviar email de recuperación solo si hay email configurado y está habilitado
-        if (request.email && request.send_password_reset !== false) {
+        // Enviar email de recuperación solo si hay email y NO se proporcionó password
+        // (Si se proporcionó password, el usuario ya lo conoce)
+        if (request.email && !request.password && request.send_password_reset !== false) {
           const { error: resetError } = await supabase.auth.admin.generateLink({
             type: 'recovery',
             email: request.email,
@@ -261,13 +267,14 @@ serve(async (req) => {
         console.log(`User role assigned successfully for user ${authData.user.id}`);
       }
 
-      // Actualizar la solicitud como aprobada
+      // Actualizar la solicitud como aprobada y limpiar el password
       const { error: updateError } = await supabase
         .from("user_registration_requests")
         .update({
           status: "approved",
           processed_by: user.id,
-          processed_at: new Date().toISOString()
+          processed_at: new Date().toISOString(),
+          password: null // Limpiar password después de crear el usuario
         })
         .eq("id", requestId);
 

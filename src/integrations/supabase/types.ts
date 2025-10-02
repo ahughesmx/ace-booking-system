@@ -1267,6 +1267,7 @@ export type Database = {
           is_membership_holder: boolean | null
           is_migration: boolean
           member_id: string
+          password: string | null
           phone: string | null
           processed_at: string | null
           processed_by: string | null
@@ -1283,6 +1284,7 @@ export type Database = {
           is_membership_holder?: boolean | null
           is_migration?: boolean
           member_id: string
+          password?: string | null
           phone?: string | null
           processed_at?: string | null
           processed_by?: string | null
@@ -1299,6 +1301,7 @@ export type Database = {
           is_membership_holder?: boolean | null
           is_migration?: boolean
           member_id?: string
+          password?: string | null
           phone?: string | null
           processed_at?: string | null
           processed_by?: string | null
