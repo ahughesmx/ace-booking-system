@@ -415,13 +415,23 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   const sortedPending = sortByMemberId(visiblePending);
   const sortedProcessed = sortByMemberId(filteredProcessedRequests);
   
-  const paginatedPendingRequests = getPaginatedRequests(sortedPending, pendingCurrentPage);
-  const paginatedProcessedRequests = getPaginatedRequests(sortedProcessed, processedCurrentPage);
-  
-  console.log('🔍 Pagination: Page', pendingCurrentPage, 'showing', paginatedPendingRequests.length, 'of', sortedPending.length, 'pending');
-  
+  // Pagination with clamping to avoid empty pages after data refresh
   const pendingTotalPages = getTotalPages(sortedPending.length);
   const processedTotalPages = getTotalPages(sortedProcessed.length);
+  const safePendingPage = Math.min(pendingCurrentPage, Math.max(pendingTotalPages, 1));
+  const safeProcessedPage = Math.min(processedCurrentPage, Math.max(processedTotalPages, 1));
+
+  const paginatedPendingRequests = getPaginatedRequests(sortedPending, safePendingPage);
+  const paginatedProcessedRequests = getPaginatedRequests(sortedProcessed, safeProcessedPage);
+
+  // Sync page state if it drifted beyond bounds
+  useEffect(() => {
+    if (pendingCurrentPage !== safePendingPage) setPendingCurrentPage(safePendingPage);
+    if (processedCurrentPage !== safeProcessedPage) setProcessedCurrentPage(safeProcessedPage);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingTotalPages, processedTotalPages]);
+  
+  console.log('🔍 Pagination: Page', safePendingPage, 'showing', paginatedPendingRequests.length, 'of', sortedPending.length, 'pending');
 
   if (loading) {
     return (
