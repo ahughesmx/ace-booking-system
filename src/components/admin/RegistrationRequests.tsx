@@ -214,10 +214,36 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
 
   const handleUpdate = async (requestId: string, updatedData: any) => {
     try {
+      // Limpiar y validar el teléfono si se proporcionó
+      let cleanedPhone = updatedData.phone;
+      if (cleanedPhone) {
+        cleanedPhone = cleanedPhone.replace(/\s/g, ''); // Eliminar espacios
+        
+        // Validar que solo contenga números
+        if (!/^\d+$/.test(cleanedPhone)) {
+          toast({
+            title: "Teléfono inválido",
+            description: "El teléfono debe contener solo números, sin espacios, guiones o caracteres especiales.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Validar que tenga exactamente 10 dígitos
+        if (cleanedPhone.length !== 10) {
+          toast({
+            title: "Teléfono inválido",
+            description: `El teléfono debe tener exactamente 10 dígitos. El teléfono actual tiene ${cleanedPhone.length} dígitos.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
       const updatePayload: any = {
         full_name: updatedData.full_name,
         email: updatedData.email,
-        phone: updatedData.phone,
+        phone: cleanedPhone,
         member_id: updatedData.member_id,
         is_membership_holder: updatedData.is_membership_holder || false,
         updated_at: new Date().toISOString()

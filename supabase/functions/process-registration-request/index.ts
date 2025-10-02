@@ -107,8 +107,32 @@ serve(async (req) => {
       console.log("📋 Request data:", { 
         full_name: request.full_name, 
         email: request.email, 
-        member_id: request.member_id 
+        member_id: request.member_id,
+        phone: request.phone 
       });
+
+      // Validar que exista el teléfono
+      if (!request.phone || request.phone.trim() === '') {
+        console.error("❌ Phone is required but missing");
+        throw new Error("El teléfono es requerido para aprobar la solicitud");
+      }
+
+      // Limpiar el teléfono de espacios
+      const cleanPhone = request.phone.replace(/\s/g, '');
+      
+      // Validar que solo contenga números
+      if (!/^\d+$/.test(cleanPhone)) {
+        console.error("❌ Phone contains invalid characters:", request.phone);
+        throw new Error("El teléfono debe contener solo números, sin espacios, guiones o caracteres especiales");
+      }
+
+      // Validar que tenga exactamente 10 dígitos
+      if (cleanPhone.length !== 10) {
+        console.error("❌ Phone has invalid length:", cleanPhone.length);
+        throw new Error(`El teléfono debe tener exactamente 10 dígitos. El teléfono actual tiene ${cleanPhone.length} dígitos`);
+      }
+
+      console.log("✅ Phone validation passed:", cleanPhone);
 
       // Validar member_id usando la función de negocio
       const { data: canUseId, error: memberIdError } = await supabase
@@ -157,7 +181,7 @@ serve(async (req) => {
           user_metadata: {
             member_id: request.member_id,
             full_name: request.full_name,
-            phone: request.phone
+            phone: cleanPhone
           }
         });
 
@@ -193,7 +217,7 @@ serve(async (req) => {
           id: authData.user.id,
           member_id: request.member_id,
           full_name: request.full_name,
-          phone: request.phone,
+          phone: cleanPhone,
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'id'
@@ -257,9 +281,9 @@ serve(async (req) => {
               user_id: authData.user.id,
               full_name: request.full_name,
               email: request.email,
-              phone: request.phone,
+              phone: cleanPhone,
               member_id: request.member_id,
-              remotejid: request.phone,
+              remotejid: cleanPhone,
               approved_by: user.id
             }
           };
