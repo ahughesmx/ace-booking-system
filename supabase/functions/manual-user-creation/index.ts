@@ -50,7 +50,22 @@ serve(async (req) => {
       throw new Error("Insufficient permissions");
     }
 
-    const body: CreateUserRequest = await req.json();
+    // Parse request body with better error handling
+    let body: CreateUserRequest;
+    try {
+      const rawBody = await req.text();
+      console.log("📦 Raw request body:", rawBody);
+      
+      if (!rawBody || rawBody.trim() === '') {
+        throw new Error("Request body is empty");
+      }
+      
+      body = JSON.parse(rawBody);
+      console.log("✅ Body parsed successfully:", body);
+    } catch (parseError) {
+      console.error("❌ Error parsing request body:", parseError);
+      throw new Error(`Invalid request body: ${parseError.message}`);
+    }
     const { email, password, full_name, member_id, phone, is_membership_holder } = body;
 
     console.log("📝 Creating user:", { email, full_name, member_id });
