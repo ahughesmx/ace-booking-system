@@ -67,3 +67,23 @@ export function getEndOfTodayMexicoCityISO(): string {
   mexicoCityTime.setHours(23, 59, 59, 999);
   return fromZonedTime(mexicoCityTime, MEXICO_CITY_TIMEZONE).toISOString();
 }
+
+/**
+ * Get the start of a specific date in Mexico City timezone as ISO string
+ */
+export function getStartOfDateMexicoCityISO(dateStr: string): string {
+  // Parse the date string (YYYY-MM-DD) in Mexico City timezone
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const mexicoCityDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+  return fromZonedTime(mexicoCityDate, MEXICO_CITY_TIMEZONE).toISOString();
+}
+
+/**
+ * Get the end of a specific date in Mexico City timezone as ISO string
+ */
+export function getEndOfDateMexicoCityISO(dateStr: string): string {
+  // Parse the date string (YYYY-MM-DD) in Mexico City timezone
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const mexicoCityDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+  return fromZonedTime(mexicoCityDate, MEXICO_CITY_TIMEZONE).toISOString();
+}

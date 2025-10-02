@@ -12,7 +12,7 @@ import { es } from "date-fns/locale";
 import { exportToPDF } from "@/utils/pdf-export";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/components/AuthProvider";
-import { getStartOfTodayMexicoCityISO, getEndOfTodayMexicoCityISO, toMexicoCityTime, fromMexicoCityTimeToUTC } from "@/utils/timezone";
+import { getStartOfDateMexicoCityISO, getEndOfDateMexicoCityISO, toMexicoCityTime } from "@/utils/timezone";
 
 interface DailyBooking {
   id: string;
@@ -63,21 +63,16 @@ export function DailyReportsOperator() {
   const fetchDailyBookings = async () => {
     setLoading(true);
     try {
-      // Crear rango de fechas para México (UTC-6)
-      const selectedDateStr = selectedDate;
-      const startOfDayMexico = new Date(`${selectedDateStr}T06:00:00.000Z`); // Inicio del día en México = 6 AM UTC
-      const endOfDayMexico = new Date(`${selectedDateStr}T05:59:59.999Z`); // Fin del día en México = 5:59 AM UTC del día siguiente
-      endOfDayMexico.setDate(endOfDayMexico.getDate() + 1);
-
-      const startOfDayUTC = startOfDayMexico.toISOString();
-      const endOfDayUTC = endOfDayMexico.toISOString();
+      // Usar funciones de timezone correctas para México
+      const startOfDayUTC = getStartOfDateMexicoCityISO(selectedDate);
+      const endOfDayUTC = getEndOfDateMexicoCityISO(selectedDate);
 
       console.log('🔍 DailyReports - Filtro de fechas:', {
-        selectedDate: selectedDateStr,
+        selectedDate,
         startOfDayUTC,
         endOfDayUTC,
-        startOfDayMexico: startOfDayMexico.toString(),
-        endOfDayMexico: endOfDayMexico.toString()
+        startOfDayMexicoTime: toMexicoCityTime(startOfDayUTC),
+        endOfDayMexicoTime: toMexicoCityTime(endOfDayUTC)
       });
 
       // Usar JOIN para obtener datos en una consulta optimizada
