@@ -154,36 +154,47 @@ serve(async (req) => {
 
       console.log("✅ Member ID validation passed for:", request.member_id);
 
-      // Verificar si ya existe un usuario con este email usando listUsers
+      // Verificar si ya existe un usuario con este email o teléfono usando listUsers
       const { data: existingUsers, error: userCheckError } = await supabase.auth.admin.listUsers();
       
       if (userCheckError) {
         throw new Error(`Error checking existing users: ${userCheckError.message}`);
       }
 
-      const existingUser = existingUsers.users.find(u => u.email === request.email);
+      const phoneE164 = cleanPhone.startsWith('+') ? cleanPhone : `+52${cleanPhone}`;
+      const existingUser = existingUsers.users.find(u => 
+        (request.email && u.email === request.email) || (u.phone && u.phone === phoneE164)
+      );
 
       let authData;
       
       if (existingUser) {
         // El usuario ya existe, usar el existente
-        authData = { user: existingUser };
-        console.log(`User with email ${request.email} already exists, using existing user`);
+        authData = { user: existingUser } as any;
+        console.log(`User already exists, using existing user. Email: ${request.email ?? 'N/A'} Phone: ${phoneE164}`);
       } else {
-        // Create new user with secure random password
-        // User will receive password reset email to set their own password
+        // Crear usuario con contraseña temporal segura
         const temporaryPassword = crypto.randomUUID() + "!Secure" + Math.random().toString(36);
         
-        const { data: newAuthData, error: createUserError } = await supabase.auth.admin.createUser({
-          email: request.email,
+        // Construir payload según tengamos email o no
+        const createPayload: any = {
           password: temporaryPassword,
-          email_confirm: true,
           user_metadata: {
             member_id: request.member_id,
             full_name: request.full_name,
             phone: cleanPhone
           }
-        });
+        };
+
+        if (request.email) {
+          createPayload.email = request.email;
+          createPayload.email_confirm = true;
+        } else {
+          createPayload.phone = phoneE164;
+          createPayload.phone_confirm = true;
+        }
+        
+        const { data: newAuthData, error: createUserError } = await supabase.auth.admin.createUser(createPayload);
 
         if (createUserError) {
           throw new Error(`Failed to create user: ${createUserError.message}`);
@@ -191,9 +202,8 @@ serve(async (req) => {
 
         authData = newAuthData;
 
-        // Always send password reset email for security
-        // User will set their own password securely
-        if (request.send_password_reset !== false) {
+        // Enviar email de recuperación solo si hay email configurado y está habilitado
+        if (request.email && request.send_password_reset !== false) {
           const { error: resetError } = await supabase.auth.admin.generateLink({
             type: 'recovery',
             email: request.email,
