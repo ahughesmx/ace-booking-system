@@ -82,9 +82,9 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
       
       const { data, error } = await supabase
         .from("user_registration_requests")
-        .select("*")
+        .select("*", { count: 'exact' })
         .order("created_at", { ascending: false })
-        .limit(6000);
+        .range(0, 5999);
 
       if (error) {
         console.error('❌ fetchRequests: Error from Supabase:', error);
