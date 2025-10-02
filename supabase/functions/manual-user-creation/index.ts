@@ -78,17 +78,38 @@ serve(async (req) => {
       throw new Error("Ya existe un usuario con este correo electrónico");
     }
 
-    // 2. Verificar si puede usar este member_id usando la función de negocio
-    const { data: canUseId, error: memberIdError } = await supabase
-      .rpc('can_use_member_id', {
-        p_member_id: member_id,
-        p_email: email,
-        p_full_name: full_name
-      });
+    // 2. Validar disponibilidad de member_id
+    // Primero verificar que exista en la tabla de claves válidas
+    const { data: validMember, error: validMemberError } = await supabase
+      .from('valid_member_ids')
+      .select('member_id')
+      .eq('member_id', member_id)
+      .maybeSingle();
 
-    if (memberIdError) {
-      console.error("❌ Error checking member_id:", memberIdError);
+    if (validMemberError) {
+      console.error("❌ Error checking valid_member_ids:", validMemberError);
       throw new Error("Error validando clave de socio");
+    }
+
+    if (!validMember) {
+      throw new Error("La clave de socio no existe en el sistema");
+    }
+
+    // Si no es admin/operador, aplicar la lógica de familia con RPC
+    let canUseId = true;
+    if (!['admin', 'operador'].includes(userRole.role)) {
+      const { data: rpcCanUse, error: memberIdError } = await supabase
+        .rpc('can_use_member_id', {
+          p_member_id: member_id,
+          p_email: email,
+          p_full_name: full_name
+        });
+
+      if (memberIdError) {
+        console.error("❌ Error checking member_id via RPC:", memberIdError);
+        throw new Error("Error validando clave de socio");
+      }
+      canUseId = !!rpcCanUse;
     }
 
     if (!canUseId) {
