@@ -75,17 +75,26 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   const fetchRequests = async () => {
     try {
       setLoading(true);
+      console.log('📥 fetchRequests: Starting fetch...');
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('📥 fetchRequests: Current session:', session ? `User ${session.user.id}` : 'No session');
       
       const { data, error } = await supabase
         .from("user_registration_requests")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ fetchRequests: Error from Supabase:', error);
+        throw error;
+      }
 
+      console.log('✅ fetchRequests: Fetched', data?.length || 0, 'requests');
+      console.log('✅ fetchRequests: Sample data:', data?.slice(0, 2));
       setRequests((data || []) as RegistrationRequest[]);
     } catch (error) {
-      console.error("Error fetching requests:", error);
+      console.error("❌ fetchRequests: Error fetching requests:", error);
       toast({
         title: "Error",
         description: "No se pudieron cargar las solicitudes de registro.",
@@ -93,6 +102,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
       });
     } finally {
       setLoading(false);
+      console.log('📥 fetchRequests: Finished');
     }
   };
 
@@ -296,31 +306,43 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
 
   // Open edit dialog
   const handleEdit = (requestId: string) => {
+    console.log('🔍 handleEdit called with requestId:', requestId);
+    console.log('🔍 Total requests:', requests.length);
     const req = requests.find(r => r.id === requestId);
-    if (!req) return;
+    console.log('🔍 Found request:', req);
+    if (!req) {
+      console.error('❌ Request not found for id:', requestId);
+      return;
+    }
     setEditingRequestId(requestId);
-    setEditForm({
+    const formData = {
       full_name: req.full_name || '',
       email: req.email || '',
       phone: req.phone || '',
       member_id: req.member_id || '',
       password: '',
       is_membership_holder: req.is_membership_holder || false
-    });
+    };
+    console.log('🔍 Setting editForm to:', formData);
+    setEditForm(formData);
   };
 
   useEffect(() => {
+    console.log('🔄 useEffect triggered - editingRequestId:', editingRequestId, 'requests.length:', requests.length);
     if (!editingRequestId) return;
     const req = requests.find(r => r.id === editingRequestId);
+    console.log('🔄 useEffect found request:', req);
     if (req) {
-      setEditForm(prev => ({
-        ...prev,
+      const updatedForm = {
         full_name: req.full_name || '',
         email: req.email || '',
         phone: req.phone || '',
         member_id: req.member_id || '',
+        password: '',
         is_membership_holder: req.is_membership_holder || false
-      }));
+      };
+      console.log('🔄 useEffect updating editForm to:', updatedForm);
+      setEditForm(updatedForm);
     }
   }, [editingRequestId, requests]);
 
@@ -375,12 +397,21 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   const basePending = requests.filter(request => request.status === 'pending');
   const processedRequests = requests.filter(request => request.status !== 'pending');
   
+  console.log('🔍 Filtering: Total requests:', requests.length);
+  console.log('🔍 Filtering: Base pending:', basePending.length);
+  console.log('🔍 Filtering: Processed:', processedRequests.length);
+  
   const searchedPending = filterRequests(basePending, pendingSearchTerm);
   const filteredProcessedRequests = filterRequests(processedRequests, processedSearchTerm);
+  
+  console.log('🔍 Filtering: After search - pending:', searchedPending.length, 'processed:', filteredProcessedRequests.length);
   
   const visiblePending = showMigrationPending 
     ? searchedPending 
     : searchedPending.filter((r) => !r.is_migration);
+  
+  console.log('🔍 Filtering: Visible pending (showMigration=' + showMigrationPending + '):', visiblePending.length);
+  console.log('🔍 Filtering: Visible pending IDs:', visiblePending.map(r => r.id));
   
   // Sort before pagination
   const sortedPending = sortByMemberId(visiblePending);
@@ -388,6 +419,8 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   
   const paginatedPendingRequests = getPaginatedRequests(sortedPending, pendingCurrentPage);
   const paginatedProcessedRequests = getPaginatedRequests(sortedProcessed, processedCurrentPage);
+  
+  console.log('🔍 Pagination: Page', pendingCurrentPage, 'showing', paginatedPendingRequests.length, 'of', sortedPending.length, 'pending');
   
   const pendingTotalPages = getTotalPages(sortedPending.length);
   const processedTotalPages = getTotalPages(sortedProcessed.length);
@@ -507,49 +540,52 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
           </DialogContent>
         </Dialog>
 
-        <Dialog open={!!editingRequestId} onOpenChange={(open) => !open && setEditingRequestId(null)}>
+        <Dialog open={!!editingRequestId} onOpenChange={(open) => {
+          console.log('🔔 Dialog onOpenChange called with:', open);
+          if (!open) setEditingRequestId(null);
+        }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Editar Solicitud</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="full_name">Nombre Completo</Label>
+                <Label htmlFor="edit_full_name">Nombre Completo</Label>
                 <Input
-                  id="full_name"
+                  id="edit_full_name"
                   value={editForm.full_name}
                   onChange={(e) => setEditForm(prev => ({ ...prev, full_name: e.target.value }))}
                 />
               </div>
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="edit_email">Email</Label>
                 <Input
-                  id="email"
+                  id="edit_email"
                   type="email"
                   value={editForm.email}
                   onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
                 />
               </div>
               <div>
-                <Label htmlFor="phone">Teléfono</Label>
+                <Label htmlFor="edit_phone">Teléfono</Label>
                 <Input
-                  id="phone"
+                  id="edit_phone"
                   value={editForm.phone}
                   onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
                 />
               </div>
               <div>
-                <Label htmlFor="member_id">Clave de Socio</Label>
+                <Label htmlFor="edit_member_id">Clave de Socio</Label>
                 <Input
-                  id="member_id"
+                  id="edit_member_id"
                   value={editForm.member_id}
                   onChange={(e) => setEditForm(prev => ({ ...prev, member_id: e.target.value }))}
                 />
               </div>
               <div>
-                <Label htmlFor="password">Nueva Contraseña (opcional)</Label>
+                <Label htmlFor="edit_password">Nueva Contraseña (opcional)</Label>
                 <Input
-                  id="password"
+                  id="edit_password"
                   type="password"
                   value={editForm.password}
                   onChange={(e) => setEditForm(prev => ({ ...prev, password: e.target.value }))}
@@ -558,11 +594,11 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
               </div>
               <div className="flex items-center space-x-2">
                 <Switch
-                  id="is_membership_holder"
+                  id="edit_is_membership_holder"
                   checked={editForm.is_membership_holder}
                   onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, is_membership_holder: checked }))}
                 />
-                <Label htmlFor="is_membership_holder">Es titular de membresía</Label>
+                <Label htmlFor="edit_is_membership_holder">Es titular de membresía</Label>
               </div>
               <div className="flex gap-2 pt-4">
                 <Button onClick={handleSaveEdit} className="flex-1">
