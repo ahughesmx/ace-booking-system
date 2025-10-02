@@ -1,36 +1,39 @@
 import { format } from 'date-fns';
-import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
-const MEXICO_CITY_TIMEZONE = 'America/Mexico_City';
+// México no usa horario de verano, zona horaria fija UTC-6
+const MEXICO_OFFSET_HOURS = -6;
 
 /**
- * Get current time in Mexico City timezone as a Date object
+ * Get current time in Mexico City timezone (UTC-6) as a Date object
  */
 export function getCurrentMexicoCityTime(): Date {
-  return toZonedTime(new Date(), MEXICO_CITY_TIMEZONE);
+  const now = new Date();
+  const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+  return new Date(utcTime + (3600000 * MEXICO_OFFSET_HOURS));
 }
 
 /**
  * Get current time in Mexico City timezone as ISO string
  */
 export function getCurrentMexicoCityTimeISO(): string {
-  const mexicoCityTime = getCurrentMexicoCityTime();
-  return fromZonedTime(mexicoCityTime, MEXICO_CITY_TIMEZONE).toISOString();
+  return getCurrentMexicoCityTime().toISOString();
 }
 
 /**
- * Convert a date to Mexico City timezone
+ * Convert a UTC date to Mexico City timezone (UTC-6)
  */
 export function toMexicoCityTime(date: Date | string): Date {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return toZonedTime(dateObj, MEXICO_CITY_TIMEZONE);
+  const utcTime = dateObj.getTime();
+  return new Date(utcTime + (3600000 * MEXICO_OFFSET_HOURS));
 }
 
 /**
  * Convert a Mexico City time to UTC for database storage
  */
 export function fromMexicoCityTimeToUTC(date: Date): Date {
-  return fromZonedTime(date, MEXICO_CITY_TIMEZONE);
+  const mexicoCityTime = date.getTime();
+  return new Date(mexicoCityTime - (3600000 * MEXICO_OFFSET_HOURS));
 }
 
 /**
@@ -56,7 +59,7 @@ export function isInPastMexicoCityTime(date: Date | string): boolean {
 export function getStartOfTodayMexicoCityISO(): string {
   const mexicoCityTime = getCurrentMexicoCityTime();
   mexicoCityTime.setHours(0, 0, 0, 0);
-  return fromZonedTime(mexicoCityTime, MEXICO_CITY_TIMEZONE).toISOString();
+  return fromMexicoCityTimeToUTC(mexicoCityTime).toISOString();
 }
 
 /**
@@ -65,25 +68,29 @@ export function getStartOfTodayMexicoCityISO(): string {
 export function getEndOfTodayMexicoCityISO(): string {
   const mexicoCityTime = getCurrentMexicoCityTime();
   mexicoCityTime.setHours(23, 59, 59, 999);
-  return fromZonedTime(mexicoCityTime, MEXICO_CITY_TIMEZONE).toISOString();
+  return fromMexicoCityTimeToUTC(mexicoCityTime).toISOString();
 }
 
 /**
  * Get the start of a specific date in Mexico City timezone as ISO string
  */
 export function getStartOfDateMexicoCityISO(dateStr: string): string {
-  // Parse the date string (YYYY-MM-DD) in Mexico City timezone
+  // Parse the date string (YYYY-MM-DD) in Mexico City timezone (UTC-6)
   const [year, month, day] = dateStr.split('-').map(Number);
-  const mexicoCityDate = new Date(year, month - 1, day, 0, 0, 0, 0);
-  return fromZonedTime(mexicoCityDate, MEXICO_CITY_TIMEZONE).toISOString();
+  // Create date in UTC then adjust to Mexico time
+  const utcDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  // Add 6 hours to get back to UTC (since Mexico is UTC-6, start of day in Mexico is 6 AM UTC)
+  return new Date(utcDate.getTime() + (6 * 3600000)).toISOString();
 }
 
 /**
  * Get the end of a specific date in Mexico City timezone as ISO string
  */
 export function getEndOfDateMexicoCityISO(dateStr: string): string {
-  // Parse the date string (YYYY-MM-DD) in Mexico City timezone
+  // Parse the date string (YYYY-MM-DD) in Mexico City timezone (UTC-6)
   const [year, month, day] = dateStr.split('-').map(Number);
-  const mexicoCityDate = new Date(year, month - 1, day, 23, 59, 59, 999);
-  return fromZonedTime(mexicoCityDate, MEXICO_CITY_TIMEZONE).toISOString();
+  // Create date in UTC then adjust to Mexico time
+  const utcDate = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+  // Add 6 hours to get back to UTC (since Mexico is UTC-6)
+  return new Date(utcDate.getTime() + (6 * 3600000)).toISOString();
 }
