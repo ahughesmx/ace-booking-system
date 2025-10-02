@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 type UserSearchProps = {
   onSelect: (userId: string) => void;
   excludeIds?: string[];
+  placeholder?: string;
 };
 
-export function UserSearch({ onSelect, excludeIds = [] }: UserSearchProps) {
+export function UserSearch({ onSelect, excludeIds = [], placeholder = "Buscar por nombre..." }: UserSearchProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<Array<{ id: string; full_name: string | null }>>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -44,7 +45,7 @@ export function UserSearch({ onSelect, excludeIds = [] }: UserSearchProps) {
     <div className="space-y-4">
       <div className="flex gap-2">
         <Input
-          placeholder="Buscar por nombre..."
+          placeholder={placeholder}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleSearch()}
