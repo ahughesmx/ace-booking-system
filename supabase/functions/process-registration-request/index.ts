@@ -154,91 +154,64 @@ serve(async (req) => {
 
       console.log("✅ Member ID validation passed for:", request.member_id);
 
-      // Verificar si ya existe un usuario con este email o teléfono usando listUsers
-      const { data: existingUsers, error: userCheckError } = await supabase.auth.admin.listUsers();
+      // SIEMPRE crear un nuevo usuario - NUNCA reutilizar usuarios existentes
+      // Cada persona debe tener su propia cuenta, incluso si son de la misma familia
+      const phoneE164 = `521${cleanPhone}`;
       
-      if (userCheckError) {
-        throw new Error(`Error checking existing users: ${userCheckError.message}`);
+      // Crear usuario con la contraseña de la solicitud o una temporal si no se proporcionó
+      const userPassword = request.password && request.password.trim() 
+        ? request.password 
+        : crypto.randomUUID() + "!Secure" + Math.random().toString(36);
+      
+      console.log(`🔑 Creating new user with ${request.password ? 'provided' : 'generated'} password`);
+      
+      // Construir payload según tengamos email o no
+      const createPayload: any = {
+        password: userPassword,
+        user_metadata: {
+          member_id: request.member_id,
+          full_name: request.full_name,
+          phone: cleanPhone
+        }
+      };
+
+      if (request.email) {
+        createPayload.email = request.email;
+        createPayload.email_confirm = true;
+      } else {
+        createPayload.phone = phoneE164;
+        createPayload.phone_confirm = true;
+      }
+      
+      const { data: authData, error: createUserError } = await supabase.auth.admin.createUser(createPayload);
+
+      if (createUserError) {
+        // Si el error es por email/teléfono duplicado, dar un mensaje claro
+        if (createUserError.message.includes('already registered') || 
+            createUserError.message.includes('duplicate') ||
+            createUserError.message.includes('already exists')) {
+          throw new Error(`Ya existe un usuario con este ${request.email ? 'correo electrónico' : 'teléfono'}. Cada miembro de la familia debe tener su propio correo/teléfono único.`);
+        }
+        throw new Error(`Error al crear usuario: ${createUserError.message}`);
       }
 
-      const phoneE164 = `521${cleanPhone}`;
-      const existingUser = existingUsers.users.find(u => 
-        (request.email && u.email === request.email) || (u.phone && u.phone === phoneE164)
-      );
+      console.log(`✅ New user created successfully for ${request.full_name}`);
 
-      let authData;
-      
-      if (existingUser) {
-        // El usuario ya existe
-        authData = { user: existingUser } as any;
-        console.log(`User already exists, using existing user. Email: ${request.email ?? 'N/A'} Phone: ${phoneE164}`);
-        
-        // Si el admin proporcionó un password, actualizar el password del usuario existente
-        if (request.password && request.password.trim()) {
-          console.log(`🔑 Updating password for existing user`);
-          const { error: updateError } = await supabase.auth.admin.updateUserById(
-            existingUser.id,
-            { password: request.password }
-          );
-          
-          if (updateError) {
-            console.error("Error updating user password:", updateError);
-            throw new Error(`Failed to update user password: ${updateError.message}`);
+      // Enviar email de recuperación solo si hay email y NO se proporcionó password
+      // (Si se proporcionó password, el usuario ya lo conoce)
+      if (request.email && !request.password && request.send_password_reset !== false) {
+        const { error: resetError } = await supabase.auth.admin.generateLink({
+          type: 'recovery',
+          email: request.email,
+          options: {
+            redirectTo: `${Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '')}/auth/callback`
           }
-          
-          console.log(`✅ Password updated successfully for existing user`);
-        }
-      } else {
-        // Crear usuario con la contraseña de la solicitud o una temporal si no se proporcionó
-        const userPassword = request.password && request.password.trim() 
-          ? request.password 
-          : crypto.randomUUID() + "!Secure" + Math.random().toString(36);
-        
-        console.log(`🔑 Using ${request.password ? 'provided' : 'generated'} password for user creation`);
-        
-        // Construir payload según tengamos email o no
-        const createPayload: any = {
-          password: userPassword,
-          user_metadata: {
-            member_id: request.member_id,
-            full_name: request.full_name,
-            phone: cleanPhone
-          }
-        };
+        });
 
-        if (request.email) {
-          createPayload.email = request.email;
-          createPayload.email_confirm = true;
+        if (resetError) {
+          console.error("Error sending password reset email:", resetError);
         } else {
-          createPayload.phone = phoneE164;
-          createPayload.phone_confirm = true;
-        }
-        
-        const { data: newAuthData, error: createUserError } = await supabase.auth.admin.createUser(createPayload);
-
-        if (createUserError) {
-          throw new Error(`Failed to create user: ${createUserError.message}`);
-        }
-
-        authData = newAuthData;
-        console.log(`✅ User created successfully with ${request.password ? 'provided' : 'temporary'} password`);
-
-        // Enviar email de recuperación solo si hay email y NO se proporcionó password
-        // (Si se proporcionó password, el usuario ya lo conoce)
-        if (request.email && !request.password && request.send_password_reset !== false) {
-          const { error: resetError } = await supabase.auth.admin.generateLink({
-            type: 'recovery',
-            email: request.email,
-            options: {
-              redirectTo: `${Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '')}/auth/callback`
-            }
-          });
-
-          if (resetError) {
-            console.error("Error sending password reset email:", resetError);
-          } else {
-            console.log("✅ Password reset email sent to:", request.email);
-          }
+          console.log("✅ Password reset email sent to:", request.email);
         }
       }
 
