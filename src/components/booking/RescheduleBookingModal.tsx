@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -10,6 +10,9 @@ import type { Booking } from "@/types/booking";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { useBookingRules } from "@/hooks/use-booking-rules";
+import { useIsBookingAffected } from "@/hooks/use-affected-bookings";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 interface RescheduleBookingModalProps {
   isOpen: boolean;
@@ -28,6 +31,10 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Check if this booking is affected by an emergency closure
+  const { data: affectedBooking } = useIsBookingAffected(booking.id);
+  const isAffectedByEmergency = !!affectedBooking;
+  
   // Get booking rules for the court type
   const { data: bookingRules } = useBookingRules(booking.court?.court_type as 'tennis' | 'padel');
 
@@ -38,7 +45,15 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
     // Don't allow dates in the past
     if (date < today) return true;
     
-    // Apply booking rules if available
+    // If affected by emergency, allow more flexibility
+    if (isAffectedByEmergency) {
+      // Allow booking up to 30 days ahead for emergency rescheduling
+      const maxDate = addDays(today, 30);
+      if (date > maxDate) return true;
+      return false;
+    }
+    
+    // Apply normal booking rules if available
     if (bookingRules) {
       // Check max_days_ahead
       if (bookingRules.max_days_ahead) {
@@ -82,6 +97,17 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
         .eq('id', booking.id);
 
       if (error) throw error;
+
+      // If this was an affected booking, mark it as rescheduled
+      if (isAffectedByEmergency && affectedBooking) {
+        await supabase
+          .from('affected_bookings')
+          .update({
+            rescheduled: true,
+            rescheduled_at: new Date().toISOString()
+          })
+          .eq('booking_id', booking.id);
+      }
     },
     onSuccess: () => {
       toast({
@@ -166,6 +192,16 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
         </DialogHeader>
         
         <div className="space-y-4">
+          {isAffectedByEmergency && (
+            <Alert className="border-yellow-500 bg-yellow-50">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800">
+                <strong>Reagendado por cierre imprevisto:</strong> Esta reserva fue afectada por un cierre imprevisto. 
+                Puedes reagendarla sin restricciones de tiempo y sin costo adicional.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div>
             <h4 className="text-sm font-medium mb-2">Reserva actual</h4>
             <div className="text-sm text-gray-600">

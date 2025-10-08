@@ -18,6 +18,7 @@ import { Calendar, Clock, AlertTriangle, X, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { AddMaintenanceDialog } from "./AddMaintenanceDialog";
+import { EmergencyClosureDialog } from "./EmergencyClosureDialog";
 import { EmergencyClosureButton } from "./EmergencyClosureButton";
 
 type MaintenancePeriod = {

@@ -15,6 +15,9 @@ export function useCourtMaintenance(courtId?: string) {
           end_time,
           reason,
           is_active,
+          is_emergency,
+          expected_reopening,
+          all_courts,
           created_at,
           court:courts(id, name, court_type)
         `)
