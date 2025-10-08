@@ -21,6 +21,7 @@ interface CashBooking {
   amount: number;
   currency: string;
   booking_made_at: string;
+  payment_completed_at?: string | null;
   user: {
     full_name: string;
     member_id: string;
@@ -66,6 +67,7 @@ export function CashReportsOperator() {
           amount,
           currency,
           booking_made_at,
+          payment_completed_at,
           payment_method,
           status,
           profiles:user_id (
@@ -78,10 +80,9 @@ export function CashReportsOperator() {
           )
         `)
         .in('payment_method', ['cash', 'efectivo'])
-        .in('status', ['paid', 'cancelled'])
-        .gte('booking_made_at', startOfDayUTC)
-        .lte('booking_made_at', endOfDayUTC)
-        .order('booking_made_at', { ascending: false });
+        .eq('status', 'paid')
+        .or(`and(payment_completed_at.gte.${startOfDayUTC},payment_completed_at.lte.${endOfDayUTC}),and(payment_completed_at.is.null,booking_made_at.gte.${startOfDayUTC},booking_made_at.lte.${endOfDayUTC})`)
+        .order('payment_completed_at', { ascending: false });
 
       if (error) throw error;
 
@@ -125,9 +126,10 @@ export function CashReportsOperator() {
     const headers = ['Fecha Cobro', 'Hora Cobro', 'Fecha Reservación', 'Hora Reservación', 'Cliente', 'Membresía', 'Cancha', 'Monto'];
     const csvData = bookings.map(booking => {
       const amount = booking.actual_amount_charged || booking.amount || 0;
+      const chargeDate = booking.payment_completed_at || booking.booking_made_at;
       return [
-        format(new Date(booking.booking_made_at), 'dd/MM/yyyy', { locale: es }),
-        format(new Date(booking.booking_made_at), 'HH:mm', { locale: es }),
+        format(new Date(chargeDate), 'dd/MM/yyyy', { locale: es }),
+        format(new Date(chargeDate), 'HH:mm', { locale: es }),
         format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es }),
         format(new Date(booking.start_time), 'HH:mm', { locale: es }),
         booking.user?.full_name || 'N/A',
@@ -154,8 +156,8 @@ export function CashReportsOperator() {
 
   const exportToPDFReport = () => {
     const pdfData = bookings.map(booking => ({
-      fecha_cobro: format(new Date(booking.booking_made_at), 'dd/MM/yyyy', { locale: es }),
-      hora_cobro: format(new Date(booking.booking_made_at), 'HH:mm', { locale: es }),
+      fecha_cobro: format(new Date(booking.payment_completed_at || booking.booking_made_at), 'dd/MM/yyyy', { locale: es }),
+      hora_cobro: format(new Date(booking.payment_completed_at || booking.booking_made_at), 'HH:mm', { locale: es }),
       fecha_reservacion: format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es }),
       hora_reservacion: `${format(new Date(booking.start_time), 'HH:mm', { locale: es })} - ${format(new Date(booking.end_time), 'HH:mm', { locale: es })}`,
       cliente: booking.user?.full_name || 'N/A',
@@ -253,9 +255,9 @@ export function CashReportsOperator() {
                 <TableRow key={booking.id}>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span>{format(new Date(booking.booking_made_at), 'dd/MM/yyyy', { locale: es })}</span>
+                      <span>{format(new Date(booking.payment_completed_at || booking.booking_made_at), 'dd/MM/yyyy', { locale: es })}</span>
                       <span className="text-sm text-muted-foreground">
-                        {format(new Date(booking.booking_made_at), 'HH:mm', { locale: es })}
+                        {format(new Date(booking.payment_completed_at || booking.booking_made_at), 'HH:mm', { locale: es })}
                       </span>
                     </div>
                   </TableCell>
