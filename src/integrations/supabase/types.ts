@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      affected_bookings: {
+        Row: {
+          booking_id: string
+          can_reschedule: boolean | null
+          created_at: string | null
+          id: string
+          maintenance_id: string
+          notified_at: string | null
+          rescheduled: boolean | null
+          rescheduled_at: string | null
+          updated_at: string | null
+          user_notified: boolean | null
+        }
+        Insert: {
+          booking_id: string
+          can_reschedule?: boolean | null
+          created_at?: string | null
+          id?: string
+          maintenance_id: string
+          notified_at?: string | null
+          rescheduled?: boolean | null
+          rescheduled_at?: string | null
+          updated_at?: string | null
+          user_notified?: boolean | null
+        }
+        Update: {
+          booking_id?: string
+          can_reschedule?: boolean | null
+          created_at?: string | null
+          id?: string
+          maintenance_id?: string
+          notified_at?: string | null
+          rescheduled?: boolean | null
+          rescheduled_at?: string | null
+          updated_at?: string | null
+          user_notified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affected_bookings_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affected_bookings_maintenance_id_fkey"
+            columns: ["maintenance_id"]
+            isOneToOne: false
+            referencedRelation: "court_maintenance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       available_court_types: {
         Row: {
           created_at: string
@@ -507,34 +561,43 @@ export type Database = {
       }
       court_maintenance: {
         Row: {
+          all_courts: boolean | null
           court_id: string
           created_at: string
           created_by: string
           end_time: string
+          expected_reopening: string | null
           id: string
           is_active: boolean
+          is_emergency: boolean | null
           reason: string
           start_time: string
           updated_at: string
         }
         Insert: {
+          all_courts?: boolean | null
           court_id: string
           created_at?: string
           created_by: string
           end_time: string
+          expected_reopening?: string | null
           id?: string
           is_active?: boolean
+          is_emergency?: boolean | null
           reason: string
           start_time: string
           updated_at?: string
         }
         Update: {
+          all_courts?: boolean | null
           court_id?: string
           created_at?: string
           created_by?: string
           end_time?: string
+          expected_reopening?: string | null
           id?: string
           is_active?: boolean
+          is_emergency?: boolean | null
           reason?: string
           start_time?: string
           updated_at?: string

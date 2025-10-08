@@ -18,6 +18,7 @@ import { Calendar, Clock, AlertTriangle, X, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { AddMaintenanceDialog } from "./AddMaintenanceDialog";
+import { EmergencyClosureButton } from "./EmergencyClosureButton";
 
 type MaintenancePeriod = {
   id: string;
@@ -27,6 +28,9 @@ type MaintenancePeriod = {
   reason: string;
   is_active: boolean;
   created_at: string;
+  is_emergency?: boolean;
+  expected_reopening?: string;
+  all_courts?: boolean;
   court: {
     id: string;
     name: string;
@@ -51,6 +55,9 @@ export function MaintenanceList() {
           reason,
           is_active,
           created_at,
+          is_emergency,
+          expected_reopening,
+          all_courts,
           court:courts(id, name, court_type)
         `)
         .eq("is_active", true)
@@ -144,7 +151,10 @@ export function MaintenanceList() {
             <Calendar className="w-5 h-5" />
             Períodos de Mantenimiento
           </CardTitle>
-          <AddMaintenanceDialog onMaintenanceAdded={refetch} />
+          <div className="flex gap-2">
+            <EmergencyClosureButton />
+            <AddMaintenanceDialog onMaintenanceAdded={refetch} />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
@@ -166,7 +176,10 @@ export function MaintenanceList() {
           <Calendar className="w-5 h-5" />
           Períodos de Mantenimiento ({maintenancePeriods.length})
         </CardTitle>
-        <AddMaintenanceDialog onMaintenanceAdded={refetch} />
+        <div className="flex gap-2">
+          <EmergencyClosureButton />
+          <AddMaintenanceDialog onMaintenanceAdded={refetch} />
+        </div>
       </CardHeader>
       <CardContent>
         <div className="rounded-lg border border-gray-100 overflow-hidden">
@@ -202,12 +215,27 @@ export function MaintenanceList() {
                     >
                       <TableCell>
                         <div>
-                          <div className="font-medium text-gray-700">
-                            {maintenance.court.name}
+                          <div className="font-medium text-gray-700 flex items-center gap-2">
+                            {maintenance.all_courts ? (
+                              <>
+                                <AlertTriangle className="w-4 h-4 text-red-600" />
+                                Todas las canchas
+                              </>
+                            ) : (
+                              maintenance.court.name
+                            )}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {getCourtTypeLabel(maintenance.court.court_type)}
+                            {maintenance.all_courts 
+                              ? "Cierre general" 
+                              : getCourtTypeLabel(maintenance.court.court_type)
+                            }
                           </div>
+                          {maintenance.is_emergency && (
+                            <Badge variant="destructive" className="mt-1 text-xs">
+                              Cierre Imprevisto
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -233,9 +261,16 @@ export function MaintenanceList() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <p className="text-sm text-gray-600 max-w-xs truncate" title={maintenance.reason}>
-                          {maintenance.reason}
-                        </p>
+                        <div className="space-y-1">
+                          <p className="text-sm text-gray-600 max-w-xs" title={maintenance.reason}>
+                            {maintenance.reason}
+                          </p>
+                          {maintenance.is_emergency && maintenance.expected_reopening && (
+                            <p className="text-xs text-blue-600">
+                              Apertura probable: {format(new Date(maintenance.expected_reopening), "dd/MM/yyyy HH:mm", { locale: es })}
+                            </p>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-1">
