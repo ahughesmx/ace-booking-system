@@ -129,7 +129,7 @@ export function DailyReportsOperator() {
       
       // Calcular resúmenes con métodos de pago estandarizados
       const cashTotal = bookingsWithDetails
-        .filter(booking => booking.payment_method === 'efectivo')
+        .filter(booking => booking.payment_method === 'efectivo' || booking.payment_method === 'cash')
         .reduce((sum, booking) => {
           const amount = booking.actual_amount_charged || booking.amount || 0;
           return sum + amount;
@@ -156,7 +156,7 @@ export function DailyReportsOperator() {
         totalBookings: bookingsWithDetails.length,
         paidBookings: paidCount,
         cancelledBookings: cancelledCount,
-        efectivoBookings: bookingsWithDetails.filter(b => b.payment_method === 'efectivo').length,
+        efectivoBookings: bookingsWithDetails.filter(b => b.payment_method === 'efectivo' || b.payment_method === 'cash').length,
         onlineBookings: bookingsWithDetails.filter(b => b.payment_method === 'online').length,
         paymentMethods: [...new Set(bookingsWithDetails.map(b => b.payment_method))],
         statuses: [...new Set(bookingsWithDetails.map(b => b.status))],
@@ -205,7 +205,7 @@ export function DailyReportsOperator() {
         booking.user?.full_name || 'N/A',
         booking.user?.member_id || 'N/A',
         booking.court?.name || 'N/A',
-        booking.payment_method === 'efectivo' ? 'Efectivo' : 'En Línea',
+        (booking.payment_method === 'efectivo' || booking.payment_method === 'cash') ? 'Efectivo' : 'En Línea',
         booking.processed_by_user?.full_name || 'Sistema',
         formatCurrency(amount)
       ];
@@ -235,7 +235,7 @@ export function DailyReportsOperator() {
       cliente: booking.user?.full_name || 'N/A',
       membresia: booking.user?.member_id || 'N/A',
       cancha: booking.court?.name || 'N/A',
-      metodo_pago: booking.payment_method === 'efectivo' ? 'Efectivo' : 'En línea',
+      metodo_pago: (booking.payment_method === 'efectivo' || booking.payment_method === 'cash') ? 'Efectivo' : 'En línea',
       procesado_por: booking.processed_by_user?.full_name || 'Sistema',
       monto: booking.actual_amount_charged || booking.amount || 0
     }));
@@ -268,7 +268,7 @@ export function DailyReportsOperator() {
   };
 
   const getPaymentMethodBadge = (method: string) => {
-    return method === 'efectivo' ? (
+    return (method === 'efectivo' || method === 'cash') ? (
       <Badge variant="secondary">Efectivo</Badge>
     ) : (
       <Badge variant="default">En Línea</Badge>

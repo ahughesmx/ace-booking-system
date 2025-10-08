@@ -77,7 +77,7 @@ export function CashReportsOperator() {
             court_type
           )
         `)
-        .eq('payment_method', 'efectivo')
+        .in('payment_method', ['cash', 'efectivo'])
         .in('status', ['paid', 'cancelled'])
         .gte('booking_made_at', startOfDayUTC)
         .lte('booking_made_at', endOfDayUTC)
