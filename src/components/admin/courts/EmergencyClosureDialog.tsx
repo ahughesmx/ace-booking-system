@@ -261,11 +261,16 @@ export function EmergencyClosureDialog({ open, onOpenChange }: EmergencyClosureD
         const profile = userMap.get(userId);
         
         // Construir array de reservas de este usuario específico
-        const userAffectedBookings = userBookings.map(booking => ({
-          booking_id: booking.id,
-          booking_start: booking.start_time,
-          booking_end: booking.end_time,
-        }));
+        const userAffectedBookings = userBookings.map(booking => {
+          const bookingDate = new Date(booking.start_time);
+          return {
+            booking_id: booking.id,
+            booking_start: booking.start_time,
+            booking_end: booking.end_time,
+            date: bookingDate.toISOString().split('T')[0],
+            time: bookingDate.toTimeString().slice(0, 5),
+          };
+        });
 
         // Construir payload del webhook para ESTE usuario
         const webhookData = {
