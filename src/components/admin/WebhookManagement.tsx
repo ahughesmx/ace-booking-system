@@ -261,7 +261,7 @@ const WebhookManagement = () => {
 }`
       },
       emergency_closure: {
-        description: "Se dispara cuando se activa un cierre imprevisto de canchas",
+        description: "Se dispara cuando se activa un cierre imprevisto. Se envía UN webhook POR CADA usuario afectado, conteniendo solo sus propias reservas.",
         headerExample: '{"Content-Type": "application/json"}',
         headerPlaceholder: 'Opcional: Headers para autenticación con tu sistema de mensajería',
         payloadExample: `{
@@ -271,20 +271,26 @@ const WebhookManagement = () => {
     "maintenance_id": "maintenance-uuid",
     "court_id": "court-uuid",
     "court_name": "Cancha 1",
+    "court_type": "tennis",
     "all_courts": false,
     "start_time": "2025-08-15T18:30:00Z",
     "end_time": "2025-08-15T22:00:00Z",
     "expected_reopening": "2025-08-16T08:00:00Z",
     "reason": "Lluvia intensa",
-    "affected_users": [
+    "user_id": "user-uuid",
+    "user_name": "Juan Pérez",
+    "user_phone": "52123456789",
+    "remotejid": "52123456789",
+    "affected_bookings": [
       {
-        "user_id": "user-uuid",
-        "user_name": "Juan Pérez",
-        "user_phone": "52123456789",
-        "remotejid": "52123456789",
-        "booking_id": "booking-uuid",
+        "booking_id": "booking-uuid-1",
         "booking_start": "2025-08-15T19:00:00Z",
         "booking_end": "2025-08-15T20:30:00Z"
+      },
+      {
+        "booking_id": "booking-uuid-2",
+        "booking_start": "2025-08-15T21:00:00Z",
+        "booking_end": "2025-08-15T22:30:00Z"
       }
     ]
   },
