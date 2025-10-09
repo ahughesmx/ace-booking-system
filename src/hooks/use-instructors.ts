@@ -11,10 +11,10 @@ export function useInstructors() {
   return useQuery({
     queryKey: ["instructors"],
     queryFn: async () => {
-      // Only select non-PII fields to protect instructor privacy
+      // Use public view to ensure PII (email, phone) is never exposed
       const { data, error } = await supabase
-        .from("instructors")
-        .select("id, full_name, bio, specialties, certifications, experience_years, avatar_url, is_active, created_at, updated_at")
+        .from("instructor_public_info")
+        .select("*")
         .eq("is_active", true)
         .order("full_name");
 
@@ -28,13 +28,13 @@ export function useInstructor(id: string) {
   return useQuery({
     queryKey: ["instructor", id],
     queryFn: async () => {
-      // Only select non-PII fields by default
+      // Use public view to ensure PII (email, phone) is never exposed
       const { data, error } = await supabase
-        .from("instructors")
-        .select("id, full_name, bio, specialties, certifications, experience_years, avatar_url, is_active, created_at, updated_at")
+        .from("instructor_public_info")
+        .select("*")
         .eq("id", id)
         .eq("is_active", true)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
