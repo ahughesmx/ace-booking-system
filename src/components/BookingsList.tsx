@@ -34,8 +34,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   const { data: padelRules } = useBookingRules('padel');
   const queryClient = useQueryClient();
 
-  // Admin puede ver todas las reservas (incluso expiradas), usuarios regulares solo las activas
-  const { data: allBookings = [], isLoading } = useAllBookings(selectedDate, false, isAdmin);
+  const { data: allBookings = [], isLoading } = useAllBookings(selectedDate);
 
   console.log("BookingsList received props:", { 
     bookingsCount: bookings.length, 

@@ -4,9 +4,9 @@ import { supabase } from "@/lib/supabase-client";
 import { Booking, RegularBooking, SpecialBooking } from "@/types/booking";
 import { useEffect } from "react";
 
-export function useBookings(selectedDate?: Date, enabled: boolean = true, includeExpired: boolean = false) {
+export function useBookings(selectedDate?: Date, enabled: boolean = true) {
   return useQuery({
-    queryKey: ["bookings", selectedDate?.toDateString(), includeExpired],
+    queryKey: ["bookings", selectedDate?.toDateString()],
     queryFn: async () => {
       if (!selectedDate) {
         console.log("🚫 No selected date provided");
@@ -19,18 +19,17 @@ export function useBookings(selectedDate?: Date, enabled: boolean = true, includ
       const endOfDay = new Date(selectedDate);
       endOfDay.setHours(23, 59, 59, 999);
 
-      console.log("📅 Fetching regular bookings for:", {
+      console.log("📅 Fetching regular bookings for date:", selectedDate.toDateString(), {
         selectedDate: selectedDate.toISOString(),
         startOfDay: startOfDay.toISOString(),
         endOfDay: endOfDay.toISOString(),
         filterStatus: "paid",
-        includeExpired,
-        filterTime: includeExpired ? "all" : "future_only"
+        filterTime: "future_only"
       });
 
       const now = new Date().toISOString();
       
-      let query = supabase
+      const { data, error } = await supabase
         .from("bookings")
         .select(`
           *,
@@ -39,28 +38,24 @@ export function useBookings(selectedDate?: Date, enabled: boolean = true, includ
         `)
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
-        .eq("status", "paid");
-      
-      // Solo aplicar filtro de end_time si NO incluimos expiradas
-      if (!includeExpired) {
-        query = query.gte("end_time", now);
-      }
-      
-      query = query.order("start_time");
-
-      const { data, error } = await query;
+        .eq("status", "paid")
+        .gte("end_time", now)
+        .order("start_time");
 
       if (error) {
         console.error("❌ Error fetching regular bookings:", error);
         return [];
       }
 
-      console.log("✅ Regular bookings fetched:", data?.length || 0, data);
+      console.log(`✅ Regular bookings fetched for ${selectedDate.toDateString()}:`, {
+        count: data?.length || 0,
+        bookings: data
+      });
       return data || [];
     },
     enabled: !!selectedDate && enabled,
-    staleTime: 1000 * 60 * 2, // 2 minutos de cache
-    gcTime: 1000 * 60 * 10,  // 10 minutos en memoria
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
   });
 }
 
@@ -110,7 +105,7 @@ export function useSpecialBookings(selectedDate?: Date, enabled: boolean = true)
   });
 }
 
-export function useAllBookings(selectedDate?: Date, usePublicView: boolean = false, includeExpired: boolean = false): { data: Booking[], isLoading: boolean } {
+export function useAllBookings(selectedDate?: Date, usePublicView: boolean = false): { data: Booking[], isLoading: boolean } {
   const queryClient = useQueryClient();
   
   // Use public view for unauthenticated access (display page)
@@ -158,7 +153,7 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
   });
   
   // Use regular authenticated queries only when NOT using public view
-  const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate, !usePublicView, includeExpired);
+  const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate, !usePublicView);
   const { data: specialBookings = [], isLoading: loadingSpecial } = useSpecialBookings(selectedDate, !usePublicView);
 
   // If using public view, transform and return
