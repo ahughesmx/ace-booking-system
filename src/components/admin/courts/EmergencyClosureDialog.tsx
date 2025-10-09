@@ -82,6 +82,9 @@ export function EmergencyClosureDialog({ open, onOpenChange }: EmergencyClosureD
       
       // Si es cierre de todas las canchas, crear un registro para cada cancha
       if (closureType === "all" && courts) {
+        // Obtener el usuario actual
+        const { data: { user } } = await supabase.auth.getUser();
+        
         const maintenanceRecords = courts.map(court => ({
           court_id: court.id,
           start_time: startDateTime,
@@ -90,34 +93,18 @@ export function EmergencyClosureDialog({ open, onOpenChange }: EmergencyClosureD
           is_emergency: true,
           expected_reopening: expectedReopeningDateTime,
           all_courts: true,
-          created_by: null, // Se llenará con el usuario actual
-        }));
-
-        // Obtener el usuario actual
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        // Asignar el usuario a cada registro
-        const recordsWithUser = maintenanceRecords.map(record => ({
-          ...record,
           created_by: user?.id,
         }));
 
-        const { error } = await supabase
+        const { data: createdMaintenances, error } = await supabase
           .from("court_maintenance")
-          .insert(recordsWithUser);
+          .insert(maintenanceRecords)
+          .select("id, court_id");
 
         if (error) throw error;
 
-        // Obtener los IDs de los mantenimientos creados para notificar usuarios afectados
-        const { data: createdMaintenances, error: fetchError } = await supabase
-          .from("court_maintenance")
-          .select("id, court_id")
-          .eq("created_by", user?.id)
-          .eq("is_emergency", true)
-          .gte("created_at", new Date(Date.now() - 5000).toISOString());
-
-        if (!fetchError && createdMaintenances) {
-          // Buscar reservas afectadas para cada cancha
+        // Buscar reservas afectadas para cada cancha
+        if (createdMaintenances) {
           await processAffectedBookings(createdMaintenances);
         }
       } else {
