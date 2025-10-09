@@ -28,7 +28,7 @@ function generateTimeSlots(businessHours: { start: number; end: number }, select
   const slots: TimeSlot[] = [];
   const now = new Date();
   
-  for (let hour = businessHours.start; hour <= businessHours.end; hour++) {
+  for (let hour = businessHours.start; hour < businessHours.end; hour++) {
     const startTime = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour);
     const endTime = addHours(startTime, 1);
     
