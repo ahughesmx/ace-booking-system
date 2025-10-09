@@ -218,57 +218,89 @@ export function EmergencyClosureDialog({ open, onOpenChange }: EmergencyClosureD
 
       if (!webhooks || webhooks.length === 0) return;
 
-      // Obtener detalles del mantenimiento
+      // Obtener detalles del mantenimiento y court
       const { data: maintenance } = await supabase
         .from("court_maintenance")
         .select(`
           id,
           reason,
           expected_reopening,
+          start_time,
+          end_time,
+          all_courts,
           court:courts(id, name, court_type)
         `)
         .eq("id", maintenanceId)
         .single();
 
-      // Para cada booking, enviar notificación
-      for (const booking of bookings) {
-        const webhookData = {
-          event: "emergency_closure",
-          timestamp: new Date().toISOString(),
-          data: {
-            booking_id: booking.id,
-            user_id: booking.user_id,
-            maintenance_id: maintenanceId,
-            reason: maintenance?.reason,
-            expected_reopening: maintenance?.expected_reopening,
-            court_name: maintenance?.court?.name,
-            court_type: maintenance?.court?.court_type,
-            booking_start_time: booking.start_time,
-            booking_end_time: booking.end_time,
-          },
-        };
+      if (!maintenance) return;
 
-        // Enviar a cada webhook
-        for (const webhook of webhooks) {
-          try {
-            const headers: Record<string, string> = {
-              "Content-Type": "application/json",
-              ...(webhook.headers as Record<string, string> || {}),
-            };
-            
-            await fetch(webhook.url, {
-              method: "POST",
-              headers,
-              body: JSON.stringify(webhookData),
-            });
-          } catch (error) {
-            console.error(`Error calling webhook ${webhook.name}:`, error);
-          }
+      // Obtener información completa de los usuarios con reservas afectadas
+      const bookingIds = bookings.map(b => b.id);
+      const userIds = [...new Set(bookings.map(b => b.user_id))];
+      
+      // Obtener información de los usuarios
+      const { data: userProfiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, phone")
+        .in("id", userIds);
+
+      const userMap = new Map(userProfiles?.map(p => [p.id, p]) || []);
+
+      // Construir el array de usuarios afectados con toda su info
+      const affectedUsers = bookings.map(booking => {
+        const profile = userMap.get(booking.user_id);
+        return {
+          user_id: booking.user_id,
+          user_name: profile?.full_name || "Usuario",
+          user_phone: profile?.phone || "",
+          remotejid: profile?.phone || "",
+          booking_id: booking.id,
+          booking_start: booking.start_time,
+          booking_end: booking.end_time,
+        };
+      });
+
+      // Construir payload del webhook con TODOS los usuarios afectados
+      const webhookData = {
+        event: "emergency_closure",
+        timestamp: new Date().toISOString(),
+        data: {
+          maintenance_id: maintenance.id,
+          court_id: maintenance.court.id,
+          court_name: maintenance.court.name,
+          court_type: maintenance.court.court_type,
+          all_courts: maintenance.all_courts,
+          start_time: maintenance.start_time,
+          end_time: maintenance.end_time,
+          expected_reopening: maintenance.expected_reopening,
+          reason: maintenance.reason,
+          affected_users: affectedUsers,
+        },
+      };
+
+      // Enviar a cada webhook configurado
+      for (const webhook of webhooks) {
+        try {
+          const headers: Record<string, string> = {
+            "Content-Type": "application/json",
+            ...(webhook.headers as Record<string, string> || {}),
+          };
+          
+          await fetch(webhook.url, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              ...webhookData,
+              webhook_name: webhook.name,
+            }),
+          });
+        } catch (error) {
+          console.error(`Error calling webhook ${webhook.name}:`, error);
         }
       }
 
       // Marcar como notificados
-      const bookingIds = bookings.map(b => b.id);
       await supabase
         .from("affected_bookings")
         .update({
