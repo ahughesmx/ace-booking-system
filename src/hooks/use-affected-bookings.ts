@@ -39,10 +39,11 @@ export function useIsBookingAffected(bookingId?: string) {
 
       const { data, error } = await supabase
         .from("affected_bookings")
-        .select("*, maintenance:court_maintenance(*)")
+        .select("*, maintenance:court_maintenance!inner(*)")
         .eq("booking_id", bookingId)
         .eq("can_reschedule", true)
         .eq("rescheduled", false)
+        .eq("maintenance.is_active", true) // Solo cierres activos
         .maybeSingle();
 
       if (error) throw error;
