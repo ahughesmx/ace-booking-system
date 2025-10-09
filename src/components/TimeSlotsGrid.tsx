@@ -5,6 +5,7 @@ import { es } from "date-fns/locale";
 import { useCourts } from "@/hooks/use-courts";
 import { useAllBookings } from "@/hooks/use-bookings";
 import { Booking, SpecialBooking } from "@/types/booking";
+import { useCourtMaintenance } from "@/hooks/use-court-maintenance";
 
 interface TimeSlot {
   start: string;
@@ -49,6 +50,8 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
   const { data: courts = [] } = useCourts(courtType);
   // Obtener todas las reservas (normales + especiales) para calcular disponibilidad
   const { data: allBookings = [] } = useAllBookings(selectedDate);
+  // Obtener cierres imprevistos activos
+  const { data: maintenancePeriods = [] } = useCourtMaintenance();
   const totalCourts = courts.length;
 
   console.log("TimeSlotsGrid - Court type:", courtType);
@@ -120,11 +123,43 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
     }) as SpecialBooking[];
   };
 
+  // Función para obtener cierres imprevistos que afectan un slot
+  const getEmergencyClosureForSlot = (slot: string) => {
+    if (!selectedDate) return undefined;
+    
+    const slotHour = parseInt(slot.split(':')[0]);
+    const slotStart = new Date(selectedDate);
+    slotStart.setHours(slotHour, 0, 0, 0);
+    const slotEnd = new Date(slotStart);
+    slotEnd.setHours(slotHour + 1, 0, 0, 0);
+
+    // Buscar cierres imprevistos que afecten este slot
+    return maintenancePeriods.find(maintenance => {
+      if (!maintenance.is_emergency || !maintenance.is_active) return false;
+      
+      const maintenanceStart = new Date(maintenance.start_time);
+      const maintenanceEnd = new Date(maintenance.end_time);
+      
+      // Si afecta todas las canchas o la cancha específica del tipo seleccionado
+      if (maintenance.all_courts) {
+        return slotStart < maintenanceEnd && slotEnd > maintenanceStart;
+      }
+      
+      // Verificar si la cancha en mantenimiento es del tipo seleccionado
+      if (maintenance.court && courtType && maintenance.court.court_type === courtType) {
+        return slotStart < maintenanceEnd && slotEnd > maintenanceStart;
+      }
+      
+      return false;
+    });
+  };
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
       {timeSlots.map(timeSlot => {
         const specialEvents = getSpecialEventsForSlot(timeSlot.start);
         const hasSpecialEvents = specialEvents.length > 0;
+        const emergencyClosure = getEmergencyClosureForSlot(timeSlot.start);
         
         // Si hay eventos especiales, el slot no está disponible
         if (hasSpecialEvents) {
@@ -137,6 +172,7 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
               availableCount={0}
               specialEvents={specialEvents}
               showCourtCount={showCourtCount}
+              emergencyClosure={emergencyClosure}
             />
           );
         }
@@ -157,6 +193,7 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
             specialEvents={specialEvents}
             bookedUser={bookedUser}
             showCourtCount={showCourtCount}
+            emergencyClosure={emergencyClosure}
           />
         );
       })}

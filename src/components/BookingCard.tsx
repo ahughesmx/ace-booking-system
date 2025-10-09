@@ -4,12 +4,14 @@ import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin, User, Calendar, Trophy, GraduationCap, Star, Zap, CalendarClock } from "lucide-react";
+import { Clock, MapPin, User, Calendar, Trophy, GraduationCap, Star, Zap, CalendarClock, AlertTriangle } from "lucide-react";
 import type { Booking } from "@/types/booking";
 import { useCancellationRules } from "@/hooks/use-cancellation-rules";
 import { useReschedulingRules } from "@/hooks/use-rescheduling-rules";
 import { RescheduleBookingModal } from "@/components/booking/RescheduleBookingModal";
 import { useState } from "react";
+import { useIsBookingAffected } from "@/hooks/use-affected-bookings";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface BookingCardProps {
   booking: Booking & { isSpecial?: boolean; event_type?: string; title?: string; description?: string };
@@ -23,9 +25,11 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
   const endTime = new Date(booking.end_time);
   const { getCancellationAllowed } = useCancellationRules();
   const { canReschedule } = useReschedulingRules();
+  const { data: affectedBooking } = useIsBookingAffected(booking.id);
 
   const isCancellationAllowed = getCancellationAllowed(booking.court?.court_type);
   const isReschedulingAllowed = canReschedule(booking.start_time, booking.court?.court_type);
+  const isAffectedByEmergency = !!affectedBooking;
 
   const getEventIcon = (eventType?: string) => {
     switch (eventType) {
@@ -54,8 +58,20 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
   };
 
   return (
-    <Card className="w-full">
+    <Card className={`w-full ${isAffectedByEmergency ? 'border-red-300 border-2' : ''}`}>
       <CardContent className="p-4">
+        {/* Alerta de cierre imprevisto */}
+        {isAffectedByEmergency && (
+          <Alert className="mb-3 bg-red-50 border-red-200">
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-sm text-red-800">
+              <strong>¡Cierre Imprevisto!</strong> Esta reserva se ve afectada por un cierre inesperado. 
+              {affectedBooking?.maintenance?.reason && ` Motivo: ${affectedBooking.maintenance.reason}.`}
+              {' '}Puede reagendarla sin restricciones.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {/* Header con nombre y badge */}
         <div className="flex items-start justify-between gap-2 mb-3">
           {booking.isSpecial ? (
