@@ -12,17 +12,13 @@ import type { Booking } from "@/types/booking";
 import { EmptyBookingsList } from "./booking/EmptyBookingsList";
 import { BookingsListContent } from "./booking/BookingsListContent";
 import { useAllBookings } from "@/hooks/use-bookings";
+import { useQuery } from "@tanstack/react-query";
 
 interface BookingsListProps {
   bookings: Booking[];
   onCancelSuccess: () => void;
   selectedDate?: Date;
 }
-
-const BUSINESS_HOURS = {
-  start: 8,
-  end: 22,
-};
 
 export function BookingsList({ bookings, onCancelSuccess, selectedDate }: BookingsListProps) {
   const { user } = useAuth();
@@ -35,6 +31,30 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   const queryClient = useQueryClient();
 
   const { data: allBookings = [], isLoading } = useAllBookings(selectedDate);
+  
+  // Obtener configuraciones reales de horarios desde la BD
+  const { data: courtTypeSettings } = useQuery({
+    queryKey: ["court-type-settings-all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("court_type_settings")
+        .select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+  
+  // Calcular el rango de horarios real basado en todas las configuraciones
+  const businessHours = {
+    start: courtTypeSettings?.reduce((min, setting) => {
+      const hour = parseInt(setting.operating_hours_start.split(':')[0]);
+      return hour < min ? hour : min;
+    }, 8) || 8,
+    end: courtTypeSettings?.reduce((max, setting) => {
+      const hour = parseInt(setting.operating_hours_end.split(':')[0]);
+      return hour > max ? hour : max;
+    }, 22) || 22,
+  };
 
   console.log("BookingsList received props:", { 
     bookingsCount: bookings.length, 
@@ -245,7 +265,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
       <EmptyBookingsList
         isAuthenticated={!!user}
         bookedSlots={new Set()}
-        businessHours={BUSINESS_HOURS}
+        businessHours={businessHours}
         selectedDate={selectedDate}
       />
     );
@@ -262,7 +282,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
       <EmptyBookingsList
         isAuthenticated={false}
         bookedSlots={bookedSlots}
-        businessHours={BUSINESS_HOURS}
+        businessHours={businessHours}
         selectedDate={selectedDate}
       />
     );
@@ -274,7 +294,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
       <EmptyBookingsList
         isAuthenticated={true}
         bookedSlots={new Set()}
-        businessHours={BUSINESS_HOURS}
+        businessHours={businessHours}
         selectedDate={selectedDate}
       />
     );
