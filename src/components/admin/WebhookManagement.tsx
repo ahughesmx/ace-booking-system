@@ -407,22 +407,58 @@ const WebhookManagement = () => {
     mutationFn: async (webhook: Webhook) => {
       console.log('Testing webhook:', webhook.url);
       
-      const testPayload = {
-        event: webhook.event_type,
-        timestamp: new Date().toISOString(),
-        data: {
-          id: `test_${Date.now()}`,
-          courtName: "Cancha de Prueba",
-          courtId: "test-court-id",
-          startTime: new Date().toISOString(),
-          endTime: new Date(Date.now() + 90 * 60 * 1000).toISOString(),
-          userName: "Usuario de Prueba",
-          userId: "test-user-id",
-          remotejid: "52123456789",
-          date: new Date().toISOString().split('T')[0],
-          time: "18:00"
-        }
-      };
+      // Construir payload específico según el tipo de evento
+      let testPayload: any;
+      const now = new Date();
+      const futureTime = new Date(Date.now() + 90 * 60 * 1000);
+      
+      if (webhook.event_type === 'emergency_closure') {
+        testPayload = {
+          event: "emergency_closure",
+          timestamp: now.toISOString(),
+          data: {
+            maintenance_id: `test_maintenance_${Date.now()}`,
+            court_id: "test-court-id",
+            court_name: "Cancha de Prueba",
+            court_type: "tennis",
+            all_courts: false,
+            start_time: now.toISOString(),
+            end_time: futureTime.toISOString(),
+            expected_reopening: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+            reason: "Prueba de cierre imprevisto - Condiciones climáticas adversas",
+            user_id: "test-user-id",
+            user_name: "Usuario de Prueba",
+            user_phone: "52123456789",
+            remotejid: "52123456789",
+            affected_bookings: [
+              {
+                booking_id: `test_booking_${Date.now()}`,
+                booking_start: now.toISOString(),
+                booking_end: futureTime.toISOString()
+              }
+            ]
+          },
+          webhook_name: webhook.name
+        };
+      } else {
+        // Payload genérico para otros tipos de eventos
+        testPayload = {
+          event: webhook.event_type,
+          timestamp: now.toISOString(),
+          data: {
+            id: `test_${Date.now()}`,
+            courtName: "Cancha de Prueba",
+            courtId: "test-court-id",
+            startTime: now.toISOString(),
+            endTime: futureTime.toISOString(),
+            userName: "Usuario de Prueba",
+            userId: "test-user-id",
+            remotejid: "52123456789",
+            date: now.toISOString().split('T')[0],
+            time: "18:00"
+          }
+        };
+      }
 
       console.log('Sending test payload:', testPayload);
       console.log('Full test payload structure:', JSON.stringify(testPayload, null, 2));
