@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             queryClient.invalidateQueries({ queryKey: ["booking-rules"] });
             queryClient.invalidateQueries({ queryKey: ["available-court-types"] });
             queryClient.invalidateQueries({ queryKey: ["court-type-settings-all"] });
-            queryClient.invalidateQueries({ queryKey: ["activeBookingsCount"] });
+            queryClient.invalidateQueries({ queryKey: ["active-bookings-count"] });
             
             toast({
               title: "Sesión iniciada",
@@ -180,6 +180,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       cleanup.then(unsubscribe => unsubscribe && unsubscribe());
     };
   }, [toast]);
+
+  // Invalidate critical queries whenever user session becomes available
+  useEffect(() => {
+    if (user?.id) {
+      // Force-refresh booking related data after login across all screens
+      queryClient.invalidateQueries({ queryKey: ["booking-rules"] });
+      queryClient.invalidateQueries({ queryKey: ["available-court-types"] });
+      queryClient.invalidateQueries({ queryKey: ["court-type-settings-all"] });
+      queryClient.invalidateQueries({ queryKey: ["court-type-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["active-bookings-count"] });
+    }
+  }, [user?.id, queryClient]);
 
   // Función para limpiar el estado de autenticación
   const cleanupAuthState = () => {
