@@ -4,9 +4,9 @@ import { supabase } from "@/lib/supabase-client";
 import { Booking, RegularBooking, SpecialBooking } from "@/types/booking";
 import { useEffect } from "react";
 
-export function useBookings(selectedDate?: Date, enabled: boolean = true) {
+export function useBookings(selectedDate?: Date, enabled: boolean = true, includeExpired: boolean = false) {
   return useQuery({
-    queryKey: ["bookings", selectedDate?.toDateString()],
+    queryKey: ["bookings", selectedDate?.toDateString(), includeExpired],
     queryFn: async () => {
       if (!selectedDate) {
         console.log("🚫 No selected date provided");
@@ -24,12 +24,13 @@ export function useBookings(selectedDate?: Date, enabled: boolean = true) {
         startOfDay: startOfDay.toISOString(),
         endOfDay: endOfDay.toISOString(),
         filterStatus: "paid",
-        filterTime: "future_only"
+        includeExpired,
+        filterTime: includeExpired ? "all" : "future_only"
       });
 
       const now = new Date().toISOString();
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("bookings")
         .select(`
           *,
@@ -38,9 +39,16 @@ export function useBookings(selectedDate?: Date, enabled: boolean = true) {
         `)
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
-        .eq("status", "paid")
-        .gte("end_time", now) // Solo reservas que no hayan terminado completamente
-        .order("start_time");
+        .eq("status", "paid");
+      
+      // Solo aplicar filtro de end_time si NO incluimos expiradas
+      if (!includeExpired) {
+        query = query.gte("end_time", now);
+      }
+      
+      query = query.order("start_time");
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("❌ Error fetching regular bookings:", error);
@@ -102,7 +110,7 @@ export function useSpecialBookings(selectedDate?: Date, enabled: boolean = true)
   });
 }
 
-export function useAllBookings(selectedDate?: Date, usePublicView: boolean = false): { data: Booking[], isLoading: boolean } {
+export function useAllBookings(selectedDate?: Date, usePublicView: boolean = false, includeExpired: boolean = false): { data: Booking[], isLoading: boolean } {
   const queryClient = useQueryClient();
   
   // Use public view for unauthenticated access (display page)
@@ -150,7 +158,7 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
   });
   
   // Use regular authenticated queries only when NOT using public view
-  const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate, !usePublicView);
+  const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate, !usePublicView, includeExpired);
   const { data: specialBookings = [], isLoading: loadingSpecial } = useSpecialBookings(selectedDate, !usePublicView);
 
   // If using public view, transform and return
