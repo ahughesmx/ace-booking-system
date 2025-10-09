@@ -259,6 +259,37 @@ const WebhookManagement = () => {
     "registered_at": "2025-08-15T10:00:00Z"
   }
 }`
+      },
+      emergency_closure: {
+        description: "Se dispara cuando se activa un cierre imprevisto de canchas",
+        headerExample: '{"Content-Type": "application/json"}',
+        headerPlaceholder: 'Opcional: Headers para autenticación con tu sistema de mensajería',
+        payloadExample: `{
+  "event": "emergency_closure",
+  "timestamp": "2025-08-15T18:30:00Z",
+  "data": {
+    "maintenance_id": "maintenance-uuid",
+    "court_id": "court-uuid",
+    "court_name": "Cancha 1",
+    "all_courts": false,
+    "start_time": "2025-08-15T18:30:00Z",
+    "end_time": "2025-08-15T22:00:00Z",
+    "expected_reopening": "2025-08-16T08:00:00Z",
+    "reason": "Lluvia intensa",
+    "affected_users": [
+      {
+        "user_id": "user-uuid",
+        "user_name": "Juan Pérez",
+        "user_phone": "52123456789",
+        "remotejid": "52123456789",
+        "booking_id": "booking-uuid",
+        "booking_start": "2025-08-15T19:00:00Z",
+        "booking_end": "2025-08-15T20:30:00Z"
+      }
+    ]
+  },
+  "webhook_name": "Mi Webhook WhatsApp"
+}`
       }
     };
     return eventConfigs[eventType] || eventConfigs.booking_created;
@@ -524,6 +555,7 @@ const WebhookManagement = () => {
     { value: "match_invitation_sent", label: "Invitación de partido enviada" },
     { value: "match_invitation_responded", label: "Invitación de partido respondida" },
     { value: "user_registered", label: "Usuario registrado" },
+    { value: "emergency_closure", label: "Cierre imprevisto" },
   ];
 
   if (isLoading) {
