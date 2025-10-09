@@ -68,6 +68,29 @@ export function MaintenanceList() {
     },
   });
 
+  type ExtendedMaintenance = MaintenancePeriod & { aggregatedCount?: number; aggregatedIds?: string[] };
+
+  const groupAllCourtMaintenances = (items: MaintenancePeriod[] = []): ExtendedMaintenance[] => {
+    const map = new Map<string, ExtendedMaintenance>();
+    for (const m of items) {
+      if (m.all_courts) {
+        const key = `${m.is_emergency ? 'e' : 'n'}|${m.start_time}|${m.end_time}|${m.reason}|${m.is_active}`;
+        const existing = map.get(key);
+        if (!existing) {
+          map.set(key, { ...m, aggregatedCount: 1, aggregatedIds: [m.id] });
+        } else {
+          existing.aggregatedCount = (existing.aggregatedCount || 0) + 1;
+          existing.aggregatedIds = [...(existing.aggregatedIds || []), m.id];
+        }
+      } else {
+        map.set(m.id, { ...m });
+      }
+    }
+    return Array.from(map.values());
+  };
+
+  const displayPeriods = groupAllCourtMaintenances(maintenancePeriods);
+
   const handleCancelMaintenance = async (maintenanceId: string, courtName: string) => {
     try {
       setLoading(true);
@@ -201,7 +224,7 @@ export function MaintenanceList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {maintenancePeriods.map((maintenance) => {
+                {displayPeriods.map((maintenance) => {
                   const { status, variant } = getMaintenanceStatus(
                     maintenance.start_time,
                     maintenance.end_time,
@@ -279,28 +302,41 @@ export function MaintenanceList() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-1">
-                          {isActive && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-gray-600 hover:text-gray-700 hover:bg-gray-100"
-                                title="Editar"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleCancelMaintenance(maintenance.id, maintenance.court.name)}
-                                disabled={loading}
-                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                title="Cancelar"
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </>
-                          )}
+                          {(() => {
+                            const aggregatedCount = (maintenance as any).aggregatedCount as number | undefined;
+                            const isAggregatedGroup = maintenance.all_courts && !!aggregatedCount && aggregatedCount > 1;
+                            if (isAggregatedGroup) {
+                              return (
+                                <span className="text-xs text-gray-500">
+                                  Cierre general agrupado ({aggregatedCount} canchas)
+                                </span>
+                              );
+                            }
+                            return (
+                              isActive && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-gray-600 hover:text-gray-700 hover:bg-gray-100"
+                                    title="Editar"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleCancelMaintenance(maintenance.id, maintenance.court.name)}
+                                    disabled={loading}
+                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    title="Cancelar"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              )
+                            );
+                          })()}
                         </div>
                       </TableCell>
                     </TableRow>
