@@ -281,25 +281,16 @@ const WebhookManagement = () => {
     "user_name": "Juan Pérez",
     "user_phone": "52123456789",
     "remotejid": "52123456789",
-    "affected_bookings": [
-      {
-        "booking_id": "booking-uuid-1",
-        "booking_start": "2025-08-15T19:00:00Z",
-        "booking_end": "2025-08-15T20:30:00Z",
-        "date": "2025-08-15",
-        "time": "19:00"
-      },
-      {
-        "booking_id": "booking-uuid-2",
-        "booking_start": "2025-08-15T21:00:00Z",
-        "booking_end": "2025-08-15T22:30:00Z",
-        "date": "2025-08-15",
-        "time": "21:00"
-      }
-    ]
+    "booking_id": "booking-uuid",
+    "booking_start": "2025-08-15T19:00:00Z",
+    "booking_end": "2025-08-15T20:30:00Z",
+    "date": "2025-08-15",
+    "time": "19:00"
   },
   "webhook_name": "Mi Webhook WhatsApp"
-}`
+}
+
+Nota: Se envía un webhook individual por cada reserva afectada.`
       }
     };
     return eventConfigs[eventType] || eventConfigs.booking_created;
@@ -434,15 +425,11 @@ const WebhookManagement = () => {
             user_name: "Usuario de Prueba",
             user_phone: "52123456789",
             remotejid: "52123456789",
-            affected_bookings: [
-              {
-                booking_id: `test_booking_${Date.now()}`,
-                booking_start: now.toISOString(),
-                booking_end: futureTime.toISOString(),
-                date: now.toISOString().split('T')[0],
-                time: now.toTimeString().slice(0, 5)
-              }
-            ]
+            booking_id: `test_booking_${Date.now()}`,
+            booking_start: now.toISOString(),
+            booking_end: futureTime.toISOString(),
+            date: now.toISOString().split('T')[0],
+            time: now.toTimeString().slice(0, 5)
           },
           webhook_name: webhook.name
         };

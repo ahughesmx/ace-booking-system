@@ -256,62 +256,61 @@ export function EmergencyClosureDialog({ open, onOpenChange }: EmergencyClosureD
         bookingsByUser.get(booking.user_id)!.push(booking);
       }
 
-      // Enviar webhook POR CADA USUARIO con solo SUS reservas
+      // Enviar un webhook individual por cada reserva afectada de cada usuario
       for (const [userId, userBookings] of bookingsByUser.entries()) {
         const profile = userMap.get(userId);
         
-        // Construir array de reservas de este usuario específico
-        const userAffectedBookings = userBookings.map(booking => {
+        // Iterar sobre cada reserva de este usuario y enviar webhook individual
+        for (const booking of userBookings) {
           const bookingDate = new Date(booking.start_time);
-          return {
-            booking_id: booking.id,
-            booking_start: booking.start_time,
-            booking_end: booking.end_time,
-            date: bookingDate.toISOString().split('T')[0],
-            time: bookingDate.toTimeString().slice(0, 5),
+          
+          // Construir payload del webhook para ESTA reserva específica
+          const webhookData = {
+            event: "emergency_closure",
+            timestamp: new Date().toISOString(),
+            data: {
+              maintenance_id: maintenance.id,
+              court_id: maintenance.court.id,
+              court_name: maintenance.court.name,
+              court_type: maintenance.court.court_type,
+              all_courts: maintenance.all_courts,
+              start_time: maintenance.start_time,
+              end_time: maintenance.end_time,
+              expected_reopening: maintenance.expected_reopening,
+              reason: maintenance.reason,
+              user_id: userId,
+              user_name: profile?.full_name || "Usuario",
+              user_phone: profile?.phone || "",
+              remotejid: profile?.phone || "",
+              booking_id: booking.id,
+              booking_start: booking.start_time,
+              booking_end: booking.end_time,
+              date: bookingDate.toISOString().split('T')[0],
+              time: bookingDate.toTimeString().slice(0, 5),
+            },
           };
-        });
 
-        // Construir payload del webhook para ESTE usuario
-        const webhookData = {
-          event: "emergency_closure",
-          timestamp: new Date().toISOString(),
-          data: {
-            maintenance_id: maintenance.id,
-            court_id: maintenance.court.id,
-            court_name: maintenance.court.name,
-            court_type: maintenance.court.court_type,
-            all_courts: maintenance.all_courts,
-            start_time: maintenance.start_time,
-            end_time: maintenance.end_time,
-            expected_reopening: maintenance.expected_reopening,
-            reason: maintenance.reason,
-            user_id: userId,
-            user_name: profile?.full_name || "Usuario",
-            user_phone: profile?.phone || "",
-            remotejid: profile?.phone || "",
-            affected_bookings: userAffectedBookings,
-          },
-        };
-
-        // Enviar a cada webhook configurado
-        for (const webhook of webhooks) {
-          try {
-            const headers: Record<string, string> = {
-              "Content-Type": "application/json",
-              ...(webhook.headers as Record<string, string> || {}),
-            };
-            
-            await fetch(webhook.url, {
-              method: "POST",
-              headers,
-              body: JSON.stringify({
-                ...webhookData,
-                webhook_name: webhook.name,
-              }),
-            });
-          } catch (error) {
-            console.error(`Error calling webhook ${webhook.name}:`, error);
+          // Enviar a cada webhook configurado
+          for (const webhook of webhooks) {
+            try {
+              const headers: Record<string, string> = {
+                "Content-Type": "application/json",
+                ...(webhook.headers as Record<string, string> || {}),
+              };
+              
+              await fetch(webhook.url, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                  ...webhookData,
+                  webhook_name: webhook.name,
+                }),
+              });
+              
+              console.log(`✅ Webhook ${webhook.name} enviado para reserva ${booking.id} del usuario ${userId}`);
+            } catch (error) {
+              console.error(`❌ Error calling webhook ${webhook.name}:`, error);
+            }
           }
         }
       }
