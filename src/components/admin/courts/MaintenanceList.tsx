@@ -61,8 +61,7 @@ export function MaintenanceList() {
           all_courts,
           court:courts(id, name, court_type)
         `)
-        .eq("is_active", true)
-        .order("start_time");
+        .order("start_time", { ascending: false }); // Más recientes primero
 
       if (error) throw error;
       return data as MaintenancePeriod[];
@@ -96,10 +95,14 @@ export function MaintenanceList() {
     }
   };
 
-  const getMaintenanceStatus = (startTime: string, endTime: string) => {
+  const getMaintenanceStatus = (startTime: string, endTime: string, isActive: boolean) => {
     const now = new Date();
     const start = new Date(startTime);
     const end = new Date(endTime);
+
+    if (!isActive) {
+      return { status: "cancelado", color: "bg-gray-100 text-gray-600", variant: "outline" as const };
+    }
 
     if (now < start) {
       return { status: "programado", color: "bg-blue-100 text-blue-800", variant: "secondary" as const };
@@ -201,7 +204,8 @@ export function MaintenanceList() {
                 {maintenancePeriods.map((maintenance) => {
                   const { status, variant } = getMaintenanceStatus(
                     maintenance.start_time,
-                    maintenance.end_time
+                    maintenance.end_time,
+                    maintenance.is_active
                   );
                   const { dateText, timeText, type } = formatDateRange(
                     maintenance.start_time,
