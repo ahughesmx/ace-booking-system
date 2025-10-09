@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 type AuthContextType = {
   session: Session | null;
@@ -29,6 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -102,6 +104,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Solo mostrar toast de "Sesión iniciada" si no es la carga inicial 
           // y si es un evento explícito de SIGNED_IN (no un refresh de token)
           if (event === "SIGNED_IN" && !isInitialLoad && currentSession?.user) {
+            // Invalidar queries de reservas para refrescar datos
+            queryClient.invalidateQueries({ queryKey: ["booking-rules"] });
+            queryClient.invalidateQueries({ queryKey: ["available-court-types"] });
+            queryClient.invalidateQueries({ queryKey: ["court-type-settings-all"] });
+            queryClient.invalidateQueries({ queryKey: ["activeBookingsCount"] });
+            
             toast({
               title: "Sesión iniciada",
               description: "Has iniciado sesión exitosamente",
