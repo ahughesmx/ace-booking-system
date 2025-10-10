@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Calendar, Receipt } from "lucide-react";
 import { useIsBookingAffected } from "@/hooks/use-affected-bookings";
+import { useCancellationRules } from "@/hooks/use-cancellation-rules";
 import type { Booking } from "@/types/booking";
 
 interface AffectedBookingActionsProps {
@@ -20,6 +21,9 @@ export function AffectedBookingActions({
 }: AffectedBookingActionsProps) {
   const { data: affectedBooking } = useIsBookingAffected(booking.id);
   const isAffected = !!affectedBooking && !affectedBooking.rescheduled;
+  const { getCancellationAllowed } = useCancellationRules();
+  
+  const isCancellationAllowed = getCancellationAllowed(booking.court?.court_type);
 
   return (
     <div className="flex gap-2">
@@ -45,7 +49,7 @@ export function AffectedBookingActions({
         </Button>
       )}
       
-      {!booking.isSpecial && showCancel && !isAffected && (
+      {!booking.isSpecial && showCancel && !isAffected && isCancellationAllowed && (
         <Button
           variant="outline"
           size="sm"
