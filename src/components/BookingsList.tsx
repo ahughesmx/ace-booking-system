@@ -66,12 +66,17 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     allBookings: allBookings.length 
   });
 
-  // Mostrar TODAS las reservas del día seleccionado (incluso las que ya pasaron)
-  const activeBookings = allBookings;
+  // Filtrar reservas para mostrar solo las futuras o actuales
+  const now = new Date();
+  const activeBookings = allBookings.filter(booking => {
+    const endTime = new Date(booking.end_time);
+    return endTime > now; // Solo mostrar reservas que no han terminado
+  });
 
-  console.log("All bookings for selected day:", {
+  console.log("Filtered active bookings:", {
     total: allBookings.length,
-    date: selectedDate?.toDateString()
+    active: activeBookings.length,
+    currentTime: now.toISOString()
   });
 
   const handleCancelBooking = async (bookingId: string) => {
@@ -284,7 +289,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   }
 
   if (!activeBookings.length) {
-    console.log("No bookings found for selected date, showing empty state");
+    console.log("No active bookings found for selected date, showing empty state");
     return (
       <EmptyBookingsList
         isAuthenticated={true}
@@ -295,7 +300,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     );
   }
 
-  console.log("Showing bookings list with", activeBookings.length, "bookings");
+  console.log("Showing bookings list with", activeBookings.length, "active bookings");
   return (
     <BookingsListContent
       bookings={activeBookings}

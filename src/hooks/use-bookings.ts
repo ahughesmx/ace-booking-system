@@ -24,8 +24,10 @@ export function useBookings(selectedDate?: Date, enabled: boolean = true) {
         startOfDay: startOfDay.toISOString(),
         endOfDay: endOfDay.toISOString(),
         filterStatus: "paid",
-        filterTime: "all_bookings_of_day"
+        filterTime: "future_only"
       });
+
+      const now = new Date().toISOString();
       
       const { data, error } = await supabase
         .from("bookings")
@@ -37,6 +39,7 @@ export function useBookings(selectedDate?: Date, enabled: boolean = true) {
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
         .eq("status", "paid")
+        .gte("end_time", now)
         .order("start_time");
 
       if (error) {
@@ -125,12 +128,15 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
         startOfDay: startOfDay.toISOString(),
         endOfDay: endOfDay.toISOString()
       });
+
+      const now = new Date().toISOString();
       
       const { data, error } = await supabase
         .from("display_bookings_combined")
         .select("*")
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
+        .gte("end_time", now)
         .order("start_time");
 
       if (error) {
