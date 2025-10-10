@@ -20,6 +20,7 @@ type User = {
   phone: string | null;
   role: UserRole;
   email?: string | null;
+  is_active?: boolean;
 };
 
 export default function UserManagement() {
@@ -140,13 +141,28 @@ export default function UserManagement() {
   const handleEditUser = async (userId: string, data: Partial<User & { new_password?: string }>) => {
     try {
       // Update profile information
+      const profileUpdates: any = {
+        full_name: data.full_name,
+        member_id: data.member_id,
+        phone: data.phone,
+      };
+
+      // Handle user activation/deactivation using RPC if status changed
+      if (data.is_active !== undefined) {
+        const { error: statusError } = await supabase.rpc('supervisor_toggle_user_status', {
+          p_user_id_to_toggle: userId,
+          p_new_status: data.is_active
+        });
+
+        if (statusError) {
+          console.error("Error updating user status:", statusError);
+          throw new Error(statusError.message || "No se pudo actualizar el estado del usuario");
+        }
+      }
+
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({
-          full_name: data.full_name,
-          member_id: data.member_id,
-          phone: data.phone,
-        })
+        .update(profileUpdates)
         .eq("id", userId);
 
       if (profileError) throw profileError;

@@ -1695,6 +1695,10 @@ export type Database = {
           member_id: string
         }[]
       }
+      supervisor_toggle_user_status: {
+        Args: { p_new_status: boolean; p_user_id_to_toggle: string }
+        Returns: boolean
+      }
       verify_rate_limit: {
         Args: {
           p_email: string

@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Eye, EyeOff, Mail, Lock, Shield } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Eye, EyeOff, Mail, Lock, Shield, UserX, UserCheck } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
@@ -18,6 +19,7 @@ interface UserEditDialogProps {
     phone: string | null;
     role: UserRole;
     email?: string | null;
+    is_active?: boolean;
   };
   onSubmit: (userId: string, data: any) => Promise<void>;
 }
@@ -38,6 +40,7 @@ export const UserEditDialog = ({ user, onSubmit }: UserEditDialogProps) => {
     email: user.email || "",
     new_password: "",
     role: user.role || "user",
+    is_active: user.is_active !== false,
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -174,6 +177,42 @@ export const UserEditDialog = ({ user, onSubmit }: UserEditDialogProps) => {
               <p className="text-xs text-muted-foreground">
                 Define los permisos de acceso del usuario en el sistema.
               </p>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Estado del usuario */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                Estado de la cuenta
+              </Badge>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="is_active" className="flex items-center gap-2">
+                  {formData.is_active ? (
+                    <UserCheck className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <UserX className="h-4 w-4 text-red-600" />
+                  )}
+                  Cuenta activa
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {formData.is_active 
+                    ? "El usuario puede acceder al sistema normalmente" 
+                    : "El usuario no puede iniciar sesión en el sistema"}
+                </p>
+              </div>
+              <Switch
+                id="is_active"
+                checked={formData.is_active}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, is_active: checked })
+                }
+              />
             </div>
           </div>
 

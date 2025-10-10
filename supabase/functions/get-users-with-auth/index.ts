@@ -36,14 +36,14 @@ serve(async (req) => {
       )
     }
 
-    // Check if user is admin
+    // Check if user is admin or supervisor
     const { data: userRole } = await supabaseClient
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
       .single()
 
-    if (!userRole || userRole.role !== 'admin') {
+    if (!userRole || !['admin', 'supervisor'].includes(userRole.role)) {
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions' }),
         { 
@@ -62,7 +62,7 @@ serve(async (req) => {
     // Get all profiles
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
-      .select('id, full_name, member_id, phone')
+      .select('id, full_name, member_id, phone, is_active')
 
     if (profilesError) {
       throw profilesError
@@ -99,6 +99,7 @@ serve(async (req) => {
         phone: profile.phone,
         role: userRole?.role || 'user',
         email: authUser?.email || null,
+        is_active: profile.is_active !== false,
       }
     })
 
