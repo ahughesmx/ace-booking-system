@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -17,7 +17,7 @@ export function ReschedulingRulesManagement() {
   const [formData, setFormData] = useState<{ [courtType: string]: { allow_rescheduling: boolean; min_hours: number } }>({});
 
   // Initialize form data when rules are loaded
-  useState(() => {
+  useEffect(() => {
     if (allRules && Array.isArray(allRules)) {
       const initialData: { [courtType: string]: { allow_rescheduling: boolean; min_hours: number } } = {};
       allRules.forEach(rule => {
@@ -32,7 +32,7 @@ export function ReschedulingRulesManagement() {
       });
       setFormData(initialData);
     }
-  });
+  }, [allRules]);
 
   const updateRulesMutation = useMutation({
     mutationFn: async (updates: { courtType: string; allow_rescheduling: boolean; min_hours: number }[]) => {
