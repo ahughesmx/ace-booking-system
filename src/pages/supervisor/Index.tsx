@@ -20,10 +20,20 @@ const SupervisorPage = () => {
   };
 
   // Show loading while verifying supervisor access
-  if (isLoading || !isSupervisor) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-lg">Verificando permisos de supervisor...</div>
+      </div>
+    );
+  }
+
+  // The hook already handles redirects for unauthorized users
+  // If we reach here and isSupervisor is true, show the interface
+  if (!isSupervisor) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Redirigiendo...</div>
       </div>
     );
   }
