@@ -13,7 +13,8 @@ import { useBookingRules } from "@/hooks/use-booking-rules";
 import { useIsBookingAffected } from "@/hooks/use-affected-bookings";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-import { useSupervisorAuth } from "@/hooks/use-supervisor-auth";
+import { useGlobalRole } from "@/hooks/use-global-role";
+import { useAuth } from "@/components/AuthProvider";
 import { isSameDay, startOfDay } from "date-fns";
 
 interface RescheduleBookingModalProps {
@@ -37,8 +38,10 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
   const { data: affectedBooking } = useIsBookingAffected(booking.id);
   const isAffectedByEmergency = !!affectedBooking;
   
-  // Check if user is supervisor
-  const { isSupervisor } = useSupervisorAuth();
+  // Check if user is supervisor (without redirect)
+  const { user } = useAuth();
+  const { data: userRole } = useGlobalRole(user?.id);
+  const isSupervisor = userRole?.role === 'supervisor' || userRole?.role === 'admin';
   
   // Get booking rules for the court type
   const { data: bookingRules } = useBookingRules(booking.court?.court_type as 'tennis' | 'padel');
