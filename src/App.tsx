@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import AdminIndex from "./pages/admin/Index";
 import OperatorIndex from "./pages/operator/Index";
 import OperatorReports from "./pages/operator/Reports";
+import SupervisorIndex from "./pages/supervisor/Index";
 import Login from "./pages/auth/Login";
 import Courses from "./pages/Courses";
 import Display from "./pages/Display";
@@ -66,6 +67,7 @@ const AppContent = () => {
         <Route path="/admin" element={<AdminRoute />} />
         <Route path="/operator" element={<OperatorIndex />} />
         <Route path="/operator/reports" element={<OperatorReports />} />
+        <Route path="/supervisor" element={<SupervisorIndex />} />
         <Route path="/display" element={<Display />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
