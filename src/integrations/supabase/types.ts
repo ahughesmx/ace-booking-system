@@ -1662,6 +1662,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      is_admin_or_supervisor: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_family_member: {
         Args: { _target_user_id: string; _user_id: string }
         Returns: boolean
