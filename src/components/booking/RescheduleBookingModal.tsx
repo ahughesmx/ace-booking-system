@@ -77,7 +77,7 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
     return slots;
   }, [courtTypeSettings]);
 
-  // Query to check existing bookings for the selected date
+  // Query to check existing bookings for the selected date (all bookings in court)
   const { data: existingBookings = [] } = useQuery({
     queryKey: ['reschedule-availability', booking.court_id, selectedDate],
     queryFn: async () => {
@@ -91,7 +91,7 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
 
       const { data, error } = await supabase
         .from('bookings')
-        .select('start_time, end_time')
+        .select('start_time, end_time, user_id')
         .eq('court_id', booking.court_id)
         .eq('status', 'paid')
         .neq('id', booking.id) // Exclude current booking
@@ -102,6 +102,26 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
       return data || [];
     },
     enabled: !!selectedDate,
+  });
+
+  // Query to check user's other bookings in the same court (for consecutive/time between validations)
+  const { data: userCourtBookings = [] } = useQuery({
+    queryKey: ['user-court-bookings', booking.user_id, booking.court_id, selectedDate],
+    queryFn: async () => {
+      if (!selectedDate || !booking.user_id) return [];
+
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('start_time, end_time')
+        .eq('court_id', booking.court_id)
+        .eq('user_id', booking.user_id)
+        .eq('status', 'paid')
+        .neq('id', booking.id); // Exclude current booking
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedDate && !!booking.user_id,
   });
 
   // Function to check if a time slot is available
@@ -115,7 +135,7 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
     const slotEnd = new Date(slotStart);
     slotEnd.setHours(slotEnd.getHours() + 1);
 
-    // Check if slot conflicts with existing bookings
+    // Check if slot conflicts with ANY booking (any user)
     const hasConflict = existingBookings.some((existingBooking: any) => {
       const existingStart = new Date(existingBooking.start_time);
       const existingEnd = new Date(existingBooking.end_time);
@@ -127,7 +147,43 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
       );
     });
 
-    return !hasConflict;
+    if (hasConflict) return false;
+
+    // Check consecutive bookings and time between bookings rules for THIS USER
+    if (bookingRules && userCourtBookings.length > 0) {
+      const hasRuleViolation = userCourtBookings.some((userBooking: any) => {
+        const userStart = new Date(userBooking.start_time);
+        const userEnd = new Date(userBooking.end_time);
+
+        // Check consecutive bookings rule
+        if (!bookingRules.allow_consecutive_bookings) {
+          // New slot ends when existing starts (consecutive before)
+          if (slotEnd.getTime() === userStart.getTime()) return true;
+          // New slot starts when existing ends (consecutive after)
+          if (slotStart.getTime() === userEnd.getTime()) return true;
+        }
+
+        // Check time between bookings rule
+        if (bookingRules.time_between_bookings) {
+          const [hours, minutes] = bookingRules.time_between_bookings.split(':').map(Number);
+          const minGapMs = (hours * 60 + minutes) * 60 * 1000;
+
+          // Check if new slot is too close after existing booking
+          const gapAfter = slotStart.getTime() - userEnd.getTime();
+          if (gapAfter > 0 && gapAfter < minGapMs) return true;
+
+          // Check if new slot is too close before existing booking
+          const gapBefore = userStart.getTime() - slotEnd.getTime();
+          if (gapBefore > 0 && gapBefore < minGapMs) return true;
+        }
+
+        return false;
+      });
+
+      if (hasRuleViolation) return false;
+    }
+
+    return true;
   };
 
   const getDisabledDates = (date: Date) => {
