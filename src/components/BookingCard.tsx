@@ -29,7 +29,10 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
 
   const isCancellationAllowed = getCancellationAllowed(booking.court?.court_type);
   const isReschedulingAllowed = canReschedule(booking.start_time, booking.court?.court_type);
-  const isAffectedByEmergency = !!affectedBooking;
+  const isAffectedByEmergency = !!affectedBooking && !affectedBooking.rescheduled;
+  
+  // Permitir reagendar si las reglas lo permiten o si está afectada por cierre/mantenimiento
+  const canShowReschedule = isReschedulingAllowed || isAffectedByEmergency;
 
   const getEventIcon = (eventType?: string) => {
     switch (eventType) {
@@ -65,9 +68,9 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
           <Alert className="mb-3 bg-red-50 border-red-200">
             <AlertTriangle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-sm text-red-800">
-              <strong>¡Cierre Imprevisto!</strong> Esta reserva se ve afectada por un cierre inesperado. 
+              <strong>¡Cierre Imprevisto!</strong> Esta reserva se ve afectada por un cierre imprevisto o mantenimiento programado. 
               {affectedBooking?.maintenance?.reason && ` Motivo: ${affectedBooking.maintenance.reason}.`}
-              {' '}Puede reagendarla sin restricciones.
+              {' '}Puede reagendarla libremente respetando horarios de operación y disponibilidad.
             </AlertDescription>
           </Alert>
         )}
@@ -129,19 +132,19 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
         {/* Botones de acción */}
         {isOwner && !booking.isSpecial && (
           <div className="flex gap-2 justify-end">
-            {isReschedulingAllowed && (
+            {canShowReschedule && (
               <Button
-                variant="outline"
+                variant={isAffectedByEmergency ? "default" : "outline"}
                 size="sm"
                 onClick={() => setIsRescheduleModalOpen(true)}
-                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                className={isAffectedByEmergency ? "bg-yellow-600 hover:bg-yellow-700" : "text-blue-600 border-blue-200 hover:bg-blue-50"}
               >
                 <CalendarClock className="w-4 h-4 mr-1" />
-                Reagendar
+                {isAffectedByEmergency ? "Reagendar Ahora" : "Reagendar"}
               </Button>
             )}
             
-            {isCancellationAllowed && (
+            {isCancellationAllowed && !isAffectedByEmergency && (
               <Button
                 variant="outline"
                 size="sm"
@@ -152,7 +155,7 @@ export function BookingCard({ booking, isOwner, onCancel }: BookingCardProps) {
               </Button>
             )}
             
-            {!isCancellationAllowed && !isReschedulingAllowed && (
+            {!isCancellationAllowed && !canShowReschedule && (
               <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
                 <Zap className="w-5 h-5 text-gray-400" />
               </div>

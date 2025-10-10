@@ -154,8 +154,12 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
     const isToday = isSameDay(startOfDay(new Date()), startOfDay(bookingDate));
     const canBypassRules = isSupervisor && (isAffectedByEmergency || isToday);
 
-    // Additional validation with booking rules (skip for supervisors with special permissions)
-    if (bookingRules && !canBypassRules) {
+    // Si la reserva está afectada por cierre/mantenimiento, permitir reagendar ignorando reglas de tiempo
+    // pero respetando horarios de operación y disponibilidad
+    const skipTimeRules = isAffectedByEmergency || canBypassRules;
+
+    // Additional validation with booking rules (skip time rules for affected bookings)
+    if (bookingRules && !skipTimeRules) {
       const selectedDateTime = new Date(selectedDate);
       selectedDateTime.setHours(parseInt(selectedTime.split(':')[0]), parseInt(selectedTime.split(':')[1]));
       
@@ -208,8 +212,8 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
             <Alert className="border-yellow-500 bg-yellow-50">
               <AlertTriangle className="h-4 w-4 text-yellow-600" />
               <AlertDescription className="text-yellow-800">
-                <strong>Reagendado por cierre imprevisto:</strong> Esta reserva fue afectada por un cierre imprevisto. 
-                Puedes reagendarla sin restricciones de tiempo y sin costo adicional.
+                <strong>Reagendado por cierre imprevisto:</strong> Esta reserva fue afectada por un cierre imprevisto o mantenimiento programado. 
+                Puedes reagendarla libremente respetando horarios de operación y disponibilidad de canchas.
               </AlertDescription>
             </Alert>
           )}

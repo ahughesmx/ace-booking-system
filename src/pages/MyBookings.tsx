@@ -22,6 +22,9 @@ import { format, differenceInHours } from "date-fns";
 import { es } from "date-fns/locale";
 import { TicketReceipt } from "@/components/booking/TicketReceipt";
 import type { Booking } from "@/types/booking";
+import { RescheduleBookingModal } from "@/components/booking/RescheduleBookingModal";
+import { useIsBookingAffected } from "@/hooks/use-affected-bookings";
+import { AffectedBookingActions } from "@/components/booking/AffectedBookingActions";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -32,6 +35,8 @@ export default function MyBookings() {
   const [pastPage, setPastPage] = useState(1);
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [selectedTicketData, setSelectedTicketData] = useState<any>(null);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [selectedBookingToReschedule, setSelectedBookingToReschedule] = useState<Booking | null>(null);
 
   const {
     upcomingBookings,
@@ -84,6 +89,16 @@ export default function MyBookings() {
     
     setSelectedTicketData(ticketData);
     setShowTicketModal(true);
+  };
+
+  const handleRescheduleClick = (booking: Booking) => {
+    setSelectedBookingToReschedule(booking);
+    setShowRescheduleModal(true);
+  };
+
+  const handleCloseReschedule = () => {
+    setShowRescheduleModal(false);
+    setSelectedBookingToReschedule(null);
   };
 
   if (!user) {
@@ -184,27 +199,13 @@ export default function MyBookings() {
                                 )}
                               </TableCell>
                               <TableCell>
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleReprintTicket(booking)}
-                                    className="flex items-center gap-1"
-                                  >
-                                    <Receipt className="h-3 w-3" />
-                                    Ticket
-                                  </Button>
-                                  {!booking.isSpecial && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => cancelBooking(booking.id)}
-                                      className="text-destructive hover:text-destructive-foreground hover:bg-destructive"
-                                    >
-                                      Cancelar
-                                    </Button>
-                                  )}
-                                </div>
+                                <AffectedBookingActions
+                                  booking={booking}
+                                  onReschedule={handleRescheduleClick}
+                                  onReprintTicket={handleReprintTicket}
+                                  onCancel={cancelBooking}
+                                  showCancel={!booking.isSpecial}
+                                />
                               </TableCell>
                             </TableRow>
                           ))}
@@ -244,25 +245,13 @@ export default function MyBookings() {
                               }</div>
                             </div>
                             <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleReprintTicket(booking)}
-                                className="flex items-center gap-1 flex-1"
-                              >
-                                <Receipt className="h-3 w-3" />
-                                Ticket
-                              </Button>
-                              {!booking.isSpecial && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => cancelBooking(booking.id)}
-                                  className="text-destructive hover:text-destructive-foreground hover:bg-destructive flex-1"
-                                >
-                                  Cancelar
-                                </Button>
-                              )}
+                              <AffectedBookingActions
+                                booking={booking}
+                                onReschedule={handleRescheduleClick}
+                                onReprintTicket={handleReprintTicket}
+                                onCancel={cancelBooking}
+                                showCancel={!booking.isSpecial}
+                              />
                             </div>
                           </div>
                         </Card>
@@ -367,17 +356,14 @@ export default function MyBookings() {
                                    </span>
                                  )}
                                </TableCell>
-                               <TableCell>
-                                 <Button
-                                   variant="outline"
-                                   size="sm"
-                                   onClick={() => handleReprintTicket(booking)}
-                                   className="flex items-center gap-1"
-                                 >
-                                   <Receipt className="h-3 w-3" />
-                                   Ticket
-                                 </Button>
-                               </TableCell>
+                                <TableCell>
+                                  <AffectedBookingActions
+                                    booking={booking}
+                                    onReschedule={handleRescheduleClick}
+                                    onReprintTicket={handleReprintTicket}
+                                    showCancel={false}
+                                  />
+                                </TableCell>
                              </TableRow>
                           ))}
                         </TableBody>
@@ -415,15 +401,12 @@ export default function MyBookings() {
                                 (booking.user?.full_name || "Usuario no disponible")
                               }</div>
                             </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleReprintTicket(booking)}
-                              className="flex items-center gap-1 w-full"
-                            >
-                              <Receipt className="h-3 w-3" />
-                              Ticket
-                            </Button>
+                            <AffectedBookingActions
+                              booking={booking}
+                              onReschedule={handleRescheduleClick}
+                              onReprintTicket={handleReprintTicket}
+                              showCancel={false}
+                            />
                           </div>
                         </Card>
                       ))}
@@ -484,6 +467,15 @@ export default function MyBookings() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Modal para reagendar */}
+      {selectedBookingToReschedule && (
+        <RescheduleBookingModal
+          isOpen={showRescheduleModal}
+          onClose={handleCloseReschedule}
+          booking={selectedBookingToReschedule}
+        />
+      )}
     </div>
   );
 }
