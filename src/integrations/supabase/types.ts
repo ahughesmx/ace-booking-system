@@ -1454,7 +1454,6 @@ export type Database = {
     Views: {
       display_bookings_combined: {
         Row: {
-          actual_amount_charged: number | null
           booking_made_at: string | null
           court_id: string | null
           court_name: string | null
@@ -1466,7 +1465,6 @@ export type Database = {
           id: string | null
           is_special: boolean | null
           member_id: string | null
-          payment_method: string | null
           start_time: string | null
           status: string | null
           title: string | null
