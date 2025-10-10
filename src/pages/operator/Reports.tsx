@@ -15,6 +15,10 @@ export default function OperatorReportsPage() {
   
   const isSupervisor = userRole?.role === 'supervisor' || userRole?.role === 'admin';
   
+  // Para operadores regulares, usar su propio user.id
+  // Para supervisores, usar selectedOperatorId (puede ser null para ver todos)
+  const effectiveOperatorId = isSupervisor ? selectedOperatorId : user?.id;
+  
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -84,7 +88,7 @@ export default function OperatorReportsPage() {
                 )}
               </CardHeader>
               <CardContent>
-                <CashReportsOperator operatorId={isSupervisor ? selectedOperatorId : undefined} />
+                <CashReportsOperator operatorId={effectiveOperatorId} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -109,7 +113,7 @@ export default function OperatorReportsPage() {
                 )}
               </CardHeader>
               <CardContent>
-                <DailyReportsOperator operatorId={isSupervisor ? selectedOperatorId : undefined} />
+                <DailyReportsOperator operatorId={effectiveOperatorId} />
               </CardContent>
             </Card>
           </TabsContent>
