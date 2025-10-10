@@ -97,7 +97,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     bookingRules,
     userActiveBookings,
     bookedSlots,
-  } = useBookingLogic(selectedDate, selectedCourtType);
+  } = useBookingLogic(selectedDate, selectedCourtType, isOperator ? selectedUserId : undefined);
 
   console.log('BookingForm - selectedCourtType:', selectedCourtType);
   console.log('BookingForm - availableTypes:', availableTypes);

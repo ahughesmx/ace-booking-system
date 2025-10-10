@@ -72,15 +72,16 @@ function useAllBookingsIncludingPending(selectedDate?: Date) {
   });
 }
 
-export function useBookingLogic(selectedDate?: Date, selectedCourtType?: string | null) {
+export function useBookingLogic(selectedDate?: Date, selectedCourtType?: string | null, forUserId?: string) {
   const { user } = useAuth();
   const { data: allBookingsWithPending = [] } = useAllBookingsIncludingPending(selectedDate);
   const { data: bookingRules } = useBookingRules(selectedCourtType as 'tennis' | 'padel');
 
-  // Use the new hook that counts only non-expired bookings
-  const { data: userActiveBookings = 0 } = useActiveBookingsCount(user?.id);
+  // Use forUserId if provided (for operators), otherwise use logged-in user
+  const targetUserId = forUserId || user?.id;
+  const { data: userActiveBookings = 0 } = useActiveBookingsCount(targetUserId);
 
-  console.log('BookingLogic - Updated active bookings count:', userActiveBookings);
+  console.log('BookingLogic - Checking bookings for userId:', targetUserId, 'count:', userActiveBookings, 'isOperatorMode:', !!forUserId);
 
   // Create set of booked slots for the selected court type (including special bookings and pending payments)
   const bookedSlots = new Set<string>();
