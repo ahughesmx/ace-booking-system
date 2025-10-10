@@ -59,8 +59,8 @@ const MainNav = () => {
     ...(isMenuItemEnabled("menu_ranking") ? [{ label: "Ranking", icon: Trophy, onClick: () => handleNavigation("ranking") }] : []),
   ];
 
-  // Panel de Control solo para admins
-  if (user && !roleLoading && userRole?.role === "admin") {
+  // Panel de Control para admins y supervisores
+  if (user && !roleLoading && (userRole?.role === "admin" || userRole?.role === "supervisor")) {
     navigationItems.push({
       label: "Panel de Control",
       icon: Settings,
@@ -78,6 +78,18 @@ const MainNav = () => {
         navigate("/operator");
       },
     });
+    navigationItems.push({
+      label: "Reportes",
+      icon: Trophy,
+      onClick: () => {
+        setMobileOpen(false);
+        navigate("/operator/reports");
+      },
+    });
+  }
+
+  // Reportes para supervisores
+  if (user && !roleLoading && userRole?.role === "supervisor") {
     navigationItems.push({
       label: "Reportes",
       icon: Trophy,
