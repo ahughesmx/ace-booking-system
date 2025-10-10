@@ -89,11 +89,9 @@ export function CashReportsOperator({ operatorId }: CashReportsOperatorProps = {
         .or(`and(payment_completed_at.gte.${startOfDayUTC},payment_completed_at.lte.${endOfDayUTC}),and(payment_completed_at.is.null,booking_made_at.gte.${startOfDayUTC},booking_made_at.lte.${endOfDayUTC})`);
       
       // Si se especifica un operador, filtrar por processed_by
+      // Si operatorId es null, mostrar todos los operadores (para supervisores)
       if (operatorId) {
         query = query.eq('processed_by', operatorId);
-      } else if (!operatorId && user) {
-        // Si no hay operador especificado, solo mostrar los del usuario actual (comportamiento por defecto)
-        query = query.eq('processed_by', user.id);
       }
       
       const { data, error } = await query.order('payment_completed_at', { ascending: false });
