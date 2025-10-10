@@ -57,15 +57,17 @@ export default function OperatorReportsPage() {
         </div>
 
         <Tabs defaultValue="cash" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className={`grid w-full ${isSupervisor ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <TabsTrigger value="cash" className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               Cobros en Ventanilla
             </TabsTrigger>
-            <TabsTrigger value="daily" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Cobros del Día
-            </TabsTrigger>
+            {isSupervisor && (
+              <TabsTrigger value="daily" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Cobros del Día
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="cash">
@@ -93,30 +95,27 @@ export default function OperatorReportsPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="daily">
-            <Card>
-              <CardHeader>
-                <CardTitle>Reporte de Cobros del Día</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {isSupervisor
-                    ? "Incluye todos los cobros del día de todos los operadores o filtrados por operador específico"
-                    : "Incluye todos los cobros del día de todos los usuarios y métodos de pago"
-                  }
-                </p>
-                {isSupervisor && (
+          {isSupervisor && (
+            <TabsContent value="daily">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Reporte de Cobros del Día</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Incluye todos los cobros del día de todos los operadores o filtrados por operador específico
+                  </p>
                   <div className="mt-4">
                     <SupervisorReportsFilters 
                       onOperatorChange={setSelectedOperatorId}
                       selectedOperatorId={selectedOperatorId}
                     />
                   </div>
-                )}
-              </CardHeader>
-              <CardContent>
-                <DailyReportsOperator operatorId={effectiveOperatorId} />
-              </CardContent>
-            </Card>
-          </TabsContent>
+                </CardHeader>
+                <CardContent>
+                  <DailyReportsOperator operatorId={effectiveOperatorId} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
