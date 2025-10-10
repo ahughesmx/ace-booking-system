@@ -248,7 +248,9 @@ export function BookingSummary({
                         {isProcessing ? (
                           gateway.name === 'efectivo' ? 'Procesando pago en ventanilla...' : 'Procesando...'
                         ) : (
-                          gateway.name === 'stripe' ? 'Pagar con tarjeta' : gateway.name
+                          gateway.name === 'stripe' ? 'Pagar con tarjeta' : 
+                          gateway.name === 'efectivo' ? 'Pago en Ventanilla' : 
+                          gateway.name
                         )}
                       </span>
                       {gateway.test_mode && !isProcessing && (
