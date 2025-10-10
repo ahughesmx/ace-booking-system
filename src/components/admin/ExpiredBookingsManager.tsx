@@ -63,7 +63,7 @@ export function ExpiredBookingsManager() {
 
       toast({
         title: "Reserva rescatada",
-        description: `Reserva marcada como pagada en efectivo. Folio: ${receiptData}`,
+        description: `Reserva marcada como pagada en ventanilla. Folio: ${receiptData}`,
       });
 
       queryClient.invalidateQueries({ queryKey: ["expired-bookings"] });
@@ -145,7 +145,7 @@ export function ExpiredBookingsManager() {
                     onClick={() => markAsPaidCash(booking.id)}
                     disabled={processing === booking.id}
                   >
-                    {processing === booking.id ? "Procesando..." : "Marcar como Pagada (Efectivo)"}
+                    {processing === booking.id ? "Procesando..." : "Marcar como Pagada (Ventanilla)"}
                   </Button>
                   <Button
                     size="sm"

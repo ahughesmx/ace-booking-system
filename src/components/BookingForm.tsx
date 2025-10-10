@@ -285,7 +285,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
           time: selectedTime!,
           duration: 1,
           amount: result.amount || 0,
-          paymentMethod: 'Efectivo',
+          paymentMethod: 'Pago en Ventanilla',
           userName: selectedUserName,
           operatorName: user?.user_metadata?.full_name || user?.email || 'Operador',
           receiptNumber: finalReceiptNumber

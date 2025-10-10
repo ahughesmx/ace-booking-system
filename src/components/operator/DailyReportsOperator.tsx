@@ -216,7 +216,7 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
         booking.user?.full_name || 'N/A',
         booking.user?.member_id || 'N/A',
         booking.court?.name || 'N/A',
-        (booking.payment_method === 'efectivo' || booking.payment_method === 'cash') ? 'Efectivo' : 'En Línea',
+        (booking.payment_method === 'efectivo' || booking.payment_method === 'cash') ? 'Pago en Ventanilla' : 'En Línea',
         booking.processed_by_user?.full_name || 'Sistema',
         formatCurrency(amount)
       ];
@@ -246,7 +246,7 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
       cliente: booking.user?.full_name || 'N/A',
       membresia: booking.user?.member_id || 'N/A',
       cancha: booking.court?.name || 'N/A',
-      metodo_pago: (booking.payment_method === 'efectivo' || booking.payment_method === 'cash') ? 'Efectivo' : 'En línea',
+      metodo_pago: (booking.payment_method === 'efectivo' || booking.payment_method === 'cash') ? 'Pago en Ventanilla' : 'En línea',
       procesado_por: booking.processed_by_user?.full_name || 'Sistema',
       monto: booking.actual_amount_charged || booking.amount || 0
     }));
@@ -268,7 +268,7 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
         { header: 'Monto', dataKey: 'monto', width: 16 }
       ],
       summary: [
-        { label: 'Total efectivo:', value: formatCurrency(summary.cashTotal) },
+        { label: 'Total ventanilla:', value: formatCurrency(summary.cashTotal) },
         { label: 'Total en línea:', value: formatCurrency(summary.onlineTotal) },
         { label: 'Total general:', value: formatCurrency(summary.total) },
         { label: 'Número de reservas:', value: summary.count.toString() }
@@ -280,7 +280,7 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
 
   const getPaymentMethodBadge = (method: string) => {
     return (method === 'efectivo' || method === 'cash') ? (
-      <Badge variant="secondary">Efectivo</Badge>
+      <Badge variant="secondary">Pago en Ventanilla</Badge>
     ) : (
       <Badge variant="default">En Línea</Badge>
     );
@@ -314,7 +314,7 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Efectivo</CardTitle>
+            <CardTitle className="text-sm font-medium">Ventanilla</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">

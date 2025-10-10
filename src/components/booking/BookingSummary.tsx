@@ -246,7 +246,7 @@ export function BookingSummary({
                       )}
                       <span className="capitalize flex-1 text-left">
                         {isProcessing ? (
-                          gateway.name === 'efectivo' ? 'Procesando pago en efectivo...' : 'Procesando...'
+                          gateway.name === 'efectivo' ? 'Procesando pago en ventanilla...' : 'Procesando...'
                         ) : (
                           gateway.name === 'stripe' ? 'Pagar con tarjeta' : gateway.name
                         )}

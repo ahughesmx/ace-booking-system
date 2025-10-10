@@ -52,7 +52,7 @@ export default function TicketReprint() {
       time: format(startTime, "HH:mm"),
       duration: Math.round(duration),
       amount: booking.actual_amount_charged || booking.amount || 0,
-      paymentMethod: booking.payment_method === 'efectivo' ? 'Efectivo' : 
+      paymentMethod: booking.payment_method === 'efectivo' ? 'Pago en Ventanilla' : 
                     booking.payment_method === 'online' ? 'Tarjeta' : 
                     booking.payment_method || 'N/A',
       userName: booking.user?.full_name || 'N/A',
@@ -163,7 +163,7 @@ export default function TicketReprint() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Todos los métodos</SelectItem>
-                      <SelectItem value="efectivo">Efectivo</SelectItem>
+                      <SelectItem value="efectivo">Pago en Ventanilla</SelectItem>
                       <SelectItem value="online">Tarjeta</SelectItem>
                     </SelectContent>
                   </Select>
@@ -259,7 +259,7 @@ export default function TicketReprint() {
                                   ${(ticket.actual_amount_charged || ticket.amount || 0).toFixed(2)}
                                 </p>
                                 <p className="text-sm text-gray-500 capitalize">
-                                  {ticket.payment_method === 'efectivo' ? 'Efectivo' : 
+                                  {ticket.payment_method === 'efectivo' ? 'Pago en Ventanilla' : 
                                    ticket.payment_method === 'online' ? 'Tarjeta' : 
                                    ticket.payment_method}
                                 </p>

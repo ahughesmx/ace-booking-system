@@ -542,7 +542,7 @@ export function useBookingPayment() {
 
         toast({
           title: "¡Pago exitoso!",
-          description: paymentGateway === 'efectivo' ? "Reserva confirmada - Pago en efectivo recibido" : "Tu reserva ha sido confirmada correctamente.",
+          description: paymentGateway === 'efectivo' ? "Reserva confirmada - Pago en ventanilla recibido" : "Tu reserva ha sido confirmada correctamente.",
         });
 
         setPendingBooking(null);

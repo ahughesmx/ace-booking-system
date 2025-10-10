@@ -60,7 +60,7 @@ export default function OperatorReportsPage() {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="cash" className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
-              Cobros en Efectivo
+              Cobros en Ventanilla
             </TabsTrigger>
             <TabsTrigger value="daily" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
@@ -71,11 +71,11 @@ export default function OperatorReportsPage() {
           <TabsContent value="cash">
             <Card>
               <CardHeader>
-                <CardTitle>Reporte de Cobros en Efectivo</CardTitle>
+                <CardTitle>Reporte de Cobros en Ventanilla</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   {isSupervisor 
-                    ? "Muestra los cobros en efectivo de todos los operadores o filtrados por operador específico"
-                    : "Muestra únicamente los cobros en efectivo realizados por ti"
+                    ? "Muestra los cobros en ventanilla de todos los operadores o filtrados por operador específico"
+                    : "Muestra únicamente los cobros en ventanilla realizados por ti"
                   }
                 </p>
                 {isSupervisor && (

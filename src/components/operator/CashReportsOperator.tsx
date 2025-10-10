@@ -159,7 +159,7 @@ export function CashReportsOperator({ operatorId }: CashReportsOperatorProps = {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `cobros_efectivo_${selectedDate}.csv`);
+    link.setAttribute('download', `cobros_ventanilla_${selectedDate}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -179,7 +179,7 @@ export function CashReportsOperator({ operatorId }: CashReportsOperatorProps = {
     }));
 
     exportToPDF({
-      title: 'Reporte de Cobros en Efectivo',
+      title: 'Reporte de Cobros en Ventanilla',
       subtitle: `Fecha de Cobro: ${format(new Date(selectedDate), 'dd/MM/yyyy', { locale: es })}`,
       data: pdfData,
       columns: [
@@ -197,7 +197,7 @@ export function CashReportsOperator({ operatorId }: CashReportsOperatorProps = {
         { label: 'Número de reservas:', value: bookings.length.toString() }
       ],
       generatedBy: user?.user_metadata?.full_name || 'Operador',
-      fileName: `cobros_efectivo_${selectedDate}.pdf`
+      fileName: `cobros_ventanilla_${selectedDate}.pdf`
     });
   };
 
@@ -229,7 +229,7 @@ export function CashReportsOperator({ operatorId }: CashReportsOperatorProps = {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Total de Cobros en Efectivo</span>
+            <span>Total de Cobros en Ventanilla</span>
             <span className="text-2xl font-bold text-primary">
               {formatCurrency(total)}
             </span>
@@ -259,7 +259,7 @@ export function CashReportsOperator({ operatorId }: CashReportsOperatorProps = {
             ) : bookings.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  No hay cobros en efectivo para la fecha seleccionada
+                  No hay cobros en ventanilla para la fecha seleccionada
                 </TableCell>
               </TableRow>
             ) : (
