@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { RescheduleBookingModal } from "@/components/booking/RescheduleBookingModal";
 import { useToast } from "@/hooks/use-toast";
+import { getStartOfDateMexicoCityISO, getEndOfDateMexicoCityISO } from "@/utils/timezone";
 import type { Booking } from "@/types/booking";
 
 export function SupervisorBookings() {
@@ -25,11 +26,15 @@ export function SupervisorBookings() {
   const { data: bookings, isLoading } = useQuery({
     queryKey: ['supervisor-bookings', selectedDate],
     queryFn: async () => {
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
+      // Usar funciones de timezone correctas para México
+      const startOfDayUTC = getStartOfDateMexicoCityISO(selectedDate);
+      const endOfDayUTC = getEndOfDateMexicoCityISO(selectedDate);
+
+      console.log('🔍 SupervisorBookings - Filtro de fechas:', {
+        selectedDate,
+        startOfDayUTC,
+        endOfDayUTC
+      });
 
       const { data, error } = await supabase
         .from('bookings')
@@ -46,12 +51,14 @@ export function SupervisorBookings() {
             court_type
           )
         `)
-        .gte('start_time', startOfDay.toISOString())
-        .lte('start_time', endOfDay.toISOString())
+        .gte('start_time', startOfDayUTC)
+        .lte('start_time', endOfDayUTC)
         .in('status', ['paid', 'pending_payment'])
         .order('start_time', { ascending: true });
 
       if (error) throw error;
+
+      console.log('📊 SupervisorBookings - Reservas encontradas:', data?.length || 0);
 
       return (data || []).map((booking) => ({
         ...booking,
