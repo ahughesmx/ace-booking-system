@@ -2,10 +2,9 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase-client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import type { Booking } from "@/types/booking";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
@@ -16,6 +15,7 @@ import { AlertTriangle } from "lucide-react";
 import { useGlobalRole } from "@/hooks/use-global-role";
 import { useAuth } from "@/components/AuthProvider";
 import { isSameDay, startOfDay } from "date-fns";
+import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 
 interface RescheduleBookingModalProps {
   isOpen: boolean;
@@ -45,6 +45,59 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
   
   // Get booking rules for the court type
   const { data: bookingRules } = useBookingRules(booking.court?.court_type as 'tennis' | 'padel');
+
+  // Query to check existing bookings for the selected date
+  const { data: existingBookings = [] } = useQuery({
+    queryKey: ['reschedule-availability', booking.court_id, selectedDate],
+    queryFn: async () => {
+      if (!selectedDate) return [];
+      
+      const startOfDate = new Date(selectedDate);
+      startOfDate.setHours(0, 0, 0, 0);
+      
+      const endOfDate = new Date(selectedDate);
+      endOfDate.setHours(23, 59, 59, 999);
+
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('start_time, end_time')
+        .eq('court_id', booking.court_id)
+        .eq('status', 'paid')
+        .neq('id', booking.id) // Exclude current booking
+        .gte('start_time', startOfDate.toISOString())
+        .lte('start_time', endOfDate.toISOString());
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedDate,
+  });
+
+  // Function to check if a time slot is available
+  const isTimeSlotAvailable = (time: string) => {
+    if (!selectedDate) return false;
+
+    const [hours] = time.split(':').map(Number);
+    const slotStart = new Date(selectedDate);
+    slotStart.setHours(hours, 0, 0, 0);
+    
+    const slotEnd = new Date(slotStart);
+    slotEnd.setHours(slotEnd.getHours() + 1);
+
+    // Check if slot conflicts with existing bookings
+    const hasConflict = existingBookings.some((existingBooking: any) => {
+      const existingStart = new Date(existingBooking.start_time);
+      const existingEnd = new Date(existingBooking.end_time);
+      
+      return (
+        (slotStart >= existingStart && slotStart < existingEnd) ||
+        (slotEnd > existingStart && slotEnd <= existingEnd) ||
+        (slotStart <= existingStart && slotEnd >= existingEnd)
+      );
+    });
+
+    return !hasConflict;
+  };
 
   const getDisabledDates = (date: Date) => {
     const today = new Date();
@@ -251,18 +304,13 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
 
           <div>
             <h4 className="text-sm font-medium mb-2">Nueva hora</h4>
-            <Select value={selectedTime} onValueChange={setSelectedTime}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona una hora" />
-              </SelectTrigger>
-              <SelectContent>
-                {timeSlots.map((time) => (
-                  <SelectItem key={time} value={time}>
-                    {time}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <TimeSlotPicker
+              availableTimeSlots={timeSlots}
+              selectedTime={selectedTime}
+              selectedCourt={booking.court_id}
+              isTimeSlotAvailable={isTimeSlotAvailable}
+              onTimeSelect={setSelectedTime}
+            />
           </div>
         </div>
 
