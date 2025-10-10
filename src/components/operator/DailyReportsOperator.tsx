@@ -238,7 +238,14 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
   };
 
   const exportToPDFReport = () => {
-    const pdfData = bookings.map(booking => ({
+    // Sort bookings by payment time in ascending order
+    const sortedBookings = [...bookings].sort((a, b) => {
+      const timeA = new Date(a.booking_made_at).getTime();
+      const timeB = new Date(b.booking_made_at).getTime();
+      return timeA - timeB;
+    });
+
+    const pdfData = sortedBookings.map(booking => ({
       fecha_cobro: format(new Date(booking.booking_made_at), 'dd/MM/yyyy', { locale: es }),
       hora_cobro: format(new Date(booking.booking_made_at), 'HH:mm', { locale: es }),
       fecha_reservacion: format(new Date(booking.start_time), 'dd/MM/yyyy', { locale: es }),
