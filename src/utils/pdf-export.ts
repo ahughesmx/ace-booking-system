@@ -90,9 +90,9 @@ export function exportToPDF(options: PDFExportOptions) {
     width: col.width
   }));
 
-  // Calculate 95% of available width
+  // Calculate 98% of available width
   const availableWidth = pageWidth - (margin * 2);
-  const tableWidth = availableWidth * 0.95;
+  const tableWidth = availableWidth * 0.98;
 
   autoTable(doc, {
     startY: yPosition,
