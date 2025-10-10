@@ -90,6 +90,10 @@ export function exportToPDF(options: PDFExportOptions) {
     width: col.width
   }));
 
+  // Calculate 90% of available width
+  const availableWidth = pageWidth - (margin * 2);
+  const tableWidth = availableWidth * 0.9;
+
   autoTable(doc, {
     startY: yPosition,
     head: [tableColumns.map(col => col.header)],
@@ -125,7 +129,7 @@ export function exportToPDF(options: PDFExportOptions) {
       fillColor: [248, 248, 248],
     },
     margin: { left: margin, right: margin },
-    tableWidth: 'wrap',
+    tableWidth: tableWidth,
     columnStyles: tableColumns.reduce((acc, col, index) => {
       if (col.width) {
         acc[index] = { cellWidth: col.width };
