@@ -4,6 +4,7 @@ import { SupervisorLayout } from "@/components/supervisor/SupervisorLayout";
 import UserManagement from "@/components/admin/UserManagement";
 import { SupervisorReports } from "@/components/supervisor/SupervisorReports";
 import { SupervisorBookings } from "@/components/supervisor/SupervisorBookings";
+import CourtManagement from "@/components/admin/CourtManagement";
 
 const SupervisorPage = () => {
   const { isSupervisor, isLoading } = useSupervisorAuth();
@@ -15,6 +16,8 @@ const SupervisorPage = () => {
         return <UserManagement />;
       case "bookings":
         return <SupervisorBookings />;
+      case "courts":
+        return <CourtManagement />;
       case "reports":
         return <SupervisorReports />;
       default:
