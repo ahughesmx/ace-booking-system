@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -16,17 +16,13 @@ import { useGlobalRole } from "@/hooks/use-global-role";
 import { useAuth } from "@/components/AuthProvider";
 import { isSameDay, startOfDay } from "date-fns";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
+import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 
 interface RescheduleBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   booking: Booking;
 }
-
-const timeSlots = [
-  "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
-  "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"
-];
 
 export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleBookingModalProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date(booking.start_time));
@@ -45,6 +41,41 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
   
   // Get booking rules for the court type
   const { data: bookingRules } = useBookingRules(booking.court?.court_type as 'tennis' | 'padel');
+  
+  // Get court type settings to generate dynamic time slots
+  const { data: courtTypeSettings } = useCourtTypeSettings(booking.court?.court_type as 'tennis' | 'padel');
+
+  // Generate time slots dynamically based on operating hours
+  const timeSlots = useMemo(() => {
+    if (!courtTypeSettings) {
+      // Fallback to default slots if settings not loaded
+      return [
+        "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
+        "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"
+      ];
+    }
+
+    // Handle both single object and array responses
+    const settings = Array.isArray(courtTypeSettings) ? courtTypeSettings[0] : courtTypeSettings;
+    
+    if (!settings?.operating_hours_start || !settings?.operating_hours_end) {
+      // Fallback if settings incomplete
+      return [
+        "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
+        "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"
+      ];
+    }
+
+    const slots: string[] = [];
+    const startHour = parseInt(settings.operating_hours_start.split(':')[0]);
+    const endHour = parseInt(settings.operating_hours_end.split(':')[0]);
+
+    for (let hour = startHour; hour < endHour; hour++) {
+      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    }
+
+    return slots;
+  }, [courtTypeSettings]);
 
   // Query to check existing bookings for the selected date
   const { data: existingBookings = [] } = useQuery({
