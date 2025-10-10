@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import MainNav from "@/components/MainNav";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, FileBarChart } from "lucide-react";
+import { Users, FileBarChart, Calendar } from "lucide-react";
 
 interface SupervisorLayoutProps {
   children: ReactNode;
@@ -17,7 +17,7 @@ export function SupervisorLayout({ children, activeTab, onTabChange }: Superviso
         <div className="mb-6">
           <h1 className="text-3xl font-bold tracking-tight mb-2">Panel de Supervisor</h1>
           <p className="text-muted-foreground">
-            Gestiona usuarios y revisa reportes de operadores
+            Gestiona usuarios, reservas y revisa reportes de operadores
           </p>
         </div>
 
@@ -26,6 +26,10 @@ export function SupervisorLayout({ children, activeTab, onTabChange }: Superviso
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Gestión de Usuarios
+            </TabsTrigger>
+            <TabsTrigger value="bookings" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Reservas
             </TabsTrigger>
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <FileBarChart className="h-4 w-4" />

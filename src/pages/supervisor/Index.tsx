@@ -3,6 +3,7 @@ import { useSupervisorAuth } from "@/hooks/use-supervisor-auth";
 import { SupervisorLayout } from "@/components/supervisor/SupervisorLayout";
 import UserManagement from "@/components/admin/UserManagement";
 import { SupervisorReports } from "@/components/supervisor/SupervisorReports";
+import { SupervisorBookings } from "@/components/supervisor/SupervisorBookings";
 
 const SupervisorPage = () => {
   const { isSupervisor, isLoading } = useSupervisorAuth();
@@ -12,6 +13,8 @@ const SupervisorPage = () => {
     switch (activeTab) {
       case "users":
         return <UserManagement />;
+      case "bookings":
+        return <SupervisorBookings />;
       case "reports":
         return <SupervisorReports />;
       default:
