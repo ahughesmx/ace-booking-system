@@ -256,16 +256,16 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
       subtitle: `Fecha de Cobro: ${format(new Date(selectedDate), 'dd/MM/yyyy', { locale: es })}`,
       data: pdfData,
       columns: [
-        { header: 'Fecha Cobro', dataKey: 'fecha_cobro', width: 16 },
-        { header: 'Hora Cobro', dataKey: 'hora_cobro', width: 14 },
-        { header: 'Fecha Reservación', dataKey: 'fecha_reservacion', width: 16 },
-        { header: 'Hora Reservación', dataKey: 'hora_reservacion', width: 20 },
-        { header: 'Cliente', dataKey: 'cliente', width: 30 },
-        { header: 'Membresía', dataKey: 'membresia', width: 16 },
-        { header: 'Cancha', dataKey: 'cancha', width: 18 },
-        { header: 'Método', dataKey: 'metodo_pago', width: 16 },
-        { header: 'Procesado Por', dataKey: 'procesado_por', width: 26 },
-        { header: 'Monto', dataKey: 'monto', width: 16 }
+        { header: 'Fecha Cobro', dataKey: 'fecha_cobro' },
+        { header: 'Hora Cobro', dataKey: 'hora_cobro' },
+        { header: 'Fecha Reservación', dataKey: 'fecha_reservacion' },
+        { header: 'Hora Reservación', dataKey: 'hora_reservacion' },
+        { header: 'Cliente', dataKey: 'cliente' },
+        { header: 'Membresía', dataKey: 'membresia' },
+        { header: 'Cancha', dataKey: 'cancha' },
+        { header: 'Método', dataKey: 'metodo_pago' },
+        { header: 'Procesado Por', dataKey: 'procesado_por' },
+        { header: 'Monto', dataKey: 'monto' }
       ],
       summary: [
         { label: 'Total ventanilla:', value: formatCurrency(summary.cashTotal) },
@@ -274,7 +274,8 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
         { label: 'Número de reservas:', value: summary.count.toString() }
       ],
       generatedBy: user?.user_metadata?.full_name || 'Operador',
-      fileName: `cobros_diarios_${selectedDate}.pdf`
+      fileName: `cobros_diarios_${selectedDate}.pdf`,
+      orientation: 'landscape'
     });
   };
 

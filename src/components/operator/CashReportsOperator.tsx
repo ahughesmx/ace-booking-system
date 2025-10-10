@@ -183,21 +183,22 @@ export function CashReportsOperator({ operatorId }: CashReportsOperatorProps = {
       subtitle: `Fecha de Cobro: ${format(new Date(selectedDate), 'dd/MM/yyyy', { locale: es })}`,
       data: pdfData,
       columns: [
-        { header: 'Fecha Cobro', dataKey: 'fecha_cobro', width: 18 },
-        { header: 'Hora Cobro', dataKey: 'hora_cobro', width: 16 },
-        { header: 'Fecha Reservación', dataKey: 'fecha_reservacion', width: 18 },
-        { header: 'Hora Reservación', dataKey: 'hora_reservacion', width: 24 },
-        { header: 'Cliente', dataKey: 'cliente', width: 35 },
-        { header: 'Membresía', dataKey: 'membresia', width: 18 },
-        { header: 'Cancha', dataKey: 'cancha', width: 20 },
-        { header: 'Monto', dataKey: 'monto', width: 18 }
+        { header: 'Fecha Cobro', dataKey: 'fecha_cobro' },
+        { header: 'Hora Cobro', dataKey: 'hora_cobro' },
+        { header: 'Fecha Reservación', dataKey: 'fecha_reservacion' },
+        { header: 'Hora Reservación', dataKey: 'hora_reservacion' },
+        { header: 'Cliente', dataKey: 'cliente' },
+        { header: 'Membresía', dataKey: 'membresia' },
+        { header: 'Cancha', dataKey: 'cancha' },
+        { header: 'Monto', dataKey: 'monto' }
       ],
       summary: [
         { label: 'Total de cobros:', value: formatCurrency(total) },
         { label: 'Número de reservas:', value: bookings.length.toString() }
       ],
       generatedBy: user?.user_metadata?.full_name || 'Operador',
-      fileName: `cobros_ventanilla_${selectedDate}.pdf`
+      fileName: `cobros_ventanilla_${selectedDate}.pdf`,
+      orientation: 'landscape'
     });
   };
 

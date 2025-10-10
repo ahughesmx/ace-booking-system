@@ -18,12 +18,17 @@ interface PDFExportOptions {
   summary?: { label: string; value: string }[];
   generatedBy?: string;
   fileName: string;
+  orientation?: 'portrait' | 'landscape';
 }
 
 export function exportToPDF(options: PDFExportOptions) {
-  const { title, subtitle, data, columns, summary, generatedBy, fileName } = options;
+  const { title, subtitle, data, columns, summary, generatedBy, fileName, orientation = 'portrait' } = options;
   
-  const doc = new jsPDF();
+  const doc = new jsPDF({
+    orientation: orientation,
+    unit: 'mm',
+    format: 'a4'
+  });
   const pageWidth = doc.internal.pageSize.width;
   const margin = 20;
   let yPosition = margin;
@@ -103,16 +108,17 @@ export function exportToPDF(options: PDFExportOptions) {
       })
     ),
     styles: {
-      fontSize: 8,
+      fontSize: orientation === 'landscape' ? 7 : 8,
       cellPadding: 2,
       lineWidth: 0.1,
       lineColor: [200, 200, 200],
+      overflow: 'linebreak',
     },
     headStyles: {
       fillColor: [41, 128, 185],
       textColor: 255,
       fontStyle: 'bold',
-      fontSize: 9,
+      fontSize: orientation === 'landscape' ? 8 : 9,
       cellPadding: 3,
     },
     alternateRowStyles: {
