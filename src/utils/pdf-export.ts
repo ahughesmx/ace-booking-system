@@ -20,10 +20,11 @@ interface PDFExportOptions {
   fileName: string;
   orientation?: 'portrait' | 'landscape';
   tableWidthPercent?: number;
+  fontSizeScale?: number;
 }
 
 export function exportToPDF(options: PDFExportOptions) {
-  const { title, subtitle, data, columns, summary, generatedBy, fileName, orientation = 'portrait', tableWidthPercent = 0.98 } = options;
+  const { title, subtitle, data, columns, summary, generatedBy, fileName, orientation = 'portrait', tableWidthPercent = 0.98, fontSizeScale = 1.0 } = options;
   
   const doc = new jsPDF({
     orientation: orientation,
@@ -113,7 +114,7 @@ export function exportToPDF(options: PDFExportOptions) {
       })
     ),
     styles: {
-      fontSize: orientation === 'landscape' ? 7 : 8,
+      fontSize: Math.round((orientation === 'landscape' ? 7 : 8) * fontSizeScale),
       cellPadding: 2,
       lineWidth: 0.1,
       lineColor: [200, 200, 200],
@@ -123,7 +124,7 @@ export function exportToPDF(options: PDFExportOptions) {
       fillColor: [41, 128, 185],
       textColor: 255,
       fontStyle: 'bold',
-      fontSize: orientation === 'landscape' ? 8 : 9,
+      fontSize: Math.round((orientation === 'landscape' ? 8 : 9) * fontSizeScale),
       cellPadding: 3,
     },
     alternateRowStyles: {

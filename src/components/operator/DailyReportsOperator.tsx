@@ -275,7 +275,8 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
       ],
       generatedBy: user?.user_metadata?.full_name || 'Operador',
       fileName: `cobros_diarios_${selectedDate}.pdf`,
-      tableWidthPercent: 1.0
+      tableWidthPercent: 1.0,
+      fontSizeScale: 0.9
     });
   };
 
