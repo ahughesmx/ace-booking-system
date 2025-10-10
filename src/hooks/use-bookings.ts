@@ -24,10 +24,8 @@ export function useBookings(selectedDate?: Date, enabled: boolean = true) {
         startOfDay: startOfDay.toISOString(),
         endOfDay: endOfDay.toISOString(),
         filterStatus: "paid",
-        filterTime: "future_only"
+        filterTime: "all_bookings_of_day"
       });
-
-      const now = new Date().toISOString();
       
       const { data, error } = await supabase
         .from("bookings")
@@ -39,7 +37,6 @@ export function useBookings(selectedDate?: Date, enabled: boolean = true) {
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
         .eq("status", "paid")
-        .gte("end_time", now)
         .order("start_time");
 
       if (error) {
@@ -128,15 +125,12 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
         startOfDay: startOfDay.toISOString(),
         endOfDay: endOfDay.toISOString()
       });
-
-      const now = new Date().toISOString();
       
       const { data, error } = await supabase
         .from("display_bookings_combined")
         .select("*")
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
-        .gte("end_time", now)
         .order("start_time");
 
       if (error) {
@@ -168,8 +162,8 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
           end_time: booking.end_time,
           created_at: booking.created_at,
           booking_made_at: booking.booking_made_at,
-          payment_method: booking.payment_method || 'admin',
-          actual_amount_charged: booking.actual_amount_charged,
+          payment_method: 'admin',
+          actual_amount_charged: null,
           user: booking.user_full_name ? {
             full_name: booking.user_full_name,
             member_id: booking.member_id || ''
@@ -194,8 +188,8 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
           end_time: booking.end_time,
           created_at: booking.created_at,
           booking_made_at: booking.booking_made_at,
-          payment_method: booking.payment_method || 'online',
-          actual_amount_charged: booking.actual_amount_charged,
+          payment_method: 'online',
+          actual_amount_charged: null,
           user: booking.user_full_name ? {
             full_name: booking.user_full_name,
             member_id: booking.member_id || ''
