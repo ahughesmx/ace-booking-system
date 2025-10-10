@@ -274,7 +274,8 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
         { label: 'Número de reservas:', value: summary.count.toString() }
       ],
       generatedBy: user?.user_metadata?.full_name || 'Operador',
-      fileName: `cobros_diarios_${selectedDate}.pdf`
+      fileName: `cobros_diarios_${selectedDate}.pdf`,
+      tableWidthPercent: 1.0
     });
   };
 

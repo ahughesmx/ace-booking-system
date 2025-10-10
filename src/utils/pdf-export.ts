@@ -19,10 +19,11 @@ interface PDFExportOptions {
   generatedBy?: string;
   fileName: string;
   orientation?: 'portrait' | 'landscape';
+  tableWidthPercent?: number;
 }
 
 export function exportToPDF(options: PDFExportOptions) {
-  const { title, subtitle, data, columns, summary, generatedBy, fileName, orientation = 'portrait' } = options;
+  const { title, subtitle, data, columns, summary, generatedBy, fileName, orientation = 'portrait', tableWidthPercent = 0.98 } = options;
   
   const doc = new jsPDF({
     orientation: orientation,
@@ -90,9 +91,9 @@ export function exportToPDF(options: PDFExportOptions) {
     width: col.width
   }));
 
-  // Calculate 98% of available width
+  // Calculate table width based on percentage
   const availableWidth = pageWidth - (margin * 2);
-  const tableWidth = availableWidth * 0.98;
+  const tableWidth = availableWidth * tableWidthPercent;
 
   autoTable(doc, {
     startY: yPosition,
