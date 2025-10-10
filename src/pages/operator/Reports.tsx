@@ -6,10 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CashReportsOperator } from "@/components/operator/CashReportsOperator";
 import { DailyReportsOperator } from "@/components/operator/DailyReportsOperator";
+import { SupervisorReportsFilters } from "@/components/operator/SupervisorReportsFilters";
 import { FileText, DollarSign } from "lucide-react";
 
 export default function OperatorReportsPage() {
   const { user, userRole, isLoading } = useAdminAuth();
+  const [selectedOperatorId, setSelectedOperatorId] = useState<string | null>(null);
+  
+  const isSupervisor = userRole?.role === 'supervisor' || userRole?.role === 'admin';
   
   if (isLoading) {
     return (
@@ -24,13 +28,15 @@ export default function OperatorReportsPage() {
     );
   }
 
-  if (!user || userRole?.role !== 'operador') {
+  const canAccessReports = userRole?.role === 'operador' || userRole?.role === 'supervisor' || userRole?.role === 'admin';
+  
+  if (!user || !canAccessReports) {
     return (
       <div className="min-h-screen bg-background">
         <MainNav />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <p>Acceso denegado. Solo operadores pueden ver esta página.</p>
+            <p>Acceso denegado. Solo operadores y supervisores pueden ver esta página.</p>
           </div>
         </div>
       </div>
@@ -63,11 +69,22 @@ export default function OperatorReportsPage() {
               <CardHeader>
                 <CardTitle>Reporte de Cobros en Efectivo</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Muestra únicamente los cobros en efectivo realizados por ti
+                  {isSupervisor 
+                    ? "Muestra los cobros en efectivo de todos los operadores o filtrados por operador específico"
+                    : "Muestra únicamente los cobros en efectivo realizados por ti"
+                  }
                 </p>
+                {isSupervisor && (
+                  <div className="mt-4">
+                    <SupervisorReportsFilters 
+                      onOperatorChange={setSelectedOperatorId}
+                      selectedOperatorId={selectedOperatorId}
+                    />
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
-                <CashReportsOperator />
+                <CashReportsOperator operatorId={isSupervisor ? selectedOperatorId : undefined} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -77,11 +94,22 @@ export default function OperatorReportsPage() {
               <CardHeader>
                 <CardTitle>Reporte de Cobros del Día</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Incluye todos los cobros del día de todos los usuarios y métodos de pago
+                  {isSupervisor
+                    ? "Incluye todos los cobros del día de todos los operadores o filtrados por operador específico"
+                    : "Incluye todos los cobros del día de todos los usuarios y métodos de pago"
+                  }
                 </p>
+                {isSupervisor && (
+                  <div className="mt-4">
+                    <SupervisorReportsFilters 
+                      onOperatorChange={setSelectedOperatorId}
+                      selectedOperatorId={selectedOperatorId}
+                    />
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
-                <DailyReportsOperator />
+                <DailyReportsOperator operatorId={isSupervisor ? selectedOperatorId : undefined} />
               </CardContent>
             </Card>
           </TabsContent>

@@ -59,12 +59,12 @@ export const UserList = ({
 
           <div className="flex items-center gap-2">
             <Badge 
-              variant={user.role === "admin" ? "default" : "secondary"}
+              variant={user.role === "admin" || user.role === "supervisor" ? "default" : "secondary"}
             >
-              {user.role === "admin" ? (
+              {(user.role === "admin" || user.role === "supervisor") && (
                 <Shield className="mr-1 h-3 w-3" />
-              ) : null}
-              {user.role}
+              )}
+              {user.role === 'supervisor' ? 'Supervisor' : user.role === 'admin' ? 'Admin' : user.role === 'operador' ? 'Operador' : 'Usuario'}
             </Badge>
             <Dialog>
               <DialogTrigger asChild>

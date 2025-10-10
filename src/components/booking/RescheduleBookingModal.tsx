@@ -13,6 +13,8 @@ import { useBookingRules } from "@/hooks/use-booking-rules";
 import { useIsBookingAffected } from "@/hooks/use-affected-bookings";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { useSupervisorAuth } from "@/hooks/use-supervisor-auth";
+import { isSameDay, startOfDay } from "date-fns";
 
 interface RescheduleBookingModalProps {
   isOpen: boolean;
@@ -34,6 +36,9 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
   // Check if this booking is affected by an emergency closure
   const { data: affectedBooking } = useIsBookingAffected(booking.id);
   const isAffectedByEmergency = !!affectedBooking;
+  
+  // Check if user is supervisor
+  const { isSupervisor } = useSupervisorAuth();
   
   // Get booking rules for the court type
   const { data: bookingRules } = useBookingRules(booking.court?.court_type as 'tennis' | 'padel');
@@ -142,8 +147,15 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
       return;
     }
 
-    // Additional validation with booking rules
-    if (bookingRules) {
+    // Supervisores pueden reagendar sin restricciones si:
+    // 1. La reserva está afectada por cierre/mantenimiento
+    // 2. Es del mismo día (incluso si ya pasó)
+    const bookingDate = new Date(booking.start_time);
+    const isToday = isSameDay(startOfDay(new Date()), startOfDay(bookingDate));
+    const canBypassRules = isSupervisor && (isAffectedByEmergency || isToday);
+
+    // Additional validation with booking rules (skip for supervisors with special permissions)
+    if (bookingRules && !canBypassRules) {
       const selectedDateTime = new Date(selectedDate);
       selectedDateTime.setHours(parseInt(selectedTime.split(':')[0]), parseInt(selectedTime.split(':')[1]));
       
@@ -198,6 +210,15 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
               <AlertDescription className="text-yellow-800">
                 <strong>Reagendado por cierre imprevisto:</strong> Esta reserva fue afectada por un cierre imprevisto. 
                 Puedes reagendarla sin restricciones de tiempo y sin costo adicional.
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {isSupervisor && !isAffectedByEmergency && (
+            <Alert className="border-blue-500 bg-blue-50">
+              <AlertTriangle className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                <strong>Permiso de Supervisor:</strong> Como supervisor, puedes reagendar reservas del mismo día sin restricciones de tiempo.
               </AlertDescription>
             </Alert>
           )}

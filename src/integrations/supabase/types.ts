@@ -1666,6 +1666,10 @@ export type Database = {
         Args: { _target_user_id: string; _user_id: string }
         Returns: boolean
       }
+      is_supervisor: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       manage_cronjob_direct: {
         Args: {
           action_type: string

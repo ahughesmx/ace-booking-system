@@ -46,7 +46,11 @@ interface PaymentSummary {
   cancelledCount: number;
 }
 
-export function DailyReportsOperator() {
+interface DailyReportsOperatorProps {
+  operatorId?: string | null;
+}
+
+export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps = {}) {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<DailyBooking[]>([]);
   const [loading, setLoading] = useState(false);
@@ -72,11 +76,12 @@ export function DailyReportsOperator() {
         startOfDayUTC,
         endOfDayUTC,
         startOfDayMexicoTime: toMexicoCityTime(startOfDayUTC),
-        endOfDayMexicoTime: toMexicoCityTime(endOfDayUTC)
+        endOfDayMexicoTime: toMexicoCityTime(endOfDayUTC),
+        operatorId
       });
 
       // Usar JOIN para obtener datos en una consulta optimizada
-      const { data, error } = await supabase
+      let query = supabase
         .from('bookings')
         .select(`
           id,
@@ -102,8 +107,14 @@ export function DailyReportsOperator() {
         `)
         .in('status', ['paid', 'cancelled'])
         .gte('booking_made_at', startOfDayUTC)
-        .lte('booking_made_at', endOfDayUTC)
-        .order('start_time', { ascending: false });
+        .lte('booking_made_at', endOfDayUTC);
+      
+      // Si se especifica un operador, filtrar por processed_by
+      if (operatorId) {
+        query = query.eq('processed_by', operatorId);
+      }
+      
+      const { data, error } = await query.order('start_time', { ascending: false });
 
       if (error) throw error;
 
@@ -191,7 +202,7 @@ export function DailyReportsOperator() {
 
   useEffect(() => {
     fetchDailyBookings();
-  }, [selectedDate]);
+  }, [selectedDate, operatorId]);
 
   const exportToCSV = () => {
     const headers = ['Fecha Cobro', 'Hora Cobro', 'Fecha Reservación', 'Hora Reservación', 'Cliente', 'Membresía', 'Cancha', 'Método Pago', 'Procesado Por', 'Monto'];

@@ -11,7 +11,7 @@ export function useAdminAuth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const isAdmin = userRole?.role === 'admin' || userRole?.role === 'operador';
+  const isAdmin = userRole?.role === 'admin' || userRole?.role === 'operador' || userRole?.role === 'supervisor';
   const isLoading = authLoading || roleLoading;
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export function useAdminAuth() {
     if (!isAdmin) {
       toast({
         title: "Acceso denegado", 
-        description: "No tienes permisos de administrador u operador",
+        description: "No tienes permisos de administrador, operador o supervisor",
         variant: "destructive",
       });
       navigate("/");

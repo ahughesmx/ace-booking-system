@@ -32,7 +32,11 @@ interface CashBooking {
   };
 }
 
-export function CashReportsOperator() {
+interface CashReportsOperatorProps {
+  operatorId?: string | null;
+}
+
+export function CashReportsOperator({ operatorId }: CashReportsOperatorProps = {}) {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<CashBooking[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,11 +57,12 @@ export function CashReportsOperator() {
         startOfDayUTC,
         endOfDayUTC,
         startOfDayMexicoTime: toMexicoCityTime(startOfDayUTC),
-        endOfDayMexicoTime: toMexicoCityTime(endOfDayUTC)
+        endOfDayMexicoTime: toMexicoCityTime(endOfDayUTC),
+        operatorId
       });
 
       // Usar JOIN para obtener datos de usuario y cancha en una consulta
-      const { data, error } = await supabase
+      let query = supabase
         .from('bookings')
         .select(`
           id,
@@ -81,8 +86,17 @@ export function CashReportsOperator() {
         `)
         .in('payment_method', ['cash', 'efectivo'])
         .eq('status', 'paid')
-        .or(`and(payment_completed_at.gte.${startOfDayUTC},payment_completed_at.lte.${endOfDayUTC}),and(payment_completed_at.is.null,booking_made_at.gte.${startOfDayUTC},booking_made_at.lte.${endOfDayUTC})`)
-        .order('payment_completed_at', { ascending: false });
+        .or(`and(payment_completed_at.gte.${startOfDayUTC},payment_completed_at.lte.${endOfDayUTC}),and(payment_completed_at.is.null,booking_made_at.gte.${startOfDayUTC},booking_made_at.lte.${endOfDayUTC})`);
+      
+      // Si se especifica un operador, filtrar por processed_by
+      if (operatorId) {
+        query = query.eq('processed_by', operatorId);
+      } else if (!operatorId && user) {
+        // Si no hay operador especificado, solo mostrar los del usuario actual (comportamiento por defecto)
+        query = query.eq('processed_by', user.id);
+      }
+      
+      const { data, error } = await query.order('payment_completed_at', { ascending: false });
 
       if (error) throw error;
 
@@ -120,7 +134,7 @@ export function CashReportsOperator() {
 
   useEffect(() => {
     fetchCashBookings();
-  }, [selectedDate, user]);
+  }, [selectedDate, user, operatorId]);
 
   const exportToCSV = () => {
     const headers = ['Fecha Cobro', 'Hora Cobro', 'Fecha Reservación', 'Hora Reservación', 'Cliente', 'Membresía', 'Cancha', 'Monto'];

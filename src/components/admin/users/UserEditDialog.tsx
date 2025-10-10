@@ -167,6 +167,7 @@ export const UserEditDialog = ({ user, onSubmit }: UserEditDialogProps) => {
                 <SelectContent className="bg-background border border-border shadow-md z-50">
                   <SelectItem value="user">Usuario</SelectItem>
                   <SelectItem value="operador">Operador</SelectItem>
+                  <SelectItem value="supervisor">Supervisor</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>
                 </SelectContent>
               </Select>
