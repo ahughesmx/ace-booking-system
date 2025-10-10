@@ -197,8 +197,7 @@ export function CashReportsOperator({ operatorId }: CashReportsOperatorProps = {
         { label: 'Número de reservas:', value: bookings.length.toString() }
       ],
       generatedBy: user?.user_metadata?.full_name || 'Operador',
-      fileName: `cobros_ventanilla_${selectedDate}.pdf`,
-      orientation: 'landscape'
+      fileName: `cobros_ventanilla_${selectedDate}.pdf`
     });
   };
 

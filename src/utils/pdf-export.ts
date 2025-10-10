@@ -30,7 +30,7 @@ export function exportToPDF(options: PDFExportOptions) {
     format: 'a4'
   });
   const pageWidth = doc.internal.pageSize.width;
-  const margin = 20;
+  const margin = 14;
   let yPosition = margin;
 
   // Header
@@ -124,8 +124,8 @@ export function exportToPDF(options: PDFExportOptions) {
     alternateRowStyles: {
       fillColor: [248, 248, 248],
     },
-    margin: { left: 10, right: 10 },
-    tableWidth: 'auto',
+    margin: { left: margin, right: margin },
+    tableWidth: 'wrap',
     columnStyles: tableColumns.reduce((acc, col, index) => {
       if (col.width) {
         acc[index] = { cellWidth: col.width };
