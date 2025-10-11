@@ -96,7 +96,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
     user: bookingUser,
     bookingRules,
     userActiveBookings,
-    bookedSlots,
+    bookedSlotsMap,
   } = useBookingLogic(selectedDate, selectedCourtType, isOperator ? selectedUserId : undefined);
 
   console.log('BookingForm - selectedCourtType:', selectedCourtType);
@@ -483,7 +483,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
           <TimeSlotSelector
             selectedDate={selectedDate}
             courtType={selectedCourtType}
-            bookedSlots={bookedSlots}
+            bookedSlots={bookedSlotsMap}
             selectedTime={selectedTime}
             onTimeSelect={setSelectedTime}
             businessHours={{ start: 8, end: 22 }}

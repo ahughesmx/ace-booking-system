@@ -83,8 +83,8 @@ export function useBookingLogic(selectedDate?: Date, selectedCourtType?: string 
 
   console.log('BookingLogic - Checking bookings for userId:', targetUserId, 'count:', userActiveBookings, 'isOperatorMode:', !!forUserId);
 
-  // Create set of booked slots for the selected court type (including special bookings and pending payments)
-  const bookedSlots = new Set<string>();
+  // Create MAP of booked slots (time -> count) for the selected court type
+  const bookedSlotsMap = new Map<string, number>();
   if (selectedDate && selectedCourtType) {
     allBookingsWithPending.forEach(booking => {
       // Include both paid bookings and active pending payments (not expired)
@@ -106,20 +106,22 @@ export function useBookingLogic(selectedDate?: Date, selectedCourtType?: string 
       if ((isPaidBooking || isPendingNotExpired) && booking.court && booking.court.court_type === selectedCourtType) {
         const hour = new Date(booking.start_time).getHours();
         const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
-        console.log(`✅ AGREGANDO SLOT OCUPADO: ${timeSlot}`);
-        bookedSlots.add(timeSlot);
+        const currentCount = bookedSlotsMap.get(timeSlot) || 0;
+        bookedSlotsMap.set(timeSlot, currentCount + 1);
+        console.log(`✅ SLOT ${timeSlot} - Reservas: ${currentCount + 1}`);
       } else {
         console.log(`❌ BOOKING NO INCLUIDO EN SLOTS OCUPADOS`);
       }
     });
   }
 
-  console.log(`📊 SLOTS OCUPADOS FINALES para ${selectedCourtType}:`, Array.from(bookedSlots));
+  console.log(`📊 SLOTS OCUPADOS FINALES para ${selectedCourtType}:`, 
+    Array.from(bookedSlotsMap.entries()).map(([slot, count]) => `${slot}: ${count} reservas`));
 
   return {
     user,
     bookingRules,
     userActiveBookings,
-    bookedSlots,
+    bookedSlotsMap,
   };
 }

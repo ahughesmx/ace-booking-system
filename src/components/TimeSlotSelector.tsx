@@ -12,7 +12,7 @@ import { SpecialBooking } from "@/types/booking";
 interface TimeSlotSelectorProps {
   selectedDate?: Date;
   courtType?: string | null;
-  bookedSlots: Set<string>;
+  bookedSlots: Map<string, number>;
   selectedTime: string | null;
   onTimeSelect: (time: string) => void;
   businessHours: {
@@ -175,10 +175,10 @@ export function TimeSlotSelector({
     }
     
     // Contar cuántas reservas regulares hay para este horario específico del tipo de cancha seleccionado
-    const bookingsCount = bookedSlots.has(slot) ? 1 : 0;
+    const bookingsCount = bookedSlots.get(slot) || 0;
     const available = Math.max(0, totalCourts - bookingsCount);
     
-    console.log(`🔍 DISPONIBILIDAD SLOT ${slot}: totalCourts=${totalCourts}, bookingsCount=${bookingsCount}, available=${available}, bookedSlots.has=${bookedSlots.has(slot)}`);
+    console.log(`🔍 DISPONIBILIDAD SLOT ${slot}: totalCourts=${totalCourts}, bookingsCount=${bookingsCount}, available=${available}`);
     
     return available;
   };
