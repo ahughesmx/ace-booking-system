@@ -128,15 +128,12 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
         startOfDay: startOfDay.toISOString(),
         endOfDay: endOfDay.toISOString()
       });
-
-      const now = new Date().toISOString();
       
       const { data, error } = await supabase
         .from("display_bookings_combined")
         .select("*")
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
-        .gte("end_time", now)
         .order("start_time");
 
       if (error) {
