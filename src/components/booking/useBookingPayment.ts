@@ -567,9 +567,11 @@ export function useBookingPayment() {
     if (!pendingBooking) return;
 
     try {
+      // CAMBIO CRÍTICO: Eliminar en lugar de marcar como cancelled
+      // Las reservas pending_payment que se cancelan nunca existieron realmente
       const { error } = await supabase
         .from("bookings")
-        .update({ status: "cancelled" })
+        .delete()
         .eq("id", pendingBooking.id)
         .eq("status", "pending_payment");
 

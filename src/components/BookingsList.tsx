@@ -146,12 +146,36 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
         return;
       }
 
-        const { error } = await supabase
-          .from("bookings")
-          .update({ status: "cancelled" })
-          .eq("id", bookingId);
+        // VALIDACIÓN CRÍTICA: Distinguir entre reservas pagadas y no pagadas
+        // Si nunca se completó el pago, ELIMINAR en lugar de marcar como cancelled
+        if (!booking.payment_completed_at) {
+          console.log("⚠️ Cancelando reserva sin pago completado, se eliminará de la BD");
+          const { error } = await supabase
+            .from("bookings")
+            .delete()
+            .eq("id", bookingId);
 
-        if (error) throw error;
+          if (error) throw error;
+
+          toast({
+            title: "Reserva eliminada",
+            description: "La reserva pendiente ha sido eliminada correctamente.",
+          });
+        } else {
+          // Si ya se pagó, marcar como cancelled para reportes contables
+          console.log("✅ Cancelando reserva pagada, se marcará como 'cancelled' para reportes contables");
+          const { error } = await supabase
+            .from("bookings")
+            .update({ status: "cancelled" })
+            .eq("id", bookingId);
+
+          if (error) throw error;
+
+          toast({
+            title: "Reserva cancelada",
+            description: "La reserva ha sido cancelada correctamente.",
+          });
+        }
 
         // Trigger booking_cancelled webhooks
         try {
