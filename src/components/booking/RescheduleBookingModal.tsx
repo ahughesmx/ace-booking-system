@@ -152,19 +152,20 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
       const hasMaintenanceConflict = maintenanceData.some((maintenance: any) => {
         if (!maintenance.is_active) return false;
         
-        // Check if maintenance affects all courts or this specific court
-        const affectsThisCourt = maintenance.all_courts || maintenance.court_id === booking.court_id;
-        if (!affectsThisCourt) return false;
-        
         const maintenanceStart = new Date(maintenance.start_time);
         const maintenanceEnd = new Date(maintenance.end_time);
         
-        // Check if slot overlaps with maintenance period
-        return (
-          (slotStart >= maintenanceStart && slotStart < maintenanceEnd) ||
-          (slotEnd > maintenanceStart && slotEnd <= maintenanceEnd) ||
-          (slotStart <= maintenanceStart && slotEnd >= maintenanceEnd)
-        );
+        // Check if maintenance affects all courts
+        if (maintenance.all_courts) {
+          return slotStart < maintenanceEnd && slotEnd > maintenanceStart;
+        }
+        
+        // Check if maintenance affects this specific court
+        if (maintenance.court_id === booking.court_id) {
+          return slotStart < maintenanceEnd && slotEnd > maintenanceStart;
+        }
+        
+        return false;
       });
       
       if (hasMaintenanceConflict) return false;
