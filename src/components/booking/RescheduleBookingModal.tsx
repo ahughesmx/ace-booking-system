@@ -135,6 +135,14 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
     const slotEnd = new Date(slotStart);
     slotEnd.setHours(slotEnd.getHours() + 1);
 
+    // Check if slot is in the past (for today only)
+    const now = new Date();
+    const isToday = isSameDay(selectedDate, now);
+    
+    if (isToday && slotStart <= now) {
+      return false;
+    }
+
     // Check if slot conflicts with ANY booking (any user)
     const hasConflict = existingBookings.some((existingBooking: any) => {
       const existingStart = new Date(existingBooking.start_time);
