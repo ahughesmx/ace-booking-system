@@ -21,6 +21,7 @@ import { useState } from "react";
 import { AddMaintenanceDialog } from "./AddMaintenanceDialog";
 import { EmergencyClosureDialog } from "./EmergencyClosureDialog";
 import { EmergencyClosureButton } from "./EmergencyClosureButton";
+import { EditMaintenanceDialog } from "./EditMaintenanceDialog";
 
 type MaintenancePeriod = {
   id: string;
@@ -43,6 +44,7 @@ type MaintenancePeriod = {
 export function MaintenanceList() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [editingMaintenanceId, setEditingMaintenanceId] = useState<string | null>(null);
 
   const { data: maintenancePeriods, refetch } = useQuery({
     queryKey: ["court-maintenance-all"],
@@ -70,7 +72,7 @@ export function MaintenanceList() {
   });
 
 
-  const handleCancelMaintenance = async (maintenanceId: string, courtName: string) => {
+  const handleCancelMaintenance = async (maintenanceId: string, courtName: string, allCourts?: boolean) => {
     try {
       setLoading(true);
       const { error } = await supabase
@@ -83,7 +85,7 @@ export function MaintenanceList() {
       await refetch();
       toast({
         title: "Mantenimiento cancelado",
-        description: `El período de mantenimiento de ${courtName} ha sido cancelado.`,
+        description: `El período de mantenimiento de ${allCourts ? 'todas las canchas' : courtName} ha sido cancelado.`,
       });
     } catch (error) {
       console.error("Error canceling maintenance:", error);
@@ -187,17 +189,18 @@ export function MaintenanceList() {
   }
 
   return (
-    <Card className="bg-white shadow-md">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
-          <Calendar className="w-5 h-5" />
-          Períodos de Mantenimiento ({maintenancePeriods.length})
-        </CardTitle>
-        <div className="flex gap-2">
-          <EmergencyClosureButton />
-          <AddMaintenanceDialog onMaintenanceAdded={refetch} />
-        </div>
-      </CardHeader>
+    <>
+      <Card className="bg-white shadow-md">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Períodos de Mantenimiento ({maintenancePeriods.length})
+          </CardTitle>
+          <div className="flex gap-2">
+            <EmergencyClosureButton />
+            <AddMaintenanceDialog onMaintenanceAdded={refetch} />
+          </div>
+        </CardHeader>
       <CardContent>
         <div className="rounded-lg border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
@@ -297,6 +300,7 @@ export function MaintenanceList() {
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                onClick={() => setEditingMaintenanceId(maintenance.id)}
                                 className="h-8 w-8 p-0 text-gray-600 hover:text-gray-700 hover:bg-gray-100"
                                 title="Editar"
                               >
@@ -305,7 +309,11 @@ export function MaintenanceList() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleCancelMaintenance(maintenance.id, maintenance.court.name)}
+                                onClick={() => handleCancelMaintenance(
+                                  maintenance.id, 
+                                  maintenance.all_courts ? "todas las canchas" : maintenance.court.name,
+                                  maintenance.all_courts
+                                )}
                                 disabled={loading}
                                 className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                                 title="Cancelar"
@@ -325,5 +333,15 @@ export function MaintenanceList() {
         </div>
       </CardContent>
     </Card>
+    
+    {editingMaintenanceId && (
+      <EditMaintenanceDialog
+        maintenanceId={editingMaintenanceId}
+        open={!!editingMaintenanceId}
+        onOpenChange={(open) => !open && setEditingMaintenanceId(null)}
+        onMaintenanceUpdated={refetch}
+      />
+    )}
+    </>
   );
 }
