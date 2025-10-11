@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
-import { formatInTimeZone } from "date-fns-tz";
+import { fromZonedTime } from "date-fns-tz";
 import {
   Dialog,
   DialogContent,
@@ -73,16 +73,16 @@ export function AddMaintenanceDialog({ onMaintenanceAdded }: AddMaintenanceDialo
       return;
     }
 
-    // Crear fechas en zona horaria de México
+    // Crear fechas locales interpretando como hora de México
     const mexicoTz = "America/Mexico_City";
-    const startLocal = `${formData.startDate}T${formData.startTime}:00`;
-    const endLocal = `${formData.endDate}T${formData.endTime}:00`;
+    const startLocalStr = `${formData.startDate}T${formData.startTime}:00`;
+    const endLocalStr = `${formData.endDate}T${formData.endTime}:00`;
     
-    // Convertir a Date objects interpretando como hora de México
-    const startDate = new Date(startLocal + "-06:00"); // Especificar UTC-6
-    const endDate = new Date(endLocal + "-06:00");
+    // Crear objetos Date interpretando como hora local de México
+    const startLocal = new Date(startLocalStr);
+    const endLocal = new Date(endLocalStr);
 
-    if (startDate >= endDate) {
+    if (startLocal >= endLocal) {
       toast({
         title: "Error",
         description: "La fecha y hora de fin debe ser posterior a la de inicio.",
@@ -91,9 +91,16 @@ export function AddMaintenanceDialog({ onMaintenanceAdded }: AddMaintenanceDialo
       return;
     }
 
-    // Convertir a ISO string UTC para guardar en la base de datos
-    const startDateTime = startDate.toISOString();
-    const endDateTime = endDate.toISOString();
+    // Convertir de hora de México a UTC usando fromZonedTime
+    const startUTC = fromZonedTime(startLocal, mexicoTz);
+    const endUTC = fromZonedTime(endLocal, mexicoTz);
+
+    console.log('DEBUG Maintenance:', {
+      startLocal: startLocalStr,
+      endLocal: endLocalStr,
+      startUTC: startUTC.toISOString(),
+      endUTC: endUTC.toISOString()
+    });
 
     try {
       setLoading(true);
@@ -101,8 +108,8 @@ export function AddMaintenanceDialog({ onMaintenanceAdded }: AddMaintenanceDialo
         .from("court_maintenance")
         .insert([{
           court_id: formData.courtId,
-          start_time: startDateTime,
-          end_time: endDateTime,
+          start_time: startUTC.toISOString(),
+          end_time: endUTC.toISOString(),
           reason: formData.reason.trim(),
           created_by: (await supabase.auth.getUser()).data.user?.id,
         }]);

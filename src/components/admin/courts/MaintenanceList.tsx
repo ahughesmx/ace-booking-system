@@ -123,6 +123,15 @@ export function MaintenanceList() {
     const daysDiff = differenceInDays(end, start);
     const isSameDate = isSameDay(start, end);
 
+    console.log('DEBUG Format Date Range:', {
+      startTimeUTC: startTime,
+      endTimeUTC: endTime,
+      startLocal: start.toISOString(),
+      endLocal: end.toISOString(),
+      formattedStart: formatInTimeZone(new Date(startTime), mexicoTz, "dd MMM yyyy HH:mm"),
+      formattedEnd: formatInTimeZone(new Date(endTime), mexicoTz, "dd MMM yyyy HH:mm")
+    });
+
     if (isSameDate) {
       // Mismo día - mostrar fecha y rango de horas
       return {
