@@ -5,6 +5,7 @@ import type { Booking } from "@/types/booking";
 interface BookingsListContentProps {
   bookings: Booking[];
   isAdmin: boolean;
+  isOperator?: boolean;
   userId?: string;
   onCancel: (id: string) => void;
 }
@@ -12,6 +13,7 @@ interface BookingsListContentProps {
 export function BookingsListContent({ 
   bookings, 
   isAdmin, 
+  isOperator = false,
   userId, 
   onCancel 
 }: BookingsListContentProps) {
@@ -31,7 +33,7 @@ export function BookingsListContent({
             <BookingCard
               key={booking.id}
               booking={booking}
-              isOwner={isAdmin || userId === booking.user_id}
+              isOwner={isAdmin || isOperator || userId === booking.user_id}
               onCancel={onCancel}
             />
           ))}

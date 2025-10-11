@@ -25,6 +25,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
   const { toast } = useToast();
   const { data: userRole } = useUserRole(user?.id);
   const isAdmin = userRole?.role === "admin";
+  const isOperator = userRole?.role === "operador";
   const { getCancellationAllowed } = useCancellationRules();
   const { data: tennisRules } = useBookingRules('tennis');
   const { data: padelRules } = useBookingRules('padel');
@@ -305,6 +306,7 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     <BookingsListContent
       bookings={activeBookings}
       isAdmin={isAdmin}
+      isOperator={isOperator}
       userId={user.id}
       onCancel={handleCancelBooking}
     />
