@@ -67,12 +67,15 @@ export function BookingsList({ bookings, onCancelSuccess, selectedDate }: Bookin
     allBookings: allBookings.length 
   });
 
-  // Filtrar reservas para mostrar solo las futuras o actuales
+  // Si selectedDate es hoy, filtrar por reservas no terminadas
+  // Si es un día futuro o pasado, mostrar todas las reservas de ese día
   const now = new Date();
-  const activeBookings = allBookings.filter(booking => {
-    const endTime = new Date(booking.end_time);
-    return endTime > now; // Solo mostrar reservas que no han terminado
-  });
+  const activeBookings = selectedDate && selectedDate.toDateString() === now.toDateString()
+    ? allBookings.filter(booking => {
+        const endTime = new Date(booking.end_time);
+        return endTime > now; // Solo filtrar por tiempo si es HOY
+      })
+    : allBookings; // Mostrar todas si es otro día
 
   console.log("Filtered active bookings:", {
     total: allBookings.length,
