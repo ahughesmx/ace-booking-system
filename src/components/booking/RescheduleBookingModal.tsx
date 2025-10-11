@@ -17,6 +17,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { isSameDay, startOfDay } from "date-fns";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
+import { useCourtMaintenance } from "@/hooks/use-court-maintenance";
 
 interface RescheduleBookingModalProps {
   isOpen: boolean;
@@ -44,6 +45,9 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
   
   // Get court type settings to generate dynamic time slots
   const { data: courtTypeSettings } = useCourtTypeSettings(booking.court?.court_type as 'tennis' | 'padel');
+  
+  // Get court maintenance data
+  const { data: maintenanceData } = useCourtMaintenance();
 
   // Generate time slots dynamically based on operating hours
   const timeSlots = useMemo(() => {
@@ -141,6 +145,29 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
     
     if (isToday && slotStart <= now) {
       return false;
+    }
+
+    // Check for active maintenance affecting this court and time slot
+    if (maintenanceData) {
+      const hasMaintenanceConflict = maintenanceData.some((maintenance: any) => {
+        if (!maintenance.is_active) return false;
+        
+        // Check if maintenance affects all courts or this specific court
+        const affectsThisCourt = maintenance.all_courts || maintenance.court_id === booking.court_id;
+        if (!affectsThisCourt) return false;
+        
+        const maintenanceStart = new Date(maintenance.start_time);
+        const maintenanceEnd = new Date(maintenance.end_time);
+        
+        // Check if slot overlaps with maintenance period
+        return (
+          (slotStart >= maintenanceStart && slotStart < maintenanceEnd) ||
+          (slotEnd > maintenanceStart && slotEnd <= maintenanceEnd) ||
+          (slotStart <= maintenanceStart && slotEnd >= maintenanceEnd)
+        );
+      });
+      
+      if (hasMaintenanceConflict) return false;
     }
 
     // Check if slot conflicts with ANY booking (any user)
