@@ -5,7 +5,7 @@ import { format, addHours, isBefore, isToday } from "date-fns";
 import { es } from "date-fns/locale";
 import { useCourts } from "@/hooks/use-courts";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
-import { useActiveMaintenancePeriods } from "@/hooks/use-court-maintenance";
+import { useActiveMaintenancePeriods, useCourtMaintenance } from "@/hooks/use-court-maintenance";
 import { useAllBookings } from "@/hooks/use-bookings";
 import { SpecialBooking } from "@/types/booking";
 
@@ -71,6 +71,7 @@ export function TimeSlotSelector({
   const { data: settingsData } = useCourtTypeSettings(courtType);
   const { data: maintenanceCourts = new Set() } = useActiveMaintenancePeriods();
   const { data: allBookings = [] } = useAllBookings(selectedDate);
+  const { data: maintenancePeriods = [] } = useCourtMaintenance();
   
   // Ensure we get the correct type - when courtType is provided, we get a single object
   const settings = courtType && settingsData && !Array.isArray(settingsData) ? settingsData : null;
@@ -93,6 +94,37 @@ export function TimeSlotSelector({
   console.log('TimeSlotSelector - timeSlots generated:', timeSlots.length);
   console.log('TimeSlotSelector - courts in maintenance:', maintenanceCourts.size);
   console.log('TimeSlotSelector - available courts:', totalCourts);
+
+  // Función para verificar si hay mantenimientos activos en un slot
+  const getMaintenanceForSlot = (slot: string) => {
+    if (!selectedDate) return undefined;
+    
+    const slotHour = parseInt(slot.split(':')[0]);
+    const slotStart = new Date(selectedDate);
+    slotStart.setHours(slotHour, 0, 0, 0);
+    const slotEnd = new Date(slotStart);
+    slotEnd.setHours(slotHour + 1, 0, 0, 0);
+
+    // Buscar CUALQUIER mantenimiento activo que afecte este slot
+    return maintenancePeriods.find(maintenance => {
+      if (!maintenance.is_active) return false;
+      
+      const maintenanceStart = new Date(maintenance.start_time);
+      const maintenanceEnd = new Date(maintenance.end_time);
+      
+      // Si afecta todas las canchas
+      if (maintenance.all_courts) {
+        return slotStart < maintenanceEnd && slotEnd > maintenanceStart;
+      }
+      
+      // Verificar si la cancha en mantenimiento es del tipo seleccionado
+      if (maintenance.court && courtType && maintenance.court.court_type === courtType) {
+        return slotStart < maintenanceEnd && slotEnd > maintenanceStart;
+      }
+      
+      return false;
+    });
+  };
 
   // Función para verificar si hay eventos especiales en un slot
   const getSpecialEventsForSlot = (slot: string) => {
@@ -124,6 +156,13 @@ export function TimeSlotSelector({
 
   const getAvailableSlots = (slot: string) => {
     if (totalCourts === 0) return 0;
+    
+    // Verificar si hay mantenimiento activo
+    const maintenanceInfo = getMaintenanceForSlot(slot);
+    if (maintenanceInfo) {
+      console.log(`🔧 SLOT ${slot} EN MANTENIMIENTO:`, maintenanceInfo.reason);
+      return 0;
+    }
     
     // Verificar si hay eventos especiales que ocupen este slot
     const specialEvents = getSpecialEventsForSlot(slot);
@@ -228,6 +267,8 @@ export function TimeSlotSelector({
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {timeSlots.map(timeSlot => {
+          const maintenanceInfo = getMaintenanceForSlot(timeSlot.start);
+          const hasMaintenance = !!maintenanceInfo;
           const availableSlots = getAvailableSlots(timeSlot.start);
           const isAvailable = !timeSlot.isPast && availableSlots > 0;
           const isSelected = selectedTime === timeSlot.start;
@@ -242,12 +283,14 @@ export function TimeSlotSelector({
               variant={isSelected ? "default" : "outline"}
               className={cn(
                 "h-auto p-3 flex flex-col items-center justify-center space-y-1 transition-all relative",
-                hasSpecialEvents
-                  ? "bg-purple-50 border-purple-200 hover:bg-purple-100"
-                  : isAvailable 
-                    ? "hover:bg-[#6898FE]/10 hover:border-[#6898FE] border-[#6898FE]/20" 
-                    : "opacity-50 cursor-not-allowed bg-gray-50",
-                isSelected && !hasSpecialEvents && "bg-[#6898FE] text-white border-[#6898FE]",
+                hasMaintenance
+                  ? "bg-orange-50 border-orange-200"
+                  : hasSpecialEvents
+                    ? "bg-purple-50 border-purple-200 hover:bg-purple-100"
+                    : isAvailable 
+                      ? "hover:bg-[#6898FE]/10 hover:border-[#6898FE] border-[#6898FE]/20" 
+                      : "opacity-50 cursor-not-allowed bg-gray-50",
+                isSelected && !hasSpecialEvents && !hasMaintenance && "bg-[#6898FE] text-white border-[#6898FE]",
                 isSelected && hasSpecialEvents && "bg-purple-600 text-white border-purple-600"
               )}
               disabled={!isAvailable}
@@ -261,9 +304,14 @@ export function TimeSlotSelector({
                 }
               }}
             >
-              {hasSpecialEvents && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full border-2 border-white flex items-center justify-center">
-                  <span className="text-[8px] text-white font-bold">!</span>
+              {(hasSpecialEvents || hasMaintenance) && (
+                <div className={cn(
+                  "absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white flex items-center justify-center",
+                  hasMaintenance ? "bg-orange-500" : "bg-purple-500"
+                )}>
+                  <span className="text-[8px] text-white font-bold">
+                    {hasMaintenance ? "🔧" : "!"}
+                  </span>
                 </div>
               )}
               
@@ -271,7 +319,16 @@ export function TimeSlotSelector({
                 {timeSlot.start} - {timeSlot.end}
               </span>
               
-              {hasSpecialEvents ? (
+              {hasMaintenance ? (
+                <div className="space-y-0.5 text-center">
+                  <span className="text-xs text-orange-600 font-medium block">
+                    🔧 Mantenimiento
+                  </span>
+                  <span className="text-xs text-orange-500 block">
+                    No disponible
+                  </span>
+                </div>
+              ) : hasSpecialEvents ? (
                 <div className="space-y-0.5 text-center">
                   <span className="text-xs text-purple-600 font-medium block">
                     🎯 {specialEvents[0].event_type}

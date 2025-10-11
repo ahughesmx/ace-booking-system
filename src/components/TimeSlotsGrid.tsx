@@ -123,8 +123,8 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
     }) as SpecialBooking[];
   };
 
-  // Función para obtener cierres imprevistos que afectan un slot
-  const getEmergencyClosureForSlot = (slot: string) => {
+  // Función para obtener mantenimientos (programados o de emergencia) que afectan un slot
+  const getMaintenanceForSlot = (slot: string) => {
     if (!selectedDate) return undefined;
     
     const slotHour = parseInt(slot.split(':')[0]);
@@ -133,9 +133,9 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
     const slotEnd = new Date(slotStart);
     slotEnd.setHours(slotHour + 1, 0, 0, 0);
 
-    // Buscar cierres imprevistos que afecten este slot
+    // Buscar CUALQUIER mantenimiento activo que afecte este slot
     return maintenancePeriods.find(maintenance => {
-      if (!maintenance.is_emergency || !maintenance.is_active) return false;
+      if (!maintenance.is_active) return false;
       
       const maintenanceStart = new Date(maintenance.start_time);
       const maintenanceEnd = new Date(maintenance.end_time);
@@ -159,7 +159,7 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
       {timeSlots.map(timeSlot => {
         const specialEvents = getSpecialEventsForSlot(timeSlot.start);
         const hasSpecialEvents = specialEvents.length > 0;
-        const emergencyClosure = getEmergencyClosureForSlot(timeSlot.start);
+        const maintenanceInfo = getMaintenanceForSlot(timeSlot.start);
         
         // Si hay eventos especiales, el slot no está disponible
         if (hasSpecialEvents) {
@@ -172,7 +172,7 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
               availableCount={0}
               specialEvents={specialEvents}
               showCourtCount={showCourtCount}
-              emergencyClosure={emergencyClosure}
+              emergencyClosure={maintenanceInfo}
             />
           );
         }
@@ -193,7 +193,7 @@ export function TimeSlotsGrid({ bookedSlots, businessHours, selectedDate, courtT
             specialEvents={specialEvents}
             bookedUser={bookedUser}
             showCourtCount={showCourtCount}
-            emergencyClosure={emergencyClosure}
+            emergencyClosure={maintenanceInfo}
           />
         );
       })}
