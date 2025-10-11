@@ -475,6 +475,7 @@ export function BookingForm({ selectedDate, onBookingSuccess, initialCourtType, 
           courts={courts}
           selectedCourt={selectedCourt}
           onCourtSelect={setSelectedCourt}
+          selectedDate={selectedDate}
         />
         
         {/* Mostrar selector de horarios cuando se haya seleccionado el tipo de cancha */}

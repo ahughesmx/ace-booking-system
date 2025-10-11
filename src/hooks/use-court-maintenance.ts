@@ -38,11 +38,11 @@ export function useCourtMaintenance(courtId?: string) {
   });
 }
 
-export function useActiveMaintenancePeriods() {
+export function useActiveMaintenancePeriods(at?: Date) {
   return useQuery({
-    queryKey: ["active-maintenance"],
+    queryKey: ["active-maintenance", at ? at.toISOString() : "now"],
     queryFn: async () => {
-      const now = new Date().toISOString();
+      const now = (at ?? new Date()).toISOString();
       
       const { data, error } = await supabase
         .from("court_maintenance")

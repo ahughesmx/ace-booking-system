@@ -7,10 +7,11 @@ interface CourtSelectionProps {
   courts: Court[];
   selectedCourt: string | null;
   onCourtSelect: (courtId: string) => void;
+  selectedDate?: Date | null;
 }
 
-export function CourtSelection({ courts, selectedCourt, onCourtSelect }: CourtSelectionProps) {
-  const { data: maintenanceCourts = new Set() } = useActiveMaintenancePeriods();
+export function CourtSelection({ courts, selectedCourt, onCourtSelect, selectedDate }: CourtSelectionProps) {
+  const { data: maintenanceCourts = new Set() } = useActiveMaintenancePeriods(selectedDate ?? undefined);
 
   if (courts.length === 0) {
     return (
