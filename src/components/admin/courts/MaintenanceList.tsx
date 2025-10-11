@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { format, differenceInDays, isSameDay } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { Calendar, Clock, AlertTriangle, X, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -97,9 +98,10 @@ export function MaintenanceList() {
   };
 
   const getMaintenanceStatus = (startTime: string, endTime: string, isActive: boolean) => {
-    const now = new Date();
-    const start = new Date(startTime);
-    const end = new Date(endTime);
+    const mexicoTz = "America/Mexico_City";
+    const now = toZonedTime(new Date(), mexicoTz);
+    const start = toZonedTime(new Date(startTime), mexicoTz);
+    const end = toZonedTime(new Date(endTime), mexicoTz);
 
     if (!isActive) {
       return { status: "cancelado", color: "bg-gray-100 text-gray-600", variant: "outline" as const };
@@ -115,30 +117,31 @@ export function MaintenanceList() {
   };
 
   const formatDateRange = (startTime: string, endTime: string) => {
-    const start = new Date(startTime);
-    const end = new Date(endTime);
+    const mexicoTz = "America/Mexico_City";
+    const start = toZonedTime(new Date(startTime), mexicoTz);
+    const end = toZonedTime(new Date(endTime), mexicoTz);
     const daysDiff = differenceInDays(end, start);
     const isSameDate = isSameDay(start, end);
 
     if (isSameDate) {
       // Mismo día - mostrar fecha y rango de horas
       return {
-        dateText: format(start, "dd MMM yyyy", { locale: es }),
-        timeText: `${format(start, "HH:mm")} - ${format(end, "HH:mm")}`,
+        dateText: formatInTimeZone(new Date(startTime), mexicoTz, "dd MMM yyyy", { locale: es }),
+        timeText: `${formatInTimeZone(new Date(startTime), mexicoTz, "HH:mm")} - ${formatInTimeZone(new Date(endTime), mexicoTz, "HH:mm")}`,
         type: "hourly"
       };
     } else if (daysDiff >= 1) {
       // Múltiples días - mostrar rango de fechas
       return {
-        dateText: `${format(start, "dd MMM")} - ${format(end, "dd MMM yyyy", { locale: es })}`,
-        timeText: `${format(start, "HH:mm")} - ${format(end, "HH:mm")}`,
+        dateText: `${formatInTimeZone(new Date(startTime), mexicoTz, "dd MMM")} - ${formatInTimeZone(new Date(endTime), mexicoTz, "dd MMM yyyy", { locale: es })}`,
+        timeText: `${formatInTimeZone(new Date(startTime), mexicoTz, "HH:mm")} - ${formatInTimeZone(new Date(endTime), mexicoTz, "HH:mm")}`,
         type: "multi-day"
       };
     } else {
       // Cruce de medianoche - mostrar fechas y horas
       return {
-        dateText: `${format(start, "dd MMM")} - ${format(end, "dd MMM yyyy", { locale: es })}`,
-        timeText: `${format(start, "HH:mm")} - ${format(end, "HH:mm")}`,
+        dateText: `${formatInTimeZone(new Date(startTime), mexicoTz, "dd MMM")} - ${formatInTimeZone(new Date(endTime), mexicoTz, "dd MMM yyyy", { locale: es })}`,
+        timeText: `${formatInTimeZone(new Date(startTime), mexicoTz, "HH:mm")} - ${formatInTimeZone(new Date(endTime), mexicoTz, "HH:mm")}`,
         type: "overnight"
       };
     }
@@ -273,7 +276,7 @@ export function MaintenanceList() {
                           </p>
                           {maintenance.is_emergency && maintenance.expected_reopening && (
                             <p className="text-xs text-blue-600">
-                              Apertura probable: {format(new Date(maintenance.expected_reopening), "dd/MM/yyyy HH:mm", { locale: es })}
+                              Apertura probable: {formatInTimeZone(new Date(maintenance.expected_reopening), "America/Mexico_City", "dd/MM/yyyy HH:mm", { locale: es })}
                             </p>
                           )}
                         </div>
