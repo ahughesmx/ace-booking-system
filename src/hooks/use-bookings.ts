@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { Booking, RegularBooking, SpecialBooking } from "@/types/booking";
 import { useEffect } from "react";
+import { getStartOfDateMexicoCityISO, getEndOfDateMexicoCityISO, getCurrentMexicoCityTime } from "@/utils/timezone";
+import { format } from "date-fns";
 
 export function useBookings(selectedDate?: Date, enabled: boolean = true) {
   return useQuery({
@@ -13,34 +15,45 @@ export function useBookings(selectedDate?: Date, enabled: boolean = true) {
         return [];
       }
 
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
+      // Usar formato YYYY-MM-DD para las funciones de timezone
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      const startISO = getStartOfDateMexicoCityISO(dateStr);
+      const endISO = getEndOfDateMexicoCityISO(dateStr);
 
-      console.log("📅 Fetching regular bookings for date:", selectedDate.toDateString(), {
-        selectedDate: selectedDate.toISOString(),
-        startOfDay: startOfDay.toISOString(),
-        endOfDay: endOfDay.toISOString(),
-        filterStatus: "paid",
-        filterTime: "future_only"
-      });
+      // Detectar si selectedDate es HOY (en hora CDMX)
+      const todayMexico = getCurrentMexicoCityTime();
+      const todayStr = format(todayMexico, 'yyyy-MM-dd');
+      const isToday = dateStr === todayStr;
 
       const now = new Date().toISOString();
+
+      console.log("📅 Fetching regular bookings for date:", selectedDate.toDateString(), {
+        dateStr,
+        startISO,
+        endISO,
+        isToday,
+        todayStr,
+        filterStatus: "paid",
+        willFilterByEndTime: isToday
+      });
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("bookings")
         .select(`
           *,
           court:courts(id, name, court_type),
           user:profiles!user_id(full_name, member_id)
         `)
-        .gte("start_time", startOfDay.toISOString())
-        .lte("start_time", endOfDay.toISOString())
-        .eq("status", "paid")
-        .gte("end_time", now)
-        .order("start_time");
+        .gte("start_time", startISO)
+        .lte("start_time", endISO)
+        .eq("status", "paid");
+
+      // Solo filtrar por end_time si es HOY
+      if (isToday) {
+        query = query.gte("end_time", now);
+      }
+
+      const { data, error } = await query.order("start_time");
 
       if (error) {
         console.error("❌ Error fetching regular bookings:", error);
@@ -68,16 +81,15 @@ export function useSpecialBookings(selectedDate?: Date, enabled: boolean = true)
         return [];
       }
 
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
+      // Usar formato YYYY-MM-DD para las funciones de timezone
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      const startISO = getStartOfDateMexicoCityISO(dateStr);
+      const endISO = getEndOfDateMexicoCityISO(dateStr);
 
       console.log("🎯 Fetching special bookings for:", {
-        selectedDate: selectedDate.toISOString(),
-        startOfDay: startOfDay.toISOString(),
-        endOfDay: endOfDay.toISOString()
+        dateStr,
+        startISO,
+        endISO
       });
 
       const { data, error } = await supabase
@@ -87,8 +99,8 @@ export function useSpecialBookings(selectedDate?: Date, enabled: boolean = true)
           court:courts(id, name, court_type),
           reference_user:profiles!special_bookings_reference_user_id_fkey(full_name, member_id)
         `)
-        .gte("start_time", startOfDay.toISOString())
-        .lte("start_time", endOfDay.toISOString())
+        .gte("start_time", startISO)
+        .lte("start_time", endISO)
         .order("start_time");
 
       if (error) {
@@ -117,23 +129,22 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
         return [];
       }
 
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
+      // Usar formato YYYY-MM-DD para las funciones de timezone
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      const startISO = getStartOfDateMexicoCityISO(dateStr);
+      const endISO = getEndOfDateMexicoCityISO(dateStr);
 
       console.log("🌐 Fetching public display bookings for:", {
-        selectedDate: selectedDate.toISOString(),
-        startOfDay: startOfDay.toISOString(),
-        endOfDay: endOfDay.toISOString()
+        dateStr,
+        startISO,
+        endISO
       });
       
       const { data, error } = await supabase
         .from("display_bookings_combined")
         .select("*")
-        .gte("start_time", startOfDay.toISOString())
-        .lte("start_time", endOfDay.toISOString())
+        .gte("start_time", startISO)
+        .lte("start_time", endISO)
         .order("start_time");
 
       if (error) {
