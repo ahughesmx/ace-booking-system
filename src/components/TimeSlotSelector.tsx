@@ -76,9 +76,9 @@ export function TimeSlotSelector({
   // Ensure we get the correct type - when courtType is provided, we get a single object
   const settings = courtType && settingsData && !Array.isArray(settingsData) ? settingsData : null;
   
-  // Filtrar canchas que no están en mantenimiento
-  const availableCourts = courts.filter(court => !maintenanceCourts.has(court.id));
-  const totalCourts = availableCourts.length;
+  // No filtrar por mantenimiento actual; se valida a nivel de slot
+  const availableCourts = courts;
+  const totalCourts = courts.length;
   
   // Usar las configuraciones específicas del tipo de cancha si están disponibles
   const timeSlots = settings 
