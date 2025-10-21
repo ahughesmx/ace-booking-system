@@ -72,6 +72,55 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
     fetchRequests();
   }, []);
 
+  // Realtime subscription for new registration requests
+  useEffect(() => {
+    console.log('🔴 Setting up realtime subscription for user_registration_requests');
+    
+    const channel = supabase
+      .channel('registration-requests-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_registration_requests'
+        },
+        (payload) => {
+          console.log('🟢 New registration request received via realtime:', payload.new);
+          // Add the new request to the beginning of the list
+          setRequests((prevRequests) => [payload.new as RegistrationRequest, ...prevRequests]);
+          
+          toast({
+            title: "Nueva solicitud de registro",
+            description: `${(payload.new as RegistrationRequest).full_name} ha enviado una solicitud.`,
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_registration_requests'
+        },
+        (payload) => {
+          console.log('🟡 Registration request updated via realtime:', payload.new);
+          // Update the request in the list
+          setRequests((prevRequests) =>
+            prevRequests.map((req) =>
+              req.id === (payload.new as RegistrationRequest).id ? (payload.new as RegistrationRequest) : req
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔴 Cleaning up realtime subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [toast]);
+
   const fetchRequests = async () => {
     try {
       setLoading(true);
