@@ -474,6 +474,24 @@ Nota: Se envía un webhook individual por cada reserva afectada.`
           },
           webhook_name: webhook.name
         };
+      } else if (webhook.event_type === 'registration_status_changed') {
+        testPayload = {
+          event: "registration_status_changed",
+          timestamp: now.toISOString(),
+          data: {
+            request_id: `test_request_${Date.now()}`,
+            status: "approved",
+            full_name: "Juan Pérez",
+            email: "juan.perez@email.com",
+            phone: "3331234567",
+            member_id: "A-123",
+            remotejid: "3331234567",
+            user_id: `test_user_${Date.now()}`,
+            processed_by: "test-admin-id",
+            rejection_reason: null
+          },
+          webhook_name: webhook.name
+        };
       } else {
         // Payload genérico para otros tipos de eventos
         testPayload = {
