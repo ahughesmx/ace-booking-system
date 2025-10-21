@@ -644,7 +644,7 @@ export default function Display() {
                   <span className="text-gray-700 font-medium">Reservado</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 bg-yellow-400 border border-yellow-400 rounded"></div>
+                  <div className="w-3 h-3 bg-yellow-600 rounded"></div>
                   <span className="text-gray-700 font-medium">Evento Especial</span>
                 </div>
                 <div className="flex items-center gap-1">
