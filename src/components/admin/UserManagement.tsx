@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Toggle } from "@/components/ui/toggle";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserCog, Search, LayoutGrid, List } from "lucide-react";
 import { UserCard } from "./users/UserCard";
 import { UserList } from "./users/UserList";
@@ -29,6 +30,7 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -36,17 +38,26 @@ export default function UserManagement() {
   }, []);
 
   useEffect(() => {
-    if (searchTerm.trim() === "") {
-      setFilteredUsers(users);
-    } else {
-      const filtered = users.filter(user => 
+    let filtered = users;
+    
+    // Aplicar filtro de búsqueda
+    if (searchTerm.trim() !== "") {
+      filtered = filtered.filter(user => 
         user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.member_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredUsers(filtered);
     }
-  }, [searchTerm, users]);
+    
+    // Aplicar filtro de status
+    if (statusFilter === 'active') {
+      filtered = filtered.filter(user => user.is_active === true);
+    } else if (statusFilter === 'inactive') {
+      filtered = filtered.filter(user => user.is_active === false);
+    }
+    
+    setFilteredUsers(filtered);
+  }, [searchTerm, statusFilter, users]);
 
   const fetchUsers = async () => {
     try {
@@ -285,9 +296,13 @@ export default function UserManagement() {
           <DirectUserRegistration onSuccess={fetchUsers} />
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-4">
-          <div className="hidden">
-            {/* Spacer */}
-          </div>
+          <Tabs value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'all' | 'active' | 'inactive')}>
+            <TabsList>
+              <TabsTrigger value="all">Todos</TabsTrigger>
+              <TabsTrigger value="active">Activos</TabsTrigger>
+              <TabsTrigger value="inactive">Inactivos</TabsTrigger>
+            </TabsList>
+          </Tabs>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
