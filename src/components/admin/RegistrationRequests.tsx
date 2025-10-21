@@ -390,9 +390,15 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
         updated_at: new Date().toISOString()
       };
 
-      // Include password if provided
+      // Manejar el password: si se proporciona uno nuevo, usarlo; si está vacío, preservar el existente
       if (updatedData.password && updatedData.password.trim()) {
         updatePayload.password = updatedData.password;
+      } else {
+        // Si el campo está vacío, buscar y preservar el password actual de la solicitud
+        const currentRequest = requests.find(r => r.id === requestId);
+        if (currentRequest?.password) {
+          updatePayload.password = currentRequest.password;
+        }
       }
 
       const { error } = await supabase
@@ -438,7 +444,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
       email: req.email || '',
       phone: req.phone || '',
       member_id: req.member_id || '',
-      password: '',
+      password: req.password || '', // Cargar password actual
       is_membership_holder: req.is_membership_holder || false
     };
     console.log('🔍 Setting editForm to:', formData);
@@ -456,7 +462,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
         email: req.email || '',
         phone: req.phone || '',
         member_id: req.member_id || '',
-        password: '',
+        password: req.password || '', // Cargar password actual
         is_membership_holder: req.is_membership_holder || false
       };
       console.log('🔄 useEffect updating editForm to:', updatedForm);
@@ -858,13 +864,16 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
               />
             </div>
             <div>
-              <Label htmlFor="edit_password">Nueva Contraseña (opcional)</Label>
+              <Label htmlFor="edit_password">
+                Contraseña Provisional 
+                {requests.find(r => r.id === editingRequestId)?.password ? ' ✓ Ya establecida' : ' (Requerida para aprobar)'}
+              </Label>
               <Input
                 id="edit_password"
                 type="password"
                 value={editForm.password}
                 onChange={(e) => setEditForm(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="Dejar vacío para mantener la actual"
+                placeholder={requests.find(r => r.id === editingRequestId)?.password ? "Dejar vacío para mantener la actual" : "Establecer contraseña provisional"}
               />
             </div>
             <div className="flex items-center space-x-2">
