@@ -505,7 +505,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
     setEditingRequestId(null);
   };
 
-  // Filter requests processed in August or September 2024
+  // Filter requests processed in August or September 2025
   const getAugustSeptemberRequests = () => {
     return requests.filter(request => {
       if (!request.processed_at || request.status === 'pending') return false;
@@ -514,7 +514,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
       const month = processedDate.getMonth(); // 0-indexed (7=August, 8=September)
       const year = processedDate.getFullYear();
       
-      return year === 2024 && (month === 7 || month === 8);
+      return year === 2025 && (month === 7 || month === 8);
     });
   };
 
