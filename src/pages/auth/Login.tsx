@@ -108,33 +108,31 @@ export default function Login() {
       console.log("🔍 [PASO 5] Iniciando consulta a valid_member_ids");
       console.log("🔍 [PASO 5] Valor a buscar:", `"${cleanMemberId}"`);
       
-      const { data: validMember, error: memberError } = await supabase
-        .from('valid_member_ids')
-        .select('member_id')
-        .eq('member_id', cleanMemberId)
-        .maybeSingle();
-
-      console.log("🔍 [PASO 5] Resultado de la consulta:", {
-        data: validMember,
-        error: memberError,
-        hasData: !!validMember,
-        hasError: !!memberError
+      const { data: validateRes, error: validateError } = await supabase.functions.invoke('validate-member-id', {
+        body: { memberId: cleanMemberId }
       });
 
-      if (!validMember || memberError) {
+      console.log("🔍 [PASO 5] Resultado de la validación (edge):", {
+        data: validateRes,
+        error: validateError,
+        isValid: !!validateRes?.valid,
+        hasError: !!validateError
+      });
+
+      if (!validateRes?.valid || validateError) {
         console.error("❌ [ERROR PASO 5] Clave de socio inválida:", { 
-          memberError, 
+          validateError, 
           searchedValue: `"${cleanMemberId}"`,
-          errorMessage: memberError?.message,
-          errorDetails: memberError?.details,
-          errorHint: memberError?.hint
+          errorMessage: (validateError as any)?.message,
+          errorDetails: (validateError as any)?.details,
+          errorHint: (validateError as any)?.hint
         });
         setError(`Clave de socio "${cleanMemberId}" inválida. Verifica que sea correcta.`);
         setIsRegistering(false);
         return;
       }
       
-      console.log("✅ [PASO 5] Clave de socio válida encontrada:", validMember);
+      console.log("✅ [PASO 5] Clave de socio válida encontrada:", validateRes);
 
       // Check for existing registration request with same phone
       console.log("🔍 [PASO 6] Verificando solicitudes existentes con teléfono:", cleanPhone);

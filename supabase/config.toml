@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.booking-reminders]
 verify_jwt = false
+
+[functions.validate-member-id]
+verify_jwt = false
