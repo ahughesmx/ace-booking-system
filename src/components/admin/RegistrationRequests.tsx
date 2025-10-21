@@ -295,6 +295,20 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
       }
     }
 
+    // Checar duplicados ya aprobados en memoria para evitar errores del Edge
+    const duplicateApproved = requests.some(r => r.id !== requestId && r.status === 'approved' && (
+      (request.email && r.email && r.email.toLowerCase() === request.email.toLowerCase()) ||
+      (request.phone && r.phone && r.phone === request.phone)
+    ));
+    if (duplicateApproved) {
+      toast({
+        title: 'Datos ya registrados',
+        description: 'Ya existe un usuario aprobado con este correo o teléfono. Ajusta los datos antes de aprobar.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     // Validar que exista la contraseña
     if (!request.password || request.password.trim() === '') {
       toast({
