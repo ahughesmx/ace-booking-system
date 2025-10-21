@@ -58,26 +58,47 @@ export default function Login() {
     setError("");
     setIsRegistering(true);
 
-    console.log("🔵 Iniciando proceso de registro...", { memberId, fullName, phone, email });
+    // Limpiar y validar campos
+    const cleanMemberId = memberId.trim();
+    const cleanFullName = fullName.trim();
+    const cleanPhone = phone.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    console.log("🔵 Iniciando proceso de registro...", { 
+      memberId: cleanMemberId, 
+      fullName: cleanFullName, 
+      phone: cleanPhone, 
+      email: cleanEmail 
+    });
+
+    // Validar campos no vacíos
+    if (!cleanMemberId || !cleanFullName || !cleanPhone || !cleanEmail) {
+      setError("Todos los campos son obligatorios");
+      setIsRegistering(false);
+      return;
+    }
 
     // Validación de teléfono
-    if (phone.length !== 10) {
+    if (cleanPhone.length !== 10) {
       setError("El celular debe tener exactamente 10 dígitos");
       setIsRegistering(false);
       return;
     }
 
     try {
-      console.log("🔍 Validando clave de socio...");
+      console.log("🔍 Validando clave de socio:", cleanMemberId);
       const { data: validMember, error: memberError } = await supabase
         .from('valid_member_ids')
         .select('member_id')
-        .eq('member_id', memberId)
-        .single();
+        .eq('member_id', cleanMemberId)
+        .maybeSingle();
 
       if (!validMember || memberError) {
-        console.log("❌ Clave de socio inválida:", memberError);
-        setError("Clave de socio inválida");
+        console.log("❌ Clave de socio inválida:", { 
+          memberError, 
+          searchedValue: cleanMemberId 
+        });
+        setError(`Clave de socio "${cleanMemberId}" inválida. Verifica que sea correcta.`);
         setIsRegistering(false);
         return;
       }
@@ -89,13 +110,13 @@ export default function Login() {
       const { data: existingRequest, error: checkRequestError } = await supabase
         .from('user_registration_requests')
         .select('id, status, full_name')
-        .eq('phone', phone)
+        .eq('phone', cleanPhone)
         .eq('status', 'pending')
-        .single();
+        .maybeSingle();
 
       if (existingRequest && !checkRequestError) {
         console.log("❌ Ya existe solicitud pendiente");
-        setError(`Ya existe una solicitud pendiente para el teléfono ${phone} (${existingRequest.full_name})`);
+        setError(`Ya existe una solicitud pendiente para el teléfono ${cleanPhone} (${existingRequest.full_name})`);
         setIsRegistering(false);
         return;
       }
@@ -105,13 +126,13 @@ export default function Login() {
       const { data: existingProfile, error: checkProfileError } = await supabase
         .from('profiles')
         .select('id, full_name, member_id')
-        .eq('phone', phone)
-        .eq('member_id', memberId)
-        .single();
+        .eq('phone', cleanPhone)
+        .eq('member_id', cleanMemberId)
+        .maybeSingle();
 
       if (existingProfile && !checkProfileError) {
         console.log("❌ Usuario ya registrado");
-        setError(`El teléfono ${phone} ya está registrado para ${existingProfile.full_name} con la clave ${memberId}`);
+        setError(`El teléfono ${cleanPhone} ya está registrado para ${existingProfile.full_name} con la clave ${cleanMemberId}`);
         setIsRegistering(false);
         return;
       }
@@ -121,10 +142,10 @@ export default function Login() {
       const { error } = await supabase
         .from('user_registration_requests')
         .insert({
-          member_id: memberId.trim(),
-          full_name: fullName.trim(),
-          phone: phone.trim(),
-          email: email.trim().toLowerCase(),
+          member_id: cleanMemberId,
+          full_name: cleanFullName,
+          phone: cleanPhone,
+          email: cleanEmail,
           status: 'pending',
           password_provided: false
         });
