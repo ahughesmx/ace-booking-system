@@ -17,6 +17,8 @@ import { Switch } from "@/components/ui/switch";
 import PendingRequests from "./registration/PendingRequests";
 import ProcessedRequests from "./registration/ProcessedRequests";
 import NewManualUserRegistration from "./NewManualUserRegistration";
+import DeleteProcessedRequestsDialog from "./registration/DeleteProcessedRequestsDialog";
+import { Trash2 } from "lucide-react";
 
 interface RegistrationRequest {
   id: string;
@@ -66,6 +68,9 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   const [processedSearchTerm, setProcessedSearchTerm] = useState("");
   const itemsPerPage = 5;
   const [showMigrationPending, setShowMigrationPending] = useState(false);
+  
+  // Delete august/september processed requests state
+  const [showDeleteAugSepDialog, setShowDeleteAugSepDialog] = useState(false);
   
   const { toast } = useToast();
 
@@ -500,6 +505,50 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
     setEditingRequestId(null);
   };
 
+  // Filter requests processed in August or September 2024
+  const getAugustSeptemberRequests = () => {
+    return requests.filter(request => {
+      if (!request.processed_at || request.status === 'pending') return false;
+      
+      const processedDate = new Date(request.processed_at);
+      const month = processedDate.getMonth(); // 0-indexed (7=August, 8=September)
+      const year = processedDate.getFullYear();
+      
+      return year === 2024 && (month === 7 || month === 8);
+    });
+  };
+
+  const handleDeleteAugustSeptember = async (requestIds: string[]) => {
+    try {
+      console.log(`🗑️ Deleting ${requestIds.length} processed requests from August/September...`);
+      
+      const { error } = await supabase
+        .from('user_registration_requests')
+        .delete()
+        .in('id', requestIds);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Solicitudes eliminadas",
+        description: `Se eliminaron ${requestIds.length} solicitudes procesadas en agosto y septiembre.`,
+      });
+
+      // Refresh the requests list
+      await fetchRequests();
+
+    } catch (error) {
+      console.error('Error deleting August/September requests:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron eliminar las solicitudes.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Handle search term changes and reset pagination
   const handlePendingSearchChange = (value: string) => {
     setPendingSearchTerm(value);
@@ -767,6 +816,13 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
           </DialogContent>
         </Dialog>
 
+        <DeleteProcessedRequestsDialog
+          open={showDeleteAugSepDialog}
+          onOpenChange={setShowDeleteAugSepDialog}
+          requests={getAugustSeptemberRequests()}
+          onConfirm={handleDeleteAugustSeptember}
+        />
+
       </>
     );
   }
@@ -806,6 +862,17 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
         </TabsContent>
         
         <TabsContent value="processed" className="space-y-4">
+          {getAugustSeptemberRequests().length > 0 && (
+            <div className="flex justify-end">
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteAugSepDialog(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Eliminar solicitudes de Agosto y Septiembre ({getAugustSeptemberRequests().length})
+              </Button>
+            </div>
+          )}
           <ProcessedRequests
             requests={paginatedProcessedRequests}
             currentPage={processedCurrentPage}
