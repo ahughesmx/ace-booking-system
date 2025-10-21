@@ -49,6 +49,8 @@ serve(async (req) => {
       .eq("member_id", memberId)
       .maybeSingle();
 
+    console.log("[validate-member-id] Query result:", { data, error, hasData: !!data, hasError: !!error });
+
     if (error) {
       console.error("[validate-member-id] Query error:", error);
       return new Response(
@@ -58,6 +60,8 @@ serve(async (req) => {
     }
 
     const valid = !!data;
+    console.log("[validate-member-id] Final result:", { valid, memberId });
+    
     return new Response(
       JSON.stringify({ valid, memberId }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

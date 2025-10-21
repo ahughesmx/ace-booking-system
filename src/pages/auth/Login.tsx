@@ -108,13 +108,18 @@ export default function Login() {
       console.log("🔍 [PASO 5] Iniciando consulta a valid_member_ids");
       console.log("🔍 [PASO 5] Valor a buscar:", `"${cleanMemberId}"`);
       
+      console.log("🔵 [PASO 5] Invocando edge function con memberId:", cleanMemberId);
+      
       const { data: validateRes, error: validateError } = await supabase.functions.invoke('validate-member-id', {
         body: { memberId: cleanMemberId }
       });
 
-      console.log("🔍 [PASO 5] Resultado de la validación (edge):", {
+      console.log("🔍 [PASO 5] Respuesta completa de edge function:", {
         data: validateRes,
         error: validateError,
+        dataType: typeof validateRes,
+        errorType: typeof validateError,
+        validateResValid: validateRes?.valid,
         isValid: !!validateRes?.valid,
         hasError: !!validateError
       });
