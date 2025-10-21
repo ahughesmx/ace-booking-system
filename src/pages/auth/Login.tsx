@@ -54,9 +54,17 @@ export default function Login() {
   };
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
+    console.log("🟢 [INICIO] Botón Registrar presionado");
     e.preventDefault();
     setError("");
     setIsRegistering(true);
+
+    console.log("🟢 [PASO 1] Valores del formulario (sin limpiar):", { 
+      memberId: `"${memberId}"`, 
+      fullName: `"${fullName}"`, 
+      phone: `"${phone}"`, 
+      email: `"${email}"` 
+    });
 
     // Limpiar y validar campos
     const cleanMemberId = memberId.trim();
@@ -64,49 +72,72 @@ export default function Login() {
     const cleanPhone = phone.trim();
     const cleanEmail = email.trim().toLowerCase();
 
-    console.log("🔵 Iniciando proceso de registro...", { 
-      memberId: cleanMemberId, 
-      fullName: cleanFullName, 
-      phone: cleanPhone, 
-      email: cleanEmail 
+    console.log("🔵 [PASO 2] Valores limpiados:", { 
+      cleanMemberId: `"${cleanMemberId}"`,
+      cleanFullName: `"${cleanFullName}"`,
+      cleanPhone: `"${cleanPhone}"`,
+      cleanEmail: `"${cleanEmail}"`
     });
 
     // Validar campos no vacíos
+    console.log("🔍 [PASO 3] Validando campos no vacíos...");
     if (!cleanMemberId || !cleanFullName || !cleanPhone || !cleanEmail) {
+      console.error("❌ [ERROR PASO 3] Campos vacíos detectados:", {
+        cleanMemberId: cleanMemberId || "(vacío)",
+        cleanFullName: cleanFullName || "(vacío)",
+        cleanPhone: cleanPhone || "(vacío)",
+        cleanEmail: cleanEmail || "(vacío)"
+      });
       setError("Todos los campos son obligatorios");
       setIsRegistering(false);
       return;
     }
+    console.log("✅ [PASO 3] Todos los campos tienen valor");
 
     // Validación de teléfono
+    console.log("🔍 [PASO 4] Validando longitud de teléfono:", cleanPhone.length);
     if (cleanPhone.length !== 10) {
+      console.error("❌ [ERROR PASO 4] Teléfono inválido. Longitud:", cleanPhone.length);
       setError("El celular debe tener exactamente 10 dígitos");
       setIsRegistering(false);
       return;
     }
+    console.log("✅ [PASO 4] Teléfono válido");
 
     try {
-      console.log("🔍 Validando clave de socio:", cleanMemberId);
+      console.log("🔍 [PASO 5] Iniciando consulta a valid_member_ids");
+      console.log("🔍 [PASO 5] Valor a buscar:", `"${cleanMemberId}"`);
+      
       const { data: validMember, error: memberError } = await supabase
         .from('valid_member_ids')
         .select('member_id')
         .eq('member_id', cleanMemberId)
         .maybeSingle();
 
+      console.log("🔍 [PASO 5] Resultado de la consulta:", {
+        data: validMember,
+        error: memberError,
+        hasData: !!validMember,
+        hasError: !!memberError
+      });
+
       if (!validMember || memberError) {
-        console.log("❌ Clave de socio inválida:", { 
+        console.error("❌ [ERROR PASO 5] Clave de socio inválida:", { 
           memberError, 
-          searchedValue: cleanMemberId 
+          searchedValue: `"${cleanMemberId}"`,
+          errorMessage: memberError?.message,
+          errorDetails: memberError?.details,
+          errorHint: memberError?.hint
         });
         setError(`Clave de socio "${cleanMemberId}" inválida. Verifica que sea correcta.`);
         setIsRegistering(false);
         return;
       }
       
-      console.log("✅ Clave de socio válida");
+      console.log("✅ [PASO 5] Clave de socio válida encontrada:", validMember);
 
       // Check for existing registration request with same phone
-      console.log("🔍 Verificando solicitudes existentes...");
+      console.log("🔍 [PASO 6] Verificando solicitudes existentes con teléfono:", cleanPhone);
       const { data: existingRequest, error: checkRequestError } = await supabase
         .from('user_registration_requests')
         .select('id, status, full_name')
@@ -114,15 +145,22 @@ export default function Login() {
         .eq('status', 'pending')
         .maybeSingle();
 
+      console.log("🔍 [PASO 6] Resultado:", {
+        data: existingRequest,
+        error: checkRequestError,
+        hasExistingRequest: !!existingRequest
+      });
+
       if (existingRequest && !checkRequestError) {
-        console.log("❌ Ya existe solicitud pendiente");
+        console.error("❌ [ERROR PASO 6] Ya existe solicitud pendiente:", existingRequest);
         setError(`Ya existe una solicitud pendiente para el teléfono ${cleanPhone} (${existingRequest.full_name})`);
         setIsRegistering(false);
         return;
       }
+      console.log("✅ [PASO 6] No hay solicitudes pendientes");
 
       // Check if user already exists with this phone and member_id
-      console.log("🔍 Verificando perfil existente...");
+      console.log("🔍 [PASO 7] Verificando perfil existente...");
       const { data: existingProfile, error: checkProfileError } = await supabase
         .from('profiles')
         .select('id, full_name, member_id')
@@ -130,16 +168,31 @@ export default function Login() {
         .eq('member_id', cleanMemberId)
         .maybeSingle();
 
+      console.log("🔍 [PASO 7] Resultado:", {
+        data: existingProfile,
+        error: checkProfileError,
+        hasExistingProfile: !!existingProfile
+      });
+
       if (existingProfile && !checkProfileError) {
-        console.log("❌ Usuario ya registrado");
+        console.error("❌ [ERROR PASO 7] Usuario ya registrado:", existingProfile);
         setError(`El teléfono ${cleanPhone} ya está registrado para ${existingProfile.full_name} con la clave ${cleanMemberId}`);
         setIsRegistering(false);
         return;
       }
+      console.log("✅ [PASO 7] Usuario no existe previamente");
 
       // Create registration request - user will set password via email
-      console.log("📝 Creando solicitud de registro...");
-      const { error } = await supabase
+      console.log("📝 [PASO 8] Creando solicitud de registro con datos:", {
+        member_id: cleanMemberId,
+        full_name: cleanFullName,
+        phone: cleanPhone,
+        email: cleanEmail,
+        status: 'pending',
+        password_provided: false
+      });
+
+      const { error: insertError } = await supabase
         .from('user_registration_requests')
         .insert({
           member_id: cleanMemberId,
@@ -150,16 +203,24 @@ export default function Login() {
           password_provided: false
         });
 
-      if (error) {
-        console.error("❌ Error creating registration request:", error);
-        setError("Error al enviar solicitud de registro: " + error.message);
+      console.log("🔍 [PASO 8] Resultado de la inserción:", {
+        error: insertError,
+        hasError: !!insertError,
+        errorMessage: insertError?.message,
+        errorDetails: insertError?.details,
+        errorHint: insertError?.hint
+      });
+
+      if (insertError) {
+        console.error("❌ [ERROR PASO 8] Error al crear solicitud:", insertError);
+        setError("Error al enviar solicitud de registro: " + insertError.message);
         setIsRegistering(false);
       } else {
-        console.log("✅ Solicitud de registro creada exitosamente");
-        setError(""); // Limpiar errores
+        console.log("✅ [PASO 8] Solicitud de registro creada exitosamente");
+        console.log("🎉 [FIN] Proceso completado exitosamente");
+        setError("");
         setShowSuccessModal(true);
         setShowRegister(false);
-        // Limpiar campos
         setMemberId("");
         setFullName("");
         setPhone("");
@@ -167,7 +228,8 @@ export default function Login() {
         setIsRegistering(false);
       }
     } catch (err) {
-      console.error("❌ Registration error:", err);
+      console.error("❌ [EXCEPCIÓN] Error no manejado:", err);
+      console.error("❌ [EXCEPCIÓN] Stack trace:", err instanceof Error ? err.stack : "No stack available");
       setError("Error al enviar solicitud de registro: " + (err instanceof Error ? err.message : String(err)));
       setIsRegistering(false);
     }
