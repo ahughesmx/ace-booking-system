@@ -652,7 +652,7 @@ export default function Display() {
                   <span className="text-gray-700 font-medium">Horario pasado</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
+                  <div className="w-3 h-3 bg-blue-200 border border-blue-400 rounded"></div>
                   <span className="text-gray-700 font-medium">Hora Actual</span>
                 </div>
               </div>
