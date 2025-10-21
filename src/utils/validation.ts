@@ -88,7 +88,7 @@ export const validateEventType = (eventType: string): boolean => {
     'match_invitation_responded',
     'user_registered',
     'emergency_closure',
-    'user_registration_approved'
+    'registration_status_changed'
   ];
   return validEvents.includes(eventType);
 };

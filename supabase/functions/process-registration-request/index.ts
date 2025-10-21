@@ -271,27 +271,31 @@ serve(async (req) => {
         console.error("Error updating request:", updateError);
       }
 
-      // Enviar webhook de aprobación
+      // Enviar webhook de cambio de estatus
       const { data: webhooks } = await supabase
         .from("webhooks")
         .select("*")
-        .eq("event_type", "user_registration_approved")
+        .eq("event_type", "registration_status_changed")
         .eq("is_active", true);
 
       for (const webhook of webhooks || []) {
         try {
           const webhookData = {
-            event: "user_registration_approved",
+            event: "registration_status_changed",
             timestamp: new Date().toISOString(),
             data: {
-              user_id: authData.user.id,
+              request_id: requestId,
+              status: "approved",
               full_name: request.full_name,
               email: request.email,
               phone: cleanPhone,
               member_id: request.member_id,
               remotejid: cleanPhone,
-              approved_by: user.id
-            }
+              user_id: authData.user.id,
+              processed_by: user.id,
+              rejection_reason: null
+            },
+            webhook_name: webhook.name
           };
 
           await fetch(webhook.url, {
@@ -350,27 +354,31 @@ serve(async (req) => {
         throw new Error("Failed to update request");
       }
 
-      // Enviar webhook de rechazo
+      // Enviar webhook de cambio de estatus
       const { data: webhooks } = await supabase
         .from("webhooks")
         .select("*")
-        .eq("event_type", "user_registration_rejected")
+        .eq("event_type", "registration_status_changed")
         .eq("is_active", true);
 
       for (const webhook of webhooks || []) {
         try {
           const webhookData = {
-            event: "user_registration_rejected",
+            event: "registration_status_changed",
             timestamp: new Date().toISOString(),
             data: {
+              request_id: requestId,
+              status: "rejected",
               full_name: request.full_name,
               email: request.email,
               phone: request.phone,
               member_id: request.member_id,
               remotejid: request.phone,
-              rejection_reason: rejectionReason,
-              rejected_by: user.id
-            }
+              user_id: null,
+              processed_by: user.id,
+              rejection_reason: rejectionReason
+            },
+            webhook_name: webhook.name
           };
 
           await fetch(webhook.url, {

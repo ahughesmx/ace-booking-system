@@ -292,21 +292,43 @@ const WebhookManagement = () => {
 
 Nota: Se envía un webhook individual por cada reserva afectada.`
       },
-      user_registration_approved: {
-        description: "Se dispara cuando un administrador aprueba una solicitud de registro",
+      registration_status_changed: {
+        description: "Se dispara cuando cambia el estatus de una solicitud de registro (Aprobada o Rechazada)",
         headerExample: '{"Content-Type": "application/json"}',
         headerPlaceholder: 'Opcional: Headers para autenticación con tu sistema de mensajería',
         payloadExample: `{
-  "event": "user_registration_approved",
+  "event": "registration_status_changed",
   "timestamp": "2025-08-15T18:30:00Z",
   "data": {
-    "user_id": "user-uuid",
+    "request_id": "request-uuid",
+    "status": "approved",
     "full_name": "Juan Pérez",
     "email": "juan.perez@email.com",
     "phone": "3331234567",
     "member_id": "A-123",
     "remotejid": "3331234567",
-    "approved_by": "admin-user-uuid"
+    "user_id": "user-uuid",
+    "processed_by": "admin-user-uuid",
+    "rejection_reason": null
+  },
+  "webhook_name": "Mi Webhook WhatsApp"
+}
+
+// Ejemplo para solicitud rechazada:
+{
+  "event": "registration_status_changed",
+  "timestamp": "2025-08-15T18:30:00Z",
+  "data": {
+    "request_id": "request-uuid",
+    "status": "rejected",
+    "full_name": "Juan Pérez",
+    "email": "juan.perez@email.com",
+    "phone": "3331234567",
+    "member_id": "A-123",
+    "remotejid": "3331234567",
+    "user_id": null,
+    "processed_by": "admin-user-uuid",
+    "rejection_reason": "Datos inválidos"
   },
   "webhook_name": "Mi Webhook WhatsApp"
 }`
@@ -610,7 +632,7 @@ Nota: Se envía un webhook individual por cada reserva afectada.`
     { value: "match_invitation_responded", label: "Invitación de partido respondida" },
     { value: "user_registered", label: "Usuario registrado" },
     { value: "emergency_closure", label: "Cierre imprevisto" },
-    { value: "user_registration_approved", label: "Solicitud de registro aprobada" },
+    { value: "registration_status_changed", label: "Cambio de estatus de solicitud" },
   ];
 
   if (isLoading) {
