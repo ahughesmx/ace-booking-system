@@ -67,7 +67,7 @@ export default function DeleteProcessedRequestsDialog({
                 ⚠️ ADVERTENCIA: Esta acción es IRREVERSIBLE
               </p>
               <p className="text-sm text-muted-foreground">
-                Se eliminarán permanentemente <strong>{requests.length} solicitudes procesadas</strong> en agosto y septiembre de 2024 de la base de datos.
+                Se eliminarán permanentemente <strong>{requests.length} solicitudes procesadas</strong> en agosto y septiembre de 2025 de la base de datos.
                 Esta acción no se puede deshacer.
               </p>
             </div>

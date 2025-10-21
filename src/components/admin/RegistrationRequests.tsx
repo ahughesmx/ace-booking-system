@@ -542,8 +542,8 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
     } catch (error) {
       console.error('Error deleting August/September requests:', error);
       toast({
-        title: "Error",
-        description: "No se pudieron eliminar las solicitudes.",
+        title: "Error al eliminar solicitudes",
+        description: error instanceof Error ? error.message : "Hubo un problema al eliminar las solicitudes",
         variant: "destructive",
       });
     }
@@ -816,13 +816,6 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
           </DialogContent>
         </Dialog>
 
-        <DeleteProcessedRequestsDialog
-          open={showDeleteAugSepDialog}
-          onOpenChange={setShowDeleteAugSepDialog}
-          requests={getAugustSeptemberRequests()}
-          onConfirm={handleDeleteAugustSeptember}
-        />
-
       </>
     );
   }
@@ -983,6 +976,13 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
           </div>
         </DialogContent>
       </Dialog>
+
+      <DeleteProcessedRequestsDialog
+        open={showDeleteAugSepDialog}
+        onOpenChange={setShowDeleteAugSepDialog}
+        requests={getAugustSeptemberRequests()}
+        onConfirm={handleDeleteAugustSeptember}
+      />
     </div>
   );
 }
