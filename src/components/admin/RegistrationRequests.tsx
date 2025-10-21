@@ -215,6 +215,12 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
         throw error;
       }
 
+      // Check if data contains an error message (when function returns 400)
+      if (data?.error) {
+        console.error("Function returned error:", data.error);
+        throw new Error(data.error);
+      }
+
       console.log("Function response:", data);
 
       toast({
@@ -234,14 +240,18 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
       let errorMessage = error.message || `No se pudo ${action === 'approve' ? 'aprobar' : 'rechazar'} la solicitud.`;
       
       // Personalizar mensaje para errores específicos
-      if (error.message?.includes("Esta clave de socio no está disponible o no pertenece a su familia")) {
+      if (error.message?.includes("Ya existe un usuario con este")) {
+        errorMessage = error.message; // Usar el mensaje completo del servidor
+      } else if (error.message?.includes("Esta clave de socio no está disponible o no pertenece a su familia")) {
         errorMessage = "Esta clave de socio ya está siendo utilizada por otra familia. El apellido del solicitante no coincide con los miembros existentes de esta membresía.";
       } else if (error.message?.includes("Member ID not available")) {
         errorMessage = "La clave de socio especificada no es válida o ya está en uso por otra familia.";
+      } else if (error.message?.includes("already been registered") || error.message?.includes("already registered")) {
+        errorMessage = "El correo electrónico o teléfono ya está registrado. Cada usuario debe tener credenciales únicas.";
       }
       
       toast({
-        title: "No se puede aprobar la solicitud",
+        title: action === 'approve' ? "No se puede aprobar la solicitud" : "Error al rechazar",
         description: errorMessage,
         variant: "destructive",
       });
