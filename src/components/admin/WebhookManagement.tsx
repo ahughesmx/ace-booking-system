@@ -291,6 +291,25 @@ const WebhookManagement = () => {
 }
 
 Nota: Se envía un webhook individual por cada reserva afectada.`
+      },
+      user_registration_approved: {
+        description: "Se dispara cuando un administrador aprueba una solicitud de registro",
+        headerExample: '{"Content-Type": "application/json"}',
+        headerPlaceholder: 'Opcional: Headers para autenticación con tu sistema de mensajería',
+        payloadExample: `{
+  "event": "user_registration_approved",
+  "timestamp": "2025-08-15T18:30:00Z",
+  "data": {
+    "user_id": "user-uuid",
+    "full_name": "Juan Pérez",
+    "email": "juan.perez@email.com",
+    "phone": "3331234567",
+    "member_id": "A-123",
+    "remotejid": "3331234567",
+    "approved_by": "admin-user-uuid"
+  },
+  "webhook_name": "Mi Webhook WhatsApp"
+}`
       }
     };
     return eventConfigs[eventType] || eventConfigs.booking_created;
@@ -591,6 +610,7 @@ Nota: Se envía un webhook individual por cada reserva afectada.`
     { value: "match_invitation_responded", label: "Invitación de partido respondida" },
     { value: "user_registered", label: "Usuario registrado" },
     { value: "emergency_closure", label: "Cierre imprevisto" },
+    { value: "user_registration_approved", label: "Solicitud de registro aprobada" },
   ];
 
   if (isLoading) {
