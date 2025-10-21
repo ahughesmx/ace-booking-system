@@ -121,12 +121,12 @@ export default function Login() {
       const { error } = await supabase
         .from('user_registration_requests')
         .insert({
-          member_id: memberId,
-          full_name: fullName,
-          phone: phone,
-          email: email,
-          send_password_reset: true,
-          status: 'pending'
+          member_id: memberId.trim(),
+          full_name: fullName.trim(),
+          phone: phone.trim(),
+          email: email.trim().toLowerCase(),
+          status: 'pending',
+          password_provided: false
         });
 
       if (error) {
