@@ -427,7 +427,7 @@ export default function Display() {
                             className={`rounded transition-all m-1 flex items-center justify-center text-xs text-white font-medium ${
                               slotInfo.isBooked
                                 ? slotInfo.type === 'special' 
-                                  ? 'bg-purple-500 hover:bg-purple-600' 
+                                  ? 'bg-orange-500 hover:bg-orange-600' 
                                   : 'bg-red-500 hover:bg-red-600'
                                 : slotInfo.type === 'past'
                                 ? 'bg-gray-400 text-gray-600'
@@ -475,7 +475,7 @@ export default function Display() {
               <span className="text-gray-700 text-sm font-medium">Reservado</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-purple-500 rounded"></div>
+              <div className="w-4 h-4 bg-orange-500 rounded"></div>
               <span className="text-gray-700 text-sm font-medium">Evento Especial</span>
             </div>
             <div className="flex items-center gap-2">
@@ -592,7 +592,7 @@ export default function Display() {
                             className={`border rounded p-2 text-center text-xs flex flex-col justify-center min-h-[80px] ${
                               slotInfo.isBooked
                                 ? slotInfo.type === 'special'
-                                  ? 'bg-purple-100 border-purple-300 text-purple-800'
+                                  ? 'bg-orange-100 border-orange-300 text-orange-800'
                                   : 'bg-red-100 border-red-300 text-red-800'
                                 : slotInfo.type === 'past'
                                 ? 'bg-gray-100 border-gray-300 text-gray-600'
@@ -644,7 +644,7 @@ export default function Display() {
                   <span className="text-gray-700 font-medium">Reservado</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 bg-purple-100 border border-purple-300 rounded"></div>
+                  <div className="w-3 h-3 bg-orange-100 border border-orange-300 rounded"></div>
                   <span className="text-gray-700 font-medium">Evento Especial</span>
                 </div>
                 <div className="flex items-center gap-1">
