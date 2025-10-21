@@ -24,6 +24,7 @@ interface RegistrationRequest {
   full_name: string;
   phone: string | null;
   email: string | null;
+  password?: string | null;
   password_provided?: boolean;
   status: 'pending' | 'approved' | 'rejected';
   rejection_reason?: string;
@@ -248,13 +249,47 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   };
 
   const handleApprove = (requestId: string) => {
-    // Buscar la solicitud para validar el teléfono
+    // Buscar la solicitud para validar
     const request = requests.find(r => r.id === requestId);
     
     if (!request) {
       toast({
         title: "Error",
         description: "No se encontró la solicitud.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar que exista email o teléfono (al menos uno requerido)
+    if ((!request.email || request.email.trim() === '') && 
+        (!request.phone || request.phone.trim() === '')) {
+      toast({
+        title: "Datos incompletos",
+        description: "El usuario debe tener al menos un correo electrónico o un número de teléfono registrado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar formato de email (si existe)
+    if (request.email && request.email.trim() !== '') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(request.email)) {
+        toast({
+          title: "Email inválido",
+          description: "El formato del correo electrónico no es válido. Por favor edita la solicitud antes de aprobarla.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Validar que exista la contraseña
+    if (!request.password || request.password.trim() === '') {
+      toast({
+        title: "Contraseña requerida",
+        description: "Debe establecer una contraseña provisional para el usuario. Por favor edita la solicitud y asigna una contraseña antes de aprobarla.",
         variant: "destructive",
       });
       return;

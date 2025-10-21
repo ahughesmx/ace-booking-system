@@ -134,6 +134,14 @@ serve(async (req) => {
 
       console.log("✅ Phone validation passed:", cleanPhone);
 
+      // Validar que exista la contraseña
+      if (!request.password || request.password.trim() === '') {
+        console.error("❌ Password validation failed: password is required");
+        throw new Error("La contraseña es requerida para aprobar la solicitud. Por favor establezca una contraseña antes de aprobar.");
+      }
+
+      console.log("✅ Password validation passed");
+
       // Cuando un admin/operador aprueba, solo verificar que el member_id sea válido
       // Sin restricciones de familia (los admins pueden asignar cualquier member_id válido)
       const { data: validMemberId, error: memberIdError } = await supabase
