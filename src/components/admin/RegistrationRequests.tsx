@@ -87,12 +87,18 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
         },
         (payload) => {
           console.log('🟢 New registration request received via realtime:', payload.new);
-          // Add the new request to the beginning of the list
-          setRequests((prevRequests) => [payload.new as RegistrationRequest, ...prevRequests]);
+          const newItem = payload.new as RegistrationRequest;
+          setRequests((prevRequests) => {
+            // Evitar duplicados y asegurar que esté al inicio
+            const withoutDup = prevRequests.filter((r) => r.id !== newItem.id);
+            return [newItem, ...withoutDup];
+          });
+          // Mostrar la nueva en la primera página
+          setPendingCurrentPage(1);
           
           toast({
             title: "Nueva solicitud de registro",
-            description: `${(payload.new as RegistrationRequest).full_name} ha enviado una solicitud.`,
+            description: `${newItem.full_name} ha enviado una solicitud.`,
           });
         }
       )
