@@ -11,6 +11,7 @@ import { useAllBookings } from "@/hooks/use-bookings";
 import { useAvailableCourtTypes } from "@/hooks/use-available-court-types";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { Booking, SpecialBooking } from "@/types/booking";
+import { getCurrentMexicoCityTime } from "@/utils/timezone";
 
 // Generate time slots based on court type settings
 function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
@@ -329,11 +330,11 @@ export default function Display() {
             />
             <div className="text-center">
               <h1 className="text-2xl font-bold text-gray-800 mb-1">
-                {formatShortDate(currentTime)}
+                {formatShortDate(getCurrentMexicoCityTime())}
               </h1>
               <p className="text-lg text-blue-600 font-semibold flex items-center justify-center gap-2">
                 <Clock className="w-4 h-4" />
-                {format(currentTime, "h:mm a")}
+                {format(getCurrentMexicoCityTime(), "h:mm a")}
               </p>
             </div>
             <div className="flex gap-2">
@@ -489,7 +490,7 @@ export default function Display() {
           />
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-800">
-              {formatShortDate(currentTime)} - {format(currentTime, "h:mm a")}
+              {formatShortDate(getCurrentMexicoCityTime())} - {format(getCurrentMexicoCityTime(), "h:mm a")}
             </h1>
           </div>
           <div className="flex gap-2">
