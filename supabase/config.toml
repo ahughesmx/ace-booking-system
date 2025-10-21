@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.validate-member-id]
 verify_jwt = false
+
+[functions.create-registration-request]
+verify_jwt = false

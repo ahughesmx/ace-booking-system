@@ -192,31 +192,29 @@ export default function Login() {
         phone: cleanPhone,
         email: cleanEmail,
         status: 'pending',
-        password_provided: false
+        send_password_reset: true
       });
 
-      const { error: insertError } = await supabase
-        .from('user_registration_requests')
-        .insert({
-          member_id: cleanMemberId,
-          full_name: cleanFullName,
+      const { data: createData, error: createError } = await supabase.functions.invoke('create-registration-request', {
+        body: {
+          memberId: cleanMemberId,
+          fullName: cleanFullName,
           phone: cleanPhone,
           email: cleanEmail,
-          status: 'pending',
-          password_provided: false
-        });
-
-      console.log("🔍 [PASO 8] Resultado de la inserción:", {
-        error: insertError,
-        hasError: !!insertError,
-        errorMessage: insertError?.message,
-        errorDetails: insertError?.details,
-        errorHint: insertError?.hint
+        }
       });
 
-      if (insertError) {
-        console.error("❌ [ERROR PASO 8] Error al crear solicitud:", insertError);
-        setError("Error al enviar solicitud de registro: " + insertError.message);
+      console.log("🔍 [PASO 8] Resultado (edge create-registration-request):", {
+        data: createData,
+        error: createError,
+        hasError: !!createError || !!createData?.error,
+        errorMessage: (createError as any)?.message || createData?.error
+      });
+
+      if (createError || (createData as any)?.error) {
+        const msg = ((createData as any)?.error as string) || (createError as any)?.message || 'Error desconocido';
+        console.error("❌ [ERROR PASO 8] Error al crear solicitud:", msg);
+        setError("Error al enviar solicitud de registro: " + msg);
         setIsRegistering(false);
       } else {
         console.log("✅ [PASO 8] Solicitud de registro creada exitosamente");
