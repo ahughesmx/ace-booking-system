@@ -83,3 +83,6 @@ verify_jwt = false
 
 [functions.create-registration-request]
 verify_jwt = false
+
+[functions.delete-inactive-users]
+verify_jwt = false

@@ -4,12 +4,14 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Toggle } from "@/components/ui/toggle";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCog, Search, LayoutGrid, List } from "lucide-react";
+import { UserCog, Search, LayoutGrid, List, Trash2 } from "lucide-react";
 import { UserCard } from "./users/UserCard";
 import { UserList } from "./users/UserList";
 import { EmptyUserState } from "./users/EmptyUserState";
 import DirectUserRegistration from "./DirectUserRegistration";
+import { DeleteInactiveUsersDialog } from "./users/DeleteInactiveUsersDialog";
 import type { Database } from "@/integrations/supabase/types";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
@@ -31,6 +33,8 @@ export default function UserManagement() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -259,6 +263,73 @@ export default function UserManagement() {
     }
   };
 
+  const handleDeleteInactiveUsers = async (userIds: string[]) => {
+    setIsDeleting(true);
+    
+    try {
+      console.log(`🗑️ Iniciando eliminación de ${userIds.length} usuarios inactivos`);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("No hay sesión activa");
+      }
+
+      const response = await supabase.functions.invoke('delete-inactive-users', {
+        body: { user_ids: userIds },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      const result = response.data;
+      
+      if (result.success) {
+        const { summary, results } = result;
+        
+        // Mostrar resultado detallado
+        if (summary.successfully_deleted > 0) {
+          toast({
+            title: "Usuarios eliminados exitosamente",
+            description: `${summary.successfully_deleted} de ${summary.total_requested} usuarios fueron eliminados permanentemente.`,
+          });
+        }
+        
+        // Mostrar fallos si los hay
+        if (summary.failed > 0) {
+          const failedUsers = results.filter((r: any) => !r.success);
+          console.warn("⚠️ Algunos usuarios no pudieron ser eliminados:", failedUsers);
+          
+          toast({
+            title: "Algunos usuarios no pudieron ser eliminados",
+            description: `${summary.failed} usuarios no cumplieron los criterios de eliminación.`,
+            variant: "destructive",
+          });
+        }
+        
+        // Cerrar diálogo y refrescar lista
+        setShowDeleteDialog(false);
+        fetchUsers();
+      } else {
+        throw new Error(result.error || "Error desconocido");
+      }
+      
+    } catch (error: any) {
+      console.error("Error eliminando usuarios:", error);
+      toast({
+        title: "Error al eliminar usuarios",
+        description: error.message || "Ocurrió un error inesperado",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -296,13 +367,28 @@ export default function UserManagement() {
           <DirectUserRegistration onSuccess={fetchUsers} />
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-4">
-          <Tabs value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'all' | 'active' | 'inactive')}>
-            <TabsList>
-              <TabsTrigger value="all">Todos</TabsTrigger>
-              <TabsTrigger value="active">Activos</TabsTrigger>
-              <TabsTrigger value="inactive">Inactivos</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex items-center gap-4">
+            <Tabs value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'all' | 'active' | 'inactive')}>
+              <TabsList>
+                <TabsTrigger value="all">Todos</TabsTrigger>
+                <TabsTrigger value="active">Activos</TabsTrigger>
+                <TabsTrigger value="inactive">Inactivos</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            
+            {statusFilter === 'inactive' && filteredUsers.length > 0 && (
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={() => setShowDeleteDialog(true)}
+                className="gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Eliminar usuarios inactivos ({filteredUsers.length})
+              </Button>
+            )}
+          </div>
+          
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -356,6 +442,14 @@ export default function UserManagement() {
           />
         )}
       </CardContent>
+
+      <DeleteInactiveUsersDialog
+        open={showDeleteDialog}
+        users={filteredUsers}
+        onConfirm={handleDeleteInactiveUsers}
+        onCancel={() => setShowDeleteDialog(false)}
+        isDeleting={isDeleting}
+      />
     </Card>
   );
 }
