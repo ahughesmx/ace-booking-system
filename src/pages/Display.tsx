@@ -16,7 +16,7 @@ import { getCurrentMexicoCityTime } from "@/utils/timezone";
 // Generate time slots based on court type settings
 function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
   const slots = [];
-  const now = new Date();
+  const now = getCurrentMexicoCityTime();
   
   if (!settings) return [];
 
@@ -36,8 +36,8 @@ function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
     const startTime = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour);
     const endTime = addHours(startTime, 1);
     
-    // Only check if it's in the past when it's TODAY
-    const isPast = isToday(selectedDate) && isBefore(startTime, now);
+    // Only mark as past if current time is >= slot end time
+    const isPast = isToday(selectedDate) && now >= endTime;
     
     slots.push({
       start: format(startTime, "HH:00"),
@@ -253,12 +253,21 @@ export default function Display() {
 
   // Get slot information
   const getSlotInfo = (courtId: string, timeSlot: string) => {
-    // Check if this time slot is in the past
-    const now = new Date();
+    // Use Mexico City time
+    const now = getCurrentMexicoCityTime();
     const slotTime = new Date(currentDate);
     const [hour] = timeSlot.split(':');
     slotTime.setHours(parseInt(hour), 0, 0, 0);
-    const isPast = isToday(currentDate) && isBefore(slotTime, now);
+    
+    // Create slot end time (1 hour later)
+    const slotEndTime = new Date(slotTime);
+    slotEndTime.setHours(slotEndTime.getHours() + 1);
+    
+    // A slot is "past" only if current time >= end time
+    const isPast = isToday(currentDate) && now >= slotEndTime;
+    
+    // A slot is "current" if now is between start and end
+    const isCurrent = isToday(currentDate) && now >= slotTime && now < slotEndTime;
 
     const booking = allBookings.find(booking => {
       const bookingDate = new Date(booking.start_time);
@@ -278,7 +287,8 @@ export default function Display() {
         type,
         booking: booking,
         isBooked: true,
-        isPast
+        isPast,
+        isCurrent
       };
     }
 
@@ -286,7 +296,8 @@ export default function Display() {
       type: isPast ? 'past' : 'available',
       booking: null,
       isBooked: false,
-      isPast
+      isPast,
+      isCurrent
     };
   };
 
@@ -420,7 +431,7 @@ export default function Display() {
                                   : 'bg-red-500 hover:bg-red-600'
                                 : slotInfo.type === 'past'
                                 ? 'bg-gray-400 text-gray-600'
-                                : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                                : 'bg-blue-600 text-white hover:bg-blue-700'
                             }`}
                             title={
                               slotInfo.type === 'special' && slotInfo.booking && isSpecialBooking(slotInfo.booking)
@@ -456,7 +467,7 @@ export default function Display() {
         <div className="bg-white border-t p-2 flex-shrink-0">
           <div className="flex justify-center gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-100 rounded"></div>
+              <div className="w-4 h-4 bg-blue-600 rounded"></div>
               <span className="text-gray-700 text-sm font-medium">Disponible</span>
             </div>
             <div className="flex items-center gap-2">
@@ -587,7 +598,7 @@ export default function Display() {
                                 ? 'bg-gray-100 border-gray-300 text-gray-600'
                                 : isCurrent
                                 ? 'bg-blue-200 border-blue-400 text-blue-900'
-                                : 'bg-blue-50 border-blue-200 text-blue-800'
+                                : 'bg-blue-600 border-blue-700 text-white'
                             }`}
                           >
                             <div className="font-bold text-sm mb-1">{slot}</div>
@@ -625,7 +636,7 @@ export default function Display() {
             <div className="bg-gray-50 p-2 border-t flex-shrink-0">
               <div className="flex justify-center gap-3 text-xs">
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 bg-blue-50 border border-blue-200 rounded"></div>
+                  <div className="w-3 h-3 bg-blue-600 border border-blue-700 rounded"></div>
                   <span className="text-gray-700 font-medium">Disponible</span>
                 </div>
                 <div className="flex items-center gap-1">
