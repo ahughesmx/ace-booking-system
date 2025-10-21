@@ -14,6 +14,8 @@ interface RegisterFormProps {
   setEmail: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onShowLogin: () => void;
+  error?: string;
+  isLoading?: boolean;
 }
 
 export function RegisterForm({
@@ -27,6 +29,8 @@ export function RegisterForm({
   setEmail,
   onSubmit,
   onShowLogin,
+  error,
+  isLoading = false,
 }: RegisterFormProps) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -95,13 +99,19 @@ export function RegisterForm({
           />
         </div>
       </div>
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
         <p className="text-sm text-blue-800">
           <strong>Nota:</strong> Después de que tu solicitud sea aprobada, recibirás un correo electrónico para establecer tu contraseña de forma segura.
         </p>
       </div>
-      <Button type="submit" className="w-full">
-        <UserPlus className="mr-2 h-4 w-4" /> Registrarse
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        <UserPlus className="mr-2 h-4 w-4" /> 
+        {isLoading ? "Enviando solicitud..." : "Registrarse"}
       </Button>
       <div className="text-center text-sm">
         <button

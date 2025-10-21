@@ -23,6 +23,7 @@ export default function Login() {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [isRegistering, setIsRegistering] = useState(false);
   
   // Estado para el modal de éxito
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -55,26 +56,36 @@ export default function Login() {
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsRegistering(true);
+
+    console.log("🔵 Iniciando proceso de registro...", { memberId, fullName, phone, email });
 
     // Validación de teléfono
     if (phone.length !== 10) {
       setError("El celular debe tener exactamente 10 dígitos");
+      setIsRegistering(false);
       return;
     }
 
     try {
-      const { data: validMember } = await supabase
+      console.log("🔍 Validando clave de socio...");
+      const { data: validMember, error: memberError } = await supabase
         .from('valid_member_ids')
         .select('member_id')
         .eq('member_id', memberId)
         .single();
 
-      if (!validMember) {
+      if (!validMember || memberError) {
+        console.log("❌ Clave de socio inválida:", memberError);
         setError("Clave de socio inválida");
+        setIsRegistering(false);
         return;
       }
+      
+      console.log("✅ Clave de socio válida");
 
       // Check for existing registration request with same phone
+      console.log("🔍 Verificando solicitudes existentes...");
       const { data: existingRequest, error: checkRequestError } = await supabase
         .from('user_registration_requests')
         .select('id, status, full_name')
@@ -83,11 +94,14 @@ export default function Login() {
         .single();
 
       if (existingRequest && !checkRequestError) {
+        console.log("❌ Ya existe solicitud pendiente");
         setError(`Ya existe una solicitud pendiente para el teléfono ${phone} (${existingRequest.full_name})`);
+        setIsRegistering(false);
         return;
       }
 
       // Check if user already exists with this phone and member_id
+      console.log("🔍 Verificando perfil existente...");
       const { data: existingProfile, error: checkProfileError } = await supabase
         .from('profiles')
         .select('id, full_name, member_id')
@@ -96,11 +110,14 @@ export default function Login() {
         .single();
 
       if (existingProfile && !checkProfileError) {
+        console.log("❌ Usuario ya registrado");
         setError(`El teléfono ${phone} ya está registrado para ${existingProfile.full_name} con la clave ${memberId}`);
+        setIsRegistering(false);
         return;
       }
 
       // Create registration request - user will set password via email
+      console.log("📝 Creando solicitud de registro...");
       const { error } = await supabase
         .from('user_registration_requests')
         .insert({
@@ -113,9 +130,11 @@ export default function Login() {
         });
 
       if (error) {
-        console.error("Error creating registration request:", error);
-        setError("Error al enviar solicitud de registro");
+        console.error("❌ Error creating registration request:", error);
+        setError("Error al enviar solicitud de registro: " + error.message);
+        setIsRegistering(false);
       } else {
+        console.log("✅ Solicitud de registro creada exitosamente");
         setError(""); // Limpiar errores
         setShowSuccessModal(true);
         setShowRegister(false);
@@ -124,10 +143,12 @@ export default function Login() {
         setFullName("");
         setPhone("");
         setEmail("");
+        setIsRegistering(false);
       }
     } catch (err) {
-      console.error("Registration error:", err);
-      setError("Error al enviar solicitud de registro");
+      console.error("❌ Registration error:", err);
+      setError("Error al enviar solicitud de registro: " + (err instanceof Error ? err.message : String(err)));
+      setIsRegistering(false);
     }
   };
 
@@ -146,6 +167,8 @@ export default function Login() {
             setEmail={setEmail}
             onSubmit={handleRegisterSubmit}
             onShowLogin={() => setShowRegister(false)}
+            error={error}
+            isLoading={isRegistering}
           />
         ) : (
           <LoginForm
