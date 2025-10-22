@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.delete-inactive-users]
 verify_jwt = false
+
+[functions.delete-test-booking]
+verify_jwt = true
