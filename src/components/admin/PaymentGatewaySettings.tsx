@@ -114,7 +114,63 @@ export default function PaymentGatewaySettings() {
     }
   }, [paymentGateways]);
 
+  const validateLiveMode = (): boolean => {
+    // Validar que las claves de producción estén presentes
+    if (!stripeConfig.secretKeyLive || !stripeConfig.publishableKeyLive) {
+      toast({
+        title: "Claves de producción requeridas",
+        description: "Debes configurar las claves de producción (Live) antes de desactivar el modo de prueba.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Validar formato de claves de producción
+    if (!stripeConfig.secretKeyLive.startsWith('sk_live_')) {
+      toast({
+        title: "Clave secreta inválida",
+        description: "La clave secreta de producción debe comenzar con 'sk_live_'",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!stripeConfig.publishableKeyLive.startsWith('pk_live_')) {
+      toast({
+        title: "Clave pública inválida",
+        description: "La clave pública de producción debe comenzar con 'pk_live_'",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSaveStripe = async () => {
+    // Si se está intentando cambiar a modo de producción, validar primero
+    if (!stripeConfig.testMode) {
+      const isValid = validateLiveMode();
+      if (!isValid) {
+        return;
+      }
+
+      // Confirmación adicional para cambio a producción
+      const confirmed = window.confirm(
+        "⚠️ ATENCIÓN: Estás a punto de activar el modo de PRODUCCIÓN de Stripe.\n\n" +
+        "Esto significa que se procesarán pagos REALES con dinero real.\n\n" +
+        "¿Estás seguro de que quieres continuar?"
+      );
+
+      if (!confirmed) {
+        toast({
+          title: "Operación cancelada",
+          description: "No se realizaron cambios en la configuración de Stripe.",
+        });
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       const { error } = await supabase
@@ -139,7 +195,7 @@ export default function PaymentGatewaySettings() {
 
       toast({
         title: "Configuración de Stripe guardada",
-        description: "La configuración de Stripe se ha actualizado correctamente.",
+        description: `La configuración de Stripe se ha actualizado correctamente en modo ${stripeConfig.testMode ? 'PRUEBA' : 'PRODUCCIÓN'}.`,
       });
     } catch (error) {
       toast({
@@ -324,19 +380,32 @@ export default function PaymentGatewaySettings() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Environment Toggle */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Label>Modo de Prueba</Label>
-              <Badge variant={stripeConfig.testMode ? "secondary" : "default"}>
-                {stripeConfig.testMode ? "Test" : "Live"}
-              </Badge>
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+            <div className="flex items-center space-x-3">
+              <div>
+                <Label className="text-base font-semibold">Modo de Operación</Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {stripeConfig.testMode 
+                    ? "Modo de prueba: No se procesarán pagos reales" 
+                    : "⚠️ Modo PRODUCCIÓN: Se procesarán pagos REALES"
+                  }
+                </p>
+              </div>
             </div>
-            <Switch
-              checked={stripeConfig.testMode}
-              onCheckedChange={(testMode) => 
-                setStripeConfig(prev => ({ ...prev, testMode }))
-              }
-            />
+            <div className="flex items-center space-x-2">
+              <Badge 
+                variant={stripeConfig.testMode ? "secondary" : "destructive"}
+                className="text-sm px-3 py-1"
+              >
+                {stripeConfig.testMode ? "TEST" : "LIVE"}
+              </Badge>
+              <Switch
+                checked={stripeConfig.testMode}
+                onCheckedChange={(testMode) => 
+                  setStripeConfig(prev => ({ ...prev, testMode }))
+                }
+              />
+            </div>
           </div>
 
           <Separator />

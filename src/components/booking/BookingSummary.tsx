@@ -12,6 +12,7 @@ import { useEnabledPaymentGateways } from "@/hooks/use-payment-settings";
 import { BookingRulesModal } from "./BookingRulesModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
+import { PaymentModeWarning } from "./PaymentModeWarning";
 
 interface BookingSummaryProps {
   date: Date;
@@ -192,6 +193,11 @@ export function BookingSummary({
             <CreditCard className="h-4 w-4" />
             Métodos de Pago
           </h4>
+
+          {/* Mostrar advertencia si Stripe está en modo de prueba */}
+          {paymentGateways.some(g => g.name === 'stripe' && g.test_mode) && (
+            <PaymentModeWarning isTestMode={true} />
+          )}
           
           {isLoadingGateways ? (
             <div className="flex items-center gap-2 text-muted-foreground">

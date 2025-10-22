@@ -179,6 +179,26 @@ export function useBookingPayment() {
       session: !!session,
       timestamp: new Date().toISOString()
     });
+
+    // Log payment mode warning for Stripe
+    if (paymentGateway === 'stripe') {
+      try {
+        const { data: stripeGateway } = await supabase
+          .from("payment_gateways")
+          .select("test_mode")
+          .eq("name", "stripe")
+          .eq("enabled", true)
+          .single();
+        
+        if (stripeGateway?.test_mode) {
+          console.warn('⚠️ STRIPE TEST MODE: This payment will NOT charge real money. Use test card: 4242 4242 4242 4242');
+        } else {
+          console.warn('💰 STRIPE LIVE MODE: This payment WILL charge REAL money!');
+        }
+      } catch (error) {
+        console.error('Error checking Stripe mode:', error);
+      }
+    }
     
     if (!pendingBooking) {
       console.error('❌ No pending booking found');

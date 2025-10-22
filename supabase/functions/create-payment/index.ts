@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { format } from "https://esm.sh/date-fns@3.6.0";
 import { toZonedTime } from "https://esm.sh/date-fns-tz@3.2.0";
+import { getStripeConfig } from "../_shared/stripe-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -103,23 +103,10 @@ serve(async (req) => {
 
     console.log("✅ All required booking data fields present");
 
-    // Initialize Stripe
-    console.log("🔧 Initializing Stripe...");
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    
-    if (!stripeKey) {
-      console.error("❌ STRIPE_SECRET_KEY not found in environment");
-      throw new Error("Stripe secret key not configured");
-    }
-    
-    console.log("🔑 Stripe key available:", !!stripeKey);
-    console.log("🔑 Stripe key starts with sk_:", stripeKey.startsWith('sk_'));
-    
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: "2023-10-16",
-    });
-
-    console.log("✅ Stripe initialized successfully");
+    // Initialize Stripe with dynamic configuration
+    console.log("🔧 Initializing Stripe with dynamic configuration...");
+    const { stripe, testMode, publishableKey } = await getStripeConfig();
+    console.log(`✅ Stripe initialized in ${testMode ? 'TEST' : 'LIVE'} mode`);
 
     // Check if customer exists or create new one
     console.log("👤 Checking for existing Stripe customer:", user.email);
@@ -200,6 +187,8 @@ serve(async (req) => {
         booking_time: formattedTime,
         court_name: bookingData.selectedCourt,
         court_type: bookingData.selectedCourtType,
+        environment: testMode ? 'test' : 'live',
+        test_mode: testMode.toString(),
       },
     };
 

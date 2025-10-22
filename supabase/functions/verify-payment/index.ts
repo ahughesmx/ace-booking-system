@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { getStripeConfig } from "../_shared/stripe-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,16 +18,29 @@ serve(async (req) => {
     const { sessionId } = await req.json();
     if (!sessionId) throw new Error("Session ID no proporcionado");
 
-    // Initialize Stripe
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeSecretKey) throw new Error("Clave secreta de Stripe no configurada");
+    console.log("🔍 Verifying Stripe payment for session:", sessionId);
 
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2023-10-16",
-    });
+    // Initialize Stripe with dynamic configuration
+    const { stripe, testMode } = await getStripeConfig();
+    console.log(`✅ Stripe initialized in ${testMode ? 'TEST' : 'LIVE'} mode for verification`);
 
     // Retrieve the checkout session
     const session = await stripe.checkout.sessions.retrieve(sessionId);
+    
+    // Validate environment consistency
+    const sessionEnvironment = session.metadata?.environment || 'unknown';
+    const expectedEnvironment = testMode ? 'test' : 'live';
+    
+    if (sessionEnvironment !== expectedEnvironment) {
+      console.warn(`⚠️ Environment mismatch: Session was created in ${sessionEnvironment} mode but current mode is ${expectedEnvironment}`);
+    }
+    
+    console.log("✅ Session retrieved:", {
+      id: session.id,
+      paymentStatus: session.payment_status,
+      environment: sessionEnvironment,
+      currentMode: expectedEnvironment
+    });
     
     if (session.payment_status === "paid") {
       // Create Supabase client with service role key to bypass RLS

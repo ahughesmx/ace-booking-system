@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { format } from "https://esm.sh/date-fns@3.6.0";
 import { toZonedTime } from "https://esm.sh/date-fns-tz@3.2.0";
+import { getStripeConfig } from "../_shared/stripe-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,27 +39,10 @@ serve(async (req) => {
 
     console.log("Creating Payment Intent for booking:", bookingData);
 
-    // Enhanced debugging for Stripe configuration
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    console.log("🔑 Environment variables available:", Object.keys(Deno.env.toObject()));
-    console.log("🔑 Stripe key available:", !!stripeKey);
-    console.log("🔑 Stripe key length:", stripeKey ? stripeKey.length : 0);
-    console.log("🔑 Stripe key starts with sk_:", stripeKey ? stripeKey.startsWith('sk_') : false);
-
-    if (!stripeKey) {
-      console.error("❌ STRIPE_SECRET_KEY is not available in environment variables");
-      throw new Error("STRIPE_SECRET_KEY not configured. Please check Supabase Edge Function secrets.");
-    }
-
-    if (!stripeKey.startsWith('sk_')) {
-      console.error("❌ STRIPE_SECRET_KEY appears to be invalid (should start with sk_)");
-      throw new Error("Invalid STRIPE_SECRET_KEY format");
-    }
-
-    // Initialize Stripe
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: "2023-10-16",
-    });
+    // Initialize Stripe with dynamic configuration
+    console.log("🔧 Initializing Stripe with dynamic configuration...");
+    const { stripe, testMode } = await getStripeConfig();
+    console.log(`✅ Stripe initialized in ${testMode ? 'TEST' : 'LIVE'} mode`);
 
     // Check if customer exists or create new one
     const customers = await stripe.customers.list({ 
@@ -97,6 +80,8 @@ serve(async (req) => {
         booking_time: formattedTime,
         court_name: bookingData.selectedCourt,
         court_type: bookingData.selectedCourtType,
+        environment: testMode ? 'test' : 'live',
+        test_mode: testMode.toString(),
       },
       description: `Reserva de cancha - ${bookingData.selectedCourt} - ${formattedDateTime}`,
     });
