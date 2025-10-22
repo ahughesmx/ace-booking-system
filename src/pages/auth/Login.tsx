@@ -139,24 +139,38 @@ export default function Login() {
       
       console.log("✅ [PASO 5] Clave de socio válida encontrada:", validateRes);
 
-      // Check for existing registration request with same phone
-      console.log("🔍 [PASO 6] Verificando solicitudes existentes con teléfono:", cleanPhone);
-      const { data: existingRequest, error: checkRequestError } = await supabase
+      // Check for existing registration request with same phone or email
+      console.log("🔍 [PASO 6] Verificando solicitudes existentes con teléfono o email:", { 
+        phone: cleanPhone, 
+        email: cleanEmail 
+      });
+      const { data: existingRequests, error: checkRequestError } = await supabase
         .from('user_registration_requests')
-        .select('id, status, full_name')
-        .eq('phone', cleanPhone)
+        .select('id, status, full_name, phone, email')
         .eq('status', 'pending')
-        .maybeSingle();
+        .or(`phone.eq.${cleanPhone},email.eq.${cleanEmail}`);
 
       console.log("🔍 [PASO 6] Resultado:", {
-        data: existingRequest,
+        data: existingRequests,
         error: checkRequestError,
-        hasExistingRequest: !!existingRequest
+        count: existingRequests?.length || 0
       });
 
-      if (existingRequest && !checkRequestError) {
-        console.error("❌ [ERROR PASO 6] Ya existe solicitud pendiente:", existingRequest);
-        setError(`Ya existe una solicitud pendiente para el teléfono ${cleanPhone} (${existingRequest.full_name})`);
+      if (existingRequests && existingRequests.length > 0 && !checkRequestError) {
+        const duplicate = existingRequests[0];
+        let reason = "";
+        
+        // Determinar qué campo(s) están duplicados
+        if (duplicate.phone === cleanPhone && duplicate.email === cleanEmail) {
+          reason = `el teléfono ${cleanPhone} y el correo ${cleanEmail}`;
+        } else if (duplicate.phone === cleanPhone) {
+          reason = `el teléfono ${cleanPhone}`;
+        } else if (duplicate.email === cleanEmail) {
+          reason = `el correo ${cleanEmail}`;
+        }
+        
+        console.error("❌ [ERROR PASO 6] Ya existe solicitud pendiente:", duplicate);
+        setError(`Ya existe una solicitud pendiente de aprobación con ${reason}. No es necesario realizar un nuevo registro.`);
         setIsRegistering(false);
         return;
       }
