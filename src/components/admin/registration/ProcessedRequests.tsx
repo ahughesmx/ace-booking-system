@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   User,
   CreditCard,
@@ -10,8 +11,7 @@ import {
   Clock,
   UserCheck,
   UserX,
-  Search,
-  Filter
+  Search
 } from "lucide-react";
 
 interface RegistrationRequest {
@@ -71,7 +71,7 @@ export default function ProcessedRequests({
   return (
     <div className="space-y-4">
       <div className="space-y-4">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
@@ -81,38 +81,14 @@ export default function ProcessedRequests({
               className="pl-10"
             />
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Filtrar por estado:</span>
-          <div className="flex gap-2">
-            <Button
-              variant={statusFilter === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onStatusFilterChange('all')}
-            >
-              Todas
-            </Button>
-            <Button
-              variant={statusFilter === 'approved' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onStatusFilterChange('approved')}
-              className={statusFilter === 'approved' ? '' : 'border-green-600 text-green-600 hover:bg-green-50'}
-            >
-              <UserCheck className="w-4 h-4 mr-1" />
-              Aprobadas
-            </Button>
-            <Button
-              variant={statusFilter === 'rejected' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onStatusFilterChange('rejected')}
-              className={statusFilter === 'rejected' ? '' : 'border-red-600 text-red-600 hover:bg-red-50'}
-            >
-              <UserX className="w-4 h-4 mr-1" />
-              Rechazadas
-            </Button>
-          </div>
+          
+          <Tabs value={statusFilter} onValueChange={(value) => onStatusFilterChange(value as 'all' | 'approved' | 'rejected')}>
+            <TabsList>
+              <TabsTrigger value="all">Todas</TabsTrigger>
+              <TabsTrigger value="approved">Aprobadas</TabsTrigger>
+              <TabsTrigger value="rejected">Rechazadas</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </div>
 
