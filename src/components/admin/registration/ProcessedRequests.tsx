@@ -53,9 +53,9 @@ export default function ProcessedRequests({
   onStatusFilterChange
 }: ProcessedRequestsProps) {
   // Calculate counts from all filtered requests (not just current page)
-  const allProcessedRequests = allFilteredRequests.filter(request => request.status !== 'pending');
-  const approvedCount = allProcessedRequests.filter(r => r.status === 'approved').length;
-  const rejectedCount = allProcessedRequests.filter(r => r.status === 'rejected').length;
+  // allFilteredRequests already contains only processed requests (filtered by search)
+  const approvedCount = allFilteredRequests.filter(r => r.status === 'approved').length;
+  const rejectedCount = allFilteredRequests.filter(r => r.status === 'rejected').length;
   
   // Display the paginated requests from props
   const processedRequests = requests;
@@ -88,7 +88,7 @@ export default function ProcessedRequests({
           <Tabs value={statusFilter} onValueChange={(value) => onStatusFilterChange(value as 'all' | 'approved' | 'rejected')}>
             <TabsList>
               <TabsTrigger value="all">
-                Todas <Badge variant="secondary" className="ml-1">{allProcessedRequests.length}</Badge>
+                Todas <Badge variant="secondary" className="ml-1">{allFilteredRequests.length}</Badge>
               </TabsTrigger>
               <TabsTrigger value="approved">
                 Aprobadas <Badge variant="secondary" className="ml-1">{approvedCount}</Badge>
