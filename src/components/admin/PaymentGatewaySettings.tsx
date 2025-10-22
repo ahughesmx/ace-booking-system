@@ -27,9 +27,7 @@ export default function PaymentGatewaySettings() {
     enabled: false,
     testMode: true,
     publishableKeyTest: "",
-    secretKeyTest: "",
     publishableKeyLive: "",
-    secretKeyLive: "",
     webhookEndpointTest: "",
     webhookEndpointLive: "",
     webhookSecretTest: "",
@@ -74,9 +72,7 @@ export default function PaymentGatewaySettings() {
             enabled: gateway.enabled,
             testMode: gateway.test_mode,
             publishableKeyTest: config?.publishableKeyTest || "",
-            secretKeyTest: config?.secretKeyTest || "",
             publishableKeyLive: config?.publishableKeyLive || "",
-            secretKeyLive: config?.secretKeyLive || "",
             webhookEndpointTest: config?.webhookEndpointTest || "",
             webhookEndpointLive: config?.webhookEndpointLive || "",
             webhookSecretTest: config?.webhookSecretTest || "",
@@ -115,34 +111,32 @@ export default function PaymentGatewaySettings() {
   }, [paymentGateways]);
 
   const validateLiveMode = (): boolean => {
-    // Validar que las claves de producción estén presentes
-    if (!stripeConfig.secretKeyLive || !stripeConfig.publishableKeyLive) {
+    // Validar que las claves publicables de producción estén presentes
+    if (!stripeConfig.publishableKeyLive) {
       toast({
-        title: "Claves de producción requeridas",
-        description: "Debes configurar las claves de producción (Live) antes de desactivar el modo de prueba.",
+        title: "Clave publicable de producción requerida",
+        description: "Debes configurar la clave publicable de producción (pk_live_) antes de desactivar el modo de prueba.",
         variant: "destructive",
       });
       return false;
     }
 
-    // Validar formato de claves de producción
-    if (!stripeConfig.secretKeyLive.startsWith('sk_live_')) {
-      toast({
-        title: "Clave secreta inválida",
-        description: "La clave secreta de producción debe comenzar con 'sk_live_'",
-        variant: "destructive",
-      });
-      return false;
-    }
-
+    // Validar formato de clave publicable de producción
     if (!stripeConfig.publishableKeyLive.startsWith('pk_live_')) {
       toast({
-        title: "Clave pública inválida",
-        description: "La clave pública de producción debe comenzar con 'pk_live_'",
+        title: "Clave publicable inválida",
+        description: "La clave publicable de producción debe comenzar con 'pk_live_'",
         variant: "destructive",
       });
       return false;
     }
+
+    // Info: Las Secret Keys se gestionan de forma segura en Supabase Secrets
+    toast({
+      title: "Nota de seguridad",
+      description: "Asegúrate de que STRIPE_SECRET_KEY_LIVE esté configurado en Supabase Secrets.",
+      variant: "default",
+    });
 
     return true;
   };
@@ -180,9 +174,7 @@ export default function PaymentGatewaySettings() {
           test_mode: stripeConfig.testMode,
           configuration: {
             publishableKeyTest: stripeConfig.publishableKeyTest,
-            secretKeyTest: stripeConfig.secretKeyTest,
             publishableKeyLive: stripeConfig.publishableKeyLive,
-            secretKeyLive: stripeConfig.secretKeyLive,
             webhookEndpointTest: stripeConfig.webhookEndpointTest,
             webhookEndpointLive: stripeConfig.webhookEndpointLive,
             webhookSecretTest: stripeConfig.webhookSecretTest,
@@ -195,7 +187,7 @@ export default function PaymentGatewaySettings() {
 
       toast({
         title: "Configuración de Stripe guardada",
-        description: `La configuración de Stripe se ha actualizado correctamente en modo ${stripeConfig.testMode ? 'PRUEBA' : 'PRODUCCIÓN'}.`,
+        description: `La configuración de Stripe se ha actualizado correctamente en modo ${stripeConfig.testMode ? 'PRUEBA' : 'PRODUCCIÓN'}. Las Secret Keys se gestionan de forma segura en Supabase Secrets.`,
       });
     } catch (error) {
       toast({
@@ -412,9 +404,15 @@ export default function PaymentGatewaySettings() {
 
           {/* Test Keys */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Shield className="h-4 w-4 text-green-600" />
-              <h4 className="font-semibold">Claves de Prueba (Test)</h4>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Shield className="h-4 w-4 text-green-600" />
+                <h4 className="font-semibold">Claves de Prueba (Test)</h4>
+              </div>
+              <div className="flex items-center space-x-2 text-xs text-muted-foreground bg-muted px-3 py-1 rounded">
+                <Shield className="h-3 w-3" />
+                <span>Secret Keys se gestionan en Supabase Secrets</span>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -429,21 +427,6 @@ export default function PaymentGatewaySettings() {
                   value={stripeConfig.publishableKeyTest}
                   onChange={(e) => 
                     setStripeConfig(prev => ({ ...prev, publishableKeyTest: e.target.value }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="stripe-secret-test">
-                  Secret Key (Test)
-                  <span className="text-xs text-muted-foreground ml-1">sk_test_...</span>
-                </Label>
-                <Input
-                  id="stripe-secret-test"
-                  type="password"
-                  placeholder="sk_test_..."
-                  value={stripeConfig.secretKeyTest}
-                  onChange={(e) => 
-                    setStripeConfig(prev => ({ ...prev, secretKeyTest: e.target.value }))
                   }
                 />
               </div>
@@ -478,9 +461,15 @@ export default function PaymentGatewaySettings() {
 
           {/* Live Keys */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <AlertCircle className="h-4 w-4 text-orange-600" />
-              <h4 className="font-semibold">Claves de Producción (Live)</h4>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="h-4 w-4 text-orange-600" />
+                <h4 className="font-semibold">Claves de Producción (Live)</h4>
+              </div>
+              <div className="flex items-center space-x-2 text-xs text-muted-foreground bg-muted px-3 py-1 rounded">
+                <Shield className="h-3 w-3" />
+                <span>Secret Keys se gestionan en Supabase Secrets</span>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -495,21 +484,6 @@ export default function PaymentGatewaySettings() {
                   value={stripeConfig.publishableKeyLive}
                   onChange={(e) => 
                     setStripeConfig(prev => ({ ...prev, publishableKeyLive: e.target.value }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="stripe-secret-live">
-                  Secret Key (Live)
-                  <span className="text-xs text-muted-foreground ml-1">sk_live_...</span>
-                </Label>
-                <Input
-                  id="stripe-secret-live"
-                  type="password"
-                  placeholder="sk_live_..."
-                  value={stripeConfig.secretKeyLive}
-                  onChange={(e) => 
-                    setStripeConfig(prev => ({ ...prev, secretKeyLive: e.target.value }))
                   }
                 />
               </div>

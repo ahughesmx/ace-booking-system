@@ -1606,22 +1606,10 @@ export type Database = {
         Args: { p_email: string; p_full_name: string; p_member_id: string }
         Returns: boolean
       }
-      cleanup_expired_bookings: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      cleanup_failed_login_attempts: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      cleanup_incomplete_matches: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      create_receipt_number: {
-        Args: { p_booking_id: string }
-        Returns: string
-      }
+      cleanup_expired_bookings: { Args: never; Returns: number }
+      cleanup_failed_login_attempts: { Args: never; Returns: number }
+      cleanup_incomplete_matches: { Args: never; Returns: number }
+      create_receipt_number: { Args: { p_booking_id: string }; Returns: string }
       deactivate_family_member: {
         Args: {
           p_member_id_to_deactivate: string
@@ -1629,14 +1617,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      execute_cronjob_sql: {
-        Args: { sql_query: string }
-        Returns: Json
-      }
-      generate_receipt_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      execute_cronjob_sql: { Args: { sql_query: string }; Returns: Json }
+      generate_receipt_number: { Args: never; Returns: string }
       get_instructor_contact: {
         Args: { instructor_id: string }
         Returns: {
@@ -1644,34 +1626,16 @@ export type Database = {
           phone: string
         }[]
       }
-      get_user_display_name: {
-        Args: { user_id: string }
-        Returns: string
-      }
-      get_user_full_name_public: {
-        Args: { uid: string }
-        Returns: string
-      }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_admin_or_operator: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_admin_or_supervisor: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      get_user_display_name: { Args: { user_id: string }; Returns: string }
+      get_user_full_name_public: { Args: { uid: string }; Returns: string }
+      is_admin: { Args: never; Returns: boolean }
+      is_admin_or_operator: { Args: never; Returns: boolean }
+      is_admin_or_supervisor: { Args: never; Returns: boolean }
       is_family_member: {
         Args: { _target_user_id: string; _user_id: string }
         Returns: boolean
       }
-      is_supervisor: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_supervisor: { Args: never; Returns: boolean }
       manage_cronjob_direct: {
         Args: {
           action_type: string
@@ -1685,10 +1649,9 @@ export type Database = {
         Args: { p_member_id_to_reactivate: string }
         Returns: boolean
       }
-      recalculate_active_bookings: {
-        Args: Record<PropertyKey, never> | { user_uuid: string }
-        Returns: undefined
-      }
+      recalculate_active_bookings:
+        | { Args: { user_uuid: string }; Returns: undefined }
+        | { Args: never; Returns: undefined }
       search_users_for_invitations: {
         Args: { search_term: string }
         Returns: {
