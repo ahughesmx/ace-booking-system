@@ -221,23 +221,29 @@ export default function Login() {
       console.log("🔍 [PASO 8] Resultado (edge create-registration-request):", {
         data: createData,
         error: createError,
-        hasError: !!createError || !!createData?.error,
-        errorMessage: (createError as any)?.message || createData?.error,
-        isDuplicate: createData?.duplicate
+        hasError: !!createError || (createData?.ok === false),
+        errorMessage: createData?.error,
+        isDuplicate: createData?.duplicate,
+        ok: createData?.ok
       });
 
-      // Check for duplicate error (409 status or duplicate flag)
-      if (createData?.duplicate || (createData as any)?.error?.includes("solicitud pendiente")) {
-        const msg = (createData as any)?.error || "Ya existe una solicitud pendiente con estos datos";
+      // Check for duplicate error or any error from the edge function
+      if (createData?.duplicate || createData?.ok === false) {
+        const msg = createData?.error || "Ya existe una solicitud pendiente con estos datos";
         console.error("❌ [ERROR PASO 8 - DUPLICADO] Solicitud duplicada detectada por servidor:", msg);
         setError(msg);
         setIsRegistering(false);
         return;
       }
 
-      if (createError || (createData as any)?.error) {
-        const msg = ((createData as any)?.error as string) || (createError as any)?.message || 'Error desconocido';
+      if (createError) {
+        const msg = (createError as any)?.message || 'Error desconocido al conectar con el servidor';
         console.error("❌ [ERROR PASO 8] Error al crear solicitud:", msg);
+        setError(msg);
+        setIsRegistering(false);
+      } else if (!createData?.ok) {
+        const msg = createData?.error || 'Error desconocido';
+        console.error("❌ [ERROR PASO 8] Error devuelto por servidor:", msg);
         setError(msg);
         setIsRegistering(false);
       } else {

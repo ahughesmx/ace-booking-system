@@ -88,13 +88,17 @@ serve(async (req) => {
         reason = `el correo ${email}`;
       }
       
+      const errorMessage = `Ya existe una solicitud pendiente de aprobación con ${reason}. No es necesario realizar un nuevo registro.`;
+      console.log("[create-registration-request] Duplicate found, returning error:", errorMessage);
+      
       return new Response(
         JSON.stringify({ 
-          error: `Ya existe una solicitud pendiente de aprobación con ${reason}. No es necesario realizar un nuevo registro.`,
+          ok: false,
+          error: errorMessage,
           duplicate: true
         }), 
         { 
-          status: 409, 
+          status: 200, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
