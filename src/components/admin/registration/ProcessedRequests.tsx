@@ -57,8 +57,11 @@ export default function ProcessedRequests({
   const approvedCount = allFilteredRequests.filter(r => r.status === 'approved').length;
   const rejectedCount = allFilteredRequests.filter(r => r.status === 'rejected').length;
   
-  // Display the paginated requests from props
-  const processedRequests = requests;
+  // Filter paginated requests by status
+  const processedRequests = requests.filter(request => {
+    if (statusFilter === 'all') return true;
+    return request.status === statusFilter;
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
