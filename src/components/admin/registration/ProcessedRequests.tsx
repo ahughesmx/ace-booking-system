@@ -50,8 +50,11 @@ export default function ProcessedRequests({
   statusFilter,
   onStatusFilterChange
 }: ProcessedRequestsProps) {
-  const processedRequests = requests
-    .filter(request => request.status !== 'pending')
+  const allProcessedRequests = requests.filter(request => request.status !== 'pending');
+  const approvedCount = allProcessedRequests.filter(r => r.status === 'approved').length;
+  const rejectedCount = allProcessedRequests.filter(r => r.status === 'rejected').length;
+  
+  const processedRequests = allProcessedRequests
     .filter(request => {
       if (statusFilter === 'all') return true;
       return request.status === statusFilter;
@@ -84,9 +87,15 @@ export default function ProcessedRequests({
           
           <Tabs value={statusFilter} onValueChange={(value) => onStatusFilterChange(value as 'all' | 'approved' | 'rejected')}>
             <TabsList>
-              <TabsTrigger value="all">Todas</TabsTrigger>
-              <TabsTrigger value="approved">Aprobadas</TabsTrigger>
-              <TabsTrigger value="rejected">Rechazadas</TabsTrigger>
+              <TabsTrigger value="all">
+                Todas <Badge variant="secondary" className="ml-1">{allProcessedRequests.length}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="approved">
+                Aprobadas <Badge variant="secondary" className="ml-1">{approvedCount}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="rejected">
+                Rechazadas <Badge variant="secondary" className="ml-1">{rejectedCount}</Badge>
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
