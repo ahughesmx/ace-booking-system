@@ -66,6 +66,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   const [processedCurrentPage, setProcessedCurrentPage] = useState(1);
   const [pendingSearchTerm, setPendingSearchTerm] = useState("");
   const [processedSearchTerm, setProcessedSearchTerm] = useState("");
+  const [processedStatusFilter, setProcessedStatusFilter] = useState<'all' | 'approved' | 'rejected'>('all');
   const itemsPerPage = 5;
   const [showMigrationPending, setShowMigrationPending] = useState(false);
   
@@ -715,6 +716,8 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
               onPageChange={setProcessedCurrentPage}
               searchTerm={processedSearchTerm}
               onSearchChange={handleProcessedSearchChange}
+              statusFilter={processedStatusFilter}
+              onStatusFilterChange={setProcessedStatusFilter}
             />
           </TabsContent>
         </Tabs>
@@ -873,6 +876,8 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
             onPageChange={setProcessedCurrentPage}
             searchTerm={processedSearchTerm}
             onSearchChange={handleProcessedSearchChange}
+            statusFilter={processedStatusFilter}
+            onStatusFilterChange={setProcessedStatusFilter}
           />
         </TabsContent>
       </Tabs>
