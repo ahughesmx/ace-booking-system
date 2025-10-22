@@ -711,6 +711,7 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
           <TabsContent value="processed" className="space-y-4">
             <ProcessedRequests
               requests={paginatedProcessedRequests}
+              allFilteredRequests={sortedProcessed}
               currentPage={processedCurrentPage}
               totalPages={processedTotalPages}
               onPageChange={setProcessedCurrentPage}
@@ -869,16 +870,17 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
               </Button>
             </div>
           )}
-          <ProcessedRequests
-            requests={paginatedProcessedRequests}
-            currentPage={processedCurrentPage}
-            totalPages={processedTotalPages}
-            onPageChange={setProcessedCurrentPage}
-            searchTerm={processedSearchTerm}
-            onSearchChange={handleProcessedSearchChange}
-            statusFilter={processedStatusFilter}
-            onStatusFilterChange={setProcessedStatusFilter}
-          />
+            <ProcessedRequests
+              requests={paginatedProcessedRequests}
+              allFilteredRequests={sortedProcessed}
+              currentPage={processedCurrentPage}
+              totalPages={processedTotalPages}
+              onPageChange={setProcessedCurrentPage}
+              searchTerm={processedSearchTerm}
+              onSearchChange={handleProcessedSearchChange}
+              statusFilter={processedStatusFilter}
+              onStatusFilterChange={setProcessedStatusFilter}
+            />
         </TabsContent>
       </Tabs>
 

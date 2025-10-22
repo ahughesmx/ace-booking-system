@@ -31,6 +31,7 @@ interface RegistrationRequest {
 
 interface ProcessedRequestsProps {
   requests: RegistrationRequest[];
+  allFilteredRequests: RegistrationRequest[];
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -42,6 +43,7 @@ interface ProcessedRequestsProps {
 
 export default function ProcessedRequests({
   requests,
+  allFilteredRequests,
   currentPage,
   totalPages,
   onPageChange,
@@ -50,15 +52,13 @@ export default function ProcessedRequests({
   statusFilter,
   onStatusFilterChange
 }: ProcessedRequestsProps) {
-  const allProcessedRequests = requests.filter(request => request.status !== 'pending');
+  // Calculate counts from all filtered requests (not just current page)
+  const allProcessedRequests = allFilteredRequests.filter(request => request.status !== 'pending');
   const approvedCount = allProcessedRequests.filter(r => r.status === 'approved').length;
   const rejectedCount = allProcessedRequests.filter(r => r.status === 'rejected').length;
   
-  const processedRequests = allProcessedRequests
-    .filter(request => {
-      if (statusFilter === 'all') return true;
-      return request.status === statusFilter;
-    });
+  // Display the paginated requests from props
+  const processedRequests = requests;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
