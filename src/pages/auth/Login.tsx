@@ -222,13 +222,23 @@ export default function Login() {
         data: createData,
         error: createError,
         hasError: !!createError || !!createData?.error,
-        errorMessage: (createError as any)?.message || createData?.error
+        errorMessage: (createError as any)?.message || createData?.error,
+        isDuplicate: createData?.duplicate
       });
+
+      // Check for duplicate error (409 status or duplicate flag)
+      if (createData?.duplicate || (createData as any)?.error?.includes("solicitud pendiente")) {
+        const msg = (createData as any)?.error || "Ya existe una solicitud pendiente con estos datos";
+        console.error("❌ [ERROR PASO 8 - DUPLICADO] Solicitud duplicada detectada por servidor:", msg);
+        setError(msg);
+        setIsRegistering(false);
+        return;
+      }
 
       if (createError || (createData as any)?.error) {
         const msg = ((createData as any)?.error as string) || (createError as any)?.message || 'Error desconocido';
         console.error("❌ [ERROR PASO 8] Error al crear solicitud:", msg);
-        setError("Error al enviar solicitud de registro: " + msg);
+        setError(msg);
         setIsRegistering(false);
       } else {
         console.log("✅ [PASO 8] Solicitud de registro creada exitosamente");

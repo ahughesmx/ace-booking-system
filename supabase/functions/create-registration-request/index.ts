@@ -66,6 +66,40 @@ serve(async (req) => {
       });
     }
 
+    // Check for existing pending requests with same phone OR email
+    console.log("[create-registration-request] Checking for duplicate pending requests:", { phone, email });
+    const { data: existingPending, error: checkError } = await supabase
+      .from("user_registration_requests")
+      .select("id, phone, email, full_name")
+      .eq("status", "pending")
+      .or(`phone.eq.${phone},email.eq.${email}`)
+      .limit(1)
+      .maybeSingle();
+
+    console.log("[create-registration-request] Duplicate check result:", { existingPending, checkError });
+
+    if (existingPending && !checkError) {
+      let reason = "";
+      if (existingPending.phone === phone && existingPending.email === email) {
+        reason = `el teléfono ${phone} y el correo ${email}`;
+      } else if (existingPending.phone === phone) {
+        reason = `el teléfono ${phone}`;
+      } else if (existingPending.email === email) {
+        reason = `el correo ${email}`;
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          error: `Ya existe una solicitud pendiente de aprobación con ${reason}. No es necesario realizar un nuevo registro.`,
+          duplicate: true
+        }), 
+        { 
+          status: 409, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
     // Insert request
     const { error: insertError } = await supabase
       .from("user_registration_requests")
