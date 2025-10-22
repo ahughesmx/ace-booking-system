@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CashReportsOperator } from "@/components/operator/CashReportsOperator";
 import { DailyReportsOperator } from "@/components/operator/DailyReportsOperator";
+import { CashCutOperator } from "@/components/operator/CashCutOperator";
 import { SupervisorReportsFilters } from "@/components/operator/SupervisorReportsFilters";
-import { FileText, DollarSign } from "lucide-react";
+import { FileText, DollarSign, Receipt } from "lucide-react";
 
 export default function OperatorReportsPage() {
   const { user, userRole, isLoading } = useAdminAuth();
@@ -57,10 +58,14 @@ export default function OperatorReportsPage() {
         </div>
 
         <Tabs defaultValue="cash" className="space-y-4">
-          <TabsList className={`grid w-full ${isSupervisor ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <TabsList className={`grid w-full ${isSupervisor ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <TabsTrigger value="cash" className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               Cobros en Ventanilla
+            </TabsTrigger>
+            <TabsTrigger value="cashcut" className="flex items-center gap-2">
+              <Receipt className="h-4 w-4" />
+              Corte de Caja
             </TabsTrigger>
             {isSupervisor && (
               <TabsTrigger value="daily" className="flex items-center gap-2">
@@ -91,6 +96,31 @@ export default function OperatorReportsPage() {
               </CardHeader>
               <CardContent>
                 <CashReportsOperator operatorId={effectiveOperatorId} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="cashcut">
+            <Card>
+              <CardHeader>
+                <CardTitle>Corte de Caja</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {isSupervisor 
+                    ? "Resumen de transacciones del día por operador"
+                    : "Resumen de tus transacciones del día"
+                  }
+                </p>
+                {isSupervisor && (
+                  <div className="mt-4">
+                    <SupervisorReportsFilters 
+                      onOperatorChange={setSelectedOperatorId}
+                      selectedOperatorId={selectedOperatorId}
+                    />
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent>
+                <CashCutOperator operatorId={effectiveOperatorId} />
               </CardContent>
             </Card>
           </TabsContent>
