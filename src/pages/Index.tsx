@@ -24,7 +24,7 @@ export default function Index() {
   const { data: userRole } = useUserRole(user?.id);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { isCardEnabled, isLoading: cardsLoading } = useHomeCardPreferences();
+  const { isCardEnabled } = useHomeCardPreferences();
   const [userFullName, setUserFullName] = useState<string | null>(null);
   
   // Type the location state
@@ -133,8 +133,8 @@ export default function Index() {
     }
   }, [paymentStatus, sessionId, paymentProcessed, user?.id, toast, queryClient, navigate]);
 
-  console.log('🐛 Index.tsx - Debug states:', { loading, isProcessingPayment, cardsLoading, currentTab });
-  if (loading || isProcessingPayment || cardsLoading) {
+  console.log('🐛 Index.tsx - Debug states:', { loading, isProcessingPayment, currentTab });
+  if (loading || isProcessingPayment) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
