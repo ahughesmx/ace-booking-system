@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { fromZonedTime } from "date-fns-tz";
 import {
@@ -36,6 +36,7 @@ interface AddMaintenanceDialogProps {
 
 export function AddMaintenanceDialog({ onMaintenanceAdded }: AddMaintenanceDialogProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -131,6 +132,10 @@ export function AddMaintenanceDialog({ onMaintenanceAdded }: AddMaintenanceDialo
       });
       setOpen(false);
       onMaintenanceAdded();
+      
+      // Invalidar todos los caches de mantenimiento para actualización inmediata
+      await queryClient.invalidateQueries({ queryKey: ["court-maintenance"] });
+      await queryClient.invalidateQueries({ queryKey: ["active-maintenance"] });
     } catch (error) {
       console.error("Error adding maintenance:", error);
       toast({

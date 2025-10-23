@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase-client";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ export function EditMaintenanceDialog({
   onMaintenanceUpdated 
 }: EditMaintenanceDialogProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     startDate: "",
@@ -137,6 +139,10 @@ export function EditMaintenanceDialog({
 
       onOpenChange(false);
       onMaintenanceUpdated();
+      
+      // Invalidar todos los caches de mantenimiento para actualización inmediata
+      await queryClient.invalidateQueries({ queryKey: ["court-maintenance"] });
+      await queryClient.invalidateQueries({ queryKey: ["active-maintenance"] });
     } catch (error) {
       console.error("Error updating maintenance:", error);
       toast({

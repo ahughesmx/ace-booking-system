@@ -1,5 +1,5 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +43,7 @@ type MaintenancePeriod = {
 
 export function MaintenanceList() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [editingMaintenanceId, setEditingMaintenanceId] = useState<string | null>(null);
 
@@ -83,6 +84,12 @@ export function MaintenanceList() {
       if (error) throw error;
 
       await refetch();
+      
+      // Invalidar todos los caches de mantenimiento para actualización inmediata
+      queryClient.invalidateQueries({ queryKey: ["court-maintenance-all"] });
+      queryClient.invalidateQueries({ queryKey: ["court-maintenance"] });
+      queryClient.invalidateQueries({ queryKey: ["active-maintenance"] });
+      
       toast({
         title: "Mantenimiento cancelado",
         description: `El período de mantenimiento de ${allCourts ? 'todas las canchas' : courtName} ha sido cancelado.`,
