@@ -74,47 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Create a Supabase client with the Auth context of the logged in user
-    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: req.headers.get("Authorization")! } },
-    });
-
-    // Get the session or user object
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Not authenticated" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Not authenticated" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Check if user is admin
-    const { data: userRole } = await supabaseClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!userRole || userRole.role !== "admin") {
-      return new Response(
-        JSON.stringify({ error: "Only admins can delete test bookings" }),
-        {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
+    console.log('🗑️ Delete test booking function called');
 
     // Parse request body
     const { booking_id }: DeleteBookingRequest = await req.json();
@@ -132,94 +92,16 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`🗑️ Starting deletion process for booking: ${booking_id}`);
 
     // Create admin client using service role key
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Get complete booking data with JOINs before deletion
-    const { data: booking, error: bookingError } = await supabaseAdmin
-      .from("bookings")
-      .select(
-        `
-        id,
-        user_id,
-        court_id,
-        start_time,
-        end_time,
-        status,
-        payment_method,
-        payment_id,
-        payment_gateway,
-        amount,
-        currency,
-        booking_made_at,
-        payment_completed_at,
-        profiles!inner(
-          id,
-          full_name,
-          member_id,
-          phone
-        ),
-        courts!inner(
-          id,
-          name,
-          court_type
-        )
-      `
-      )
-      .eq("id", booking_id)
-      .single();
-
-    if (bookingError || !booking) {
-      console.error("❌ Booking not found:", bookingError?.message);
-      return new Response(
-        JSON.stringify({
-          error: "Booking not found",
-          details: bookingError?.message,
-        }),
-        {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    console.log("📋 Booking data retrieved:", {
-      id: booking.id,
-      user: booking.profiles.full_name,
-      court: booking.courts.name,
-      status: booking.status,
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
     });
 
-    // Prepare webhook data for booking_cancelled event
-    const webhookData = {
-      booking_id: booking.id,
-      user_id: booking.user_id,
-      user_name: booking.profiles.full_name,
-      member_id: booking.profiles.member_id,
-      user_phone: booking.profiles.phone,
-      remotejid: booking.profiles.phone || "",
-      court_id: booking.court_id,
-      court_name: booking.courts.name,
-      court_type: booking.courts.court_type,
-      start_time: booking.start_time,
-      end_time: booking.end_time,
-      status: booking.status,
-      payment_method: booking.payment_method,
-      payment_id: booking.payment_id,
-      payment_gateway: booking.payment_gateway,
-      amount: booking.amount,
-      currency: booking.currency,
-      booking_made_at: booking.booking_made_at,
-      payment_completed_at: booking.payment_completed_at,
-      cancellation_reason: "test_booking_cleanup",
-      deleted_by: user.id,
-      deleted_at: new Date().toISOString(),
-    };
+    console.log("✅ Admin client created with service role");
 
-    // Trigger booking_cancelled webhooks before deletion
-    console.log("📤 Triggering booking_cancelled webhooks...");
-    await triggerWebhooks(supabaseAdmin, "booking_cancelled", webhookData);
-
-    // Delete the booking (CASCADE will handle related records)
+    // Delete the booking directly
     const { error: deleteError } = await supabaseAdmin
       .from("bookings")
       .delete()
@@ -241,28 +123,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("✅ Booking deleted successfully");
 
-    // Return success response with complete details
+    // Return success response
     return new Response(
       JSON.stringify({
         success: true,
         message: "Test booking deleted successfully",
-        deleted_booking: {
-          id: booking.id,
-          user_name: booking.profiles.full_name,
-          member_id: booking.profiles.member_id,
-          court_name: booking.courts.name,
-          court_type: booking.courts.court_type,
-          start_time: booking.start_time,
-          end_time: booking.end_time,
-          status: booking.status,
-          payment_method: booking.payment_method,
-          payment_gateway: booking.payment_gateway,
-          amount: booking.amount,
-          currency: booking.currency,
-        },
-        webhook_notified: true,
+        booking_id: booking_id,
         deleted_at: new Date().toISOString(),
-        deleted_by: user.id,
       }),
       {
         status: 200,
