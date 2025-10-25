@@ -11,7 +11,7 @@ import { useAllBookings } from "@/hooks/use-bookings";
 import { useAvailableCourtTypes } from "@/hooks/use-available-court-types";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { Booking, SpecialBooking } from "@/types/booking";
-import { getCurrentMexicoCityTime, toMexicoCityTime } from "@/utils/timezone";
+import { getCurrentMexicoCityTime } from "@/utils/timezone";
 
 // Generate time slots based on court type settings
 function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
@@ -49,11 +49,11 @@ function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
 }
 
 export default function Display() {
-  const [currentTime, setCurrentTime] = useState(getCurrentMexicoCityTime());
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [viewMode, setViewMode] = useState<'all' | 'single'>('single'); // Default to single
   const [selectedCourtId, setSelectedCourtId] = useState<string>('');
 
-  const currentDate = getCurrentMexicoCityTime();
+  const currentDate = new Date();
   console.log("🖥️ Display component - Current date:", currentDate.toISOString());
 
   // Use the combined bookings hook with public view for unauthenticated display access
@@ -233,29 +233,19 @@ export default function Display() {
 
   // Check if a slot is booked
   const isBooked = (courtId: string, timeSlot: string) => {
-    const slotHour = parseInt(timeSlot.split(':')[0]);
-    const slotStart = new Date(currentDate);
-    slotStart.setHours(slotHour, 0, 0, 0);
-    const slotEnd = new Date(slotStart);
-    slotEnd.setHours(slotHour + 1, 0, 0, 0);
-
     const found = allBookings.some(booking => {
-      if (booking.court_id !== courtId) return false;
-
-      const bookingStart = toMexicoCityTime(booking.start_time);
-      const bookingEnd = toMexicoCityTime(booking.end_time);
-
-      const isOverlapping = slotStart < bookingEnd && slotEnd > bookingStart;
+      const bookingDate = new Date(booking.start_time);
+      const bookingHour = format(bookingDate, "HH:00");
+      const isMatch = booking.court_id === courtId && bookingHour === timeSlot;
       
-      if (isOverlapping) {
-        console.log(`🎯 Slot ${timeSlot} occupied by booking:`, {
+      if (isMatch) {
+        console.log(`🎯 Found booking for court ${courtId} at ${timeSlot}:`, {
           type: isSpecialBooking(booking) ? 'special' : 'regular',
-          range: `${format(bookingStart, 'HH:mm')} - ${format(bookingEnd, 'HH:mm')}`,
-          slot: `${timeSlot} - ${format(slotEnd, 'HH:mm')}`
+          booking
         });
       }
       
-      return isOverlapping;
+      return isMatch;
     });
     
     return found;
@@ -280,14 +270,9 @@ export default function Display() {
     const isCurrent = isToday(currentDate) && now >= slotTime && now < slotEndTime;
 
     const booking = allBookings.find(booking => {
-      if (booking.court_id !== courtId) return false;
-
-      const bookingStart = toMexicoCityTime(booking.start_time);
-      const bookingEnd = toMexicoCityTime(booking.end_time);
-
-      const isOverlapping = slotTime < bookingEnd && slotEndTime > bookingStart;
-      
-      return isOverlapping;
+      const bookingDate = new Date(booking.start_time);
+      const bookingHour = format(bookingDate, "HH:00");
+      return booking.court_id === courtId && bookingHour === timeSlot;
     });
 
     if (booking) {
