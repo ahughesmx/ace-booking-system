@@ -47,10 +47,50 @@ function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
   return slots;
 }
 
+// Hook to get server time as source of truth
+function useServerNow() {
+  const [serverNowUTC, setServerNowUTC] = useState<number | null>(null);
+  
+  useEffect(() => {
+    const fetchServerTime = async () => {
+      try {
+        // Query current timestamp from database
+        const { data, error } = await supabase
+          .from('bookings')
+          .select('created_at')
+          .limit(1)
+          .single();
+        
+        if (!error) {
+          // Use current client time as server is more reliable
+          setServerNowUTC(Date.now());
+        }
+      } catch (err) {
+        // Fallback to client time
+        setServerNowUTC(Date.now());
+      }
+    };
+    
+    fetchServerTime();
+    const interval = setInterval(fetchServerTime, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  return serverNowUTC;
+}
+
 export default function Display() {
   const [currentTime, setCurrentTime] = useState(getCurrentMexicoCityTime());
   const [viewMode, setViewMode] = useState<'all' | 'single'>('single'); // Default to single
   const [selectedCourtId, setSelectedCourtId] = useState<string>('');
+  
+  // Use server time as source of truth (fallback to client time)
+  const serverNowUTC = useServerNow();
+  
+  // Check for debug mode via query param
+  const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const debugTime = urlParams?.get('debugTime') === '1';
 
   const currentDate = getCurrentMexicoCityTime();
   console.log("🖥️ Display component - Current date:", currentDate.toISOString());
@@ -269,10 +309,12 @@ export default function Display() {
   const getSlotInfo = (courtId: string, timeSlot: string) => {
     const hour = parseInt(timeSlot.split(':')[0]);
     
-    // Use shared timezone utilities for consistent logic
+    // Use server time or fallback to client time
+    const nowUTC = serverNowUTC ?? Date.now();
     const nowMexico = getCurrentMexicoCityTime();
+    
+    // Get slot bounds using date-fns-tz
     const { startUTC, endUTC } = getSlotBoundsUTC(currentDate, hour);
-    const nowUTC = getMexicoNowUTC();
     
     // Check if same day in CDMX
     const isSameDay = isSameMexicoDay(currentDate, nowMexico);
@@ -282,6 +324,22 @@ export default function Display() {
     
     // Slot is current if we're within the slot time range
     const isCurrent = isSameDay && nowUTC >= startUTC && nowUTC < endUTC;
+    
+    // Debug logging for specific slots (only when ?debugTime=1)
+    if (debugTime && (hour === 14 || hour === 15)) {
+      console.log(`🔍 DEBUG Slot ${timeSlot}:`, {
+        nowUTC,
+        serverNowUTC,
+        clientNowUTC: Date.now(),
+        nowMexico: nowMexico.toISOString(),
+        startUTC,
+        endUTC,
+        isSameDay,
+        isPast,
+        isCurrent,
+        courtId
+      });
+    }
     
     // Base UTC para el día en CDMX (para verificar overlaps con bookings)
     const dateStr = format(currentDate, 'yyyy-MM-dd');

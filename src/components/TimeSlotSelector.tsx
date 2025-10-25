@@ -8,7 +8,7 @@ import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { useActiveMaintenancePeriods, useCourtMaintenance } from "@/hooks/use-court-maintenance";
 import { useAllBookings } from "@/hooks/use-bookings";
 import { SpecialBooking } from "@/types/booking";
-import { isSlotPastMexico } from "@/utils/timezone";
+import { isSlotPastMexico, isSameMexicoDay, getCurrentMexicoCityTime, getStartOfDateMexicoCityISO, getEndOfDateMexicoCityISO } from "@/utils/timezone";
 
 interface TimeSlotSelectorProps {
   selectedDate?: Date;

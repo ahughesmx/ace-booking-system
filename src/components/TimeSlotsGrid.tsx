@@ -6,7 +6,7 @@ import { useCourts } from "@/hooks/use-courts";
 import { useAllBookings } from "@/hooks/use-bookings";
 import { Booking, SpecialBooking } from "@/types/booking";
 import { useCourtMaintenance } from "@/hooks/use-court-maintenance";
-import { isSlotPastMexico } from "@/utils/timezone";
+import { isSlotPastMexico, isSameMexicoDay, getCurrentMexicoCityTime, getStartOfDateMexicoCityISO, getEndOfDateMexicoCityISO } from "@/utils/timezone";
 
 interface TimeSlot {
   start: string;

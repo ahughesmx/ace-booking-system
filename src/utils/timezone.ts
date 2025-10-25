@@ -1,15 +1,15 @@
 import { format } from 'date-fns';
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 
-// México no usa horario de verano, zona horaria fija UTC-6
-const MEXICO_OFFSET_HOURS = -6;
+// Use America/Mexico_City timezone for all conversions
+const TZ = 'America/Mexico_City';
 
 /**
- * Get current time in Mexico City timezone (UTC-6) as a Date object
+ * Get current time in Mexico City timezone as a Date object
+ * Uses date-fns-tz for reliable timezone conversion
  */
 export function getCurrentMexicoCityTime(): Date {
-  const now = new Date();
-  const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
-  return new Date(utcTime + (3600000 * MEXICO_OFFSET_HOURS));
+  return toZonedTime(new Date(), TZ);
 }
 
 /**
@@ -20,20 +20,20 @@ export function getCurrentMexicoCityTimeISO(): string {
 }
 
 /**
- * Convert a UTC date to Mexico City timezone (UTC-6)
+ * Convert a UTC date to Mexico City timezone
+ * Uses date-fns-tz for reliable timezone conversion
  */
 export function toMexicoCityTime(date: Date | string): Date {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  const utcTime = dateObj.getTime();
-  return new Date(utcTime + (3600000 * MEXICO_OFFSET_HOURS));
+  return toZonedTime(dateObj, TZ);
 }
 
 /**
  * Convert a Mexico City time to UTC for database storage
+ * Uses date-fns-tz for reliable timezone conversion
  */
 export function fromMexicoCityTimeToUTC(date: Date): Date {
-  const mexicoCityTime = date.getTime();
-  return new Date(mexicoCityTime - (3600000 * MEXICO_OFFSET_HOURS));
+  return fromZonedTime(date, TZ);
 }
 
 /**
@@ -98,9 +98,11 @@ export function getEndOfDateMexicoCityISO(dateStr: string): string {
 /**
  * Get date key in Mexico City timezone (format: yyyy-MM-dd)
  * Used for comparing if two dates are the same day in CDMX
+ * Uses date-fns-tz for reliable timezone conversion
  */
-export function mexicoDayKey(date: Date): string {
-  const mexicoDate = toMexicoCityTime(date);
+export function mexicoDayKey(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const mexicoDate = toZonedTime(dateObj, TZ);
   const year = mexicoDate.getFullYear();
   const month = String(mexicoDate.getMonth() + 1).padStart(2, '0');
   const day = String(mexicoDate.getDate()).padStart(2, '0');
@@ -117,19 +119,22 @@ export function getMexicoNowUTC(): number {
 
 /**
  * Get slot start and end bounds as UTC timestamps for a given date and hour in Mexico City
+ * Uses date-fns-tz to handle timezone conversion reliably
  * @param dateMexico - Date in Mexico City timezone
  * @param hour - Hour of the day (0-23)
  * @returns Object with startUTC and endUTC as timestamps
  */
 export function getSlotBoundsUTC(dateMexico: Date, hour: number): { startUTC: number; endUTC: number } {
-  const year = dateMexico.getFullYear();
-  const month = dateMexico.getMonth();
-  const day = dateMexico.getDate();
+  // Create a date in CDMX with the specified hour
+  const mexicoDate = toZonedTime(dateMexico, TZ);
+  mexicoDate.setHours(hour, 0, 0, 0);
   
-  // Create UTC timestamps accounting for Mexico's UTC-6 offset
-  // When it's 14:00 in Mexico (UTC-6), it's 20:00 UTC
-  const startUTC = Date.UTC(year, month, day, hour + 6, 0, 0, 0);
-  const endUTC = Date.UTC(year, month, day, hour + 7, 0, 0, 0);
+  // Convert to UTC using date-fns-tz
+  const startUTC = fromZonedTime(mexicoDate, TZ).getTime();
+  
+  // End is 1 hour later
+  mexicoDate.setHours(hour + 1, 0, 0, 0);
+  const endUTC = fromZonedTime(mexicoDate, TZ).getTime();
   
   return { startUTC, endUTC };
 }
@@ -159,7 +164,8 @@ export function isSlotPastMexico(dateMexico: Date, hour: number): boolean {
 
 /**
  * Check if two dates are the same day in Mexico City timezone
+ * Uses date-fns-tz for reliable comparison
  */
-export function isSameMexicoDay(dateA: Date, dateB: Date): boolean {
+export function isSameMexicoDay(dateA: Date | string, dateB: Date | string): boolean {
   return mexicoDayKey(dateA) === mexicoDayKey(dateB);
 }
