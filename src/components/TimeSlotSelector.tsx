@@ -334,20 +334,24 @@ export function TimeSlotSelector({
                     🎯 {specialEvents[0].event_type}
                   </span>
                   <span className="text-xs text-purple-500 block">
-                    Reservado
+                    No disponible
                   </span>
                 </div>
               ) : (
                 <span className={cn(
-                  "text-xs",
+                  "text-xs flex flex-col gap-0.5",
                   isSelected ? "text-white/80" : isAvailable ? "text-[#6898FE]" : "text-gray-500"
                 )}>
-                  {timeSlot.isPast 
-                    ? "Horario pasado"
-                    : availableSlots > 0 
-                      ? `${availableSlots} ${availableSlots === 1 ? 'disponible' : 'disponibles'}`
-                      : "Reservado"
-                   }
+                  {timeSlot.isPast ? (
+                    "Horario pasado"
+                  ) : availableSlots > 0 ? (
+                    `${availableSlots} ${availableSlots === 1 ? 'disponible' : 'disponibles'}`
+                  ) : (
+                    <>
+                      <span className="font-medium">Reservado</span>
+                      <span>No disponible</span>
+                    </>
+                  )}
                 </span>
               )}
             </Button>

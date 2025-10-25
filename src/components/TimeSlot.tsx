@@ -85,7 +85,7 @@ export function TimeSlot({
             🎯 {specialEvents[0].event_type}
           </p>
           <p className="text-xs text-purple-500">
-            Reservado
+            No disponible
           </p>
         </div>
       ) : (
@@ -97,6 +97,11 @@ export function TimeSlot({
                   : "Disponible")
               : "Reservado"}
           </p>
+          {!actuallyAvailable && (
+            <p className="text-xs text-gray-500">
+              No disponible
+            </p>
+          )}
           {!actuallyAvailable && bookedUser && (
             <p className="text-[10px] text-gray-400 font-medium">
               {bookedUser}
