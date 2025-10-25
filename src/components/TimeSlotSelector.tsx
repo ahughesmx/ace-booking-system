@@ -334,7 +334,7 @@ export function TimeSlotSelector({
                     🎯 {specialEvents[0].event_type}
                   </span>
                   <span className="text-xs text-purple-500 block">
-                    No disponible
+                    Reservado
                   </span>
                 </div>
               ) : (
@@ -346,7 +346,7 @@ export function TimeSlotSelector({
                     ? "Horario pasado"
                     : availableSlots > 0 
                       ? `${availableSlots} ${availableSlots === 1 ? 'disponible' : 'disponibles'}`
-                      : "No disponible"
+                      : "Reservado"
                    }
                 </span>
               )}
