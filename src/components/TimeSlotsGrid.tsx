@@ -26,14 +26,23 @@ interface TimeSlotsGridProps {
 
 function generateTimeSlots(businessHours: { start: number; end: number }, selectedDate: Date = new Date()) {
   const slots: TimeSlot[] = [];
-  const now = new Date();
+  
+  // Get current time as UTC timestamp for proper comparison
+  const now = Date.now();
+  const checkIsToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
   
   for (let hour = businessHours.start; hour < businessHours.end; hour++) {
-    const startTime = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour);
-    const endTime = addHours(startTime, 1);
+    // Create slot time in Mexico (UTC-6), convert to UTC timestamp
+    const year = selectedDate.getFullYear();
+    const month = selectedDate.getMonth();
+    const day = selectedDate.getDate();
+    const slotUTC = Date.UTC(year, month, day, hour + 6, 0, 0, 0); // +6 because Mexico is UTC-6
     
-    // Solo verificar si está en el pasado cuando es el día actual
-    const isPast = isToday(selectedDate) ? isBefore(startTime, now) : false;
+    // Compare UTC timestamps - only mark as past if it's today
+    const isPast = checkIsToday && slotUTC < now;
+    
+    const startTime = new Date(year, month, day, hour);
+    const endTime = addHours(startTime, 1);
     
     slots.push({
       start: format(startTime, "HH:00"),

@@ -24,7 +24,6 @@ interface TimeSlotSelectorProps {
 
 function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
   const slots = [];
-  const now = new Date();
   
   if (!settings) return slots;
 
@@ -40,14 +39,22 @@ function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
     return []; // No generar slots si no opera este día
   }
   
+  // Get current time as UTC timestamp for proper comparison
+  const now = Date.now();
+  const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+  
   for (let hour = startHour; hour < endHour; hour++) {
-    const startTime = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour);
+    // Create slot time in Mexico (UTC-6), convert to UTC timestamp
+    const year = selectedDate.getFullYear();
+    const month = selectedDate.getMonth();
+    const day = selectedDate.getDate();
+    const slotUTC = Date.UTC(year, month, day, hour + 6, 0, 0, 0); // +6 because Mexico is UTC-6
+    
+    // Compare UTC timestamps
+    const isPast = isToday && slotUTC < now;
+    
+    const startTime = new Date(year, month, day, hour);
     const endTime = addHours(startTime, 1);
-    
-    // ARREGLO: Solo verificar si está en el pasado cuando es HOY
-    const isPast = isToday(selectedDate) && isBefore(startTime, now);
-    
-    console.log(`⏰ SLOT ${hour}:00 - isToday: ${isToday(selectedDate)}, startTime: ${startTime.toLocaleTimeString()}, now: ${now.toLocaleTimeString()}, isPast: ${isPast}`);
     
     slots.push({
       start: format(startTime, "HH:00"),
