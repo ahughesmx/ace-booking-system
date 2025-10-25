@@ -49,11 +49,11 @@ function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
 }
 
 export default function Display() {
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(getCurrentMexicoCityTime());
   const [viewMode, setViewMode] = useState<'all' | 'single'>('single'); // Default to single
   const [selectedCourtId, setSelectedCourtId] = useState<string>('');
 
-  const currentDate = new Date();
+  const currentDate = getCurrentMexicoCityTime();
   console.log("🖥️ Display component - Current date:", currentDate.toISOString());
 
   // Use the combined bookings hook with public view for unauthenticated display access
@@ -172,7 +172,7 @@ export default function Display() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTime(new Date());
+      setCurrentTime(getCurrentMexicoCityTime());
     }, 60000);
 
     const wakeLock = async () => {
@@ -191,7 +191,7 @@ export default function Display() {
   useEffect(() => {
     if (viewMode === 'single' && displaySettings?.rotation_interval) {
       const refreshInterval = setInterval(() => {
-        setCurrentTime(new Date());
+        setCurrentTime(getCurrentMexicoCityTime());
       }, displaySettings.rotation_interval);
 
       return () => clearInterval(refreshInterval);
