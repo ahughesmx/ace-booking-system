@@ -160,6 +160,42 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
     gcTime: 1000 * 60 * 10,
   });
   
+  // Realtime for public view (invalidate public combined view on base table changes)
+  useEffect(() => {
+    if (!usePublicView) return;
+
+    console.log("🔔 Subscribing realtime for public display view");
+
+    const bookingsChannel = supabase
+      .channel('public-display-bookings')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'bookings' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["display-bookings-combined"] });
+        }
+      )
+      .subscribe();
+
+    const specialChannel = supabase
+      .channel('public-display-special-bookings')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'special_bookings' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["display-bookings-combined"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log("🧹 Cleaning up public display realtime subscriptions");
+      supabase.removeChannel(bookingsChannel);
+      supabase.removeChannel(specialChannel);
+    };
+  }, [usePublicView, queryClient, selectedDate]);
+  
+  
   // Use regular authenticated queries only when NOT using public view
   const { data: regularBookings = [], isLoading: loadingRegular } = useBookings(selectedDate, !usePublicView);
   const { data: specialBookings = [], isLoading: loadingSpecial } = useSpecialBookings(selectedDate, !usePublicView);
@@ -230,13 +266,12 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
     };
   }
 
-  // Setup realtime subscriptions (only for authenticated queries)
+  // Setup realtime subscriptions for both public and authenticated views
   useEffect(() => {
-    if (usePublicView) return; // Skip subscriptions for public view
-    
     console.log("🔄 Setting up realtime subscriptions", {
       hasSelectedDate: !!selectedDate,
-      date: selectedDate?.toISOString()
+      date: selectedDate?.toISOString(),
+      usePublicView
     });
 
     // Subscribe to bookings changes
@@ -251,8 +286,13 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
         },
         (payload) => {
           console.log('📡 Bookings table change detected:', payload);
-          // Invalidate and refetch bookings queries
-          queryClient.invalidateQueries({ queryKey: ["bookings"] });
+          if (usePublicView) {
+            // Invalidate public combined view
+            queryClient.invalidateQueries({ queryKey: ["display-bookings-combined"] });
+          } else {
+            // Invalidate authenticated bookings
+            queryClient.invalidateQueries({ queryKey: ["bookings"] });
+          }
         }
       )
       .subscribe();
@@ -269,8 +309,13 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
         },
         (payload) => {
           console.log('📡 Special bookings table change detected:', payload);
-          // Invalidate and refetch special bookings queries
-          queryClient.invalidateQueries({ queryKey: ["special-bookings"] });
+          if (usePublicView) {
+            // Invalidate public combined view
+            queryClient.invalidateQueries({ queryKey: ["display-bookings-combined"] });
+          } else {
+            // Invalidate authenticated special bookings
+            queryClient.invalidateQueries({ queryKey: ["special-bookings"] });
+          }
         }
       )
       .subscribe();
