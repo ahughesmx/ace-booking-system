@@ -63,14 +63,28 @@ export function EmergencyClosureButton() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: "Canchas reabiertas",
         description: "Las canchas han sido reabiertas exitosamente. Los usuarios pueden volver a reservar.",
       });
-      queryClient.invalidateQueries({ queryKey: ["active-emergency-closures"] });
-      queryClient.invalidateQueries({ queryKey: ["court-maintenance-all"] });
-      queryClient.invalidateQueries({ queryKey: ["court-maintenance"] });
+      // Invalidar TODOS los caches de mantenimiento
+      await queryClient.invalidateQueries({ 
+        queryKey: ["court-maintenance"],
+        refetchType: 'all'
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: ["active-maintenance"],
+        refetchType: 'all'
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: ["court-maintenance-all"],
+        refetchType: 'all'
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: ["active-emergency-closures"],
+        refetchType: 'all'
+      });
       setShowReopenDialog(false);
     },
     onError: (error) => {

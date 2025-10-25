@@ -85,10 +85,19 @@ export function MaintenanceList() {
 
       await refetch();
       
-      // Invalidar todos los caches de mantenimiento para actualización inmediata
-      queryClient.invalidateQueries({ queryKey: ["court-maintenance-all"] });
-      queryClient.invalidateQueries({ queryKey: ["court-maintenance"] });
-      queryClient.invalidateQueries({ queryKey: ["active-maintenance"] });
+      // Invalidar TODOS los caches de mantenimiento con comodines
+      await queryClient.invalidateQueries({ 
+        queryKey: ["court-maintenance"],
+        refetchType: 'all' // Forzar refetch de queries activas e inactivas
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: ["active-maintenance"],
+        refetchType: 'all'
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: ["court-maintenance-all"],
+        refetchType: 'all'
+      });
       
       toast({
         title: "Mantenimiento cancelado",

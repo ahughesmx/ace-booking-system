@@ -133,9 +133,19 @@ export function AddMaintenanceDialog({ onMaintenanceAdded }: AddMaintenanceDialo
       setOpen(false);
       onMaintenanceAdded();
       
-      // Invalidar todos los caches de mantenimiento para actualización inmediata
-      await queryClient.invalidateQueries({ queryKey: ["court-maintenance"] });
-      await queryClient.invalidateQueries({ queryKey: ["active-maintenance"] });
+      // Invalidar TODOS los caches de mantenimiento con comodines
+      await queryClient.invalidateQueries({ 
+        queryKey: ["court-maintenance"],
+        refetchType: 'all' // Forzar refetch de queries activas e inactivas
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: ["active-maintenance"],
+        refetchType: 'all'
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: ["court-maintenance-all"],
+        refetchType: 'all'
+      });
     } catch (error) {
       console.error("Error adding maintenance:", error);
       toast({
