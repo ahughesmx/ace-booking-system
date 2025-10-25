@@ -16,7 +16,6 @@ import { getCurrentMexicoCityTime, toMexicoCityTime, fromMexicoCityTimeToUTC, ge
 // Generate time slots based on court type settings
 function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
   const slots: { start: string; end: string; isPast: boolean }[] = [];
-  const nowMexico = getCurrentMexicoCityTime();
   
   if (!settings) return [];
 
@@ -32,15 +31,25 @@ function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
     return []; // No slots if not operating this day
   }
   
+  // Get current time as UTC timestamp for proper comparison
+  const now = Date.now();
+  const nowMexico = getCurrentMexicoCityTime();
+  const isSameDay = nowMexico.getFullYear() === selectedDate.getFullYear() &&
+                    nowMexico.getMonth() === selectedDate.getMonth() &&
+                    nowMexico.getDate() === selectedDate.getDate();
+  
   for (let hour = startHour; hour < endHour; hour++) {
     const labelStart = `${String(hour).padStart(2,'0')}:00`;
     const labelEnd = `${String((hour + 1)).padStart(2,'0')}:00`;
 
-    // Only mark as past if current time in CDMX >= end time
-    const isSameDay = nowMexico.getFullYear() === selectedDate.getFullYear() &&
-                      nowMexico.getMonth() === selectedDate.getMonth() &&
-                      nowMexico.getDate() === selectedDate.getDate();
-    const isPast = isSameDay ? nowMexico.getHours() >= (hour + 1) : nowMexico > selectedDate && nowMexico.toDateString() !== selectedDate.toDateString() && nowMexico > selectedDate;
+    // Create slot time in Mexico (UTC-6), convert to UTC timestamp
+    const year = selectedDate.getFullYear();
+    const month = selectedDate.getMonth();
+    const day = selectedDate.getDate();
+    const slotUTC = Date.UTC(year, month, day, hour + 6, 0, 0, 0); // +6 because Mexico is UTC-6
+    
+    // Compare UTC timestamps - slot is past only if it's today and current time >= slot time
+    const isPast = isSameDay && slotUTC < now;
     
     slots.push({
       start: labelStart,
