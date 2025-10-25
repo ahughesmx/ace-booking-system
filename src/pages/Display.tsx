@@ -11,12 +11,12 @@ import { useAllBookings } from "@/hooks/use-bookings";
 import { useAvailableCourtTypes } from "@/hooks/use-available-court-types";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { Booking, SpecialBooking } from "@/types/booking";
-import { getCurrentMexicoCityTime, toMexicoCityTime } from "@/utils/timezone";
+import { getCurrentMexicoCityTime, toMexicoCityTime, fromMexicoCityTimeToUTC, getStartOfDateMexicoCityISO } from "@/utils/timezone";
 
 // Generate time slots based on court type settings
 function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
-  const slots = [];
-  const now = getCurrentMexicoCityTime();
+  const slots: { start: string; end: string; isPast: boolean }[] = [];
+  const nowMexico = getCurrentMexicoCityTime();
   
   if (!settings) return [];
 
@@ -33,15 +33,18 @@ function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
   }
   
   for (let hour = startHour; hour < endHour; hour++) {
-    const startTime = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour);
-    const endTime = addHours(startTime, 1);
-    
-    // Only mark as past if current time is >= slot end time
-    const isPast = isToday(selectedDate) && now >= endTime;
+    const labelStart = `${String(hour).padStart(2,'0')}:00`;
+    const labelEnd = `${String((hour + 1)).padStart(2,'0')}:00`;
+
+    // Only mark as past if current time in CDMX >= end time
+    const isSameDay = nowMexico.getFullYear() === selectedDate.getFullYear() &&
+                      nowMexico.getMonth() === selectedDate.getMonth() &&
+                      nowMexico.getDate() === selectedDate.getDate();
+    const isPast = isSameDay ? nowMexico.getHours() >= (hour + 1) : nowMexico > selectedDate && nowMexico.toDateString() !== selectedDate.toDateString() && nowMexico > selectedDate;
     
     slots.push({
-      start: format(startTime, "HH:00"),
-      end: format(endTime, "HH:00"),
+      start: labelStart,
+      end: labelEnd,
       isPast
     });
   }
@@ -234,79 +237,73 @@ export default function Display() {
   // Check if a slot is booked
   const isBooked = (courtId: string, timeSlot: string) => {
     const slotHour = parseInt(timeSlot.split(':')[0]);
-    
-    // currentDate ya está en Mexico City time, solo establecemos la hora
-    const slotStart = new Date(currentDate);
-    slotStart.setHours(slotHour, 0, 0, 0);
-    const slotEnd = new Date(slotStart);
-    slotEnd.setHours(slotHour + 1, 0, 0, 0);
+
+    // Construir el slot en UTC que corresponde a esa hora en CDMX
+    const dateStr = format(currentDate, 'yyyy-MM-dd');
+    const baseUTC = new Date(getStartOfDateMexicoCityISO(dateStr)); // 00:00 CDMX == 06:00 UTC
+    const slotStartUTC = addHours(baseUTC, slotHour);
+    const slotEndUTC = addHours(baseUTC, slotHour + 1);
 
     const found = allBookings.some(booking => {
       if (booking.court_id !== courtId) return false;
 
-      // Convert booking times from UTC to Mexico City timezone
-      const bookingStart = toMexicoCityTime(booking.start_time);
-      const bookingEnd = toMexicoCityTime(booking.end_time);
+      // Tiempos de la reserva tal cual vienen (ya con zona en la cadena ISO)
+      const bookingStartUTC = new Date(booking.start_time);
+      const bookingEndUTC = new Date(booking.end_time);
 
-      // Check if slot overlaps with booking
-      const isOverlapping = slotStart < bookingEnd && slotEnd > bookingStart;
-      
+      // Overlap en UTC (misma referencia temporal para ambos)
+      const isOverlapping = slotStartUTC < bookingEndUTC && slotEndUTC > bookingStartUTC;
+
       if (isOverlapping) {
-        console.log(`🎯 Slot ${timeSlot} occupied by booking:`, {
-          type: isSpecialBooking(booking) ? 'special' : 'regular',
-          slotRange: `${format(slotStart, 'HH:mm')} - ${format(slotEnd, 'HH:mm')}`,
-          bookingRange: `${format(bookingStart, 'HH:mm')} - ${format(bookingEnd, 'HH:mm')}`,
-          slotStart: slotStart.toISOString(),
-          bookingStart: bookingStart.toISOString(),
-          bookingEnd: bookingEnd.toISOString()
+        console.log(`🎯 Overlap ${timeSlot}`, {
+          slotStartUTC: slotStartUTC.toISOString(),
+          slotEndUTC: slotEndUTC.toISOString(),
+          bookingStart: booking.start_time,
+          bookingEnd: booking.end_time,
         });
       }
-      
+
       return isOverlapping;
     });
-    
+
     return found;
   };
 
   // Get slot information
   const getSlotInfo = (courtId: string, timeSlot: string) => {
-    // Use Mexico City time
-    const now = getCurrentMexicoCityTime();
-    const slotTime = new Date(currentDate);
+    // Base UTC para el día en CDMX
+    const dateStr = format(currentDate, 'yyyy-MM-dd');
+    const baseUTC = new Date(getStartOfDateMexicoCityISO(dateStr));
+
+    // Now en UTC equivalente al reloj de CDMX
+    const nowMexico = getCurrentMexicoCityTime();
+    const nowUTC = fromMexicoCityTimeToUTC(nowMexico);
+
     const [hour] = timeSlot.split(':');
-    slotTime.setHours(parseInt(hour), 0, 0, 0);
-    
-    // Create slot end time (1 hour later)
-    const slotEndTime = new Date(slotTime);
-    slotEndTime.setHours(parseInt(hour) + 1, 0, 0, 0);
-    
-    // A slot is "past" only if current time >= end time
-    const isPast = isToday(currentDate) && now >= slotEndTime;
-    
-    // A slot is "current" if now is between start and end
-    const isCurrent = isToday(currentDate) && now >= slotTime && now < slotEndTime;
+    const slotTimeUTC = addHours(baseUTC, parseInt(hour));
+    const slotEndTimeUTC = addHours(baseUTC, parseInt(hour) + 1);
+
+    // A slot is "past" only if current time >= end time (en UTC)
+    const isSameDay = format(currentDate, 'yyyy-MM-dd') === format(nowMexico, 'yyyy-MM-dd');
+    const isPast = isSameDay && nowUTC >= slotEndTimeUTC;
+
+    // A slot is "current" si now está entre inicio y fin
+    const isCurrent = isSameDay && nowUTC >= slotTimeUTC && nowUTC < slotEndTimeUTC;
 
     const booking = allBookings.find(booking => {
       if (booking.court_id !== courtId) return false;
 
-      // Convert booking times from UTC to Mexico City timezone
-      const bookingStart = toMexicoCityTime(booking.start_time);
-      const bookingEnd = toMexicoCityTime(booking.end_time);
+      const bookingStartUTC = new Date(booking.start_time);
+      const bookingEndUTC = new Date(booking.end_time);
 
-      // Check if slot overlaps with booking (both in Mexico City timezone)
-      const isOverlapping = slotTime < bookingEnd && slotEndTime > bookingStart;
+      // Check if slot overlaps with booking (todo en UTC)
+      const isOverlapping = slotTimeUTC < bookingEndUTC && slotEndTimeUTC > bookingStartUTC;
       
       return isOverlapping;
     });
 
     if (booking) {
       const type = isSpecialBooking(booking) ? 'special' : 'regular';
-      console.log(`📍 Slot info for court ${courtId} at ${timeSlot}:`, {
-        type,
-        booking,
-        title: isSpecialBooking(booking) ? booking.title : 'Reserva regular'
-      });
-      
       return {
         type,
         booking: booking,
