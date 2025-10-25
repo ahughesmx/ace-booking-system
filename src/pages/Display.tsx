@@ -242,17 +242,21 @@ export default function Display() {
     const found = allBookings.some(booking => {
       if (booking.court_id !== courtId) return false;
 
-      const bookingStart = toMexicoCityTime(booking.start_time);
-      const bookingEnd = toMexicoCityTime(booking.end_time);
+      // Parse UTC times directly without conversion
+      const bookingStart = new Date(booking.start_time);
+      const bookingEnd = new Date(booking.end_time);
 
-      // Check if slot overlaps with booking
+      // Check if slot overlaps with booking (both in same timezone now)
       const isOverlapping = slotStart < bookingEnd && slotEnd > bookingStart;
       
       if (isOverlapping) {
         console.log(`🎯 Slot ${timeSlot} occupied by booking:`, {
           type: isSpecialBooking(booking) ? 'special' : 'regular',
-          range: `${format(bookingStart, 'HH:mm')} - ${format(bookingEnd, 'HH:mm')}`,
-          slot: `${timeSlot} - ${format(slotEnd, 'HH:mm')}`
+          slotRange: `${format(slotStart, 'HH:mm')} - ${format(slotEnd, 'HH:mm')}`,
+          bookingRange: `${format(bookingStart, 'HH:mm')} - ${format(bookingEnd, 'HH:mm')}`,
+          slotStart: slotStart.toISOString(),
+          bookingStart: bookingStart.toISOString(),
+          bookingEnd: bookingEnd.toISOString()
         });
       }
       
@@ -283,8 +287,9 @@ export default function Display() {
     const booking = allBookings.find(booking => {
       if (booking.court_id !== courtId) return false;
 
-      const bookingStart = toMexicoCityTime(booking.start_time);
-      const bookingEnd = toMexicoCityTime(booking.end_time);
+      // Parse UTC times directly without conversion
+      const bookingStart = new Date(booking.start_time);
+      const bookingEnd = new Date(booking.end_time);
 
       // Check if slot overlaps with booking
       const isOverlapping = slotTime < bookingEnd && slotEndTime > bookingStart;
