@@ -109,6 +109,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             queryClient.invalidateQueries({ queryKey: ["available-court-types"] });
             queryClient.invalidateQueries({ queryKey: ["court-type-settings-all"] });
             queryClient.invalidateQueries({ queryKey: ["active-bookings-count"] });
+            queryClient.invalidateQueries({ queryKey: ["bookings"] });
+            queryClient.invalidateQueries({ queryKey: ["special-bookings"] });
+            queryClient.invalidateQueries({ queryKey: ["all-bookings"] });
+            queryClient.invalidateQueries({ queryKey: ["userBookings"] });
             
             toast({
               title: "Sesión iniciada",
@@ -190,6 +194,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ["court-type-settings-all"] });
       queryClient.invalidateQueries({ queryKey: ["court-type-settings"] });
       queryClient.invalidateQueries({ queryKey: ["active-bookings-count"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["special-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["all-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["userBookings"] });
     }
   }, [user?.id, queryClient]);
 
