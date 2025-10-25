@@ -205,24 +205,38 @@ export function useBookingSubmit(onBookingSuccess: () => void) {
         // No fallar la reserva por errores de webhook
       }
 
-      // Invalidar todas las queries relacionadas con reservas para actualizar los contadores
+      // Invalidar TODOS los caches de reservas para actualización inmediata
       await queryClient.invalidateQueries({ 
-        queryKey: ["bookings"] 
+        queryKey: ["bookings"],
+        refetchType: 'all'
+      });
+      
+      await queryClient.invalidateQueries({ 
+        queryKey: ["all-bookings-including-pending"],
+        refetchType: 'all'
       });
       
       // Invalidar específicamente la query de reservas activas del usuario
       await queryClient.invalidateQueries({ 
-        queryKey: ["userActiveBookings", user?.id] 
+        queryKey: ["userActiveBookings"],
+        refetchType: 'all'
       });
 
       // Invalidar la query de reservas activas para el componente de partidos
       await queryClient.invalidateQueries({ 
-        queryKey: ["active-bookings", user?.id] 
+        queryKey: ["active-bookings"],
+        refetchType: 'all'
+      });
+      
+      await queryClient.invalidateQueries({ 
+        queryKey: ["active-bookings-count"],
+        refetchType: 'all'
       });
 
       // Invalidar reglas de reserva por si hay cambios
       await queryClient.invalidateQueries({ 
-        queryKey: ["bookingRules"] 
+        queryKey: ["bookingRules"],
+        refetchType: 'all'
       });
 
       toast({

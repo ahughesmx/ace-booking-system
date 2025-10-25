@@ -556,9 +556,22 @@ export function useBookingPayment() {
           console.error("❌ Error procesando webhooks:", webhookError);
         }
 
-        await queryClient.invalidateQueries({ queryKey: ["bookings"] });
-        await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
-        await queryClient.invalidateQueries({ queryKey: ["active-bookings", user?.id] });
+        await queryClient.invalidateQueries({ 
+          queryKey: ["bookings"],
+          refetchType: 'all'
+        });
+        await queryClient.invalidateQueries({ 
+          queryKey: ["userActiveBookings"],
+          refetchType: 'all'
+        });
+        await queryClient.invalidateQueries({ 
+          queryKey: ["active-bookings"],
+          refetchType: 'all'
+        });
+        await queryClient.invalidateQueries({ 
+          queryKey: ["all-bookings-including-pending"],
+          refetchType: 'all'
+        });
 
         toast({
           title: "¡Pago exitoso!",
@@ -599,8 +612,18 @@ export function useBookingPayment() {
 
       setPendingBooking(null);
       
-      await queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
+      await queryClient.invalidateQueries({ 
+        queryKey: ["bookings"],
+        refetchType: 'all'
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: ["userActiveBookings"],
+        refetchType: 'all'
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: ["all-bookings-including-pending"],
+        refetchType: 'all'
+      });
     } catch (error) {
       console.error("Error canceling booking:", error);
     }
@@ -632,8 +655,18 @@ export function useBookingPayment() {
         console.log('✅ Pago PayPal confirmado exitosamente');
         
         // Invalidate queries and clear state
-        await queryClient.invalidateQueries({ queryKey: ["bookings"] });
-        await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
+        await queryClient.invalidateQueries({ 
+          queryKey: ["bookings"],
+          refetchType: 'all'
+        });
+        await queryClient.invalidateQueries({ 
+          queryKey: ["userActiveBookings"],
+          refetchType: 'all'
+        });
+        await queryClient.invalidateQueries({ 
+          queryKey: ["all-bookings-including-pending"],
+          refetchType: 'all'
+        });
         setPendingBooking(null);
         
         return true;
@@ -676,8 +709,18 @@ export function useBookingPayment() {
           console.log('✅ Pago confirmado exitosamente');
           
           // Invalidate queries and clear state
-          await queryClient.invalidateQueries({ queryKey: ["bookings"] });
-          await queryClient.invalidateQueries({ queryKey: ["userActiveBookings", user?.id] });
+          await queryClient.invalidateQueries({ 
+            queryKey: ["bookings"],
+            refetchType: 'all'
+          });
+          await queryClient.invalidateQueries({ 
+            queryKey: ["userActiveBookings"],
+            refetchType: 'all'
+          });
+          await queryClient.invalidateQueries({ 
+            queryKey: ["all-bookings-including-pending"],
+            refetchType: 'all'
+          });
           setPendingBooking(null);
           
           return true;

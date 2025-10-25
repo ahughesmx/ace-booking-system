@@ -227,16 +227,37 @@ export function useUserBookings(userId?: string) {
       if (error) throw error;
     },
     onSuccess: () => {
-      // Invalidate user-specific booking queries
-      queryClient.invalidateQueries({ queryKey: ["userUpcomingBookings", userId] });
-      queryClient.invalidateQueries({ queryKey: ["userPastBookings", userId] });
+      // Invalidar TODOS los caches de reservas para actualización inmediata
+      queryClient.invalidateQueries({ 
+        queryKey: ["userUpcomingBookings"],
+        refetchType: 'all'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ["userPastBookings"],
+        refetchType: 'all'
+      });
       
-      // Invalidate general booking queries that determine slot availability
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["all-bookings-including-pending"] });
-      queryClient.invalidateQueries({ queryKey: ["userActiveBookings", userId] });
-      queryClient.invalidateQueries({ queryKey: ["active-bookings", userId] });
-      queryClient.invalidateQueries({ queryKey: ["active-bookings-count", userId] });
+      // Invalidar también las queries generales de bookings
+      queryClient.invalidateQueries({ 
+        queryKey: ["bookings"],
+        refetchType: 'all'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ["all-bookings-including-pending"],
+        refetchType: 'all'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ["userActiveBookings"],
+        refetchType: 'all'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ["active-bookings"],
+        refetchType: 'all'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ["active-bookings-count"],
+        refetchType: 'all'
+      });
       
       toast({
         title: "Éxito",
