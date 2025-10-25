@@ -235,11 +235,11 @@ export default function Display() {
   const isBooked = (courtId: string, timeSlot: string) => {
     const slotHour = parseInt(timeSlot.split(':')[0]);
     
-    // Create slot times in Mexico City timezone (UTC-6)
+    // currentDate ya está en Mexico City time, solo establecemos la hora
     const slotStart = new Date(currentDate);
-    slotStart.setUTCHours(slotHour + 6, 0, 0, 0); // +6 porque Mexico City es UTC-6
+    slotStart.setHours(slotHour, 0, 0, 0);
     const slotEnd = new Date(slotStart);
-    slotEnd.setUTCHours(slotHour + 7, 0, 0, 0);
+    slotEnd.setHours(slotHour + 1, 0, 0, 0);
 
     const found = allBookings.some(booking => {
       if (booking.court_id !== courtId) return false;
@@ -248,7 +248,7 @@ export default function Display() {
       const bookingStart = toMexicoCityTime(booking.start_time);
       const bookingEnd = toMexicoCityTime(booking.end_time);
 
-      // Check if slot overlaps with booking (both in Mexico City timezone now)
+      // Check if slot overlaps with booking
       const isOverlapping = slotStart < bookingEnd && slotEnd > bookingStart;
       
       if (isOverlapping) {
@@ -274,11 +274,11 @@ export default function Display() {
     const now = getCurrentMexicoCityTime();
     const slotTime = new Date(currentDate);
     const [hour] = timeSlot.split(':');
-    slotTime.setUTCHours(parseInt(hour) + 6, 0, 0, 0); // +6 porque Mexico City es UTC-6
+    slotTime.setHours(parseInt(hour), 0, 0, 0);
     
     // Create slot end time (1 hour later)
     const slotEndTime = new Date(slotTime);
-    slotEndTime.setUTCHours(parseInt(hour) + 7, 0, 0, 0);
+    slotEndTime.setHours(parseInt(hour) + 1, 0, 0, 0);
     
     // A slot is "past" only if current time >= end time
     const isPast = isToday(currentDate) && now >= slotEndTime;
