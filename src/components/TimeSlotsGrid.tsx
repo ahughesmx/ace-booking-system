@@ -6,6 +6,7 @@ import { useCourts } from "@/hooks/use-courts";
 import { useAllBookings } from "@/hooks/use-bookings";
 import { Booking, SpecialBooking } from "@/types/booking";
 import { useCourtMaintenance } from "@/hooks/use-court-maintenance";
+import { isSlotPastMexico } from "@/utils/timezone";
 
 interface TimeSlot {
   start: string;
@@ -27,19 +28,13 @@ interface TimeSlotsGridProps {
 function generateTimeSlots(businessHours: { start: number; end: number }, selectedDate: Date = new Date()) {
   const slots: TimeSlot[] = [];
   
-  // Get current time as UTC timestamp for proper comparison
-  const now = Date.now();
-  const checkIsToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+  const year = selectedDate.getFullYear();
+  const month = selectedDate.getMonth();
+  const day = selectedDate.getDate();
   
   for (let hour = businessHours.start; hour < businessHours.end; hour++) {
-    // Create slot time in Mexico (UTC-6), convert to UTC timestamp
-    const year = selectedDate.getFullYear();
-    const month = selectedDate.getMonth();
-    const day = selectedDate.getDate();
-    const slotUTC = Date.UTC(year, month, day, hour + 6, 0, 0, 0); // +6 because Mexico is UTC-6
-    
-    // Compare UTC timestamps - only mark as past if it's today
-    const isPast = checkIsToday && slotUTC < now;
+    // Use shared timezone utility for consistent "isPast" check
+    const isPast = isSlotPastMexico(selectedDate, hour);
     
     const startTime = new Date(year, month, day, hour);
     const endTime = addHours(startTime, 1);

@@ -8,6 +8,7 @@ import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { useActiveMaintenancePeriods, useCourtMaintenance } from "@/hooks/use-court-maintenance";
 import { useAllBookings } from "@/hooks/use-bookings";
 import { SpecialBooking } from "@/types/booking";
+import { isSlotPastMexico } from "@/utils/timezone";
 
 interface TimeSlotSelectorProps {
   selectedDate?: Date;
@@ -39,19 +40,13 @@ function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
     return []; // No generar slots si no opera este día
   }
   
-  // Get current time as UTC timestamp for proper comparison
-  const now = Date.now();
-  const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+  const year = selectedDate.getFullYear();
+  const month = selectedDate.getMonth();
+  const day = selectedDate.getDate();
   
   for (let hour = startHour; hour < endHour; hour++) {
-    // Create slot time in Mexico (UTC-6), convert to UTC timestamp
-    const year = selectedDate.getFullYear();
-    const month = selectedDate.getMonth();
-    const day = selectedDate.getDate();
-    const slotUTC = Date.UTC(year, month, day, hour + 6, 0, 0, 0); // +6 because Mexico is UTC-6
-    
-    // Compare UTC timestamps
-    const isPast = isToday && slotUTC < now;
+    // Use shared timezone utility for consistent "isPast" check
+    const isPast = isSlotPastMexico(selectedDate, hour);
     
     const startTime = new Date(year, month, day, hour);
     const endTime = addHours(startTime, 1);

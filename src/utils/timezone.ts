@@ -94,3 +94,72 @@ export function getEndOfDateMexicoCityISO(dateStr: string): string {
   // Add 6 hours to get back to UTC (since Mexico is UTC-6)
   return new Date(utcDate.getTime() + (6 * 3600000)).toISOString();
 }
+
+/**
+ * Get date key in Mexico City timezone (format: yyyy-MM-dd)
+ * Used for comparing if two dates are the same day in CDMX
+ */
+export function mexicoDayKey(date: Date): string {
+  const mexicoDate = toMexicoCityTime(date);
+  const year = mexicoDate.getFullYear();
+  const month = String(mexicoDate.getMonth() + 1).padStart(2, '0');
+  const day = String(mexicoDate.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Get current time in Mexico City as UTC timestamp (milliseconds)
+ */
+export function getMexicoNowUTC(): number {
+  const nowMexico = getCurrentMexicoCityTime();
+  return fromMexicoCityTimeToUTC(nowMexico).getTime();
+}
+
+/**
+ * Get slot start and end bounds as UTC timestamps for a given date and hour in Mexico City
+ * @param dateMexico - Date in Mexico City timezone
+ * @param hour - Hour of the day (0-23)
+ * @returns Object with startUTC and endUTC as timestamps
+ */
+export function getSlotBoundsUTC(dateMexico: Date, hour: number): { startUTC: number; endUTC: number } {
+  const year = dateMexico.getFullYear();
+  const month = dateMexico.getMonth();
+  const day = dateMexico.getDate();
+  
+  // Create UTC timestamps accounting for Mexico's UTC-6 offset
+  // When it's 14:00 in Mexico (UTC-6), it's 20:00 UTC
+  const startUTC = Date.UTC(year, month, day, hour + 6, 0, 0, 0);
+  const endUTC = Date.UTC(year, month, day, hour + 7, 0, 0, 0);
+  
+  return { startUTC, endUTC };
+}
+
+/**
+ * Check if a time slot is in the past (Mexico City timezone)
+ * A slot is past if it's the same day in CDMX and current time >= slot end time
+ * @param dateMexico - Date in Mexico City timezone
+ * @param hour - Hour of the day (0-23)
+ */
+export function isSlotPastMexico(dateMexico: Date, hour: number): boolean {
+  const nowMexico = getCurrentMexicoCityTime();
+  const nowUTC = fromMexicoCityTimeToUTC(nowMexico).getTime();
+  
+  // Check if same day in CDMX
+  const isSameDay = mexicoDayKey(dateMexico) === mexicoDayKey(nowMexico);
+  
+  if (!isSameDay) {
+    // If different day, check if dateMexico is before today
+    return mexicoDayKey(dateMexico) < mexicoDayKey(nowMexico);
+  }
+  
+  // Same day: slot is past if current time >= end of slot
+  const { endUTC } = getSlotBoundsUTC(dateMexico, hour);
+  return nowUTC >= endUTC;
+}
+
+/**
+ * Check if two dates are the same day in Mexico City timezone
+ */
+export function isSameMexicoDay(dateA: Date, dateB: Date): boolean {
+  return mexicoDayKey(dateA) === mexicoDayKey(dateB);
+}

@@ -11,7 +11,7 @@ import { useAllBookings } from "@/hooks/use-bookings";
 import { useAvailableCourtTypes } from "@/hooks/use-available-court-types";
 import { useCourtTypeSettings } from "@/hooks/use-court-type-settings";
 import { Booking, SpecialBooking } from "@/types/booking";
-import { getCurrentMexicoCityTime, toMexicoCityTime, fromMexicoCityTimeToUTC, getStartOfDateMexicoCityISO } from "@/utils/timezone";
+import { getCurrentMexicoCityTime, toMexicoCityTime, fromMexicoCityTimeToUTC, getStartOfDateMexicoCityISO, isSlotPastMexico, getSlotBoundsUTC, getMexicoNowUTC, isSameMexicoDay } from "@/utils/timezone";
 
 // Generate time slots based on court type settings
 function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
@@ -31,25 +31,12 @@ function generateTimeSlots(settings: any, selectedDate: Date = new Date()) {
     return []; // No slots if not operating this day
   }
   
-  // Get current time as UTC timestamp for proper comparison
-  const now = Date.now();
-  const nowMexico = getCurrentMexicoCityTime();
-  const isSameDay = nowMexico.getFullYear() === selectedDate.getFullYear() &&
-                    nowMexico.getMonth() === selectedDate.getMonth() &&
-                    nowMexico.getDate() === selectedDate.getDate();
-  
   for (let hour = startHour; hour < endHour; hour++) {
     const labelStart = `${String(hour).padStart(2,'0')}:00`;
     const labelEnd = `${String((hour + 1)).padStart(2,'0')}:00`;
 
-    // Create slot time in Mexico (UTC-6), convert to UTC timestamp
-    const year = selectedDate.getFullYear();
-    const month = selectedDate.getMonth();
-    const day = selectedDate.getDate();
-    const slotUTC = Date.UTC(year, month, day, hour + 6, 0, 0, 0); // +6 because Mexico is UTC-6
-    
-    // Compare UTC timestamps - slot is past only if it's today and current time >= slot time
-    const isPast = isSameDay && slotUTC < now;
+    // Use shared timezone utility for consistent "isPast" check
+    const isPast = isSlotPastMexico(selectedDate, hour);
     
     slots.push({
       start: labelStart,
@@ -280,24 +267,27 @@ export default function Display() {
 
   // Get slot information
   const getSlotInfo = (courtId: string, timeSlot: string) => {
-    // Base UTC para el día en CDMX
+    const hour = parseInt(timeSlot.split(':')[0]);
+    
+    // Use shared timezone utilities for consistent logic
+    const nowMexico = getCurrentMexicoCityTime();
+    const { startUTC, endUTC } = getSlotBoundsUTC(currentDate, hour);
+    const nowUTC = getMexicoNowUTC();
+    
+    // Check if same day in CDMX
+    const isSameDay = isSameMexicoDay(currentDate, nowMexico);
+    
+    // Slot is past if current time >= slot end time (on the same day)
+    const isPast = isSameDay && nowUTC >= endUTC;
+    
+    // Slot is current if we're within the slot time range
+    const isCurrent = isSameDay && nowUTC >= startUTC && nowUTC < endUTC;
+    
+    // Base UTC para el día en CDMX (para verificar overlaps con bookings)
     const dateStr = format(currentDate, 'yyyy-MM-dd');
     const baseUTC = new Date(getStartOfDateMexicoCityISO(dateStr));
-
-    // Now en UTC equivalente al reloj de CDMX
-    const nowMexico = getCurrentMexicoCityTime();
-    const nowUTC = fromMexicoCityTimeToUTC(nowMexico);
-
-    const [hour] = timeSlot.split(':');
-    const slotTimeUTC = addHours(baseUTC, parseInt(hour));
-    const slotEndTimeUTC = addHours(baseUTC, parseInt(hour) + 1);
-
-    // A slot is "past" only if current time >= end time (en UTC)
-    const isSameDay = format(currentDate, 'yyyy-MM-dd') === format(nowMexico, 'yyyy-MM-dd');
-    const isPast = isSameDay && nowUTC >= slotEndTimeUTC;
-
-    // A slot is "current" si now está entre inicio y fin
-    const isCurrent = isSameDay && nowUTC >= slotTimeUTC && nowUTC < slotEndTimeUTC;
+    const slotTimeUTC = addHours(baseUTC, hour);
+    const slotEndTimeUTC = addHours(baseUTC, hour + 1);
 
     const booking = allBookings.find(booking => {
       if (booking.court_id !== courtId) return false;
