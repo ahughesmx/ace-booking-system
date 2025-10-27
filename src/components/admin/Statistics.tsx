@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart,
   Bar,
@@ -24,6 +25,7 @@ import {
   AreaChart,
   Area,
 } from "recharts";
+import { AdminReports } from "./reports/AdminReports";
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -350,7 +352,18 @@ export default function Statistics() {
   });
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <Tabs defaultValue="reports" className="space-y-6">
+      <TabsList>
+        <TabsTrigger value="reports">Reportes</TabsTrigger>
+        <TabsTrigger value="statistics">Estadísticas</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="reports">
+        <AdminReports />
+      </TabsContent>
+
+      <TabsContent value="statistics">
+        <div className="grid gap-6 md:grid-cols-2">
       {/* Top 10 Usuarios */}
       <Card className="col-span-2">
         <CardHeader>
@@ -638,6 +651,8 @@ export default function Statistics() {
           </div>
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </TabsContent>
+    </Tabs>
   );
 }
