@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Download, FileText, Loader2 } from "lucide-react";
+import { Download, FileText, Loader2, ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { exportToPDF } from "@/utils/pdf-export";
 
@@ -32,6 +32,9 @@ interface BookingReport {
   } | null;
 }
 
+type SortField = "payment_date" | "reservation_date" | "client";
+type SortOrder = "asc" | "desc";
+
 export function DateRangeReport() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -46,6 +49,10 @@ export function DateRangeReport() {
   const [membershipFilter, setMembershipFilter] = useState<string>("");
   const [userFilter, setUserFilter] = useState<string>("");
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>("all");
+  
+  // Sorting
+  const [sortField, setSortField] = useState<SortField>("payment_date");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   
   // Operators list
   const [operators, setOperators] = useState<Array<{ id: string; full_name: string }>>([]);
@@ -180,8 +187,8 @@ export function DateRangeReport() {
 
   const exportToCSV = () => {
     const headers = [
-      "Fecha Reservación",
       "Fecha Pago",
+      "Fecha Reservación",
       "Cliente",
       "Membresía",
       "Cancha",
@@ -190,12 +197,12 @@ export function DateRangeReport() {
       "Procesado Por",
     ];
 
-    const rows = bookings.map((booking) => [
-      format(new Date(booking.start_time), "dd/MM/yyyy HH:mm"),
+    const rows = sortedBookings.map((booking) => [
       format(
         new Date(booking.payment_completed_at || booking.booking_made_at),
         "dd/MM/yyyy HH:mm"
       ),
+      format(new Date(booking.start_time), "dd/MM/yyyy HH:mm"),
       booking.user?.full_name || "N/A",
       booking.user?.member_id || "N/A",
       booking.court.name,
@@ -225,8 +232,8 @@ export function DateRangeReport() {
     const totals = calculateTotals();
 
     const columns = [
-      { header: "Fecha Reservación", dataKey: "reservation_date" },
       { header: "Fecha Pago", dataKey: "payment_date" },
+      { header: "Fecha Reservación", dataKey: "reservation_date" },
       { header: "Cliente", dataKey: "client" },
       { header: "Membresía", dataKey: "membership" },
       { header: "Cancha", dataKey: "court" },
@@ -235,12 +242,12 @@ export function DateRangeReport() {
       { header: "Procesado Por", dataKey: "processed_by" },
     ];
 
-    const data = bookings.map((booking) => ({
-      reservation_date: format(new Date(booking.start_time), "dd/MM/yyyy HH:mm"),
+    const data = sortedBookings.map((booking) => ({
       payment_date: format(
         new Date(booking.payment_completed_at || booking.booking_made_at),
         "dd/MM/yyyy HH:mm"
       ),
+      reservation_date: format(new Date(booking.start_time), "dd/MM/yyyy HH:mm"),
       client: booking.user?.full_name || "N/A",
       membership: booking.user?.member_id || "N/A",
       court: booking.court.name,
@@ -267,13 +274,47 @@ export function DateRangeReport() {
       orientation: "landscape",
     });
 
-    toast({
-      title: "Exportado",
-      description: "El reporte se ha exportado a PDF exitosamente",
+      toast({
+        title: "Exportado",
+        description: "El reporte se ha exportado a PDF exitosamente",
+      });
+    };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
+
+  const getSortedBookings = () => {
+    const sorted = [...bookings].sort((a, b) => {
+      let comparison = 0;
+      
+      if (sortField === "payment_date") {
+        const dateA = new Date(a.payment_completed_at || a.booking_made_at).getTime();
+        const dateB = new Date(b.payment_completed_at || b.booking_made_at).getTime();
+        comparison = dateA - dateB;
+      } else if (sortField === "reservation_date") {
+        const dateA = new Date(a.start_time).getTime();
+        const dateB = new Date(b.start_time).getTime();
+        comparison = dateA - dateB;
+      } else if (sortField === "client") {
+        const nameA = a.user?.full_name || "";
+        const nameB = b.user?.full_name || "";
+        comparison = nameA.localeCompare(nameB);
+      }
+      
+      return sortOrder === "asc" ? comparison : -comparison;
     });
+    
+    return sorted;
   };
 
   const totals = calculateTotals();
+  const sortedBookings = getSortedBookings();
 
   return (
     <div className="space-y-6">
@@ -442,9 +483,36 @@ export function DateRangeReport() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Fecha Reservación</TableHead>
-                    <TableHead>Fecha Pago</TableHead>
-                    <TableHead>Cliente</TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort("payment_date")}
+                        className="flex items-center gap-1"
+                      >
+                        Fecha Pago
+                        <ArrowUpDown className="h-4 w-4" />
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort("reservation_date")}
+                        className="flex items-center gap-1"
+                      >
+                        Fecha Reservación
+                        <ArrowUpDown className="h-4 w-4" />
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort("client")}
+                        className="flex items-center gap-1"
+                      >
+                        Cliente
+                        <ArrowUpDown className="h-4 w-4" />
+                      </Button>
+                    </TableHead>
                     <TableHead>Membresía</TableHead>
                     <TableHead>Cancha</TableHead>
                     <TableHead>Método</TableHead>
@@ -453,16 +521,16 @@ export function DateRangeReport() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {bookings.map((booking) => (
+                  {sortedBookings.map((booking) => (
                     <TableRow key={booking.id}>
-                      <TableCell>
-                        {format(new Date(booking.start_time), "dd/MM/yyyy HH:mm")}
-                      </TableCell>
                       <TableCell>
                         {format(
                           new Date(booking.payment_completed_at || booking.booking_made_at),
                           "dd/MM/yyyy HH:mm"
                         )}
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(booking.start_time), "dd/MM/yyyy HH:mm")}
                       </TableCell>
                       <TableCell>{booking.user?.full_name || "N/A"}</TableCell>
                       <TableCell>{booking.user?.member_id || "N/A"}</TableCell>
