@@ -55,17 +55,22 @@ export function DateRangeReport() {
   }, []);
 
   const fetchOperators = async () => {
-    const { data } = await supabase
+    const { data: userRoles } = await supabase
       .from("user_roles")
-      .select("user_id, profiles!inner(id, full_name)")
+      .select("user_id")
       .eq("role", "operador");
 
-    if (data) {
-      const operatorsList = data.map((item: any) => ({
-        id: item.profiles.id,
-        full_name: item.profiles.full_name,
-      }));
-      setOperators(operatorsList);
+    if (userRoles && userRoles.length > 0) {
+      const operatorIds = userRoles.map((ur) => ur.user_id);
+      
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", operatorIds);
+
+      if (profiles) {
+        setOperators(profiles);
+      }
     }
   };
 
@@ -93,7 +98,7 @@ export function DateRangeReport() {
           actual_amount_charged,
           amount,
           processed_by,
-          user:profiles!bookings_user_id_fkey(full_name, member_id),
+          user:profiles!bookings_user_id_fkey_profiles(full_name, member_id),
           court:courts(name),
           processed_by_user:profiles!bookings_processed_by_fkey(full_name)
         `)
