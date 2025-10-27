@@ -168,6 +168,15 @@ export function DateRangeReport() {
     }
   };
 
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
   const calculateTotals = () => {
     const onlineTotal = bookings
       .filter((b) => b.payment_method === "online")
@@ -207,7 +216,7 @@ export function DateRangeReport() {
       booking.user?.member_id || "N/A",
       booking.court.name,
       booking.payment_method === "online" ? "Sistema" : "Ventanilla",
-      `$${(booking.actual_amount_charged || booking.amount || 0).toFixed(2)}`,
+      formatCurrency(booking.actual_amount_charged || booking.amount || 0),
       booking.processed_by_user?.full_name || "Sistema",
     ]);
 
@@ -252,7 +261,7 @@ export function DateRangeReport() {
       membership: booking.user?.member_id || "N/A",
       court: booking.court.name,
       method: booking.payment_method === "online" ? "Sistema" : "Ventanilla",
-      amount: `$${(booking.actual_amount_charged || booking.amount || 0).toFixed(2)}`,
+      amount: formatCurrency(booking.actual_amount_charged || booking.amount || 0),
       processed_by: booking.processed_by_user?.full_name || "Sistema",
     }));
 
@@ -265,9 +274,9 @@ export function DateRangeReport() {
       columns,
       data,
       summary: [
-        { label: "Total Sistema (Online)", value: `$${totals.online.toFixed(2)}` },
-        { label: "Total Ventanilla (Efectivo)", value: `$${totals.cash.toFixed(2)}` },
-        { label: "Total General", value: `$${totals.total.toFixed(2)}` },
+        { label: "Total Sistema (Online)", value: formatCurrency(totals.online) },
+        { label: "Total Ventanilla (Efectivo)", value: formatCurrency(totals.cash) },
+        { label: "Total General", value: formatCurrency(totals.total) },
         { label: "Total Reservaciones", value: totals.count.toString() },
       ],
       fileName: `reporte-reservaciones-${startDate}-${endDate}.pdf`,
@@ -436,7 +445,7 @@ export function DateRangeReport() {
               <CardTitle className="text-sm font-medium">Sistema (Online)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${totals.online.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(totals.online)}</div>
             </CardContent>
           </Card>
 
@@ -445,7 +454,7 @@ export function DateRangeReport() {
               <CardTitle className="text-sm font-medium">Ventanilla (Efectivo)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${totals.cash.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(totals.cash)}</div>
             </CardContent>
           </Card>
 
@@ -454,7 +463,7 @@ export function DateRangeReport() {
               <CardTitle className="text-sm font-medium">Total General</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${totals.total.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(totals.total)}</div>
             </CardContent>
           </Card>
 
@@ -539,7 +548,7 @@ export function DateRangeReport() {
                         {booking.payment_method === "online" ? "Sistema" : "Ventanilla"}
                       </TableCell>
                       <TableCell className="text-right">
-                        ${(booking.actual_amount_charged || booking.amount || 0).toFixed(2)}
+                        {formatCurrency(booking.actual_amount_charged || booking.amount || 0)}
                       </TableCell>
                       <TableCell>
                         {booking.processed_by_user?.full_name || "Sistema"}
