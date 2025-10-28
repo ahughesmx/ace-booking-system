@@ -36,7 +36,7 @@ interface HourlyData {
 
 export default function Statistics() {
   // Top 10 usuarios con más reservas
-  const { data: topUsers } = useQuery({
+  const { data: topUsers, isLoading: loadingTopUsers } = useQuery({
     queryKey: ["top-users"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -60,7 +60,7 @@ export default function Statistics() {
   });
 
   // Distribución por tipo de usuario
-  const { data: userTypes } = useQuery({
+  const { data: userTypes, isLoading: loadingUserTypes } = useQuery({
     queryKey: ["user-types"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -83,7 +83,7 @@ export default function Statistics() {
   });
 
   // Frecuencia de reservas por usuario
-  const { data: bookingFrequency } = useQuery({
+  const { data: bookingFrequency, isLoading: loadingFrequency } = useQuery({
     queryKey: ["booking-frequency"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -116,7 +116,7 @@ export default function Statistics() {
   });
 
   // Ocupación diaria/semanal/mensual
-  const { data: occupancyData } = useQuery({
+  const { data: occupancyData, isLoading: loadingOccupancy } = useQuery({
     queryKey: ["occupancy"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -140,7 +140,7 @@ export default function Statistics() {
   });
 
   // Horas pico vs valle
-  const { data: peakHours } = useQuery({
+  const { data: peakHours, isLoading: loadingPeakHours } = useQuery({
     queryKey: ["peak-hours"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -165,7 +165,7 @@ export default function Statistics() {
     },
   });
 
-  const { data: courtDistribution } = useQuery({
+  const { data: courtDistribution, isLoading: loadingCourtDist } = useQuery({
     queryKey: ["court-distribution"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -189,7 +189,7 @@ export default function Statistics() {
   });
 
   // Ocupación por hora para cada cancha
-  const { data: hourlyOccupation } = useQuery({
+  const { data: hourlyOccupation, isLoading: loadingHourly } = useQuery({
     queryKey: ["hourly-occupation"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -222,7 +222,7 @@ export default function Statistics() {
   });
 
   // Tendencias mensuales
-  const { data: monthlyTrends } = useQuery({
+  const { data: monthlyTrends, isLoading: loadingMonthly } = useQuery({
     queryKey: ["monthly-trends"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -246,7 +246,7 @@ export default function Statistics() {
   });
 
   // Comparativa por día de la semana
-  const { data: weekdayComparison } = useQuery({
+  const { data: weekdayComparison, isLoading: loadingWeekday } = useQuery({
     queryKey: ["weekday-comparison"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -271,7 +271,7 @@ export default function Statistics() {
   });
 
   // Horas populares (últimos 30 días)
-  const { data: popularHours } = useQuery({
+  const { data: popularHours, isLoading: loadingPopular } = useQuery({
     queryKey: ["popular-hours"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -295,7 +295,7 @@ export default function Statistics() {
   });
 
   // Métodos de pago
-  const { data: paymentMethods } = useQuery({
+  const { data: paymentMethods, isLoading: loadingPaymentMethods } = useQuery({
     queryKey: ["payment-methods"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -323,7 +323,7 @@ export default function Statistics() {
   });
 
   // Ingresos por método de pago
-  const { data: paymentRevenue } = useQuery({
+  const { data: paymentRevenue, isLoading: loadingRevenue } = useQuery({
     queryKey: ["payment-revenue"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -371,17 +371,27 @@ export default function Statistics() {
           <CardDescription>Últimos 30 días</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topUsers}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="reservas" fill="#4f46e5" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {loadingTopUsers ? (
+            <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+              Cargando datos...
+            </div>
+          ) : !topUsers || topUsers.length === 0 ? (
+            <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+              No hay datos disponibles para este período
+            </div>
+          ) : (
+            <div className="h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topUsers}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="reservas" fill="#4f46e5" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -392,27 +402,37 @@ export default function Statistics() {
           <CardDescription>Todos los usuarios</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={userTypes}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  label
-                >
-                  {userTypes?.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          {loadingUserTypes ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Cargando datos...
+            </div>
+          ) : !userTypes || userTypes.length === 0 ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No hay datos disponibles
+            </div>
+          ) : (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={userTypes}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label
+                  >
+                    {userTypes?.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -423,17 +443,27 @@ export default function Statistics() {
           <CardDescription>Top 5 usuarios más activos</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={bookingFrequency}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="user" angle={-45} textAnchor="end" height={100} />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="frequency" fill="#10b981" name="Reservas por día" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {loadingFrequency ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Cargando datos...
+            </div>
+          ) : !bookingFrequency || bookingFrequency.length === 0 ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No hay datos disponibles
+            </div>
+          ) : (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={bookingFrequency}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="user" angle={-45} textAnchor="end" height={100} />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="frequency" fill="#10b981" name="Reservas por día" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -444,17 +474,27 @@ export default function Statistics() {
           <CardDescription>Últimos 30 días</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={occupancyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="fecha" />
-                <YAxis />
-                <Tooltip />
-                <Area type="monotone" dataKey="ocupacion" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          {loadingOccupancy ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Cargando datos...
+            </div>
+          ) : !occupancyData || occupancyData.length === 0 ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No hay datos disponibles
+            </div>
+          ) : (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={occupancyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="fecha" />
+                  <YAxis />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="ocupacion" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -465,17 +505,27 @@ export default function Statistics() {
           <CardDescription>Últimos 7 días</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={peakHours}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hora" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="reservas" fill="#f59e0b" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {loadingPeakHours ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Cargando datos...
+            </div>
+          ) : !peakHours || peakHours.length === 0 ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No hay datos disponibles
+            </div>
+          ) : (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={peakHours}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="hora" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="reservas" fill="#f59e0b" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -485,27 +535,37 @@ export default function Statistics() {
           <CardDescription>Últimos 30 días</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={courtDistribution}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  label
-                >
-                  {courtDistribution?.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          {loadingCourtDist ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Cargando datos...
+            </div>
+          ) : !courtDistribution || courtDistribution.length === 0 ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No hay datos disponibles
+            </div>
+          ) : (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={courtDistribution}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label
+                  >
+                    {courtDistribution?.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -516,24 +576,34 @@ export default function Statistics() {
           <CardDescription>Últimos 7 días</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={hourlyOccupation}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                {courtDistribution?.map((court: any, index: number) => (
-                  <Bar 
-                    key={court.name}
-                    dataKey={court.name}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {loadingHourly ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Cargando datos...
+            </div>
+          ) : !hourlyOccupation || hourlyOccupation.length === 0 ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No hay datos disponibles
+            </div>
+          ) : (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={hourlyOccupation}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="hour" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  {courtDistribution?.map((court: any, index: number) => (
+                    <Bar 
+                      key={court.name}
+                      dataKey={court.name}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -544,17 +614,27 @@ export default function Statistics() {
           <CardDescription>Último año</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyTrends}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="reservas" stroke="#4f46e5" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {loadingMonthly ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Cargando datos...
+            </div>
+          ) : !monthlyTrends || monthlyTrends.length === 0 ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No hay datos disponibles
+            </div>
+          ) : (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyTrends}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="reservas" stroke="#4f46e5" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -565,17 +645,27 @@ export default function Statistics() {
           <CardDescription>Últimos 30 días</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weekdayComparison}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="dia" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="reservas" fill="#4f46e5" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {loadingWeekday ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Cargando datos...
+            </div>
+          ) : !weekdayComparison || weekdayComparison.length === 0 ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No hay datos disponibles
+            </div>
+          ) : (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weekdayComparison}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="dia" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="reservas" fill="#4f46e5" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -586,17 +676,27 @@ export default function Statistics() {
           <CardDescription>Últimos 30 días</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={popularHours}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hora" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="reservas" fill="#10b981" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {loadingPopular ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Cargando datos...
+            </div>
+          ) : !popularHours || popularHours.length === 0 ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No hay datos disponibles
+            </div>
+          ) : (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={popularHours}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="hora" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="reservas" fill="#10b981" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -607,27 +707,37 @@ export default function Statistics() {
           <CardDescription>Últimos 30 días</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={paymentMethods}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {paymentMethods?.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          {loadingPaymentMethods ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Cargando datos...
+            </div>
+          ) : !paymentMethods || paymentMethods.length === 0 ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No hay datos disponibles
+            </div>
+          ) : (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={paymentMethods}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {paymentMethods?.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -638,17 +748,27 @@ export default function Statistics() {
           <CardDescription>Últimos 30 días</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={paymentRevenue}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="method" />
-                <YAxis />
-                <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Ingresos']} />
-                <Bar dataKey="revenue" fill="#f59e0b" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {loadingRevenue ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Cargando datos...
+            </div>
+          ) : !paymentRevenue || paymentRevenue.length === 0 ? (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No hay datos disponibles
+            </div>
+          ) : (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={paymentRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="method" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Ingresos']} />
+                  <Bar dataKey="revenue" fill="#f59e0b" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
         </div>
