@@ -77,15 +77,39 @@ serve(async (req) => {
       throw rolesError
     }
 
-    // Get auth users using admin client
-    const { data: authUsersResponse, error: authError } = await supabaseAdmin.auth.admin.listUsers()
+    // Get ALL auth users using explicit pagination
+    let allAuthUsers = []
+    let page = 1
+    let hasMore = true
 
-    if (authError) {
-      console.error('Error fetching auth users:', authError)
-      throw authError
+    console.log('🔄 Starting to fetch all auth users with pagination...')
+
+    while (hasMore) {
+      const { data: authUsersResponse, error: authError } = await supabaseAdmin.auth.admin.listUsers({
+        page: page,
+        perPage: 1000
+      })
+
+      if (authError) {
+        console.error(`❌ Error fetching auth users page ${page}:`, authError)
+        throw authError
+      }
+
+      const users = authUsersResponse.users || []
+      allAuthUsers = allAuthUsers.concat(users)
+      
+      console.log(`✅ Fetched page ${page}: ${users.length} users (Total: ${allAuthUsers.length})`)
+      
+      // If we got less than 1000, we've reached the end
+      if (users.length < 1000) {
+        hasMore = false
+        console.log(`🏁 Finished! Total auth users retrieved: ${allAuthUsers.length}`)
+      } else {
+        page++
+      }
     }
 
-    const authUsers = authUsersResponse.users || []
+    const authUsers = allAuthUsers
 
     // Combine all data
     const usersWithRoles = profiles.map((profile) => {
