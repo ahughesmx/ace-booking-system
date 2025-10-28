@@ -75,25 +75,30 @@ export default function Statistics() {
     },
   });
 
-  // Distribución por tipo de usuario
-  const { data: userTypes, isLoading: loadingUserTypes } = useQuery({
-    queryKey: ["user-types"],
+  // Estado de reservas (últimos 30 días)
+  const { data: bookingStatus, isLoading: loadingBookingStatus } = useQuery({
+    queryKey: ["booking-status"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("user_roles")
-        .select("role, count")
-        .select("role");
+        .from("bookings")
+        .select("status")
+        .gte("start_time", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
       if (error) throw error;
 
-      const distribution = data.reduce((acc: any, user: any) => {
-        acc[user.role] = (acc[user.role] || 0) + 1;
+      const statusCounts = data.reduce((acc: any, booking: any) => {
+        const statusLabel = 
+          booking.status === 'paid' ? 'Pagadas' :
+          booking.status === 'cancelled' ? 'Canceladas' :
+          booking.status === 'pending_payment' ? 'Pendientes de Pago' :
+          booking.status;
+        acc[statusLabel] = (acc[statusLabel] || 0) + 1;
         return acc;
       }, {});
 
-      return Object.entries(distribution).map(([role, count]) => ({
-        name: role === 'admin' ? 'Administrador' : 'Usuario Regular',
-        value: count,
+      return Object.entries(statusCounts).map(([name, value]) => ({
+        name,
+        value,
       }));
     },
   });
@@ -456,18 +461,18 @@ export default function Statistics() {
         </CardContent>
       </Card>
 
-      {/* Distribución por Tipo de Usuario */}
+      {/* Estado de Reservas */}
       <Card>
         <CardHeader>
-          <CardTitle>Distribución por Tipo de Usuario</CardTitle>
-          <CardDescription>Todos los usuarios</CardDescription>
+          <CardTitle>Estado de Reservas</CardTitle>
+          <CardDescription>Últimos 30 días</CardDescription>
         </CardHeader>
         <CardContent>
-          {loadingUserTypes ? (
+          {loadingBookingStatus ? (
             <div className="h-[300px] flex items-center justify-center text-muted-foreground">
               Cargando datos...
             </div>
-          ) : !userTypes || userTypes.length === 0 ? (
+          ) : !bookingStatus || bookingStatus.length === 0 ? (
             <div className="h-[300px] flex items-center justify-center text-muted-foreground">
               No hay datos disponibles
             </div>
@@ -476,15 +481,18 @@ export default function Statistics() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={userTypes}
+                    data={bookingStatus}
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
-                    label
+                    label={(entry) => {
+                      const { name, percent } = entry;
+                      return `${name} ${(percent * 100).toFixed(1)}%`;
+                    }}
                   >
-                    {userTypes?.map((entry: any, index: number) => (
+                    {bookingStatus?.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
