@@ -39,15 +39,31 @@ export default function Statistics() {
   const { data: topUsers, isLoading: loadingTopUsers } = useQuery({
     queryKey: ["top-users"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch bookings from last 30 days
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
-        .select("user_id, profiles(full_name)")
+        .select("user_id")
         .gte("start_time", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
-      if (error) throw error;
+      if (bookingsError) throw bookingsError;
 
-      const userBookings = data.reduce((acc: any, booking: any) => {
-        const userName = booking.profiles?.full_name || 'Usuario Desconocido';
+      // Get unique user IDs
+      const userIds = [...new Set(bookingsData.map(b => b.user_id).filter(Boolean))];
+
+      // Fetch profiles for those users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Create a map of user_id to full_name
+      const userMap = new Map(profilesData.map(p => [p.id, p.full_name]));
+
+      // Count bookings per user
+      const userBookings = bookingsData.reduce((acc: any, booking: any) => {
+        const userName = userMap.get(booking.user_id) || 'Usuario Desconocido';
         acc[userName] = (acc[userName] || 0) + 1;
         return acc;
       }, {});
@@ -86,18 +102,33 @@ export default function Statistics() {
   const { data: bookingFrequency, isLoading: loadingFrequency } = useQuery({
     queryKey: ["booking-frequency"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch bookings from last 30 days
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
-        .select("user_id, start_time, profiles(full_name)")
+        .select("user_id, start_time")
         .gte("start_time", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
         .order("start_time", { ascending: true });
 
-      if (error) throw error;
+      if (bookingsError) throw bookingsError;
+
+      // Get unique user IDs
+      const userIds = [...new Set(bookingsData.map(b => b.user_id).filter(Boolean))];
+
+      // Fetch profiles for those users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Create a map of user_id to full_name
+      const userMap = new Map(profilesData.map(p => [p.id, p.full_name]));
 
       const userFrequency: { [key: string]: { [key: string]: number } } = {};
       
-      data.forEach((booking: any) => {
-        const userName = booking.profiles?.full_name || 'Usuario Desconocido';
+      bookingsData.forEach((booking: any) => {
+        const userName = userMap.get(booking.user_id) || 'Usuario Desconocido';
         const date = new Date(booking.start_time).toLocaleDateString();
         
         if (!userFrequency[userName]) {
@@ -168,15 +199,30 @@ export default function Statistics() {
   const { data: courtDistribution, isLoading: loadingCourtDist } = useQuery({
     queryKey: ["court-distribution"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch bookings from last 30 days
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
-        .select("court_id, courts(name)")
+        .select("court_id")
         .gte("start_time", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
-      if (error) throw error;
+      if (bookingsError) throw bookingsError;
 
-      const distribution = data.reduce((acc: any, booking: any) => {
-        const courtName = booking.courts?.name || 'Desconocida';
+      // Get unique court IDs
+      const courtIds = [...new Set(bookingsData.map(b => b.court_id).filter(Boolean))];
+
+      // Fetch courts
+      const { data: courtsData, error: courtsError } = await supabase
+        .from("courts")
+        .select("id, name")
+        .in("id", courtIds);
+
+      if (courtsError) throw courtsError;
+
+      // Create a map of court_id to name
+      const courtMap = new Map(courtsData.map(c => [c.id, c.name]));
+
+      const distribution = bookingsData.reduce((acc: any, booking: any) => {
+        const courtName = courtMap.get(booking.court_id) || 'Desconocida';
         acc[courtName] = (acc[courtName] || 0) + 1;
         return acc;
       }, {});
@@ -192,18 +238,33 @@ export default function Statistics() {
   const { data: hourlyOccupation, isLoading: loadingHourly } = useQuery({
     queryKey: ["hourly-occupation"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch bookings from last 7 days
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
-        .select("start_time, court_id, courts(name)")
+        .select("start_time, court_id")
         .gte("start_time", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 
-      if (error) throw error;
+      if (bookingsError) throw bookingsError;
+
+      // Get unique court IDs
+      const courtIds = [...new Set(bookingsData.map(b => b.court_id).filter(Boolean))];
+
+      // Fetch courts
+      const { data: courtsData, error: courtsError } = await supabase
+        .from("courts")
+        .select("id, name")
+        .in("id", courtIds);
+
+      if (courtsError) throw courtsError;
+
+      // Create a map of court_id to name
+      const courtMap = new Map(courtsData.map(c => [c.id, c.name]));
 
       const hourlyData: { [hour: string]: { [court: string]: number } } = {};
       
-      data.forEach((booking: any) => {
+      bookingsData.forEach((booking: any) => {
         const hour = new Date(booking.start_time).getHours();
-        const courtName = booking.courts?.name || 'Desconocida';
+        const courtName = courtMap.get(booking.court_id) || 'Desconocida';
         
         const hourKey = `${hour}:00`;
         if (!hourlyData[hourKey]) {
