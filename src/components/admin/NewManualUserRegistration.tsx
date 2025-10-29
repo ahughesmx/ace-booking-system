@@ -104,19 +104,19 @@ export default function NewManualUserRegistration({ onSuccess }: NewManualUserRe
     });
 
     // 1. Crear solicitud en user_registration_requests
-    const { data: requestData, error: requestError } = await supabase
-      .from("user_registration_requests")
-      .insert({
-        member_id: data.member_id,
-        full_name: data.full_name,
-        email: data.email,
-        phone: data.phone,
-        password: data.password,
-        password_provided: true,
-        status: 'pending'
-      })
-      .select()
-      .single();
+      const { data: requestData, error: requestError } = await supabase
+        .from("user_registration_requests")
+        .insert({
+          member_id: data.member_id,
+          full_name: data.full_name,
+          email: data.email,
+          phone: data.phone,
+          password: data.password,
+          send_password_reset: false,
+          status: 'pending'
+        })
+        .select()
+        .single();
 
     if (requestError) {
       console.error("❌ Registration request creation error:", requestError);
