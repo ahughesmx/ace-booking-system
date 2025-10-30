@@ -8,10 +8,11 @@ import { useAuth } from "@/components/AuthProvider";
 import { BookingForm } from "@/components/BookingForm";
 import { BookingsList } from "@/components/BookingsList";
 import { useAllBookings } from "@/hooks/use-bookings";
-import { startOfToday, addDays } from "date-fns";
+import { startOfToday, addDays, startOfMonth, endOfMonth, addMonths } from "date-fns";
 import { useBookingRules } from "@/hooks/use-booking-rules";
 import { useAvailableCourtTypes } from "@/hooks/use-available-court-types";
 import { CourtTypeSelectionDialog } from "@/components/booking/CourtTypeSelectionDialog";
+import { getCurrentMexicoCityTime } from "@/utils/timezone";
 
 interface BookingCalendarProps {
   selectedCourtType?: string | null;
@@ -53,6 +54,11 @@ function BookingCalendar({ selectedCourtType: initialCourtType, selectedDate: in
   console.log('📋 BookingCalendar BOOKING RULES HOOK EXECUTED - timestamp:', new Date().getTime());
 
   const today = startOfToday();
+  
+  // Calcular límites de navegación del calendario (mes actual y mes siguiente)
+  const currentMexicoTime = getCurrentMexicoCityTime();
+  const fromMonth = startOfMonth(currentMexicoTime);
+  const toMonth = endOfMonth(addMonths(currentMexicoTime, 1));
   
   // Memoizar el cálculo de la fecha máxima para evitar recálculos innecesarios
   const getMaxDate = useMemo(() => {
@@ -170,6 +176,8 @@ function BookingCalendar({ selectedCourtType: initialCourtType, selectedDate: in
                 selected={selectedDate}
                 onSelect={setSelectedDate}
                 disabled={isDayDisabled}
+                fromMonth={fromMonth}
+                toMonth={toMonth}
                 className="w-full mx-auto"
                 initialFocus
               />

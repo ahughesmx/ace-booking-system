@@ -1,6 +1,6 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker, CaptionProps } from "react-day-picker";
+import { DayPicker, CaptionProps, useNavigation } from "react-day-picker";
 import { es } from "date-fns/locale";
 import { format } from "date-fns";
 import { formatWithCapitalization } from "@/lib/date-utils";
@@ -10,13 +10,41 @@ import { buttonVariants } from "@/components/ui/button";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
-// Componente personalizado para el caption con capitalización
+// Componente personalizado para el caption con capitalización y navegación
 function CustomCaption({ displayMonth }: CaptionProps) {
+  const { goToMonth, previousMonth, nextMonth } = useNavigation();
+  
   return (
     <div className="flex justify-center pt-1 relative items-center">
+      <button
+        type="button"
+        disabled={!previousMonth}
+        onClick={() => previousMonth && goToMonth(previousMonth)}
+        className={cn(
+          buttonVariants({ variant: "outline" }),
+          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute left-1"
+        )}
+        aria-label="Mes anterior"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      
       <span className="text-sm font-medium">
         {formatWithCapitalization(displayMonth, "MMMM yyyy")}
       </span>
+      
+      <button
+        type="button"
+        disabled={!nextMonth}
+        onClick={() => nextMonth && goToMonth(nextMonth)}
+        className={cn(
+          buttonVariants({ variant: "outline" }),
+          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-1"
+        )}
+        aria-label="Mes siguiente"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
     </div>
   );
 }
