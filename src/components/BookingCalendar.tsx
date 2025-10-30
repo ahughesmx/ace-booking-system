@@ -55,10 +55,9 @@ function BookingCalendar({ selectedCourtType: initialCourtType, selectedDate: in
 
   const today = startOfToday();
   
-  // Calcular límites de navegación del calendario (mes actual y mes siguiente)
+  // Calcular límites de navegación del calendario
   const currentMexicoTime = getCurrentMexicoCityTime();
   const fromMonth = startOfMonth(currentMexicoTime);
-  const toMonth = endOfMonth(addMonths(currentMexicoTime, 1));
   
   // Memoizar el cálculo de la fecha máxima para evitar recálculos innecesarios
   const getMaxDate = useMemo(() => {
@@ -68,6 +67,20 @@ function BookingCalendar({ selectedCourtType: initialCourtType, selectedDate: in
     // Si no hay tipo de cancha seleccionado, usar fecha muy restrictiva (solo hoy)
     return today;
   }, [selectedCourtType, bookingRules, today]);
+  
+  // Calcular toMonth dinámicamente: solo permitir navegar al mes siguiente
+  // si la fecha máxima de reserva abarca días de ese mes
+  const toMonth = useMemo(() => {
+    const endOfCurrentMonth = endOfMonth(currentMexicoTime);
+    
+    // Si maxDate es mayor que el fin del mes actual, permitir navegar al siguiente
+    if (getMaxDate > endOfCurrentMonth) {
+      return endOfMonth(addMonths(currentMexicoTime, 1));
+    }
+    
+    // Si maxDate está dentro del mes actual, solo permitir navegar hasta este mes
+    return endOfCurrentMonth;
+  }, [getMaxDate, currentMexicoTime]);
 
   // Memoizar la función isDayDisabled para mejor rendimiento
   const isDayDisabled = useMemo(() => (date: Date) => {
