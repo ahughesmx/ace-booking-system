@@ -403,7 +403,20 @@ export default function SpecialBookingManagement() {
                   <Label htmlFor="event_type">Tipo de Evento</Label>
                   <Select 
                     value={formData.event_type} 
-                    onValueChange={(value) => setFormData({...formData, event_type: value})}
+                    onValueChange={(value) => {
+                      if (value === 'horario_domingo') {
+                        setFormData({
+                          ...formData, 
+                          event_type: value,
+                          is_recurring: true,
+                          recurrence_pattern: ['sunday'],
+                          is_date_range: false,
+                          recurrence_weeks: 52
+                        });
+                      } else {
+                        setFormData({...formData, event_type: value});
+                      }
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar tipo" />
@@ -412,6 +425,7 @@ export default function SpecialBookingManagement() {
                       <SelectItem value="torneo">Torneo</SelectItem>
                       <SelectItem value="clases">Clases</SelectItem>
                       <SelectItem value="eventos">Eventos</SelectItem>
+                      <SelectItem value="horario_domingo">Horario Domingo</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -539,6 +553,12 @@ export default function SpecialBookingManagement() {
                           selected={formData.selected_date}
                           onSelect={(date) => setFormData({...formData, selected_date: date})}
                           locale={es}
+                          disabled={(date) => {
+                            if (formData.event_type === 'horario_domingo') {
+                              return getDay(date) !== 0;
+                            }
+                            return false;
+                          }}
                           className="pointer-events-auto min-w-[320px]"
                           initialFocus
                         />
@@ -597,6 +617,16 @@ export default function SpecialBookingManagement() {
                 </div>
               )}
 
+              {/* Información visual para Horario Domingo */}
+              {formData.event_type === 'horario_domingo' && formData.selected_date && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                  <p className="text-sm text-purple-800">
+                    <span className="font-medium">Horario Domingo configurado:</span>
+                    {` Se crearán reservas cada domingo desde el ${format(formData.selected_date, "dd/MM/yyyy", { locale: es })} durante ${formData.recurrence_weeks} semanas.`}
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label>Opciones de Precio</Label>
                 <Select 
@@ -648,6 +678,7 @@ export default function SpecialBookingManagement() {
                     <Checkbox
                       id="is_recurring"
                       checked={formData.is_recurring}
+                      disabled={formData.event_type === 'horario_domingo'}
                       onCheckedChange={(checked) => {
                         setFormData({
                           ...formData, 
@@ -670,6 +701,7 @@ export default function SpecialBookingManagement() {
                             <Checkbox
                               id={day.value}
                               checked={formData.recurrence_pattern.includes(day.value)}
+                              disabled={formData.event_type === 'horario_domingo' && day.value !== 'sunday'}
                               onCheckedChange={(checked) => {
                                 if (checked) {
                                   setFormData({
@@ -696,13 +728,16 @@ export default function SpecialBookingManagement() {
                         id="recurrence_weeks"
                         type="number"
                         min="1"
-                        max="12"
+                        max={formData.event_type === 'horario_domingo' ? 104 : 12}
                         value={formData.recurrence_weeks}
                         onChange={(e) => setFormData({...formData, recurrence_weeks: Number(e.target.value)})}
                         placeholder="1"
                       />
                       <p className="text-sm text-gray-500 mt-1">
-                        Se crearán reservas para {formData.recurrence_weeks} semana(s)
+                        {formData.event_type === 'horario_domingo' 
+                          ? `Se crearán reservas cada domingo durante ${formData.recurrence_weeks} semanas (${formData.recurrence_weeks} domingos)`
+                          : `Se crearán reservas para ${formData.recurrence_weeks} semana(s)`
+                        }
                       </p>
                     </div>
                   </div>
