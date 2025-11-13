@@ -12,7 +12,7 @@ import { Calendar, CalendarClock, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { RescheduleBookingModal } from "@/components/booking/RescheduleBookingModal";
-import { SpecialBookingManagement } from "@/components/admin/SpecialBookingManagement";
+import SpecialBookingManagement from "@/components/admin/SpecialBookingManagement";
 import { useToast } from "@/hooks/use-toast";
 import { getStartOfDateMexicoCityISO, getEndOfDateMexicoCityISO } from "@/utils/timezone";
 import type { Booking } from "@/types/booking";
