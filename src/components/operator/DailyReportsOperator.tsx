@@ -18,12 +18,19 @@ interface DailyBooking {
   id: string;
   start_time: string;
   end_time: string;
-  actual_amount_charged: number;
-  amount: number;
-  currency: string;
+  actual_amount_charged: number | null;
+  amount: number | null;
+  currency?: string;
   payment_method: string;
   booking_made_at: string;
+  payment_completed_at: string;
   status: string;
+  booking_type: 'regular' | 'special';
+  title?: string | null;
+  event_type?: string | null;
+  user_id: string | null;
+  court_id: string;
+  processed_by: string | null;
   user: {
     full_name: string;
     member_id: string;
@@ -31,7 +38,7 @@ interface DailyBooking {
   court: {
     name: string;
     court_type: string;
-  };
+  } | null;
   processed_by_user: {
     full_name: string;
   } | null;
@@ -82,39 +89,42 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
 
       // Usar JOIN para obtener datos en una consulta optimizada
       let query = supabase
-        .from('bookings')
+        .from('combined_bookings_for_reports')
         .select(`
           id,
           start_time,
           end_time,
-          actual_amount_charged,
           amount,
-          currency,
           payment_method,
-          booking_made_at,
+          payment_completed_at,
           status,
+          booking_type,
+          title,
+          event_type,
+          user_id,
+          court_id,
+          processed_by,
           profiles:user_id (
             full_name,
             member_id
           ),
-          courts (
+          courts:court_id (
             name,
             court_type
           ),
-          processed_by_profiles:profiles!processed_by (
+          processed_by_profile:profiles!processed_by (
             full_name
           )
         `)
-        .in('status', ['paid', 'cancelled'])
-        .gte('booking_made_at', startOfDayUTC)
-        .lte('booking_made_at', endOfDayUTC);
+        .gte('payment_completed_at', startOfDayUTC)
+        .lte('payment_completed_at', endOfDayUTC);
       
       // Si se especifica un operador, filtrar por processed_by
       if (operatorId) {
         query = query.eq('processed_by', operatorId);
       }
       
-      const { data, error } = await query.order('start_time', { ascending: false });
+      const { data, error } = await query.order('payment_completed_at', { ascending: false });
 
       if (error) throw error;
 
@@ -124,16 +134,24 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
           id: data[0].id,
           start_time: data[0].start_time,
           payment_method: data[0].payment_method,
-          amount: data[0].actual_amount_charged
+          amount: data[0].amount,
+          booking_type: data[0].booking_type
         } : null
       });
 
       // Mapear datos con estructura consistente
-      const bookingsWithDetails = (data || []).map((booking) => ({
+      const bookingsWithDetails = (data || []).map((booking: any) => ({
         ...booking,
+        // Mapear amount de la vista a actual_amount_charged para compatibilidad
+        actual_amount_charged: booking.amount,
+        // Mapear payment_completed_at a booking_made_at para compatibilidad
+        booking_made_at: booking.payment_completed_at,
+        // Mapear relaciones con los nombres correctos
         user: Array.isArray(booking.profiles) ? booking.profiles[0] : booking.profiles,
         court: Array.isArray(booking.courts) ? booking.courts[0] : booking.courts,
-        processed_by_user: Array.isArray(booking.processed_by_profiles) ? booking.processed_by_profiles[0] : booking.processed_by_profiles
+        processed_by_user: Array.isArray(booking.processed_by_profile) 
+          ? booking.processed_by_profile[0] 
+          : booking.processed_by_profile
       }));
 
       setBookings(bookingsWithDetails);
@@ -434,8 +452,25 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>{booking.user?.full_name || 'N/A'}</TableCell>
-                  <TableCell>{booking.user?.member_id || 'N/A'}</TableCell>
+                  <TableCell>
+                    {booking.booking_type === 'special' && !booking.user ? (
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">Especial</Badge>
+                        <span>{booking.title || 'Evento'}</span>
+                      </div>
+                    ) : (
+                      booking.user?.full_name || 'N/A'
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {booking.booking_type === 'special' ? (
+                      <Badge variant="secondary" className="text-xs">
+                        {booking.event_type || 'Evento Especial'}
+                      </Badge>
+                    ) : (
+                      booking.user?.member_id || 'N/A'
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <span>{booking.court?.name || 'N/A'}</span>
