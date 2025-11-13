@@ -31,6 +31,8 @@ type SpecialBooking = {
   recurrence_pattern: string[];
   created_at: string;
   reference_user_id: string;
+  created_by: string;
+  updated_by: string | null;
   court: {
     name: string;
     court_type: string;
@@ -39,6 +41,12 @@ type SpecialBooking = {
     full_name: string;
     member_id: string;
   };
+  creator?: {
+    full_name: string;
+  };
+  updater?: {
+    full_name: string;
+  } | null;
 };
 
 const DAYS_OF_WEEK = [
@@ -109,7 +117,9 @@ export default function SpecialBookingManagement() {
         .select(`
           *,
           court:courts(name, court_type),
-          reference_user:profiles!special_bookings_reference_user_id_fkey(full_name, member_id)
+          reference_user:profiles!special_bookings_reference_user_id_fkey(full_name, member_id),
+          creator:profiles!special_bookings_created_by_fkey(full_name),
+          updater:profiles!special_bookings_updated_by_fkey(full_name)
         `)
         .gte("end_time", now) // Only show non-expired bookings
         .order("start_time", { ascending: true });
@@ -232,6 +242,17 @@ export default function SpecialBookingManagement() {
       return;
     }
 
+    // Get current user for audit trail
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "Usuario no autenticado",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Validaciones adicionales para rango de fechas
     if (formData.is_date_range && !formData.end_date) {
       toast({
@@ -297,7 +318,8 @@ export default function SpecialBookingManagement() {
           custom_price: formData.price_type === 'custom' ? formData.custom_price : null,
           is_recurring: formData.is_recurring || formData.is_date_range,
           recurrence_pattern: formData.is_recurring ? formData.recurrence_pattern : null,
-          reference_user_id: formData.reference_user_id
+          reference_user_id: formData.reference_user_id,
+          created_by: user.id
         });
       }
 
@@ -783,6 +805,16 @@ export default function SpecialBookingManagement() {
                       {booking.reference_user && (
                         <p className="text-sm text-blue-600">
                           Referencia: {booking.reference_user.full_name} ({booking.reference_user.member_id})
+                        </p>
+                      )}
+                      {booking.creator && (
+                        <p className="text-sm text-muted-foreground">
+                          ✏️ Creado por: {booking.creator.full_name}
+                        </p>
+                      )}
+                      {booking.updater && (
+                        <p className="text-sm text-muted-foreground">
+                          🔄 Última edición: {booking.updater.full_name}
                         </p>
                       )}
                       {booking.description && (
