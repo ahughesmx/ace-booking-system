@@ -88,7 +88,9 @@ export default function SpecialBookingManagement() {
     reference_user_search: '',
     // Nuevas propiedades para rango de días
     is_date_range: false,
-    end_date: null as Date | null
+    end_date: null as Date | null,
+    // Método de pago
+    payment_method: 'efectivo' as 'efectivo' | 'online'
   });
 
   const [userSuggestions, setUserSuggestions] = useState<any[]>([]);
@@ -319,7 +321,12 @@ export default function SpecialBookingManagement() {
           is_recurring: formData.is_recurring || formData.is_date_range,
           recurrence_pattern: formData.is_recurring ? formData.recurrence_pattern : null,
           reference_user_id: formData.reference_user_id,
-          created_by: user.id
+          created_by: user.id,
+          // Nuevos campos de pago
+          processed_by: user.id,
+          payment_completed_at: new Date().toISOString(),
+          payment_method: formData.payment_method,
+          status: 'paid'
         });
       }
 
@@ -354,7 +361,8 @@ export default function SpecialBookingManagement() {
         reference_user_id: '',
         reference_user_search: '',
         is_date_range: false,
-        end_date: null
+        end_date: null,
+        payment_method: 'efectivo'
       });
       setUserSuggestions([]);
       setIsCreating(false);
@@ -676,6 +684,25 @@ export default function SpecialBookingManagement() {
                     />
                   </div>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="payment_method">Método de Pago</Label>
+                <Select 
+                  value={formData.payment_method} 
+                  onValueChange={(value: 'efectivo' | 'online') => setFormData({...formData, payment_method: value})}
+                >
+                  <SelectTrigger id="payment_method">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="efectivo">Efectivo</SelectItem>
+                    <SelectItem value="online">En Línea (Terminal Externa)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  Selecciona cómo se realizó el pago de esta reserva especial
+                </p>
               </div>
 
               <div className="space-y-4">
