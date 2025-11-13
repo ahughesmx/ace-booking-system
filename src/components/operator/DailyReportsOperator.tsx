@@ -87,35 +87,10 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
         operatorId
       });
 
-      // Usar JOIN para obtener datos en una consulta optimizada
+      // Consultar vista combinada con todos los datos incluidos
       let query = supabase
         .from('combined_bookings_for_reports')
-        .select(`
-          id,
-          start_time,
-          end_time,
-          amount,
-          payment_method,
-          payment_completed_at,
-          status,
-          booking_type,
-          title,
-          event_type,
-          user_id,
-          court_id,
-          processed_by,
-          profiles:user_id (
-            full_name,
-            member_id
-          ),
-          courts:court_id (
-            name,
-            court_type
-          ),
-          processed_by_profile:profiles!processed_by (
-            full_name
-          )
-        `)
+        .select('*')
         .gte('payment_completed_at', startOfDayUTC)
         .lte('payment_completed_at', endOfDayUTC);
       
@@ -132,26 +107,32 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
         count: data?.length || 0,
         firstBooking: data?.[0] ? {
           id: data[0].id,
+          booking_type: data[0].booking_type,
           start_time: data[0].start_time,
           payment_method: data[0].payment_method,
           amount: data[0].amount,
-          booking_type: data[0].booking_type
+          user_full_name: data[0].user_full_name,
+          court_name: data[0].court_name
         } : null
       });
 
       // Mapear datos con estructura consistente
       const bookingsWithDetails = (data || []).map((booking: any) => ({
         ...booking,
-        // Mapear amount de la vista a actual_amount_charged para compatibilidad
+        // Mapear a la estructura legacy para compatibilidad
         actual_amount_charged: booking.amount,
-        // Mapear payment_completed_at a booking_made_at para compatibilidad
         booking_made_at: booking.payment_completed_at,
-        // Mapear relaciones con los nombres correctos
-        user: Array.isArray(booking.profiles) ? booking.profiles[0] : booking.profiles,
-        court: Array.isArray(booking.courts) ? booking.courts[0] : booking.courts,
-        processed_by_user: Array.isArray(booking.processed_by_profile) 
-          ? booking.processed_by_profile[0] 
-          : booking.processed_by_profile
+        user: booking.user_full_name ? {
+          full_name: booking.user_full_name,
+          member_id: booking.user_member_id
+        } : null,
+        court: {
+          name: booking.court_name,
+          court_type: booking.court_type
+        },
+        processed_by_user: booking.processed_by_name ? {
+          full_name: booking.processed_by_name
+        } : null
       }));
 
       setBookings(bookingsWithDetails);
