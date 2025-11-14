@@ -31,8 +31,8 @@ type SpecialBooking = {
   recurrence_pattern: string[];
   created_at: string;
   reference_user_id: string;
-  created_by: string;
-  updated_by: string | null;
+  created_by?: string;
+  updated_by?: string | null;
   court: {
     name: string;
     court_type: string;
