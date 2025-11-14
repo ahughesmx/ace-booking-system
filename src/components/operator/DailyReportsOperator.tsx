@@ -87,19 +87,12 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
         operatorId
       });
 
-      // Consultar vista combinada con todos los datos incluidos
-      let queryBuilder = supabase
-        .from('combined_bookings_for_reports' as any)
-        .select('*')
-        .gte('payment_completed_at', startOfDayUTC)
-        .lte('payment_completed_at', endOfDayUTC);
-      
-      // Si se especifica un operador, filtrar por processed_by
-      if (operatorId) {
-        queryBuilder = queryBuilder.eq('processed_by', operatorId);
-      }
-      
-      const { data, error } = await queryBuilder.order('payment_completed_at', { ascending: false }) as any;
+      // Usar función RPC segura que valida permisos (admin/supervisor)
+      const { data, error } = await supabase.rpc('get_combined_bookings_for_reports', {
+        p_start_date: startOfDayUTC,
+        p_end_date: endOfDayUTC,
+        p_operator_id: operatorId || null
+      });
 
       if (error) throw error;
 
