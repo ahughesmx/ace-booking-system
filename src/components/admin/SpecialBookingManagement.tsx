@@ -119,9 +119,7 @@ export default function SpecialBookingManagement() {
         .select(`
           *,
           court:courts(name, court_type),
-          reference_user:profiles!special_bookings_reference_user_id_fkey(full_name, member_id),
-          creator:profiles!special_bookings_created_by_fkey(full_name),
-          updater:profiles!special_bookings_updated_by_fkey(full_name)
+          reference_user:profiles!special_bookings_reference_user_id_fkey(full_name, member_id)
         `)
         .gte("end_time", now) // Only show non-expired bookings
         .order("start_time", { ascending: true });
