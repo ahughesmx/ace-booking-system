@@ -274,8 +274,8 @@ serve(async (req) => {
           status: 404,
         });
       }
-
-    // If we reach here, payment was not successful in Stripe
+    } else {
+      // If we reach here, payment was not successful in Stripe
     const duration = Date.now() - startTime;
     console.warn(`⚠️ [${duration}ms] STRIPE VERIFY-PAYMENT: Payment not completed. Status: ${session.payment_status}`);
     
@@ -302,6 +302,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
     });
+    }
 
   } catch (error) {
     const elapsed = Date.now() - ((error as any).startTime || Date.now());
