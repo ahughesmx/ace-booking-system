@@ -18,31 +18,33 @@ serve(async (req) => {
     const { sessionId } = await req.json();
     if (!sessionId) throw new Error("Session ID no proporcionado");
 
-    console.log("🔍 Verifying Stripe payment for session:", sessionId);
+    const startTime = Date.now();
+    console.log(`🔵 [${new Date().toISOString()}] STRIPE VERIFY-PAYMENT: Starting verification`);
+    console.log(`📥 [${Date.now() - startTime}ms] Received sessionId: ${sessionId}`);
 
     // Initialize Stripe with dynamic configuration
     const { stripe, testMode } = await getStripeConfig();
-    console.log(`✅ Stripe initialized in ${testMode ? 'TEST' : 'LIVE'} mode for verification`);
+    console.log(`✅ [${Date.now() - startTime}ms] Stripe initialized in ${testMode ? 'TEST' : 'LIVE'} mode for verification`);
 
     // Retrieve the checkout session
+    console.log(`🔍 [${Date.now() - startTime}ms] Retrieving Stripe session...`);
     const session = await stripe.checkout.sessions.retrieve(sessionId);
+    console.log(`✅ [${Date.now() - startTime}ms] Session retrieved:`, {
+      id: session.id,
+      paymentStatus: session.payment_status,
+      environment: session.metadata?.environment || 'unknown'
+    });
     
     // Validate environment consistency
     const sessionEnvironment = session.metadata?.environment || 'unknown';
     const expectedEnvironment = testMode ? 'test' : 'live';
     
     if (sessionEnvironment !== expectedEnvironment) {
-      console.warn(`⚠️ Environment mismatch: Session was created in ${sessionEnvironment} mode but current mode is ${expectedEnvironment}`);
+      console.warn(`⚠️ [${Date.now() - startTime}ms] Environment mismatch: Session was created in ${sessionEnvironment} mode but current mode is ${expectedEnvironment}`);
     }
     
-    console.log("✅ Session retrieved:", {
-      id: session.id,
-      paymentStatus: session.payment_status,
-      environment: sessionEnvironment,
-      currentMode: expectedEnvironment
-    });
-    
     if (session.payment_status === "paid") {
+      console.log(`💰 [${Date.now() - startTime}ms] Payment status: PAID - Processing booking update...`);
       // Create Supabase client with service role key to bypass RLS
       const supabaseService = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
@@ -53,6 +55,7 @@ serve(async (req) => {
   // Parse booking data from metadata
   const bookingData = JSON.parse(session.metadata?.booking_data || "{}");
   
+  console.log(`🔍 [${Date.now() - startTime}ms] Searching for booking...`);
   // First try to find pending booking
   let { data: existingBooking } = await supabaseService
     .from("bookings")
@@ -63,9 +66,11 @@ serve(async (req) => {
     .limit(1)
     .maybeSingle();
 
+  console.log(`📦 [${Date.now() - startTime}ms] Pending booking search result: ${existingBooking ? `FOUND (${existingBooking.id})` : 'NOT FOUND'}`);
+
   // If no pending booking found, search for recently paid bookings with matching payment_id
   if (!existingBooking && session.payment_intent) {
-    console.log('🔍 No pending booking found, searching for recently paid booking with payment_id:', session.payment_intent);
+    console.log(`🔍 [${Date.now() - startTime}ms] No pending booking found, searching for recently paid booking with payment_id: ${session.payment_intent}`);
     
     const { data: paidBooking } = await supabaseService
       .from("bookings")
@@ -78,7 +83,7 @@ serve(async (req) => {
       .maybeSingle();
     
     if (paidBooking) {
-      console.log('✅ Found recently paid booking:', paidBooking.id);
+      console.log(`✅ [${Date.now() - startTime}ms] Found recently paid booking: ${paidBooking.id} - Payment already confirmed`);
       return new Response(JSON.stringify({ 
         success: true, 
         message: "Pago ya confirmado anteriormente",
@@ -92,6 +97,7 @@ serve(async (req) => {
   }
 
       if (existingBooking) {
+        console.log(`⚠️ [${Date.now() - startTime}ms] About to update booking ${existingBooking.id} to PAID status`);
         // Update booking status to paid
         const { error } = await supabaseService
           .from("bookings")
@@ -103,8 +109,12 @@ serve(async (req) => {
           })
           .eq("id", existingBooking.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error(`❌ [${Date.now() - startTime}ms] Error updating booking:`, error);
+          throw error;
+        }
 
+        console.log(`✅ [${Date.now() - startTime}ms] Booking ${existingBooking.id} updated successfully to PAID`);
         console.log('🎯 STRIPE VERIFY-PAYMENT: Pago confirmado, ejecutando webhooks...');
         
         // Ejecutar webhooks para booking_created después de confirmación de Stripe
@@ -162,10 +172,10 @@ serve(async (req) => {
             .eq("event_type", "booking_created")
             .eq("is_active", true);
 
-          console.log('🔍 STRIPE VERIFY-PAYMENT: Webhooks encontrados:', webhooks, 'Error:', webhooksError);
+          console.log(`🔍 [${Date.now() - startTime}ms] STRIPE VERIFY-PAYMENT: Webhooks encontrados: ${webhooks?.length || 0}`);
 
           if (webhooks && webhooks.length > 0) {
-            console.log(`🚀 STRIPE VERIFY-PAYMENT: Disparando ${webhooks.length} webhooks`);
+            console.log(`🚀 [${Date.now() - startTime}ms] STRIPE VERIFY-PAYMENT: Disparando ${webhooks.length} webhooks`);
             for (const webhook of webhooks) {
               console.log(`📡 STRIPE VERIFY-PAYMENT: Procesando webhook: ${webhook.name} -> ${webhook.url}`);
               try {
@@ -197,8 +207,7 @@ serve(async (req) => {
                   }),
                 });
 
-                console.log(`✅ STRIPE VERIFY-PAYMENT: Webhook ${webhook.name} response status:`, response.status);
-                console.log(`✅ STRIPE VERIFY-PAYMENT: Webhook ${webhook.name} disparado exitosamente`);
+                console.log(`✅ [${Date.now() - startTime}ms] STRIPE VERIFY-PAYMENT: Webhook ${webhook.name} response status: ${response.status}`);
               } catch (webhookError) {
                 console.error(`❌ STRIPE VERIFY-PAYMENT: Error disparando webhook ${webhook.name}:`, webhookError);
               }
@@ -211,6 +220,7 @@ serve(async (req) => {
           // No fallar la verificación por errores de webhook
         }
 
+        console.log(`🏁 [${Date.now() - startTime}ms] STRIPE VERIFY-PAYMENT: Completed successfully in ${Date.now() - startTime}ms`);
         return new Response(JSON.stringify({ 
           success: true, 
           message: "Pago verificado y reserva confirmada",
@@ -224,6 +234,7 @@ serve(async (req) => {
     }
 
     // If we reach here, payment was not successful in Stripe
+    console.warn(`⚠️ [${Date.now() - startTime}ms] STRIPE VERIFY-PAYMENT: Payment not completed. Status: ${session.payment_status}`);
     return new Response(JSON.stringify({ 
       success: false, 
       message: "El pago no fue completado exitosamente en Stripe",
@@ -234,8 +245,15 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("Error verifying payment:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const elapsed = Date.now() - ((error as any).startTime || Date.now());
+    console.error(`❌ [${elapsed}ms] STRIPE VERIFY-PAYMENT: Unexpected error:`, {
+      message: error.message,
+      stack: error.stack
+    });
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: error.toString()
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

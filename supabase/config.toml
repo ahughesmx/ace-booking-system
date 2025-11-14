@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.delete-test-booking]
 verify_jwt = false
+
+[functions.get-payment-logs]
+verify_jwt = true

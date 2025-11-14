@@ -37,7 +37,7 @@ serve(async (req) => {
 
     // Get request body - expecting orderId from PayPal v2 API
     const { paymentId: orderId } = await req.json();
-    console.log('📋 PAYPAL VERIFY-PAYMENT: PayPal order ID:', orderId, 'User ID:', user.id);
+    console.log(`📋 [${Date.now() - startTime}ms] PAYPAL VERIFY-PAYMENT: PayPal order ID: ${orderId}, User ID: ${user.id}`);
 
     if (!orderId) {
       console.error('❌ PAYPAL VERIFY-PAYMENT: Missing PayPal order ID');
@@ -89,6 +89,7 @@ serve(async (req) => {
     }
 
     // Get PayPal access token
+    console.log(`🔐 [${Date.now() - startTime}ms] PAYPAL VERIFY-PAYMENT: Obtaining PayPal access token...`);
     const tokenResponse = await fetch(`${paypalBaseUrl}/v1/oauth2/token`, {
       method: "POST",
       headers: {
@@ -101,7 +102,7 @@ serve(async (req) => {
     });
 
     if (!tokenResponse.ok) {
-      console.error('❌ PAYPAL VERIFY-PAYMENT: Failed to get PayPal token');
+      console.error(`❌ [${Date.now() - startTime}ms] PAYPAL VERIFY-PAYMENT: Failed to get PayPal token`);
       return new Response(JSON.stringify({ error: "Error de autenticación con PayPal" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -216,8 +217,8 @@ serve(async (req) => {
       })
       .eq("id", booking.id);
 
-    if (updateError) {
-      console.error('❌ PAYPAL VERIFY-PAYMENT: Error updating booking:', updateError);
+      if (updateError) {
+        console.error(`❌ [${Date.now() - startTime}ms] PAYPAL VERIFY-PAYMENT: Error updating booking:`, updateError);
       return new Response(JSON.stringify({ 
         success: false, 
         error: "Error al actualizar la reserva" 
