@@ -44,19 +44,34 @@ export function useInstructor(id: string) {
 }
 
 // Admin-only hook to fetch full instructor details including PII
+// Uses secure RPC function to prevent direct table access
 export function useInstructorWithPII(id: string) {
   return useQuery({
     queryKey: ["instructor-pii", id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("instructors")
+      // Fetch public info from secure view (no PII)
+      const { data: publicData, error: publicError } = await supabase
+        .from("instructor_public_info")
         .select("*")
         .eq("id", id)
-        .eq("is_active", true)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      return data;
+      if (publicError) throw publicError;
+      if (!publicData) return null;
+
+      // Fetch PII using secure SECURITY DEFINER function
+      const { data: piiData, error: piiError } = await supabase
+        .rpc("get_instructor_contact", { instructor_id: id });
+
+      if (piiError) throw piiError;
+
+      // Combine public data with PII (defense-in-depth approach)
+      return {
+        ...publicData,
+        email: piiData?.[0]?.email || null,
+        phone: piiData?.[0]?.phone || null,
+        user_id: null, // Not exposed in public view for security
+      };
     },
     enabled: !!id,
   });
