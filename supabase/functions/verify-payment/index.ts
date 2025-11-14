@@ -221,6 +221,23 @@ serve(async (req) => {
         }
 
         console.log(`🏁 [${Date.now() - startTime}ms] STRIPE VERIFY-PAYMENT: Completed successfully in ${Date.now() - startTime}ms`);
+        
+        // Escribir log en la tabla
+        await supabaseService.from("payment_verification_logs").insert({
+          function_name: "verify-payment",
+          session_id: sessionId,
+          booking_id: existingBooking.id,
+          user_id: session.metadata?.user_id,
+          status: "success",
+          duration_ms: Date.now() - startTime,
+          payment_status: session.payment_status,
+          amount: existingBooking.amount,
+          metadata: {
+            environment: testMode ? 'test' : 'live',
+            payment_intent: session.payment_intent
+          }
+        });
+        
         return new Response(JSON.stringify({ 
           success: true, 
           message: "Pago verificado y reserva confirmada",
@@ -230,11 +247,53 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
         });
+      } else {
+        // No se encontró booking - escribir log
+        const duration = Date.now() - startTime;
+        await supabaseService.from("payment_verification_logs").insert({
+          function_name: "verify-payment",
+          session_id: sessionId,
+          booking_id: null,
+          user_id: session.metadata?.user_id,
+          status: "not_found",
+          duration_ms: duration,
+          error_message: "Booking not found for this payment session",
+          payment_status: session.payment_status,
+          metadata: {
+            environment: testMode ? 'test' : 'live'
+          }
+        });
+        
+        console.error(`❌ [${duration}ms] STRIPE VERIFY-PAYMENT: Booking not found`);
+        return new Response(JSON.stringify({ 
+          error: "Reserva no encontrada",
+          sessionId,
+          details: "No pending booking found for this payment session"
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404,
+        });
       }
-    }
 
     // If we reach here, payment was not successful in Stripe
-    console.warn(`⚠️ [${Date.now() - startTime}ms] STRIPE VERIFY-PAYMENT: Payment not completed. Status: ${session.payment_status}`);
+    const duration = Date.now() - startTime;
+    console.warn(`⚠️ [${duration}ms] STRIPE VERIFY-PAYMENT: Payment not completed. Status: ${session.payment_status}`);
+    
+    // Escribir log
+    await supabaseService.from("payment_verification_logs").insert({
+      function_name: "verify-payment",
+      session_id: sessionId,
+      booking_id: null,
+      user_id: session.metadata?.user_id,
+      status: "error",
+      duration_ms: duration,
+      error_message: `Payment not completed. Status: ${session.payment_status}`,
+      payment_status: session.payment_status,
+      metadata: {
+        environment: testMode ? 'test' : 'live'
+      }
+    });
+    
     return new Response(JSON.stringify({ 
       success: false, 
       message: "El pago no fue completado exitosamente en Stripe",
@@ -250,6 +309,31 @@ serve(async (req) => {
       message: error.message,
       stack: error.stack
     });
+    
+    // Escribir log de error
+    try {
+      const supabaseService = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        { auth: { persistSession: false } }
+      );
+      
+      await supabaseService.from("payment_verification_logs").insert({
+        function_name: "verify-payment",
+        session_id: (error as any).sessionId || "unknown",
+        booking_id: null,
+        user_id: null,
+        status: "error",
+        duration_ms: elapsed,
+        error_message: error.message || "Unexpected error",
+        metadata: {
+          error_details: error.toString()
+        }
+      });
+    } catch (logError) {
+      console.error("Failed to write error log:", logError);
+    }
+    
     return new Response(JSON.stringify({ 
       error: error.message,
       details: error.toString()
