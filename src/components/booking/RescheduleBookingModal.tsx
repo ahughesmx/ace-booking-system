@@ -128,6 +128,31 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
     enabled: !!selectedDate && !!booking.user_id,
   });
 
+  // Query to check special bookings that may block slots
+  const { data: specialBookings = [] } = useQuery({
+    queryKey: ['special-bookings-reschedule', booking.court_id, selectedDate],
+    queryFn: async () => {
+      if (!selectedDate) return [];
+      
+      const startOfDate = new Date(selectedDate);
+      startOfDate.setHours(0, 0, 0, 0);
+      
+      const endOfDate = new Date(selectedDate);
+      endOfDate.setHours(23, 59, 59, 999);
+
+      const { data, error } = await supabase
+        .from('special_bookings')
+        .select('start_time, end_time, title, event_type')
+        .eq('court_id', booking.court_id)
+        .gte('end_time', startOfDate.toISOString())
+        .lte('start_time', endOfDate.toISOString());
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedDate && !!booking.court_id,
+  });
+
   // Function to check if a time slot is available
   const isTimeSlotAvailable = (time: string) => {
     if (!selectedDate) return false;
@@ -184,6 +209,15 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
     });
 
     if (hasConflict) return false;
+
+    // Check for special bookings conflicts
+    const hasSpecialBookingConflict = specialBookings.some((sb: any) => {
+      const sbStart = new Date(sb.start_time);
+      const sbEnd = new Date(sb.end_time);
+      return slotStart < sbEnd && slotEnd > sbStart;
+    });
+
+    if (hasSpecialBookingConflict) return false;
 
     // Check consecutive bookings and time between bookings rules for THIS USER
     if (bookingRules && userCourtBookings.length > 0) {
@@ -356,6 +390,67 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
     // pero respetando horarios de operación y disponibilidad
     const skipTimeRules = isAffectedByEmergency || canBypassRules;
 
+    // Calculate new start and end times
+    const [hours] = selectedTime.split(':').map(Number);
+    const newStartTime = new Date(selectedDate);
+    newStartTime.setHours(hours, 0, 0, 0);
+    const newEndTime = new Date(newStartTime);
+    newEndTime.setHours(newEndTime.getHours() + 1);
+
+    // Validate special bookings conflict (SIEMPRE validar, incluso para supervisores)
+    const hasSpecialConflict = specialBookings.some((sb: any) => {
+      const sbStart = new Date(sb.start_time);
+      const sbEnd = new Date(sb.end_time);
+      return newStartTime < sbEnd && newEndTime > sbStart;
+    });
+
+    if (hasSpecialConflict) {
+      toast({
+        title: "Error",
+        description: "No puedes reagendar a un horario con evento especial (torneo, clases, etc.)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate consecutive bookings and time between bookings (unless bypassing rules)
+    if (bookingRules && !skipTimeRules && userCourtBookings.length > 0) {
+      for (const userBooking of userCourtBookings) {
+        const userStart = new Date((userBooking as any).start_time);
+        const userEnd = new Date((userBooking as any).end_time);
+
+        // Check consecutive bookings rule
+        if (!bookingRules.allow_consecutive_bookings) {
+          if (newEndTime.getTime() === userStart.getTime() || newStartTime.getTime() === userEnd.getTime()) {
+            toast({
+              title: "Error",
+              description: "Las reservas consecutivas no están permitidas. Debes dejar tiempo entre reservas.",
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+
+        // Check time between bookings rule
+        if (bookingRules.time_between_bookings) {
+          const [tbHours, tbMinutes] = bookingRules.time_between_bookings.split(':').map(Number);
+          const minGapMs = (tbHours * 60 + tbMinutes) * 60 * 1000;
+
+          const gapAfter = newStartTime.getTime() - userEnd.getTime();
+          const gapBefore = userStart.getTime() - newEndTime.getTime();
+
+          if ((gapAfter > 0 && gapAfter < minGapMs) || (gapBefore > 0 && gapBefore < minGapMs)) {
+            toast({
+              title: "Error",
+              description: `Debes dejar al menos ${tbHours} hora(s) entre reservas en la misma cancha.`,
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+      }
+    }
+
     // Additional validation with booking rules (skip time rules for affected bookings)
     if (bookingRules && !skipTimeRules) {
       const selectedDateTime = new Date(selectedDate);
@@ -363,8 +458,8 @@ export function RescheduleBookingModal({ isOpen, onClose, booking }: RescheduleB
       
       // Check minimum advance time
       if (bookingRules.min_advance_booking_time) {
-        const [hours, minutes] = bookingRules.min_advance_booking_time.split(':').map(Number);
-        const minAdvanceHours = hours + (minutes / 60);
+        const [advHours, advMinutes] = bookingRules.min_advance_booking_time.split(':').map(Number);
+        const minAdvanceHours = advHours + (advMinutes / 60);
         const minDate = new Date();
         minDate.setHours(minDate.getHours() + minAdvanceHours);
         

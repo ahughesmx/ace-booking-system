@@ -1087,6 +1087,51 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_verification_logs: {
+        Row: {
+          amount: number | null
+          booking_id: string | null
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          function_name: string
+          id: string
+          metadata: Json | null
+          payment_status: string | null
+          session_id: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          booking_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          function_name: string
+          id?: string
+          metadata?: Json | null
+          payment_status?: string | null
+          session_id: string
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          booking_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          function_name?: string
+          id?: string
+          metadata?: Json | null
+          payment_status?: string | null
+          session_id?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active_bookings: number | null
@@ -1252,50 +1297,68 @@ export type Database = {
         Row: {
           court_id: string
           created_at: string
+          created_by: string
           custom_price: number | null
           description: string | null
           end_time: string
           event_type: string
           id: string
           is_recurring: boolean
+          payment_completed_at: string | null
+          payment_method: string | null
           price_type: string
+          processed_by: string | null
           recurrence_pattern: string[] | null
           reference_user_id: string | null
           start_time: string
+          status: string | null
           title: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           court_id: string
           created_at?: string
+          created_by?: string
           custom_price?: number | null
           description?: string | null
           end_time: string
           event_type: string
           id?: string
           is_recurring?: boolean
+          payment_completed_at?: string | null
+          payment_method?: string | null
           price_type?: string
+          processed_by?: string | null
           recurrence_pattern?: string[] | null
           reference_user_id?: string | null
           start_time: string
+          status?: string | null
           title: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           court_id?: string
           created_at?: string
+          created_by?: string
           custom_price?: number | null
           description?: string | null
           end_time?: string
           event_type?: string
           id?: string
           is_recurring?: boolean
+          payment_completed_at?: string | null
+          payment_method?: string | null
           price_type?: string
+          processed_by?: string | null
           recurrence_pattern?: string[] | null
           reference_user_id?: string | null
           start_time?: string
+          status?: string | null
           title?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -1303,6 +1366,34 @@ export type Database = {
             columns: ["court_id"]
             isOneToOne: false
             referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "special_bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "special_bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "special_bookings_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "special_bookings_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1315,6 +1406,20 @@ export type Database = {
           {
             foreignKeyName: "special_bookings_reference_user_id_fkey"
             columns: ["reference_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "special_bookings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "special_bookings_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
@@ -1452,6 +1557,29 @@ export type Database = {
       }
     }
     Views: {
+      combined_bookings_for_reports: {
+        Row: {
+          amount: number | null
+          booking_type: string | null
+          court_id: string | null
+          court_name: string | null
+          court_type: string | null
+          end_time: string | null
+          event_type: string | null
+          id: string | null
+          payment_completed_at: string | null
+          payment_method: string | null
+          processed_by: string | null
+          processed_by_name: string | null
+          start_time: string | null
+          status: string | null
+          title: string | null
+          user_full_name: string | null
+          user_id: string | null
+          user_member_id: string | null
+        }
+        Relationships: []
+      }
       display_bookings_combined: {
         Row: {
           booking_made_at: string | null
@@ -1602,6 +1730,16 @@ export type Database = {
         Args: { booking_time: string }
         Returns: string
       }
+      calculate_special_booking_price: {
+        Args: {
+          p_court_id: string
+          p_custom_price: number
+          p_end_time: string
+          p_price_type: string
+          p_start_time: string
+        }
+        Returns: number
+      }
       can_use_member_id: {
         Args: { p_email: string; p_full_name: string; p_member_id: string }
         Returns: boolean
@@ -1619,6 +1757,39 @@ export type Database = {
       }
       execute_cronjob_sql: { Args: { sql_query: string }; Returns: Json }
       generate_receipt_number: { Args: never; Returns: string }
+      get_combined_bookings_for_reports: {
+        Args: {
+          p_end_date?: string
+          p_operator_id?: string
+          p_start_date?: string
+        }
+        Returns: {
+          amount: number | null
+          booking_type: string | null
+          court_id: string | null
+          court_name: string | null
+          court_type: string | null
+          end_time: string | null
+          event_type: string | null
+          id: string | null
+          payment_completed_at: string | null
+          payment_method: string | null
+          processed_by: string | null
+          processed_by_name: string | null
+          start_time: string | null
+          status: string | null
+          title: string | null
+          user_full_name: string | null
+          user_id: string | null
+          user_member_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "combined_bookings_for_reports"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_instructor_contact: {
         Args: { instructor_id: string }
         Returns: {
@@ -1650,8 +1821,8 @@ export type Database = {
         Returns: boolean
       }
       recalculate_active_bookings:
-        | { Args: { user_uuid: string }; Returns: undefined }
         | { Args: never; Returns: undefined }
+        | { Args: { user_uuid: string }; Returns: undefined }
       search_users_for_invitations: {
         Args: { search_term: string }
         Returns: {
