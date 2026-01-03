@@ -43,7 +43,7 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single()
 
-    if (!userRole || userRole.role !== 'admin') {
+    if (!userRole || !['admin', 'supervisor'].includes(userRole.role)) {
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions' }),
         { 

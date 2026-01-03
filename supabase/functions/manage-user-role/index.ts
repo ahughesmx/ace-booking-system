@@ -48,7 +48,7 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single()
 
-    if (!userRole || userRole.role !== 'admin') {
+    if (!userRole || !['admin', 'supervisor'].includes(userRole.role)) {
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions' }),
         { 
@@ -60,6 +60,17 @@ serve(async (req) => {
 
     // Parse request body
     const { userId, role } = await req.json()
+
+    // Supervisors cannot assign admin or supervisor roles (prevent privilege escalation)
+    if (userRole.role === 'supervisor' && ['admin', 'supervisor'].includes(role)) {
+      return new Response(
+        JSON.stringify({ error: 'Los supervisores no pueden asignar roles de admin o supervisor' }),
+        { 
+          status: 403, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
 
     if (!userId || !role) {
       return new Response(
