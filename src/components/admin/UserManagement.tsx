@@ -106,7 +106,7 @@ export default function UserManagement() {
       console.error("Error fetching users:", error);
       toast({
         title: "Error",
-        description: "No se pudieron cargar los usuarios. Verifica que tengas permisos de administrador.",
+        description: "No se pudieron cargar los usuarios. Verifica que tengas permisos de administrador o supervisor.",
         variant: "destructive",
       });
     } finally {
