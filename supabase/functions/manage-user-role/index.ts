@@ -61,10 +61,11 @@ serve(async (req) => {
     // Parse request body
     const { userId, role } = await req.json()
 
-    // Supervisors cannot assign admin or supervisor roles (prevent privilege escalation)
-    if (userRole.role === 'supervisor' && ['admin', 'supervisor'].includes(role)) {
+    // Supervisors cannot assign admin role (prevent privilege escalation)
+    // BUT they CAN assign supervisor, operador, and user roles
+    if (userRole.role === 'supervisor' && role === 'admin') {
       return new Response(
-        JSON.stringify({ error: 'Los supervisores no pueden asignar roles de admin o supervisor' }),
+        JSON.stringify({ error: 'Los supervisores no pueden asignar el rol de administrador' }),
         { 
           status: 403, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
