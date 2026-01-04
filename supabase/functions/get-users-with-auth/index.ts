@@ -13,20 +13,46 @@ serve(async (req) => {
   }
 
   try {
+    // Get the authorization header
+    const authHeader = req.headers.get('Authorization')
+    
+    if (!authHeader) {
+      console.error('❌ No Authorization header provided')
+      return new Response(
+        JSON.stringify({ error: 'Authorization header required' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+    
     // Create a Supabase client with the Auth context of the logged in user.
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+      { global: { headers: { Authorization: authHeader } } }
     )
 
     // Get the session or user object
-    const authHeader = req.headers.get('Authorization')!
     const token = authHeader.replace('Bearer ', '')
-    const { data } = await supabaseClient.auth.getUser(token)
+    const { data, error: authError } = await supabaseClient.auth.getUser(token)
+    
+    if (authError) {
+      console.error('❌ Auth error:', authError.message)
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+    
     const user = data.user
 
     if (!user) {
+      console.error('❌ No user found for token')
       return new Response(
         JSON.stringify({ error: 'Not authenticated' }),
         { 
@@ -35,6 +61,8 @@ serve(async (req) => {
         }
       )
     }
+    
+    console.log(`✅ Authenticated user: ${user.id}`)
 
     // Check if user is admin or supervisor
     const { data: userRole } = await supabaseClient
