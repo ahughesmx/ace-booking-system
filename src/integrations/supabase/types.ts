@@ -129,10 +129,10 @@ export type Database = {
           id: string
           max_active_bookings: number
           max_days_ahead: number
-          min_advance_booking_time: unknown
-          min_cancellation_time: unknown
-          min_rescheduling_time: unknown
-          time_between_bookings: unknown
+          min_advance_booking_time: string
+          min_cancellation_time: string
+          min_rescheduling_time: string
+          time_between_bookings: string
           updated_at: string | null
         }
         Insert: {
@@ -144,10 +144,10 @@ export type Database = {
           id?: string
           max_active_bookings?: number
           max_days_ahead?: number
-          min_advance_booking_time?: unknown
-          min_cancellation_time?: unknown
-          min_rescheduling_time?: unknown
-          time_between_bookings?: unknown
+          min_advance_booking_time?: string
+          min_cancellation_time?: string
+          min_rescheduling_time?: string
+          time_between_bookings?: string
           updated_at?: string | null
         }
         Update: {
@@ -159,10 +159,10 @@ export type Database = {
           id?: string
           max_active_bookings?: number
           max_days_ahead?: number
-          min_advance_booking_time?: unknown
-          min_cancellation_time?: unknown
-          min_rescheduling_time?: unknown
-          time_between_bookings?: unknown
+          min_advance_booking_time?: string
+          min_cancellation_time?: string
+          min_rescheduling_time?: string
+          time_between_bookings?: string
           updated_at?: string | null
         }
         Relationships: []
