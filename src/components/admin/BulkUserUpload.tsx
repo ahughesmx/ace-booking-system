@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Download, Upload, Users } from "lucide-react";
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 
 interface BulkUserUploadProps {
   onSuccess?: () => void;
