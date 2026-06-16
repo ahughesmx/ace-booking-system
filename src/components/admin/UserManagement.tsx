@@ -35,6 +35,8 @@ export default function UserManagement() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
   const { toast } = useToast();
 
   useEffect(() => {
@@ -62,6 +64,10 @@ export default function UserManagement() {
     
     setFilteredUsers(filtered);
   }, [searchTerm, statusFilter, users]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, viewMode]);
 
   const fetchUsers = async () => {
     try {
@@ -423,23 +429,92 @@ export default function UserManagement() {
       <CardContent>
         {filteredUsers.length === 0 ? (
           <EmptyUserState searchTerm={searchTerm} />
-        ) : viewMode === 'grid' ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredUsers.map((user) => (
-              <UserCard
-                key={user.id}
-                user={user}
-                onEditUser={handleEditUser}
-                onUpdateRole={updateUserRole}
-              />
-            ))}
-          </div>
         ) : (
-          <UserList
-            users={filteredUsers}
-            onEditUser={handleEditUser}
-            onUpdateRole={updateUserRole}
-          />
+          (() => {
+            const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
+            const page = Math.min(currentPage, totalPages);
+            const start = (page - 1) * pageSize;
+            const pageUsers = filteredUsers.slice(start, start + pageSize);
+
+            const getPageNumbers = () => {
+              const maxVisible = 10;
+              if (totalPages <= maxVisible) {
+                return Array.from({ length: totalPages }, (_, i) => i + 1);
+              }
+              const pages: (number | "...")[] = [];
+              const showLeft = Math.max(2, page - 2);
+              const showRight = Math.min(totalPages - 1, page + 2);
+              pages.push(1);
+              if (showLeft > 2) pages.push("...");
+              for (let i = showLeft; i <= showRight; i++) pages.push(i);
+              if (showRight < totalPages - 1) pages.push("...");
+              pages.push(totalPages);
+              return pages;
+            };
+
+            return (
+              <div className="space-y-4">
+                {viewMode === 'grid' ? (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {pageUsers.map((user) => (
+                      <UserCard
+                        key={user.id}
+                        user={user}
+                        onEditUser={handleEditUser}
+                        onUpdateRole={updateUserRole}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <UserList
+                    users={pageUsers}
+                    onEditUser={handleEditUser}
+                    onUpdateRole={updateUserRole}
+                  />
+                )}
+
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                  <p className="text-sm text-muted-foreground">
+                    Mostrando {start + 1}-{Math.min(start + pageSize, filteredUsers.length)} de {filteredUsers.length} usuarios
+                  </p>
+                  {totalPages > 1 && (
+                    <div className="flex flex-wrap items-center justify-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                      >
+                        Anterior
+                      </Button>
+                      {getPageNumbers().map((p, idx) =>
+                        p === "..." ? (
+                          <span key={`e-${idx}`} className="px-2 text-muted-foreground">...</span>
+                        ) : (
+                          <Button
+                            key={p}
+                            variant={p === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(p as number)}
+                          >
+                            {p}
+                          </Button>
+                        )
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                      >
+                        Siguiente
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()
         )}
       </CardContent>
 
