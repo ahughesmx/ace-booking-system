@@ -183,16 +183,51 @@ export default function ProcessedRequests({
               </Button>
               
               <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <Button
-                    key={page}
-                    variant={currentPage === page ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => onPageChange(page)}
-                  >
-                    {page}
-                  </Button>
-                ))}
+                {(() => {
+                  const maxVisible = 10;
+                  const pages: (number | 'ellipsis')[] = [];
+
+                  if (totalPages <= maxVisible + 2) {
+                    for (let i = 1; i <= totalPages; i++) pages.push(i);
+                  } else {
+                    pages.push(1);
+                    const halfVisible = Math.floor(maxVisible / 2);
+                    let startPage = Math.max(2, currentPage - halfVisible);
+                    let endPage = Math.min(totalPages - 1, currentPage + halfVisible);
+                    if (currentPage <= halfVisible + 2) {
+                      endPage = Math.min(maxVisible, totalPages - 1);
+                      startPage = 2;
+                    }
+                    if (currentPage >= totalPages - halfVisible - 1) {
+                      startPage = Math.max(2, totalPages - maxVisible);
+                      endPage = totalPages - 1;
+                    }
+                    if (startPage > 2) pages.push('ellipsis');
+                    for (let i = startPage; i <= endPage; i++) pages.push(i);
+                    if (endPage < totalPages - 1) pages.push('ellipsis');
+                    pages.push(totalPages);
+                  }
+
+                  return pages.map((page, index) => {
+                    if (page === 'ellipsis') {
+                      return (
+                        <span key={`ellipsis-${index}`} className="px-2 text-muted-foreground">
+                          ...
+                        </span>
+                      );
+                    }
+                    return (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => onPageChange(page)}
+                      >
+                        {page}
+                      </Button>
+                    );
+                  });
+                })()}
               </div>
 
               <Button
