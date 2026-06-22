@@ -46,7 +46,7 @@ serve(async (req) => {
       .eq("user_id", user.id)
       .single();
 
-    if (!userRole || !['admin', 'operador'].includes(userRole.role)) {
+    if (!userRole || !['admin', 'operador', 'supervisor'].includes(userRole.role)) {
       throw new Error("Insufficient permissions");
     }
 
@@ -95,9 +95,9 @@ serve(async (req) => {
       throw new Error("La clave de socio no existe en el sistema");
     }
 
-    // Si no es admin/operador, aplicar la lógica de familia con RPC
+    // Si no es admin/operador/supervisor, aplicar la lógica de familia con RPC
     let canUseId = true;
-    if (!['admin', 'operador'].includes(userRole.role)) {
+    if (!['admin', 'operador', 'supervisor'].includes(userRole.role)) {
       const { data: rpcCanUse, error: memberIdError } = await supabase
         .rpc('can_use_member_id', {
           p_member_id: member_id,
