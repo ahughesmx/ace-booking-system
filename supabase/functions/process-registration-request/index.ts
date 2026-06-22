@@ -71,7 +71,7 @@ serve(async (req) => {
       console.error("❌ Role query error:", roleError);
     }
 
-    if (!userRole || !['admin', 'operador'].includes(userRole.role)) {
+    if (!userRole || !['admin', 'operador', 'supervisor'].includes(userRole.role)) {
       console.error("❌ Insufficient permissions. User role:", userRole?.role);
       throw new Error("Insufficient permissions");
     }
@@ -239,9 +239,7 @@ serve(async (req) => {
       if (profileError) {
         console.error("Error upserting profile:", profileError);
         // Solo intentar eliminar el usuario si lo acabamos de crear
-        if (!existingUser) {
-          await supabase.auth.admin.deleteUser(authData.user.id);
-        }
+        await supabase.auth.admin.deleteUser(authData.user.id);
         throw new Error("Failed to create/update user profile");
       }
 

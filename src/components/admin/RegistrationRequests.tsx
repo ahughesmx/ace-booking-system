@@ -242,17 +242,36 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
     } catch (error: any) {
       console.error(`Error ${action}ing request:`, error);
       
-      // Determinar el mensaje de error apropiado
-      let errorMessage = error.message || `No se pudo ${action === 'approve' ? 'aprobar' : 'rechazar'} la solicitud.`;
+      let errorMessage = `No se pudo ${action === 'approve' ? 'aprobar' : 'rechazar'} la solicitud.`;
+      
+      // Intentar extraer el mensaje de error real de la Edge Function
+      if (error.context && typeof error.context.json === 'function') {
+        try {
+          const clonedResponse = error.context.clone();
+          const errBody = await clonedResponse.json();
+          if (errBody && errBody.error) {
+            errorMessage = errBody.error;
+          }
+        } catch (e) {
+          try {
+            const errText = await error.context.text();
+            if (errText) errorMessage = errText;
+          } catch (e2) {
+            console.error("Error reading response context:", e2);
+          }
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
       
       // Personalizar mensaje para errores específicos
-      if (error.message?.includes("Ya existe un usuario con este")) {
-        errorMessage = error.message; // Usar el mensaje completo del servidor
-      } else if (error.message?.includes("Esta clave de socio no está disponible o no pertenece a su familia")) {
+      if (errorMessage.includes("Ya existe un usuario con este")) {
+        // mantener mensaje detallado del servidor
+      } else if (errorMessage.includes("Esta clave de socio no está disponible o no pertenece a su familia")) {
         errorMessage = "Esta clave de socio ya está siendo utilizada por otra familia. El apellido del solicitante no coincide con los miembros existentes de esta membresía.";
-      } else if (error.message?.includes("Member ID not available")) {
+      } else if (errorMessage.includes("Member ID not available")) {
         errorMessage = "La clave de socio especificada no es válida o ya está en uso por otra familia.";
-      } else if (error.message?.includes("already been registered") || error.message?.includes("already registered")) {
+      } else if (errorMessage.includes("already been registered") || errorMessage.includes("already registered")) {
         errorMessage = "El correo electrónico o teléfono ya está registrado. Cada usuario debe tener credenciales únicas.";
       }
       
