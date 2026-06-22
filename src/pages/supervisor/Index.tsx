@@ -5,6 +5,7 @@ import UserManagement from "@/components/admin/UserManagement";
 import { SupervisorReports } from "@/components/supervisor/SupervisorReports";
 import { SupervisorBookings } from "@/components/supervisor/SupervisorBookings";
 import CourtManagement from "@/components/admin/CourtManagement";
+import MemberIdTabs from "@/components/admin/MemberIdTabs";
 
 const SupervisorPage = () => {
   const { isSupervisor, isLoading } = useSupervisorAuth();
@@ -14,6 +15,8 @@ const SupervisorPage = () => {
     switch (activeTab) {
       case "users":
         return <UserManagement />;
+      case "memberships":
+        return <MemberIdTabs />;
       case "bookings":
         return <SupervisorBookings />;
       case "courts":
