@@ -20,9 +20,10 @@ import { ExpiredBookingsManager } from "@/components/admin/ExpiredBookingsManage
 import InterfacePreferencesManagement from "@/components/admin/InterfacePreferencesManagement";
 import { LegalTextsManagement } from "@/components/admin/LegalTextsManagement";
 import { ReschedulingRulesManagement } from "@/components/admin/ReschedulingRulesManagement";
+import DatabaseBackup from "@/components/admin/DatabaseBackup";
 
 const AdminPage = () => {
-  const { isAdmin, isLoading } = useAdminAuth();
+  const { isAdmin, isLoading, userRole } = useAdminAuth();
   const [activeTab, setActiveTab] = useState("users");
 
   const renderContent = () => {
@@ -68,6 +69,8 @@ const AdminPage = () => {
         return <InterfacePreferencesManagement />;
       case "legal-texts":
         return <LegalTextsManagement />;
+      case "database-backup":
+        return userRole?.role === "admin" ? <DatabaseBackup /> : <UserManagement />;
       default:
         return <UserManagement />;
     }

@@ -2,6 +2,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import MainNav from "@/components/MainNav";
+import { useAuth } from "@/components/AuthProvider";
+import { useGlobalRole } from "@/hooks/use-global-role";
 import {
   Users,
   Settings,
@@ -19,6 +21,7 @@ import {
   Eye,
   FileText,
   CalendarClock,
+  DatabaseBackup as DatabaseBackupIcon,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -28,6 +31,10 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children, activeTab, onTabChange }: AdminLayoutProps) {
+  const { user } = useAuth();
+  const { data: userRole } = useGlobalRole(user?.id);
+  const isAdmin = userRole?.role === "admin";
+
   const tabs = [
     { id: "users", label: "Usuarios", icon: Users },
     { id: "registration-requests", label: "Solicitudes Registro", icon: UserPlus },
@@ -46,6 +53,9 @@ export default function AdminLayout({ children, activeTab, onTabChange }: AdminL
     { id: "expired-bookings", label: "Reservas Expiradas", icon: Clock },
     { id: "interface-preferences", label: "Preferencias de Interfaz", icon: Eye },
     { id: "legal-texts", label: "Textos Legales", icon: FileText },
+    ...(isAdmin
+      ? [{ id: "database-backup", label: "Respaldo BD", icon: DatabaseBackupIcon }]
+      : []),
   ];
 
   return (
