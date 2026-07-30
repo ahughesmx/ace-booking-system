@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Database, Download, Loader2, ShieldAlert } from "lucide-react";
+import { Database, Download, FileCode, Loader2, ShieldAlert } from "lucide-react";
 
 type BackupSummary = {
   generated_at: string;
@@ -13,40 +13,54 @@ type BackupSummary = {
 };
 
 export default function DatabaseBackup() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingFormat, setLoadingFormat] = useState<"json" | "sql" | null>(null);
   const [lastBackup, setLastBackup] = useState<BackupSummary | null>(null);
   const { toast } = useToast();
 
-  const handleBackup = async () => {
+  const downloadFile = (content: string, filename: string, mime: string) => {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleBackup = async (format: "json" | "sql") => {
     try {
-      setIsLoading(true);
+      setLoadingFormat(format);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Sesión no válida. Inicia sesión nuevamente.");
 
       const { data, error } = await supabase.functions.invoke("database-backup", {
+        body: { format },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
       if (error) throw new Error(error.message || "No se pudo generar el respaldo");
       if (!data || (data as any).error) throw new Error((data as any)?.error || "Respuesta vacía");
 
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
       const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `respaldo-cdv-${stamp}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+
+      if (format === "sql") {
+        downloadFile((data as any).sql, `respaldo-cdv-${stamp}.sql`, "text/plain;charset=utf-8");
+      } else {
+        downloadFile(
+          JSON.stringify(data, null, 2),
+          `respaldo-cdv-${stamp}.json`,
+          "application/json"
+        );
+      }
 
       setLastBackup((data as any).metadata as BackupSummary);
 
       toast({
         title: "Respaldo generado",
-        description: `Se descargaron ${(data as any).metadata.total_records} registros.`,
+        description: `Se descargaron ${(data as any).metadata.total_records} registros en formato ${format.toUpperCase()}.`,
       });
     } catch (err: any) {
       console.error("Error generando respaldo:", err);
@@ -56,7 +70,7 @@ export default function DatabaseBackup() {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setLoadingFormat(null);
     }
   };
 
@@ -91,19 +105,67 @@ export default function DatabaseBackup() {
             </AlertDescription>
           </Alert>
 
-          <Button onClick={handleBackup} disabled={isLoading} size="lg">
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generando respaldo...
-              </>
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" />
-                Descargar respaldo completo
-              </>
-            )}
-          </Button>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-md border p-4 space-y-3">
+              <div>
+                <p className="font-medium">Respaldo de datos (JSON)</p>
+                <p className="text-sm text-muted-foreground">
+                  Incluye todas las tablas más el listado de cuentas de acceso. Ideal para
+                  auditoría y recuperación parcial.
+                </p>
+              </div>
+              <Button
+                onClick={() => handleBackup("json")}
+                disabled={loadingFormat !== null}
+                className="w-full"
+              >
+                {loadingFormat === "json" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Descargar JSON
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <div className="rounded-md border p-4 space-y-3">
+              <div>
+                <p className="font-medium">Respaldo restaurable (SQL)</p>
+                <p className="text-sm text-muted-foreground">
+                  Archivo <code>.sql</code> con INSERTs ordenados por dependencias. Se pega en el
+                  SQL Editor de Supabase para restaurar todo de una vez.
+                </p>
+              </div>
+              <Button
+                onClick={() => handleBackup("sql")}
+                disabled={loadingFormat !== null}
+                variant="secondary"
+                className="w-full"
+              >
+                {loadingFormat === "sql" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <FileCode className="mr-2 h-4 w-4" />
+                    Descargar SQL restaurable
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            El SQL usa <code>ON CONFLICT DO NOTHING</code>, por lo que no sobrescribe registros
+            existentes. Las cuentas de acceso (auth) solo viajan en el JSON.
+          </p>
 
           {lastBackup && (
             <div className="rounded-md border p-4 space-y-2">
