@@ -23,8 +23,11 @@ export const MatchInvitationNotification = () => {
   const { data: pendingInvitations = [], refetch } = useInvitations(user?.id);
 
   useEffect(() => {
+    const channelId = `match-invitations-${Math.random().toString(36).substring(2, 9)}`;
+    const matchesChannelId = `matches-notif-${Math.random().toString(36).substring(2, 9)}`;
+
     const channel = supabase
-      .channel('match-invitations')
+      .channel(channelId)
       .on(
         'postgres_changes',
         {
@@ -39,7 +42,7 @@ export const MatchInvitationNotification = () => {
       .subscribe();
 
     const matchesChannel = supabase
-      .channel('matches')
+      .channel(matchesChannelId)
       .on(
         'postgres_changes',
         {

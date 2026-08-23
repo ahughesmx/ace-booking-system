@@ -166,8 +166,11 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
 
     console.log("🔔 Subscribing realtime for public display view");
 
+    const bookingsChannelId = `public-display-bookings-${Math.random().toString(36).substring(2, 9)}`;
+    const specialChannelId = `public-display-special-bookings-${Math.random().toString(36).substring(2, 9)}`;
+
     const bookingsChannel = supabase
-      .channel('public-display-bookings')
+      .channel(bookingsChannelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'bookings' },
@@ -178,7 +181,7 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
       .subscribe();
 
     const specialChannel = supabase
-      .channel('public-display-special-bookings')
+      .channel(specialChannelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'special_bookings' },
@@ -274,9 +277,12 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
       usePublicView
     });
 
+    const bookingsChannelId = `bookings-realtime-${Math.random().toString(36).substring(2, 9)}`;
+    const specialBookingsChannelId = `special-bookings-realtime-${Math.random().toString(36).substring(2, 9)}`;
+
     // Subscribe to bookings changes
     const bookingsChannel = supabase
-      .channel('bookings-realtime')
+      .channel(bookingsChannelId)
       .on(
         'postgres_changes',
         {
@@ -299,7 +305,7 @@ export function useAllBookings(selectedDate?: Date, usePublicView: boolean = fal
 
     // Subscribe to special_bookings changes
     const specialBookingsChannel = supabase
-      .channel('special-bookings-realtime')
+      .channel(specialBookingsChannelId)
       .on(
         'postgres_changes',
         {

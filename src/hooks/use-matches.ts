@@ -92,8 +92,9 @@ export function useMatches() {
   });
 
   useEffect(() => {
+    const channelId = `matches-changes-${Math.random().toString(36).substring(2, 9)}`;
     const channel = supabase
-      .channel('matches-changes')
+      .channel(channelId)
       .on(
         'postgres_changes',
         {

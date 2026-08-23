@@ -83,8 +83,9 @@ export default function RegistrationRequests({ showOnlyButton = false, showOnlyT
   useEffect(() => {
     console.log('🔴 Setting up realtime subscription for user_registration_requests');
     
+    const channelId = `registration-requests-changes-${Math.random().toString(36).substring(2, 9)}`;
     const channel = supabase
-      .channel('registration-requests-changes')
+      .channel(channelId)
       .on(
         'postgres_changes',
         {
