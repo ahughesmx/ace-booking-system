@@ -43,21 +43,49 @@ export default function UserManagement() {
     fetchUsers();
   }, []);
 
+  // Auxiliar para normalizar texto (insensible a tildes/acentos y mayúsculas)
+  const normalizeText = (str: string | null | undefined) => {
+    if (!str) return "";
+    return str
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+  };
+
+  // Auxiliar para obtener solo dígitos numéricos (para teléfonos)
+  const getDigits = (str: string | null | undefined) => {
+    if (!str) return "";
+    return str.replace(/\D/g, "");
+  };
+
   useEffect(() => {
     let filtered = users;
     
-    // Aplicar filtro de búsqueda
+    // Aplicar filtro de búsqueda global (Nombre, Socio, Teléfono, Email, Rol)
     if (searchTerm.trim() !== "") {
-      filtered = filtered.filter(user => 
-        user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.member_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      const term = normalizeText(searchTerm);
+      const termDigits = getDigits(searchTerm);
+
+      filtered = filtered.filter(user => {
+        const nameMatch = normalizeText(user.full_name).includes(term);
+        const memberIdMatch = normalizeText(user.member_id).includes(term);
+        const emailMatch = normalizeText(user.email).includes(term);
+        const roleMatch = normalizeText(user.role).includes(term);
+        
+        // Coincidencia de teléfono por texto o por dígitos puros
+        const phoneMatch = user.phone ? (
+          normalizeText(user.phone).includes(term) ||
+          (termDigits.length >= 3 && getDigits(user.phone).includes(termDigits))
+        ) : false;
+
+        return nameMatch || memberIdMatch || emailMatch || phoneMatch || roleMatch;
+      });
     }
     
     // Aplicar filtro de status
     if (statusFilter === 'active') {
-      filtered = filtered.filter(user => user.is_active === true);
+      filtered = filtered.filter(user => user.is_active !== false);
     } else if (statusFilter === 'inactive') {
       filtered = filtered.filter(user => user.is_active === false);
     }

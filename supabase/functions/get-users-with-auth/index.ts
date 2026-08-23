@@ -87,19 +87,21 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    // Get all profiles
+    // Get all profiles (up to 10000)
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
       .select('id, full_name, member_id, phone, is_active')
+      .range(0, 9999)
 
     if (profilesError) {
       throw profilesError
     }
 
-    // Get all user roles
+    // Get all user roles (up to 10000)
     const { data: roles, error: rolesError } = await supabaseAdmin
       .from('user_roles')
       .select('user_id, role')
+      .range(0, 9999)
 
     if (rolesError) {
       throw rolesError
