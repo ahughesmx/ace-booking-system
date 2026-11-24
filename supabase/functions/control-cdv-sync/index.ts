@@ -38,22 +38,45 @@ function formatMexicoDateTime(isoString: string | null | undefined): { date: str
   };
 }
 
-async function verifyAuthorization(req: Request, bodyApiKey?: string): Promise<{ authorized: boolean; reason?: string }> {
-  const configuredSyncKey = Deno.env.get("CONTROL_CDV_API_KEY") || Deno.env.get("WEBHOOK_API_KEY");
-  const headerApiKey = req.headers.get("x-api-key") || req.headers.get("x-control-cdv-key");
+function timingSafeCompare(a: string, b: string): boolean {
+  if (!a || !b || a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
+async function verifyAuthorization(
+  req: Request,
+  bodyApiKey?: string
+): Promise<{ authorized: boolean; authMethod?: string; reason?: string }> {
+  const configuredSyncKey =
+    Deno.env.get("CONTROL_CDV_API_KEY") || Deno.env.get("WEBHOOK_API_KEY");
+  const headerApiKey =
+    req.headers.get("x-api-key") || req.headers.get("x-control-cdv-key") || "";
   const authHeader = req.headers.get("authorization") || "";
   const bearerToken = authHeader.toLowerCase().startsWith("bearer ")
     ? authHeader.slice(7).trim()
     : "";
 
-  // 1. Verificar por API Key dedicada si está configurada
-  if (configuredSyncKey && (headerApiKey === configuredSyncKey || bodyApiKey === configuredSyncKey || bearerToken === configuredSyncKey)) {
-    return { authorized: true };
+  // 1. Autenticación Server-to-Server estricta por API Key privada (CONTROL_CDV_API_KEY)
+  // NUNCA se acepta SUPABASE_ANON_KEY como llave de sincronización
+  if (configuredSyncKey) {
+    if (
+      timingSafeCompare(headerApiKey, configuredSyncKey) ||
+      (bodyApiKey && timingSafeCompare(bodyApiKey, configuredSyncKey)) ||
+      timingSafeCompare(bearerToken, configuredSyncKey)
+    ) {
+      return { authorized: true, authMethod: "api_key" };
+    }
   }
 
-  // 2. Verificar si el Bearer token corresponde a un usuario autenticado con rol operador, supervisor o admin
+  // 2. Autenticación por JWT de sesión de usuario con rol operativo (admin, supervisor, operador)
   if (bearerToken) {
-    const { data: userData, error: userError } = await supabase.auth.getUser(bearerToken);
+    const { data: userData, error: userError } = await supabase.auth.getUser(
+      bearerToken
+    );
     if (!userError && userData?.user) {
       const { data: roleRow } = await supabase
         .from("user_roles")
@@ -63,19 +86,29 @@ async function verifyAuthorization(req: Request, bodyApiKey?: string): Promise<{
         .maybeSingle();
 
       if (roleRow) {
-        return { authorized: true };
+        return { authorized: true, authMethod: `jwt_${roleRow.role}` };
       }
-      return { authorized: false, reason: "El usuario no tiene rol de operador, supervisor o administrador" };
+      return {
+        authorized: false,
+        reason:
+          "El usuario autenticado no tiene rol de operador, supervisor o administrador",
+      };
     }
   }
 
-  // 3. Si no hay CONTROL_CDV_API_KEY configurada en variables de entorno pero se envía x-api-key o apikey válida de proyecto
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  if (!configuredSyncKey && (headerApiKey || (anonKey && bearerToken === anonKey))) {
-    return { authorized: true };
+  if (!configuredSyncKey) {
+    return {
+      authorized: false,
+      reason:
+        "CONTROL_CDV_API_KEY no está configurada en los secrets del servidor o no se envió un JWT válido de operador/admin",
+    };
   }
 
-  return { authorized: false, reason: "Credenciales de sincronización inválidas o ausentes (x-api-key / Authorization Bearer)" };
+  return {
+    authorized: false,
+    reason:
+      "Credenciales de API inválidas o ausentes. Se requiere x-api-key privada (CONTROL_CDV_API_KEY) o sesión JWT autorizada",
+  };
 }
 
 async function buildSyncPayload(params: {

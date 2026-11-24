@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ControlCdvSyncDialog } from "@/components/operator/ControlCdvSyncDialog";
-import { CONTROL_CDV_PULL_ENDPOINT, CONTROL_CDV_REST_RPC_ENDPOINT } from "@/services/control-cdv-sync";
+import { CONTROL_CDV_PULL_ENDPOINT } from "@/services/control-cdv-sync";
 import {
   Dialog,
   DialogContent,
@@ -837,47 +837,27 @@ Nota: Se envía un webhook individual por cada reserva afectada.`
         </CardHeader>
         <CardContent className="space-y-3 text-xs text-blue-900">
           <p>
-            El sistema <strong>Control CDV</strong> puede conectarse directamente a este sistema para sincronizar todas las transacciones del día (Ventanilla/Efectivo, En Línea y Especiales) e incluirlas en el corte de caja de recepción:
+            La comunicación con <strong>Control CDV</strong> se realiza exclusivamente a través de una <strong>API REST aislada (Edge Function)</strong> autenticada mediante API Key privada (<code>x-api-key: CONTROL_CDV_API_KEY</code>), sin exponer conexión directa a la base de datos:
           </p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <div className="rounded border border-blue-200 bg-white p-2.5 flex items-center justify-between gap-2">
-              <div className="truncate">
-                <div className="font-semibold text-blue-950">Endpoint API REST (Pull):</div>
-                <code className="text-[11px] text-slate-600">{CONTROL_CDV_PULL_ENDPOINT}?date=YYYY-MM-DD</code>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigator.clipboard.writeText(CONTROL_CDV_PULL_ENDPOINT);
-                  toast({
-                    title: "Endpoint copiado",
-                    description: "La URL del endpoint Pull de Control CDV se copió al portapapeles",
-                  });
-                }}
-              >
-                <Copy className="h-3.5 w-3.5" />
-              </Button>
+          <div className="rounded border border-blue-200 bg-white p-2.5 flex items-center justify-between gap-2">
+            <div className="truncate">
+              <div className="font-semibold text-blue-950">Endpoint API REST de Sincronización (Pull / Push):</div>
+              <code className="text-[11px] text-slate-600">{CONTROL_CDV_PULL_ENDPOINT}?date=YYYY-MM-DD</code>
             </div>
-            <div className="rounded border border-blue-200 bg-white p-2.5 flex items-center justify-between gap-2">
-              <div className="truncate">
-                <div className="font-semibold text-blue-950">Endpoint RPC PostgreSQL:</div>
-                <code className="text-[11px] text-slate-600">{CONTROL_CDV_REST_RPC_ENDPOINT}</code>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigator.clipboard.writeText(CONTROL_CDV_REST_RPC_ENDPOINT);
-                  toast({
-                    title: "RPC copiado",
-                    description: "La URL del RPC de sincronización se copió al portapapeles",
-                  });
-                }}
-              >
-                <Copy className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(CONTROL_CDV_PULL_ENDPOINT);
+                toast({
+                  title: "Endpoint API copiado",
+                  description: "La URL de la API de sincronización de Control CDV se copió al portapapeles",
+                });
+              }}
+            >
+              <Copy className="h-3.5 w-3.5 mr-1.5" />
+              Copiar URL API
+            </Button>
           </div>
         </CardContent>
       </Card>
