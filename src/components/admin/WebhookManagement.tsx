@@ -17,8 +17,12 @@ import {
   Settings,
   TestTube,
   Copy,
-  AlertCircle
+  AlertCircle,
+  Server
 } from "lucide-react";
+import { format } from "date-fns";
+import { ControlCdvSyncDialog } from "@/components/operator/ControlCdvSyncDialog";
+import { CONTROL_CDV_PULL_ENDPOINT, CONTROL_CDV_REST_RPC_ENDPOINT } from "@/services/control-cdv-sync";
 import {
   Dialog,
   DialogContent,
@@ -57,6 +61,7 @@ interface Webhook {
 const WebhookManagement = () => {
   const { isAdmin, isLoading: adminLoading } = useAdminAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isControlCdvDialogOpen, setIsControlCdvDialogOpen] = useState(false);
   const [newWebhook, setNewWebhook] = useState({
     name: "",
     url: "",
@@ -332,6 +337,55 @@ Nota: Se envía un webhook individual por cada reserva afectada.`
   },
   "webhook_name": "Mi Webhook WhatsApp"
 }`
+      },
+      cash_cut_sync: {
+        description: "Sincroniza todas las transacciones del día con el sistema Control CDV para el corte de caja en recepción",
+        headerExample: '{"Content-Type": "application/json", "x-api-key": "tu-token-control-cdv"}',
+        headerPlaceholder: 'Opcional: Headers de autenticación para Control CDV (x-api-key / Authorization)',
+        payloadExample: `{
+  "success": true,
+  "source": "ace-booking-system",
+  "club": "Centro Deportivo Veracruzano",
+  "event": "cash_cut_sync",
+  "sync_timestamp": "2026-11-24T18:00:00Z",
+  "timezone": "America/Mexico_City",
+  "period": {
+    "date": "2026-11-24",
+    "start_utc": "2026-11-24T06:00:00.000Z",
+    "end_utc": "2026-11-25T05:59:59.999Z"
+  },
+  "summary": {
+    "total_transactions": 5,
+    "active_transactions": 5,
+    "cancelled_transactions": 0,
+    "cash_ventanilla_total": 750,
+    "cash_ventanilla_count": 3,
+    "online_total": 500,
+    "online_count": 2,
+    "grand_total": 1250
+  },
+  "transactions": [
+    {
+      "external_transaction_id": "booking-uuid",
+      "folio": "COB-2026-00015",
+      "payment_channel": "VENTANILLA",
+      "control_cdv_payment_method": "CASH",
+      "amount": 250,
+      "include_in_cash_drawer": true,
+      "member": {
+        "action_number": "1001",
+        "full_name": "Juan Pérez"
+      },
+      "court": {
+        "name": "Pádel",
+        "court_type": "padel"
+      },
+      "operator": {
+        "operator_name": "Recepción CDV"
+      }
+    }
+  ]
+}`
       }
     };
     return eventConfigs[eventType] || eventConfigs.booking_created;
@@ -590,8 +644,8 @@ Nota: Se envía un webhook individual por cada reserva afectada.`
       return;
     }
 
-    // Validate URL
-    const urlError = validateWebhookUrl(sanitizedUrl);
+    // Validate URL (allow local network HTTP/HTTPS for Control CDV integration)
+    const urlError = validateWebhookUrl(sanitizedUrl, newWebhook.event_type === "cash_cut_sync");
     if (urlError) {
       toast({
         title: "Error",
@@ -651,6 +705,7 @@ Nota: Se envía un webhook individual por cada reserva afectada.`
     { value: "user_registered", label: "Usuario registrado" },
     { value: "emergency_closure", label: "Cierre imprevisto" },
     { value: "registration_status_changed", label: "Cambio de estatus de solicitud" },
+    { value: "cash_cut_sync", label: "Sincronización de Corte de Caja (Control CDV)" },
   ];
 
   if (isLoading) {
@@ -761,6 +816,77 @@ Nota: Se envía un webhook individual por cada reserva afectada.`
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Information card for Control CDV Cash Cut synchronization */}
+      <Card className="border-blue-200 bg-blue-50/40">
+        <CardHeader className="pb-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="text-base font-semibold text-blue-950 flex items-center gap-2">
+              <Server className="h-5 w-5 text-blue-600" />
+              Integración Corte de Caja con Sistema Control CDV (Pull &amp; Push)
+            </CardTitle>
+            <Button
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => setIsControlCdvDialogOpen(true)}
+            >
+              <Server className="h-4 w-4 mr-2" />
+              Probar / Sincronizar Movimientos del Día
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3 text-xs text-blue-900">
+          <p>
+            El sistema <strong>Control CDV</strong> puede conectarse directamente a este sistema para sincronizar todas las transacciones del día (Ventanilla/Efectivo, En Línea y Especiales) e incluirlas en el corte de caja de recepción:
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="rounded border border-blue-200 bg-white p-2.5 flex items-center justify-between gap-2">
+              <div className="truncate">
+                <div className="font-semibold text-blue-950">Endpoint API REST (Pull):</div>
+                <code className="text-[11px] text-slate-600">{CONTROL_CDV_PULL_ENDPOINT}?date=YYYY-MM-DD</code>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(CONTROL_CDV_PULL_ENDPOINT);
+                  toast({
+                    title: "Endpoint copiado",
+                    description: "La URL del endpoint Pull de Control CDV se copió al portapapeles",
+                  });
+                }}
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <div className="rounded border border-blue-200 bg-white p-2.5 flex items-center justify-between gap-2">
+              <div className="truncate">
+                <div className="font-semibold text-blue-950">Endpoint RPC PostgreSQL:</div>
+                <code className="text-[11px] text-slate-600">{CONTROL_CDV_REST_RPC_ENDPOINT}</code>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(CONTROL_CDV_REST_RPC_ENDPOINT);
+                  toast({
+                    title: "RPC copiado",
+                    description: "La URL del RPC de sincronización se copió al portapapeles",
+                  });
+                }}
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <ControlCdvSyncDialog
+        open={isControlCdvDialogOpen}
+        onOpenChange={setIsControlCdvDialogOpen}
+        selectedDate={format(new Date(), "yyyy-MM-dd")}
+      />
 
       {/* Information card for booking webhook integration */}
       <Alert>

@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download, Calendar, DollarSign, CreditCard, Hash, TrendingUp, FileText } from "lucide-react";
+import { Download, Calendar, DollarSign, CreditCard, Hash, TrendingUp, FileText, Server } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { exportToPDF } from "@/utils/pdf-export";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/components/AuthProvider";
 import { getStartOfDateMexicoCityISO, getEndOfDateMexicoCityISO, toMexicoCityTime } from "@/utils/timezone";
+import { ControlCdvSyncDialog } from "./ControlCdvSyncDialog";
 
 interface DailyBooking {
   id: string;
@@ -62,6 +63,7 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
   const [bookings, setBookings] = useState<DailyBooking[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [syncDialogOpen, setSyncDialogOpen] = useState(false);
   const [summary, setSummary] = useState<PaymentSummary>({ 
     cashTotal: 0, 
     onlineTotal: 0, 
@@ -300,7 +302,7 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
             className="w-auto"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button onClick={exportToCSV} variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Exportar CSV
@@ -309,8 +311,23 @@ export function DailyReportsOperator({ operatorId }: DailyReportsOperatorProps =
             <FileText className="h-4 w-4 mr-2" />
             Exportar PDF
           </Button>
+          <Button
+            onClick={() => setSyncDialogOpen(true)}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Server className="h-4 w-4 mr-2" />
+            Sincronizar con Control CDV
+          </Button>
         </div>
       </div>
+
+      <ControlCdvSyncDialog
+        open={syncDialogOpen}
+        onOpenChange={setSyncDialogOpen}
+        selectedDate={selectedDate}
+        operatorId={operatorId}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
         <Card>

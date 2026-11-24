@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.get-payment-logs]
 verify_jwt = true
+
+[functions.control-cdv-sync]
+verify_jwt = false

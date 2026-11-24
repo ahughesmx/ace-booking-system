@@ -8,7 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "node --test tests/e2e/control-cdv-sync.e2e.test.mjs"
   },
   "dependencies": {
     "@e965/xlsx": "0.20.3",

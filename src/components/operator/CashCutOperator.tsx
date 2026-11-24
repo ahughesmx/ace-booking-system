@@ -5,17 +5,37 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Download, FileText, DollarSign, Hash, TrendingUp, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Download,
+  FileText,
+  DollarSign,
+  Hash,
+  TrendingUp,
+  AlertCircle,
+  RefreshCw,
+  Server,
+  Globe,
+} from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { exportToCashCutPDF } from "@/utils/pdf-miniprinter";
 import { formatCurrency } from "@/lib/utils";
 import { getStartOfDateMexicoCityISO, getEndOfDateMexicoCityISO } from "@/utils/timezone";
 import { toast } from "sonner";
+import { ControlCdvSyncDialog } from "./ControlCdvSyncDialog";
+import {
+  fetchDailyTransactionsForControlCdv,
+  getLastControlCdvSync,
+  LastSyncRecord,
+} from "@/services/control-cdv-sync";
 
 interface CashCutSummary {
   cashTotal: number;
+  onlineTotal: number;
+  grandTotal: number;
   bookingsCount: number;
+  onlineCount: number;
   activeCount: number;
   cancelledCount: number;
   operatorName: string;
@@ -28,18 +48,25 @@ interface CashCutOperatorProps {
 export function CashCutOperator({ operatorId }: CashCutOperatorProps = {}) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [syncDialogOpen, setSyncDialogOpen] = useState(false);
+  const [lastSync, setLastSync] = useState<LastSyncRecord | null>(() =>
+    getLastControlCdvSync()
+  );
   const [summary, setSummary] = useState<CashCutSummary>({
     cashTotal: 0,
+    onlineTotal: 0,
+    grandTotal: 0,
     bookingsCount: 0,
+    onlineCount: 0,
     activeCount: 0,
     cancelledCount: 0,
-    operatorName: ''
+    operatorName: "",
   });
 
   const fetchCashCutData = async () => {
     if (!user && !operatorId) return;
-    
+
     setLoading(true);
     try {
       const startOfDayUTC = getStartOfDateMexicoCityISO(selectedDate);
@@ -47,37 +74,31 @@ export function CashCutOperator({ operatorId }: CashCutOperatorProps = {}) {
 
       const effectiveOperatorId = operatorId || user?.id;
 
-      console.log('🧾 CashCut - Filtro:', {
-        selectedDate,
-        effectiveOperatorId,
-        startOfDayUTC,
-        endOfDayUTC
-      });
+      // Obtener nombre del operador si hay un operador específico seleccionado
+      let operatorDisplayName = "Todos los Operadores";
+      if (effectiveOperatorId) {
+        const { data: operatorProfile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", effectiveOperatorId)
+          .maybeSingle();
+        operatorDisplayName = operatorProfile?.full_name || "Operador";
+      }
 
-      // Obtener nombre del operador
-      const { data: operatorProfile, error: operatorError } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', effectiveOperatorId)
-        .single();
+      // Obtener reservas procesadas en efectivo por el operador en el día seleccionado
+      let cashQuery = supabase
+        .from("bookings")
+        .select("id, actual_amount_charged, amount, status, payment_completed_at")
+        .in("payment_method", ["cash", "efectivo"])
+        .gte("payment_completed_at", startOfDayUTC)
+        .lte("payment_completed_at", endOfDayUTC);
 
-      if (operatorError) throw operatorError;
+      if (effectiveOperatorId) {
+        cashQuery = cashQuery.eq("processed_by", effectiveOperatorId);
+      }
 
-      // Obtener reservas procesadas por el operador en el día seleccionado
-      const { data, error } = await supabase
-        .from('bookings')
-        .select('id, actual_amount_charged, amount, status, payment_completed_at')
-        .in('payment_method', ['cash', 'efectivo'])
-        .eq('processed_by', effectiveOperatorId)
-        .gte('payment_completed_at', startOfDayUTC)
-        .lte('payment_completed_at', endOfDayUTC);
-
+      const { data, error } = await cashQuery;
       if (error) throw error;
-
-      console.log('🧾 CashCut - Datos encontrados:', {
-        count: data?.length || 0,
-        data: data
-      });
 
       const bookingsCount = data?.length || 0;
       const cashTotal = (data || []).reduce((sum, booking) => {
@@ -85,20 +106,37 @@ export function CashCutOperator({ operatorId }: CashCutOperatorProps = {}) {
         return sum + amount;
       }, 0);
 
-      const activeCount = (data || []).filter(b => b.status === 'paid').length;
-      const cancelledCount = (data || []).filter(b => b.status === 'cancelled').length;
+      const activeCount = (data || []).filter((b) => b.status === "paid").length;
+      const cancelledCount = (data || []).filter((b) => b.status === "cancelled").length;
+
+      // Consultar también resumen global del día (incluyendo pagos en línea) para sincronización con Control CDV
+      let onlineTotal = 0;
+      let onlineCount = 0;
+      try {
+        const syncPayload = await fetchDailyTransactionsForControlCdv({
+          selectedDate,
+          operatorId: operatorId || null,
+          onlyCash: false,
+        });
+        onlineTotal = syncPayload.summary.online_total;
+        onlineCount = syncPayload.summary.online_count;
+      } catch {
+        // Fallback silencioso si el usuario solo tiene permisos de sus propios cobros en efectivo
+      }
 
       setSummary({
         cashTotal,
+        onlineTotal,
+        grandTotal: cashTotal + onlineTotal,
         bookingsCount,
+        onlineCount,
         activeCount,
         cancelledCount,
-        operatorName: operatorProfile?.full_name || 'Operador'
+        operatorName: operatorDisplayName,
       });
-
     } catch (error) {
-      console.error('Error fetching cash cut data:', error);
-      toast.error('Error al cargar los datos del corte de caja');
+      console.error("Error fetching cash cut data:", error);
+      toast.error("Error al cargar los datos del corte de caja");
     } finally {
       setLoading(false);
     }
@@ -109,43 +147,56 @@ export function CashCutOperator({ operatorId }: CashCutOperatorProps = {}) {
   }, [selectedDate, user, operatorId]);
 
   const exportToCSV = () => {
-    const headers = ['Operador', 'Fecha', 'Importe Ventanilla', 'Reservaciones Cobradas', 'Activas', 'Canceladas'];
-    const csvData = [[
-      summary.operatorName,
-      format(new Date(selectedDate), 'dd/MM/yyyy', { locale: es }),
-      formatCurrency(summary.cashTotal),
-      summary.bookingsCount.toString(),
-      summary.activeCount.toString(),
-      summary.cancelledCount.toString()
-    ]];
+    const headers = [
+      "Operador",
+      "Fecha",
+      "Importe Ventanilla",
+      "Reservaciones Cobradas Ventanilla",
+      "Importe En Línea",
+      "Total General Día",
+      "Activas",
+      "Canceladas",
+    ];
+    const csvData = [
+      [
+        summary.operatorName,
+        format(new Date(selectedDate + "T12:00:00"), "dd/MM/yyyy", { locale: es }),
+        formatCurrency(summary.cashTotal),
+        summary.bookingsCount.toString(),
+        formatCurrency(summary.onlineTotal),
+        formatCurrency(summary.grandTotal),
+        summary.activeCount.toString(),
+        summary.cancelledCount.toString(),
+      ],
+    ];
 
-    const csvContent = [headers, ...csvData]
-      .map(row => row.join(','))
-      .join('\n');
+    const csvContent = [headers, ...csvData].map((row) => row.join(",")).join("\n");
 
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob(["\uFEFF" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `corte_caja_${selectedDate}.csv`);
-    link.style.visibility = 'hidden';
+    link.setAttribute("href", url);
+    link.setAttribute("download", `corte_caja_${selectedDate}.csv`);
+    link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('CSV exportado correctamente');
+    toast.success("CSV exportado correctamente");
   };
 
   const exportToPDFReport = () => {
     exportToCashCutPDF({
       operatorName: summary.operatorName,
-      date: format(new Date(selectedDate), 'dd/MM/yyyy', { locale: es }),
+      date: format(new Date(selectedDate + "T12:00:00"), "dd/MM/yyyy", { locale: es }),
       cashTotal: summary.cashTotal,
       bookingsCount: summary.bookingsCount,
       activeCount: summary.activeCount,
       cancelledCount: summary.cancelledCount,
-      fileName: `corte_caja_${selectedDate}.pdf`
+      fileName: `corte_caja_${selectedDate}.pdf`,
     });
-    toast.success('PDF generado correctamente');
+    toast.success("PDF generado correctamente");
   };
 
   if (!operatorId && !user) {
@@ -163,28 +214,82 @@ export function CashCutOperator({ operatorId }: CashCutOperatorProps = {}) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4 mb-4">
-        <div className="flex items-center gap-2">
-          <Label htmlFor="date">Fecha:</Label>
-          <Input
-            id="date"
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-auto"
-          />
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="date">Fecha:</Label>
+            <Input
+              id="date"
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-auto"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={exportToCSV} variant="outline" size="sm" disabled={loading}>
+              <Download className="h-4 w-4 mr-2" />
+              Exportar CSV
+            </Button>
+            <Button
+              onClick={exportToPDFReport}
+              variant="outline"
+              size="sm"
+              disabled={loading}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Exportar PDF
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={exportToCSV} variant="outline" size="sm" disabled={loading}>
-            <Download className="h-4 w-4 mr-2" />
-            Exportar CSV
-          </Button>
-          <Button onClick={exportToPDFReport} variant="outline" size="sm" disabled={loading}>
-            <FileText className="h-4 w-4 mr-2" />
-            Exportar PDF
-          </Button>
-        </div>
+
+        <Button
+          onClick={() => setSyncDialogOpen(true)}
+          size="sm"
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+          disabled={loading}
+        >
+          <Server className="h-4 w-4 mr-2" />
+          Sincronizar con Control CDV
+        </Button>
       </div>
+
+      {/* Banner de estado de sincronización con Control CDV */}
+      <Card className="border-blue-200 bg-blue-50/40">
+        <CardContent className="py-3 px-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-full bg-blue-100 text-blue-700">
+              <RefreshCw className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-blue-950 flex items-center gap-2">
+                Integración Corte de Caja — Sistema Control CDV
+                {lastSync && (
+                  <Badge
+                    variant={lastSync.status === "success" ? "default" : "destructive"}
+                    className="text-[11px]"
+                  >
+                    {lastSync.status === "success"
+                      ? `Última sinc: ${lastSync.date} (${lastSync.totalTransactions} movs)`
+                      : "Error en último envío"}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-blue-800">
+                Sincroniza todas las transacciones del día (Ventanilla: {formatCurrency(summary.cashTotal)} • En Línea: {formatCurrency(summary.onlineTotal)}) con el corte de caja de recepción en Control CDV.
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-blue-300 bg-white hover:bg-blue-50 text-blue-800"
+            onClick={() => setSyncDialogOpen(true)}
+          >
+            Ver / Enviar Movimientos del Día
+          </Button>
+        </CardContent>
+      </Card>
 
       {loading ? (
         <Card>
@@ -196,11 +301,11 @@ export function CashCutOperator({ operatorId }: CashCutOperatorProps = {}) {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="col-span-1 md:col-span-3">
+          <Card className="col-span-1 md:col-span-2">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <DollarSign className="h-4 w-4" />
-                Importe en Ventanilla
+                Importe en Ventanilla (Efectivo en Caja)
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -208,7 +313,25 @@ export function CashCutOperator({ operatorId }: CashCutOperatorProps = {}) {
                 {formatCurrency(summary.cashTotal)}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                Total cobrado en efectivo
+                Total cobrado en efectivo en recepción ({summary.operatorName})
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="col-span-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                Cobros en Línea del Día
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                {formatCurrency(summary.onlineTotal)}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {summary.onlineCount} transacción(es) web • Total Día:{" "}
+                <span className="font-semibold">{formatCurrency(summary.grandTotal)}</span>
               </div>
             </CardContent>
           </Card>
@@ -217,16 +340,14 @@ export function CashCutOperator({ operatorId }: CashCutOperatorProps = {}) {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Hash className="h-4 w-4" />
-                Reservaciones Cobradas
+                Reservaciones Cobradas (Ventanilla)
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-blue-600">
                 {summary.bookingsCount}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Total procesadas
-              </div>
+              <div className="text-xs text-muted-foreground mt-1">Total procesadas</div>
             </CardContent>
           </Card>
 
@@ -241,9 +362,7 @@ export function CashCutOperator({ operatorId }: CashCutOperatorProps = {}) {
               <div className="text-3xl font-bold text-emerald-600">
                 {summary.activeCount}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Vigentes
-              </div>
+              <div className="text-xs text-muted-foreground mt-1">Vigentes</div>
             </CardContent>
           </Card>
 
@@ -258,9 +377,7 @@ export function CashCutOperator({ operatorId }: CashCutOperatorProps = {}) {
               <div className="text-3xl font-bold text-orange-600">
                 {summary.cancelledCount}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Sin devolución
-              </div>
+              <div className="text-xs text-muted-foreground mt-1">Sin devolución</div>
             </CardContent>
           </Card>
         </div>
@@ -276,6 +393,14 @@ export function CashCutOperator({ operatorId }: CashCutOperatorProps = {}) {
           </CardContent>
         </Card>
       )}
+
+      <ControlCdvSyncDialog
+        open={syncDialogOpen}
+        onOpenChange={setSyncDialogOpen}
+        selectedDate={selectedDate}
+        operatorId={operatorId}
+        onSyncCompleted={(rec) => setLastSync(rec)}
+      />
     </div>
   );
 }

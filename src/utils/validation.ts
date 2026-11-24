@@ -1,23 +1,27 @@
 
 // Input validation utilities for security
-export const validateWebhookUrl = (url: string): string | null => {
+export const validateWebhookUrl = (url: string, allowLocalNetwork: boolean = false): string | null => {
   try {
     const parsedUrl = new URL(url);
     
-    // Only allow HTTPS URLs
-    if (parsedUrl.protocol !== 'https:') {
+    // Allow HTTP for local network integration (e.g. Control CDV on LAN/localhost) when allowLocalNetwork is true
+    if (allowLocalNetwork) {
+      if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') {
+        return 'Solo se permiten URLs HTTP o HTTPS';
+      }
+    } else if (parsedUrl.protocol !== 'https:') {
       return 'Solo se permiten URLs HTTPS';
     }
     
-    // Block localhost and private IP ranges
     const hostname = parsedUrl.hostname.toLowerCase();
     if (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname.startsWith('192.168.') ||
-      hostname.startsWith('10.') ||
-      hostname.startsWith('172.16.') ||
-      hostname.includes('169.254.') // Link-local
+      !allowLocalNetwork &&
+      (hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('10.') ||
+        hostname.startsWith('172.16.') ||
+        hostname.includes('169.254.'))
     ) {
       return 'No se permiten URLs locales o privadas';
     }
@@ -88,7 +92,8 @@ export const validateEventType = (eventType: string): boolean => {
     'match_invitation_responded',
     'user_registered',
     'emergency_closure',
-    'registration_status_changed'
+    'registration_status_changed',
+    'cash_cut_sync'
   ];
   return validEvents.includes(eventType);
 };
